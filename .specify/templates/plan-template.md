@@ -31,7 +31,18 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Verify against `.specify/memory/constitution.md` (mark each PASS / N/A / violation):
+
+- [ ] I. Honesty: demo disclaimer on every page; credit link in footer/staff login; no fake reviews, stats, awards, or third-party logos; sample content labelled
+- [ ] II. Privacy: roles enforced server-side; patient sees only own data; reports via authenticated endpoint; audit log entries; no medical data/secrets in logs; rate limits on auth, booking, lookup
+- [ ] III. Server truth: slots, rules, prices, statuses computed server-side; DB-level double-booking prevention; Asia/Karachi times; PKR prices
+- [ ] IV. API-first: same booking/availability/reschedule/cancel/status APIs for website, staff app, and AI agent
+- [ ] V. Resilience: frontend build passes with backend unreachable
+- [ ] VI. Security: Argon2, httpOnly cookie JWT, Origin/CSRF checks, same-origin proxy, strict CORS, no committed secrets
+- [ ] VII. Databases: pooled URL for app, direct URL for migrations, separate dev/prod
+- [ ] VIII. Design/a11y: tokens (#0B2545, #14B8A6), reduced-motion, WCAG 2.2 AA, Core Web Vitals, next/image
+- [ ] IX. Quality: TS strict, no `any`, unit + Playwright tests planned, small changes
+- [ ] X. Build order: work belongs to the current phase (1 frontend mock → 2 backend → 3 staff app → 4 deploy → 5 AI agent)
 
 ## Project Structure
 
