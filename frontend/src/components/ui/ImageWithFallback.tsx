@@ -39,7 +39,8 @@ export function ImageWithFallback({ image, sizes, priority = false, className }:
       width={image.width}
       height={image.height}
       sizes={sizes}
-      priority={priority}
+      // Next 16 deprecated `priority`; `preload` adds a <link rel="preload"> for the LCP image.
+      preload={priority}
       className={cn("h-auto w-full", className)}
       onError={() => setFailed(true)}
       // An image that failed before hydration never fires onError; catch that case here.

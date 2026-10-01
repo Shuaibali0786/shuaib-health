@@ -1,5 +1,5 @@
 import { formatOpeningHours, formatOpeningHoursParts } from "@/lib/format";
-import type { Fact, HeroFact, QuickAction, WhyPoint } from "@/types/content";
+import type { Fact, HeroFact, ImageAsset, QuickAction, WhyPoint } from "@/types/content";
 import { departments } from "./departments";
 import { siteConfig } from "./siteConfig";
 
@@ -9,6 +9,14 @@ import { siteConfig } from "./siteConfig";
  */
 
 const hoursParts = formatOpeningHoursParts(siteConfig.openingHours);
+
+/** Hero photo (4:5). A labelled placeholder until a real photo replaces the file. */
+export const heroImage: ImageAsset = {
+  src: "/images/hero/hero-doctor-placeholder.jpg",
+  alt: "Friendly doctor in a clinic (placeholder image)",
+  width: 1200,
+  height: 1500,
+};
 
 /** Exactly three floating cards in the hero (FR-011). */
 export const heroFacts: HeroFact[] = [

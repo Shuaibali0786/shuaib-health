@@ -75,6 +75,15 @@ export function placeholderRoutes(): PlaceholderRoute[] {
   ];
 }
 
+/**
+ * Whether a navigation link is the current page. Home matches only "/";
+ * every other link also matches its sub-paths (/doctors matches /doctors/dr-x).
+ */
+export function isActivePath(pathname: string, href: string): boolean {
+  if (href === ROUTES.home) return pathname === ROUTES.home;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 function normalize(path: string): string {
   return path.length > 1 ? path.replace(/\/+$/, "") : path;
 }

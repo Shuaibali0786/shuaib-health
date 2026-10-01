@@ -4,11 +4,20 @@ import { cn } from "@/lib/cn";
 
 export type ButtonVariant = "primary" | "accent" | "outline" | "danger" | "onDark";
 
+export type ButtonSize = "md" | "sm";
+
 interface ButtonProps extends Omit<ComponentPropsWithoutRef<"a">, "href"> {
   href: string;
   variant?: ButtonVariant;
+  /** "sm" is for tight spaces such as the header; both sizes keep a 44 px minimum height. */
+  size?: ButtonSize;
   fullWidth?: boolean;
 }
+
+const SIZE_CLASS: Record<ButtonSize, string> = {
+  md: "px-5 py-2.5 text-base",
+  sm: "px-4 py-2 text-sm",
+};
 
 /**
  * Every pairing meets WCAG 2.2 AA (design-system.md §1):
@@ -27,9 +36,18 @@ const VARIANT_CLASS: Record<ButtonVariant, string> = {
 const EXTERNAL = /^(tel:|mailto:|https?:)/;
 
 /** A link styled as a button. Internal paths use next/link; tel:, mailto: and http(s) use a plain anchor. */
-export function Button({ href, variant = "primary", fullWidth = false, className, children, ...props }: ButtonProps) {
+export function Button({
+  href,
+  variant = "primary",
+  size = "md",
+  fullWidth = false,
+  className,
+  children,
+  ...props
+}: ButtonProps) {
   const classes = cn(
-    "inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-5 py-2.5 text-base font-semibold transition-colors duration-150",
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-control font-semibold transition-colors duration-150",
+    SIZE_CLASS[size],
     VARIANT_CLASS[variant],
     fullWidth && "w-full",
     className,
