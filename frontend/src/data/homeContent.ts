@@ -12,10 +12,18 @@ const hoursParts = formatOpeningHoursParts(siteConfig.openingHours);
 
 /** Hero photo (4:5), fitted from a stock photo with npm run images. */
 export const heroImage: ImageAsset = {
-  src: "/images/hero/hero-doctor-placeholder.jpg",
+  src: "/images/hero/hero-doctor.jpg",
   alt: "Smiling doctor in a white coat with a stethoscope, seated at a desk",
   width: 1200,
   height: 1500,
+};
+
+/** Clinic interior photo (4:3) beside the "Why choose us" points. */
+export const clinicImage: ImageAsset = {
+  src: "/images/clinic/clinic-interior.jpg",
+  alt: "Bright, calm clinic reception where a patient speaks with a receptionist at the desk",
+  width: 1200,
+  height: 900,
 };
 
 /** Exactly three floating cards in the hero (FR-011). */

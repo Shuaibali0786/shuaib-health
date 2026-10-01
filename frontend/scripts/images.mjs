@@ -12,7 +12,7 @@
 //         --position attention|centre|top|bottom|left|right   simpler alternative
 //                              (default: attention). --focus wins if both are given.
 //
-// Keys are the file names without "-placeholder.jpg": hero-doctor, clinic-interior,
+// Keys are the file names without ".jpg": hero-doctor, clinic-interior,
 // general-medicine, cardiology, dr-imran-qureshi, staying-hydrated, and so on.
 
 import { existsSync, statSync } from "node:fs";

@@ -9,8 +9,15 @@ interface SectionProps extends Omit<ComponentPropsWithoutRef<"section">, "aria-l
   labelledBy?: string;
   /** "none" leaves the background to the caller (gradient bands). */
   tone?: SectionTone;
+  /** "compact" is for slim bands such as the facts band. */
+  spacing?: "default" | "compact";
   containerClassName?: string;
 }
+
+const SPACING_CLASS = {
+  default: "py-16 lg:py-24",
+  compact: "py-10 lg:py-14",
+} as const;
 
 const TONE_CLASS: Record<SectionTone, string> = {
   background: "bg-background",
@@ -22,13 +29,14 @@ const TONE_CLASS: Record<SectionTone, string> = {
 export function Section({
   labelledBy,
   tone = "background",
+  spacing = "default",
   className,
   containerClassName,
   children,
   ...props
 }: SectionProps) {
   return (
-    <section aria-labelledby={labelledBy} className={cn("py-16 lg:py-24", TONE_CLASS[tone], className)} {...props}>
+    <section aria-labelledby={labelledBy} className={cn(SPACING_CLASS[spacing], TONE_CLASS[tone], className)} {...props}>
       <Container className={containerClassName}>{children}</Container>
     </section>
   );

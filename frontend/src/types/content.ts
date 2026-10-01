@@ -7,7 +7,7 @@
  */
 
 export interface ImageAsset {
-  /** Path under `public/`, for example "/images/departments/cardiology-placeholder.jpg". */
+  /** Path under `public/`, for example "/images/departments/cardiology.jpg". */
   src: string;
   alt: string;
   width: number;

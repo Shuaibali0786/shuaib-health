@@ -2,7 +2,7 @@ import type { Doctor, ImageAsset } from "@/types/content";
 
 function doctorPhoto(slug: string, alt: string): ImageAsset {
   return {
-    src: `/images/doctors/${slug}-placeholder.jpg`,
+    src: `/images/doctors/${slug}.jpg`,
     alt,
     width: 600,
     height: 750,

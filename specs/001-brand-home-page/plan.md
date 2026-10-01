@@ -85,11 +85,11 @@ frontend/
 │   └── generate-placeholder-images.mjs   # writes clearly labelled placeholder JPGs (sharp)
 ├── public/
 │   └── images/
-│       ├── hero/                   # hero-doctor-placeholder.jpg
-│       ├── clinic/                 # clinic-interior-placeholder.jpg
-│       ├── departments/            # <dept-slug>-placeholder.jpg × 7
-│       ├── doctors/                # <doctor-slug>-placeholder.jpg × 4
-│       └── tips/                   # <tip-slug>-placeholder.jpg × 3
+│       ├── hero/                   # hero-doctor.jpg
+│       ├── clinic/                 # clinic-interior.jpg
+│       ├── departments/            # <dept-slug>.jpg × 7
+│       ├── doctors/                # <doctor-slug>.jpg × 4
+│       └── tips/                   # <tip-slug>.jpg × 3
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx              # fonts, metadata, SkipLink, NoticeBar, SiteHeader, <main>, SiteFooter

@@ -2,7 +2,7 @@ import type { Department, ImageAsset } from "@/types/content";
 
 function departmentImage(slug: string, alt: string): ImageAsset {
   return {
-    src: `/images/departments/${slug}-placeholder.jpg`,
+    src: `/images/departments/${slug}.jpg`,
     alt,
     width: 800,
     height: 600,

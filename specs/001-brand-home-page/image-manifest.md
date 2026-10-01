@@ -7,7 +7,7 @@ Every image file the pages expect, so real photos can be added later. All paths 
 **To replace a placeholder with a real photo** (one image at a time, in CMD from `D:\shuaib-health\frontend`):
 
 1. Pick a photo you own or that has a licence allowing this use: no watermark, no visible brand names or logos, and no identifiable patients without written consent. Bigger than the target size is best; the tool crops and shrinks it.
-2. Fit it to the exact size and shape the page expects. This writes over the placeholder file, so no component changes are needed:
+2. Fit it to the exact size and shape the page expects. This writes over the existing file, so no component changes are needed:
    `npm run images -- fit "C:\Users\You\Downloads\doctor.jpg" hero-doctor`
    If the automatic crop cuts off the wrong part, pick the point to keep centred with `--focus x,y` (fractions of the photo, `0.5,0.3` = middle, 30% down), which is how faces are kept whole. `--position top` (or `centre`, `bottom`, `left`, `right`) is the simpler alternative.
 3. Update its `alt` text in `frontend/src/data/*.ts` so it describes the real photo (remove "placeholder image"). The hero is `heroImage` in `homeContent.ts`.
@@ -17,29 +17,29 @@ Every image file the pages expect, so real photos can be added later. All paths 
 
 ## Naming rule
 
-`<subject-slug>-placeholder.jpg` while a placeholder. Real photos may drop the suffix later, but then update the path in the data file in the same change. Keep the manifest table and the data files in sync; `tests/unit/images.test.ts` fails if a referenced file is missing or if a file in these folders is not referenced.
+`<subject-slug>.jpg`, for example `cardiology.jpg`. The same name is used whether the file is a generated placeholder or a real photo, so replacing a photo never needs a code change. Keep the manifest table and the data files in sync; `tests/unit/images.test.ts` fails if a referenced file is missing or if a file in these folders is not referenced.
 
 ## Files
 
-| # | File | Size (px) | Ratio | Used in | Loading | Alt text (initial) |
+| # | File | Size (px) | Ratio | Used in | Loading | Alt text |
 |---|------|-----------|-------|---------|---------|--------------------|
-| 1 | `images/hero/hero-doctor-placeholder.jpg` | 1200 × 1500 | 4:5 | Hero | `priority` | "Friendly doctor in a clinic (placeholder image)" |
-| 2 | `images/clinic/clinic-interior-placeholder.jpg` | 1200 × 900 | 4:3 | Why choose us | lazy | "Bright, calm clinic reception and waiting area (placeholder image)" |
-| 3 | `images/departments/general-medicine-placeholder.jpg` | 800 × 600 | 4:3 | Department card | lazy | "General Medicine department (placeholder image)" |
-| 4 | `images/departments/cardiology-placeholder.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Cardiology department (placeholder image)" |
-| 5 | `images/departments/pediatrics-placeholder.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Pediatrics department (placeholder image)" |
-| 6 | `images/departments/gynecology-placeholder.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Gynecology department (placeholder image)" |
-| 7 | `images/departments/dermatology-placeholder.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Dermatology department (placeholder image)" |
-| 8 | `images/departments/dental-placeholder.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Dental department (placeholder image)" |
-| 9 | `images/departments/pathology-lab-placeholder.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Pathology Lab department (placeholder image)" |
-| 10 | `images/doctors/dr-ayesha-rahman-placeholder.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Portrait of sample doctor Dr. Ayesha Rahman (placeholder image)" |
-| 11 | `images/doctors/dr-imran-qureshi-placeholder.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Portrait of sample doctor Dr. Imran Qureshi (placeholder image)" |
-| 12 | `images/doctors/dr-sana-farooqui-placeholder.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Portrait of sample doctor Dr. Sana Farooqui (placeholder image)" |
-| 13 | `images/doctors/dr-hassan-mirza-placeholder.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Portrait of sample doctor Dr. Hassan Mirza (placeholder image)" |
-| 14 | `images/tips/staying-hydrated-placeholder.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Glass of water on a table (placeholder image)" |
-| 15 | `images/tips/healthy-sleep-habits-placeholder.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Calm bedroom with soft light (placeholder image)" |
-| 16 | `images/tips/balanced-plate-placeholder.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Balanced meal with vegetables (placeholder image)" |
-| 17 | `images/tips/daily-walk-placeholder.jpg` | 800 × 500 | 16:10 | Health tip card (4th tip, older, not on Home) | lazy | "Person walking in a park (placeholder image)" |
+| 1 | `images/hero/hero-doctor.jpg` | 1200 × 1500 | 4:5 | Hero | `priority` | "Smiling doctor in a white coat with a stethoscope, seated at a desk" |
+| 2 | `images/clinic/clinic-interior.jpg` | 1200 × 900 | 4:3 | Why choose us | lazy | "Bright, calm clinic reception where a patient speaks with a receptionist at the desk" |
+| 3 | `images/departments/general-medicine.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Doctor reviewing a folder with a patient in a consultation room" |
+| 4 | `images/departments/cardiology.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Smiling nurse in green scrubs holding a paper heart" |
+| 5 | `images/departments/pediatrics.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Doctor listening to a young girl's chest with a stethoscope" |
+| 6 | `images/departments/gynecology.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Doctor and two women gathered around a table during a consultation" |
+| 7 | `images/departments/dermatology.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Doctor examining a skin image on a tablet beside a patient" |
+| 8 | `images/departments/dental.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Two dental staff reviewing an X-ray on a screen beside a dental chair" |
+| 9 | `images/departments/pathology-lab.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Laboratory scientist in a blue gown using a microscope" |
+| 10 | `images/doctors/dr-ayesha-rahman.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Ayesha Rahman: a woman in a white coat taking a phone call and holding a notebook" |
+| 11 | `images/doctors/dr-imran-qureshi.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Imran Qureshi: a man in a white coat with a stethoscope" |
+| 12 | `images/doctors/dr-sana-farooqui.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Sana Farooqui: a smiling woman in a headscarf and dark scrubs holding a red book" |
+| 13 | `images/doctors/dr-hassan-mirza.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Hassan Mirza: a bearded man in glasses and a lavender coat with a stethoscope, arms crossed" |
+| 14 | `images/tips/staying-hydrated.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Water being poured from a glass jug into a drinking glass" |
+| 15 | `images/tips/healthy-sleep-habits.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Woman sleeping peacefully in a bed with light bedding" |
+| 16 | `images/tips/balanced-plate.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Plate with avocado, boiled egg, tomatoes, walnuts and leafy greens" |
+| 17 | `images/tips/daily-walk.jpg` | 800 × 500 | 16:10 | Health tip card (4th tip, older, not on Home) | lazy | "Two people walking along a tree-lined park path in morning mist" |
 
 Total: 17 files. Health-tip slugs match the file names: `staying-hydrated`, `healthy-sleep-habits`, `balanced-plate`, `daily-walk`; the three newest appear on Home.
 
@@ -64,7 +64,7 @@ Total: 17 files. Health-tip slugs match the file names: `staying-hydrated`, `hea
 
 ## Current photos (all 17 are real)
 
-The 17 photos were supplied by the project owner from Pexels (Pexels licence: free to use, attribution not required; confirm each photo's Pexels page still shows that licence). The originals live in `assets\photos` (ignored by git, about 30 MB); only the fitted JPGs under `frontend\public\images` are committed. The files keep their `-placeholder.jpg` names so no code changes were needed; renaming them is a possible later cleanup.
+The 17 photos were supplied by the project owner from Pexels (Pexels licence: free to use, attribution not required; confirm each photo's Pexels page still shows that licence). The originals live in `assets\photos` (ignored by git, about 30 MB); only the fitted JPGs under `frontend\public\images` are committed. The files keep their `.jpg` names so no code changes were needed; renaming them is a possible later cleanup.
 
 Fit settings used (run from `frontend\`, for example `npm run images -- fit "..\assets\photos\hero.jpg.jpg" hero-doctor --focus 0.5,0.25`), so any photo can be re-fitted identically:
 

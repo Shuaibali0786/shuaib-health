@@ -35,11 +35,11 @@ describe("Hero", () => {
     expect(container.textContent).not.toMatch(BANNED);
   });
 
-  it("shows the placeholder hero photo with alt text", () => {
+  it("shows the hero photo with alt text", () => {
     render(<Hero />);
     const photo = screen.getByRole("img", { name: heroImage.alt });
     expect(photo).toHaveAttribute("width", "1200");
     expect(photo).toHaveAttribute("height", "1500");
-    expect(heroImage.src).toBe("/images/hero/hero-doctor-placeholder.jpg");
+    expect(heroImage.src).toBe("/images/hero/hero-doctor.jpg");
   });
 });

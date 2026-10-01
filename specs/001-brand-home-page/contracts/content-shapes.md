@@ -90,7 +90,7 @@ export interface NavItem {
   "name": "Cardiology",
   "summary": "Heart and blood-pressure care with routine checkups.",
   "image": {
-    "src": "/images/departments/cardiology-placeholder.jpg",
+    "src": "/images/departments/cardiology.jpg",
     "alt": "Cardiology department (placeholder image)",
     "width": 800,
     "height": 600
@@ -108,7 +108,7 @@ export interface NavItem {
   "departmentId": "dept-cardiology",
   "specialty": "Cardiology",
   "photo": {
-    "src": "/images/doctors/dr-imran-qureshi-placeholder.jpg",
+    "src": "/images/doctors/dr-imran-qureshi.jpg",
     "alt": "Portrait of sample doctor Dr. Imran Qureshi (placeholder image)",
     "width": 600,
     "height": 750
