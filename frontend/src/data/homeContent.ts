@@ -10,10 +10,10 @@ import { siteConfig } from "./siteConfig";
 
 const hoursParts = formatOpeningHoursParts(siteConfig.openingHours);
 
-/** Hero photo (4:5). A labelled placeholder until a real photo replaces the file. */
+/** Hero photo (4:5), fitted from a stock photo with npm run images. */
 export const heroImage: ImageAsset = {
   src: "/images/hero/hero-doctor-placeholder.jpg",
-  alt: "Friendly doctor in a clinic (placeholder image)",
+  alt: "Smiling doctor in a white coat with a stethoscope, seated at a desk",
   width: 1200,
   height: 1500,
 };

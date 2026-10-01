@@ -14,7 +14,7 @@ export const healthTips: HealthTip[] = [
     publishedAt: "2026-09-12T09:00:00+05:00",
     image: {
       src: "/images/tips/staying-hydrated-placeholder.jpg",
-      alt: "Glass of water on a table (placeholder image)",
+      alt: "Water being poured from a glass jug into a drinking glass",
       width: 800,
       height: 500,
     },
@@ -29,7 +29,7 @@ export const healthTips: HealthTip[] = [
     publishedAt: "2026-09-05T09:00:00+05:00",
     image: {
       src: "/images/tips/healthy-sleep-habits-placeholder.jpg",
-      alt: "Calm bedroom with soft light (placeholder image)",
+      alt: "Woman sleeping peacefully in a bed with light bedding",
       width: 800,
       height: 500,
     },
@@ -44,7 +44,7 @@ export const healthTips: HealthTip[] = [
     publishedAt: "2026-08-28T09:00:00+05:00",
     image: {
       src: "/images/tips/balanced-plate-placeholder.jpg",
-      alt: "Balanced meal with vegetables (placeholder image)",
+      alt: "Plate with avocado, boiled egg, tomatoes, walnuts and leafy greens",
       width: 800,
       height: 500,
     },
@@ -59,7 +59,7 @@ export const healthTips: HealthTip[] = [
     publishedAt: "2026-08-14T09:00:00+05:00",
     image: {
       src: "/images/tips/daily-walk-placeholder.jpg",
-      alt: "Person walking in a park (placeholder image)",
+      alt: "Two people walking along a tree-lined park path in morning mist",
       width: 800,
       height: 500,
     },

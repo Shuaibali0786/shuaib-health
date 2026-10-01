@@ -140,7 +140,8 @@ describe("SiteHeader", () => {
       .getAllByRole("link", { hidden: true })
       .filter((link) => link.getAttribute("href") === `tel:${siteConfig.emergencyPhone.tel}`);
     expect(phoneLinks.length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByRole("link", { name: "Call emergency phone" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Call emergency phone (sample number)" })).toBeInTheDocument();
+    expect(screen.getAllByText("Emergency (sample)").length).toBeGreaterThanOrEqual(1);
 
     const book = screen
       .getAllByRole("link", { hidden: true })

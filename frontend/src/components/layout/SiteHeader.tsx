@@ -33,7 +33,7 @@ export async function SiteHeader() {
         <div className="ml-auto flex items-center gap-2 xl:ml-0">
           <a
             href={`tel:${emergencyPhone.tel}`}
-            aria-label="Call emergency phone"
+            aria-label="Call emergency phone (sample number)"
             className="inline-flex size-11 items-center justify-center rounded-control text-danger-700 hover:bg-surface md:hidden"
           >
             <Phone className="size-5" aria-hidden="true" />
@@ -44,7 +44,7 @@ export async function SiteHeader() {
           >
             <Phone className="size-5 shrink-0 text-danger-700" aria-hidden="true" />
             <span className="flex flex-col font-semibold leading-tight">
-              <span className="text-[0.8125rem] font-medium text-muted">Emergency</span>
+              <span className="text-[0.8125rem] font-medium text-muted">Emergency (sample)</span>
               <span className="whitespace-nowrap text-sm">{emergencyPhone.display}</span>
             </span>
           </a>

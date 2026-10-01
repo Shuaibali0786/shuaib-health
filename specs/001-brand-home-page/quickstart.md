@@ -134,7 +134,15 @@ In Chrome DevTools, open Lighthouse, choose Mobile and Performance, and run it a
 
 ## 9. Replacing placeholder images later
 
-See [image-manifest.md](./image-manifest.md): overwrite the file with the same name and aspect ratio, then update the alt text in `frontend\src\data`.
+See [image-manifest.md](./image-manifest.md). In short, from `frontend\`:
+
+```bat
+npm run images -- check
+npm run images -- fit "C:\Users\You\Downloads\doctor.jpg" hero-doctor
+npm run images -- check
+```
+
+Then update the alt text in `frontend\src\data` for that image.
 
 ## 10. Cleanup helpers (CMD)
 

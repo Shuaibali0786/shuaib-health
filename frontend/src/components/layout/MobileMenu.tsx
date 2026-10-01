@@ -86,7 +86,7 @@ export function MobileMenu({ items, emergencyPhone }: MobileMenuProps) {
             >
               <Phone className="size-5 text-danger-700" aria-hidden="true" />
               <span className="flex flex-col leading-tight">
-                <span className="text-[0.8125rem] font-medium text-muted">Emergency</span>
+                <span className="text-[0.8125rem] font-medium text-muted">Emergency (sample)</span>
                 <span>{emergencyPhone.display}</span>
               </span>
             </a>
