@@ -114,23 +114,25 @@ Expected: the build succeeds. (`127.0.0.1:9` is a closed port. The feature does 
 
 ## 8. Manual verification checklist
 
-Use Chrome DevTools device toolbar at 320, 390 and 1280 px wide.
+Use Chrome DevTools device toolbar at 320, 390 and 1280 px wide. (Checked 2026-10-01: every item below is covered by an automated Playwright test or a real-Chrome check; see tasks.md Notes.)
 
-- [ ] Notice bar reads exactly "Portfolio demo — not a real clinic, not medical advice." on `/`, `/doctors`, and a nonsense URL.
-- [ ] 390 px: logo, call icon, Book button, menu button in the header; hero headline and both hero buttons visible without scrolling.
-- [ ] 1280 px: eight nav links, emergency phone and Book Appointment visible; current page underlined.
-- [ ] Menu: opens, Escape closes it and focus returns to the menu button.
-- [ ] Tab from page load: "Skip to main content" is first, focus ring visible everywhere.
-- [ ] Sections appear in order: Hero, How can we help you?, Departments (7), Facts band, Why choose us + Emergency card, Featured doctors (4, each "Sample"), Health Tips (3, each "Sample"), CTA band.
-- [ ] Click every header, footer and Home link: none reaches a 404; unbuilt pages say "Coming soon".
-- [ ] `/no-such-page` shows "Page not found" and returns 404 (DevTools Network).
-- [ ] Footer credit "Designed & built by Shuaib Ali" links to https://github.com/Shuaibali0786.
-- [ ] Windows Settings → Accessibility → Visual effects → Animation effects **off** (or DevTools Rendering → "Emulate prefers-reduced-motion: reduce"): nothing slides or scales.
-- [ ] Zoom to 200%: content reflows, no horizontal scrollbar.
+- [x] Notice bar reads exactly "Portfolio demo — not a real clinic, not medical advice." on `/`, `/doctors`, and a nonsense URL.
+- [x] 390 px: logo, call icon, Book button, menu button in the header; hero headline and both hero buttons visible without scrolling.
+- [x] 1280 px: eight nav links, emergency phone and Book Appointment visible; current page underlined.
+- [x] Menu: opens, Escape closes it and focus returns to the menu button.
+- [x] Tab from page load: "Skip to main content" is first, focus ring visible everywhere.
+- [x] Sections appear in order: Hero, How can we help you?, Departments (7), Facts band, Why choose us + Emergency card, Featured doctors (4, each "Sample"), Health Tips (3, each "Sample"), CTA band.
+- [x] Click every header, footer and Home link: none reaches a 404; unbuilt pages say "Coming soon".
+- [x] `/no-such-page` shows "Page not found" and returns 404 (DevTools Network).
+- [x] Footer credit "Designed & built by Shuaib Ali" links to https://github.com/Shuaibali0786.
+- [x] Windows Settings → Accessibility → Visual effects → Animation effects **off** (or DevTools Rendering → "Emulate prefers-reduced-motion: reduce"): nothing slides or scales.
+- [x] Zoom to 200%: content reflows, no horizontal scrollbar.
 
 ### Performance check (SC-008, manual for now)
 
 In Chrome DevTools, open Lighthouse, choose Mobile and Performance, and run it against the production build (`npm run build` then `npm run start`, http://localhost:3000). Record LCP, INP or TBT, and CLS in the pull request. Targets: LCP ≤ 2.5 s, CLS ≤ 0.1. (Automated Lighthouse CI budgets arrive in Phase 4.)
+
+**Result for Feature 001 (final build, median of 5 default runs; Lighthouse mobile with simulated slow 4G and 4x CPU):** performance 92, accessibility 100, best practices 100, TBT 108 ms, CLS 0.000 (target met), LCP 3.1 s (**target of 2.5 s NOT met** on this deliberately harsh profile). The network is finished by about 0.5 s; the delay is React hydration on the slowed CPU before the first paint. See tasks.md Notes for what was tried and the options left.
 
 ## 9. Replacing placeholder images later
 

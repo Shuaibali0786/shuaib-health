@@ -9,7 +9,13 @@ interface PageProps {
 
 /**
  * Serves "Coming soon" for every registered placeholder path (lib/routes.ts).
- * dynamicParams = false makes every other path a real 404.
+ * dynamicParams = false makes every other path a real 404 whose HTML is rendered on the server,
+ * inside the site layout, so it also works without JavaScript and for crawlers.
+ *
+ * Known and harmless: Next logs "Error: Internal: NoFallbackError" on the server for each unknown
+ * URL it answers this way. Dropping dynamicParams = false silences that line, but then Next serves
+ * its generic error shell for unknown URLs (the 404 text only exists in the client payload), which
+ * is worse. Verified in the browser and in tests/e2e/links.spec.ts.
  */
 export const dynamicParams = false;
 

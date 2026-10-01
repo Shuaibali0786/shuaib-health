@@ -23,7 +23,7 @@ Every image file the pages expect, so real photos can be added later. All paths 
 
 | # | File | Size (px) | Ratio | Used in | Loading | Alt text |
 |---|------|-----------|-------|---------|---------|--------------------|
-| 1 | `images/hero/hero-doctor.jpg` | 1200 × 1500 | 4:5 | Hero | `priority` | "Smiling doctor in a white coat with a stethoscope, seated at a desk" |
+| 1 | `images/hero/hero-doctor.jpg` | 1200 × 1500 | 4:5 | Hero | eager, `fetchPriority=high` | "Smiling doctor in a white coat with a stethoscope, seated at a desk" |
 | 2 | `images/clinic/clinic-interior.jpg` | 1200 × 900 | 4:3 | Why choose us | lazy | "Bright, calm clinic reception where a patient speaks with a receptionist at the desk" |
 | 3 | `images/departments/general-medicine.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Doctor reviewing a folder with a patient in a consultation room" |
 | 4 | `images/departments/cardiology.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Smiling nurse in green scrubs holding a paper heart" |
@@ -58,7 +58,7 @@ Total: 17 files. Health-tip slugs match the file names: `staying-hydrated`, `hea
   - department card: `(min-width: 1280px) 280px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw`
   - doctor card: `(min-width: 1280px) 280px, (min-width: 640px) 45vw, 92vw`
   - tip card: `(min-width: 1024px) 360px, (min-width: 640px) 45vw, 92vw`
-- Only the hero image uses `priority`; all others use the default lazy loading.
+- Only the hero image loads eagerly (`loading="eager"` with `fetchPriority="high"`); all others use the default lazy loading.
 - A failed image shows the neutral fallback block (see design-system §7) with the alt text as its caption.
 - Image file names and alt text contain no third-party brand names.
 

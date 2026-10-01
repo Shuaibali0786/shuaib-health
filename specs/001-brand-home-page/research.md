@@ -43,7 +43,7 @@ All items from the plan's Technical Context are resolved; no `NEEDS CLARIFICATIO
 
 ## R2. Framer Motion package and bundle size
 
-**Decision**: install `framer-motion` and use `LazyMotion` with `domAnimation` and the `m` component; import `MotionConfig` with `reducedMotion="user"`.
+**Decision (as built)**: install `framer-motion` and use only its tiny `animate` (`framer-motion/dom/mini`) for the scroll reveal. The originally planned `LazyMotion` + `MotionConfig` provider was built, then removed after measuring: nothing used it, and `LazyMotion` fetches its feature bundle as soon as it mounts, not on first use (page JavaScript fell from 179.3 kB to 151.1 kB gzip).
 
 **Rationale**: the constitution names Framer Motion. `framer-motion` and `motion` publish identical versions (13.4.6) and `framer-motion` is not deprecated, so the literal choice costs nothing; moving to `motion/react` later is an import change. `LazyMotion` avoids shipping the full feature set for simple fades and slides.
 
@@ -52,7 +52,7 @@ All items from the plan's Technical Context are resolved; no `NEEDS CLARIFICATIO
 ## R3. Reduced motion and no-JavaScript safety
 
 **Decision**: two layers.
-1. Framer: `MotionConfig reducedMotion="user"` disables transform and layout animations for users who prefer reduced motion (opacity changes remain).
+1. Reveal checks `prefers-reduced-motion` itself and does nothing when it is set (no hiding, no movement).
 2. CSS: `@media (prefers-reduced-motion: reduce)` sets `transition-duration`/`animation-duration` to near zero and removes hover transforms.
 
 `Reveal` renders children visible on the server. After hydration it applies the hidden state only to elements that are below the fold at that moment, then animates them in once as they scroll into view. The hero never uses hidden-then-reveal.
