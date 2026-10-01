@@ -154,4 +154,11 @@ describe("SiteHeader", () => {
     const { container } = render(await SiteHeader());
     expect(container.querySelector("header")).toHaveClass("sticky", "top-0");
   });
+
+  it("wraps instead of overflowing when text is enlarged or spaced out (WCAG 1.4.12)", async () => {
+    const { container } = render(await SiteHeader());
+    const row = container.querySelector("header > div");
+    expect(row).toHaveClass("flex-wrap", "min-h-16");
+    expect(row).not.toHaveClass("h-16");
+  });
 });

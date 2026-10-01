@@ -19,7 +19,7 @@ export function TipCard({ tip }: { tip: HealthTip }) {
           {tip.isSample ? <SampleBadge /> : null}
         </div>
         <h3 className="mt-2 text-lg font-bold">
-          <Link href={tipPath(tip.slug)} className="after:absolute after:inset-0 after:rounded-card">
+          <Link href={tipPath(tip.slug)} className="inline-flex min-h-6 items-center after:absolute after:inset-0 after:rounded-card">
             {tip.title}
           </Link>
         </h3>

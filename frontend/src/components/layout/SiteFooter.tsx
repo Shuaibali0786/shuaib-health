@@ -106,7 +106,7 @@ export async function SiteFooter() {
             <a
               href={site.credit.href}
               rel="noopener noreferrer"
-              className="underline underline-offset-4 hover:text-teal-300"
+              className="inline-block py-1 underline underline-offset-4 hover:text-teal-300"
             >
               {site.credit.text}
             </a>

@@ -23,7 +23,7 @@ export function Hero() {
   return (
     <section aria-labelledby="hero-title" className="bg-soft-gradient">
       <Container className="grid items-center gap-10 py-12 md:py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:py-20">
-        <div>
+        <div className="min-w-0">
           <p className="mb-3 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-teal-700">
             Clinic &amp; Diagnostics, Karachi
           </p>
@@ -45,7 +45,7 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+        <div className="relative mx-auto w-full min-w-0 max-w-md lg:max-w-none">
           <div className="overflow-hidden rounded-card shadow-lift">
             <ImageWithFallback image={heroImage} sizes="(min-width: 1024px) 480px, 90vw" priority />
           </div>

@@ -12,10 +12,12 @@ interface LogoProps {
   className?: string;
 }
 
+// The wordmark is a logotype, so its size is in pixels (like the mark beside it) and does not grow with
+// the browser's text-size setting; body text still does. This keeps the header on one row at large text sizes.
 const SIZES: Record<LogoSize, { mark: number; text: string }> = {
-  sm: { mark: 28, text: "text-lg" },
-  md: { mark: 36, text: "text-xl" },
-  lg: { mark: 48, text: "text-3xl" },
+  sm: { mark: 28, text: "text-[18px]" },
+  md: { mark: 36, text: "text-[20px]" },
+  lg: { mark: 48, text: "text-[30px]" },
 };
 
 /**

@@ -165,9 +165,9 @@ describe("phone layouts", () => {
     const { container } = render(await DepartmentGrid());
     const list = container.querySelector("ul");
     expect(list).toHaveClass("grid", "grid-cols-2", "lg:grid-cols-3", "xl:grid-cols-4");
-    // The decorative "Learn more" row is hidden on phones, and summaries are clamped to two lines.
+    // The decorative "Learn more" row is hidden on phones; summaries are never clipped (text-size safe).
     expect(screen.getAllByText("Learn more")[0]).toHaveClass("max-sm:hidden");
-    expect(screen.getByText(departments[0]!.summary)).toHaveClass("max-sm:line-clamp-2");
+    expect(screen.getByText(departments[0]!.summary).className).not.toMatch(/line-clamp/);
   });
 
   it("keeps quick actions in two columns, with the last one full width", () => {

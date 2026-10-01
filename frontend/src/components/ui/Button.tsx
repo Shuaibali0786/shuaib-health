@@ -46,7 +46,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const classes = cn(
-    "inline-flex min-h-11 items-center justify-center gap-2 rounded-control font-semibold transition-colors duration-150",
+    "inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-control text-center font-semibold transition-colors duration-150",
     SIZE_CLASS[size],
     VARIANT_CLASS[variant],
     fullWidth && "w-full",

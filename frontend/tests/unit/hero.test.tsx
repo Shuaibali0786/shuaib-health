@@ -41,5 +41,8 @@ describe("Hero", () => {
     expect(photo).toHaveAttribute("width", "1200");
     expect(photo).toHaveAttribute("height", "1500");
     expect(heroImage.src).toBe("/images/hero/hero-doctor.jpg");
+    // It is the LCP image: loaded eagerly with a high fetch priority.
+    expect(photo).toHaveAttribute("loading", "eager");
+    expect(photo).toHaveAttribute("fetchpriority", "high");
   });
 });

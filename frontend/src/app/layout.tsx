@@ -4,7 +4,6 @@ import { NoticeBar } from "@/components/layout/NoticeBar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SkipLink } from "@/components/layout/SkipLink";
-import { MotionProvider } from "@/components/ui/MotionProvider";
 import { siteConfig } from "@/data/siteConfig";
 import { THEME_COLOR } from "./theme-color";
 import "./globals.css";
@@ -40,15 +39,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
       <body className="flex min-h-screen flex-col">
-        <MotionProvider>
-          <SkipLink />
-          <NoticeBar />
-          <SiteHeader />
-          <main id="main-content" tabIndex={-1} className="flex-1">
-            {children}
-          </main>
-          <SiteFooter />
-        </MotionProvider>
+        <SkipLink />
+        <NoticeBar />
+        <SiteHeader />
+        <main id="main-content" tabIndex={-1} className="flex-1">
+          {children}
+        </main>
+        <SiteFooter />
       </body>
     </html>
   );

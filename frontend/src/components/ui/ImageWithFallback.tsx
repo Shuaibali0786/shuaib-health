@@ -39,8 +39,11 @@ export function ImageWithFallback({ image, sizes, priority = false, className }:
       width={image.width}
       height={image.height}
       sizes={sizes}
-      // Next 16 deprecated `priority`; `preload` adds a <link rel="preload"> for the LCP image.
-      preload={priority}
+      // The hero is in the first bytes of HTML, so the browser finds it at once. Next's docs prefer
+      // eager loading plus a high fetch priority over `preload`, which adds a separate
+      // <link rel="preload"> tag with no href (the only unusual preload on the page).
+      loading={priority ? "eager" : undefined}
+      fetchPriority={priority ? "high" : undefined}
       className={cn("h-auto w-full", className)}
       onError={() => setFailed(true)}
       // An image that failed before hydration never fires onError; catch that case here.

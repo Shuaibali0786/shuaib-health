@@ -10,7 +10,9 @@ import { MobileMenu } from "./MobileMenu";
 import { NavLinks } from "./NavLinks";
 
 /**
- * Sticky header (4 rem tall on phones, 4.5 rem from md; globals.css uses 4.5 rem
+ * Sticky header (at least 4 rem tall on phones, 4.5 rem from md; if text is enlarged or spaced out
+ * so the items no longer fit one row, the right-hand group wraps to a second row instead of
+ * overflowing off screen; globals.css uses 4.5 rem
  * as scroll-padding-top so focused elements are never hidden under it).
  * - below 768 px: logo, call icon, compact "Book" button (from 375 px), menu button
  * - 768 to 1279 px: logo, emergency phone, Book Appointment, menu button
@@ -21,7 +23,7 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-white">
-      <Container wide className="flex h-16 items-center gap-3 md:h-[4.5rem]">
+      <Container wide className="flex min-h-16 flex-wrap items-center gap-x-2 gap-y-1 py-1 sm:gap-x-3 md:min-h-[4.5rem]">
         <Link href={ROUTES.home} aria-label="Shuaib Health home" className="shrink-0 rounded-control">
           <Logo size="md" />
         </Link>
@@ -53,7 +55,7 @@ export async function SiteHeader() {
             variant="accent"
             size="sm"
             aria-label="Book Appointment"
-            className="max-[374px]:hidden"
+            className="max-sm:px-3 max-[374px]:hidden"
           >
             <span className="md:hidden">Book</span>
             <span className="hidden md:inline">Book Appointment</span>
