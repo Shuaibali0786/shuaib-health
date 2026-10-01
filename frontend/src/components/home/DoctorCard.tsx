@@ -17,7 +17,7 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
       <div className="relative">
         <ImageWithFallback
           image={doctor.photo}
-          sizes="(min-width: 1280px) 280px, (min-width: 640px) 45vw, 92vw"
+          sizes="(min-width: 1280px) 280px, (min-width: 640px) 45vw, 78vw"
         />
         {doctor.isSample ? <SampleBadge className="absolute left-3 top-3" /> : null}
       </div>

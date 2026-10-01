@@ -32,8 +32,8 @@ export function QuickActions() {
             className={cn("flex", index === quickActions.length - 1 && "col-span-2 lg:col-span-1")}
           >
             <Card interactive className="w-full">
-              <Link href={action.href} className="flex h-full flex-col items-start gap-3 rounded-card p-4 sm:p-5">
-                <IconTile name={action.iconName} />
+              <Link href={action.href} className="flex h-full flex-col items-start gap-2 rounded-card p-3 sm:gap-3 sm:p-5">
+                <IconTile name={action.iconName} className="max-sm:size-10" />
                 <span className="font-heading text-base font-bold text-navy-900">{action.label}</span>
                 <span className="text-sm text-muted">{action.description}</span>
               </Link>

@@ -10,7 +10,7 @@ import type { HealthTip } from "@/types/content";
 export function TipCard({ tip }: { tip: HealthTip }) {
   return (
     <Card as="article" interactive className="flex w-full flex-col overflow-hidden">
-      <ImageWithFallback image={tip.image} sizes="(min-width: 1024px) 360px, (min-width: 640px) 45vw, 92vw" />
+      <ImageWithFallback image={tip.image} sizes="(min-width: 1024px) 360px, (min-width: 640px) 45vw, 78vw" />
       <div className="flex flex-1 flex-col p-5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-teal-700">

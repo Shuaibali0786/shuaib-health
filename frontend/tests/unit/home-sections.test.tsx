@@ -159,3 +159,44 @@ describe("ImageWithFallback", () => {
     expect(container.firstElementChild).toHaveStyle({ aspectRatio: "800 / 600" });
   });
 });
+
+describe("phone layouts", () => {
+  it("shows departments as compact two-column cards", async () => {
+    const { container } = render(await DepartmentGrid());
+    const list = container.querySelector("ul");
+    expect(list).toHaveClass("grid", "grid-cols-2", "lg:grid-cols-3", "xl:grid-cols-4");
+    // The decorative "Learn more" row is hidden on phones, and summaries are clamped to two lines.
+    expect(screen.getAllByText("Learn more")[0]).toHaveClass("max-sm:hidden");
+    expect(screen.getByText(departments[0]!.summary)).toHaveClass("max-sm:line-clamp-2");
+  });
+
+  it("keeps quick actions in two columns, with the last one full width", () => {
+    const { container } = render(<QuickActions />);
+    expect(container.querySelector("ul")).toHaveClass("grid-cols-2", "lg:grid-cols-5");
+    const items = screen.getAllByRole("listitem");
+    expect(items[items.length - 1]).toHaveClass("col-span-2", "lg:col-span-1");
+  });
+
+  it("makes featured doctors a snap-scrolling swipe row on phones, a grid from sm", async () => {
+    const { container } = render(await FeaturedDoctors());
+    const list = container.querySelector("ul")!;
+    expect(list).toHaveClass("max-sm:snap-x", "max-sm:snap-mandatory", "max-sm:overflow-x-auto", "max-sm:flex");
+    expect(list).toHaveClass("grid", "sm:grid-cols-2", "xl:grid-cols-4");
+    for (const item of screen.getAllByRole("listitem")) {
+      expect(item).toHaveClass("max-sm:w-[78%]", "max-sm:snap-start", "max-sm:shrink-0");
+    }
+  });
+
+  it("makes health tips a snap-scrolling swipe row on phones, a grid from sm", async () => {
+    const { container } = render(await HealthTips());
+    const list = container.querySelector("ul")!;
+    expect(list).toHaveClass("max-sm:snap-x", "max-sm:snap-mandatory", "max-sm:overflow-x-auto");
+    expect(list).toHaveClass("grid", "sm:grid-cols-2", "lg:grid-cols-3");
+    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+  });
+
+  it("leaves room around swipe-row cards so shadows and focus outlines are not clipped", async () => {
+    const { container } = render(await FeaturedDoctors());
+    expect(container.querySelector("ul")).toHaveClass("max-sm:px-4", "max-sm:pt-2", "max-sm:pb-6", "max-sm:scroll-pl-4");
+  });
+});

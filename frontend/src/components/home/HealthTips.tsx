@@ -2,12 +2,17 @@ import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { SWIPE_ITEM, SWIPE_ROW } from "@/components/ui/swipe-row";
+import { SwipeList } from "@/components/ui/SwipeList";
+import { cn } from "@/lib/cn";
 import { getLatestHealthTips } from "@/lib/content";
-import { REVEAL_STAGGER } from "@/lib/motion";
 import { ROUTES } from "@/lib/routes";
 import { TipCard } from "./TipCard";
 
-/** The three latest health tips (FR-017), newest first, with a link to all tips. */
+/**
+ * The three latest health tips (FR-017), newest first, with a link to all tips.
+ * A swipe row on phones (next card peeking), two columns from sm, three from lg.
+ */
 export async function HealthTips() {
   const tips = await getLatestHealthTips(3);
 
@@ -24,13 +29,15 @@ export async function HealthTips() {
           View all tips
         </Button>
       </Reveal>
-      <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {tips.map((tip, index) => (
-          <Reveal as="li" key={tip.id} delay={index * REVEAL_STAGGER} className="flex">
-            <TipCard tip={tip} />
-          </Reveal>
-        ))}
-      </ul>
+      <Reveal className="mt-10">
+        <SwipeList className={cn("grid gap-5 sm:grid-cols-2 lg:grid-cols-3", SWIPE_ROW)}>
+          {tips.map((tip) => (
+            <li key={tip.id} className={cn("flex", SWIPE_ITEM)}>
+              <TipCard tip={tip} />
+            </li>
+          ))}
+        </SwipeList>
+      </Reveal>
     </Section>
   );
 }

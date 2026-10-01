@@ -117,12 +117,12 @@ Breakpoints are Tailwind defaults (`sm` 640, `md` 768, `lg` 1024, `xl` 1280); de
 | # | Section | Layout | Notes |
 |---|---------|--------|-------|
 | 1 | Hero | Mobile: text, buttons, then image with the three fact cards stacked below. `lg`: two columns, image right, cards floating over its edges | Background `bg-soft-gradient`; H1 in navy-900; primary button navy/white; secondary outlined navy. Image 4:5 `priority`. Cards use `shadow-lift`, icon in `bg-teal-100` tile with navy icon |
-| 2 | How can we help you? | 2 columns on phones (5th item spans), 5 columns on `lg` | Each action: icon tile, label, one-line description; entire card is one link |
-| 3 | Departments | 1 column at 320–479, 2 columns `sm`, 3 columns `lg`, 4 on `xl` (7 cards, last row partly filled) | Card: image 4:3, name (h3), one line, arrow link. Card hover lifts 2 px unless reduced motion |
+| 2 | How can we help you? | Compact cards (smaller padding and icon) in 2 columns on phones (5th item spans both), 5 columns on `lg` | Each action: icon tile, label, one-line description; entire card is one link |
+| 3 | Departments | Compact cards in 2 columns on phones (two-line summary, no "Learn more" row), 2 columns `sm`, 3 columns `lg`, 4 on `xl` (7 cards, last row partly filled) | Card: image 4:3, name (h3), one line, arrow link. Card hover lifts 2 px unless reduced motion |
 | 4 | Honest facts band | `bg-deep-gradient`, 2×2 on phones, 4 across on `lg` | Value in teal-300 heading font, label in white. No counts of patients, awards, ratings |
 | 5 | Why choose us + Emergency | Mobile: image, list, then Emergency card. `lg`: list left, image right, Emergency card spans below | 4–5 points with teal-100 icon tiles; Emergency card `danger-50` background, danger-700 heading and icon, `tel:` button (white on danger-700), and the sentence advising the nearest ER |
-| 6 | Featured doctors | 1 column mobile, 2 columns `sm`, 4 on `xl` | Card: photo 4:5, "Sample" badge, name, specialty, "PKR n" fee, "View profile" |
-| 7 | Health Tips | 1 → 3 columns | Card: image 16:10, category, title (h3), date (Karachi), "Sample" badge, summary |
+| 6 | Featured doctors | Swipe row on phones (snap scrolling, 78% wide cards so the next one peeks), 2 columns `sm`, 4 on `xl` | Card: photo 4:5, "Sample" badge, name, specialty, "PKR n" fee, "View profile" |
+| 7 | Health Tips | Swipe row on phones (as doctors), 2 columns `sm`, 3 columns `lg` | Card: image 16:10, category, title (h3), date (Karachi), "Sample" badge, summary |
 | 8 | CTA band | `bg-deep-gradient`, centered | H2 "Book your appointment", one line of text, accent button (`bg-accent-gradient`, navy text). Focus ring uses teal-300 here |
 
 Sections alternate `background` and `surface` for calm rhythm. Each section has one `h2` (except the hero `h1`); card titles are `h3`.
