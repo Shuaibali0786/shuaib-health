@@ -140,13 +140,13 @@ description: "Task list for Feature 002: all remaining public pages of Shuaib He
 **Goal**: `/lab-tests` catalog with search and category filter, plus `/lab-tests/[slug]` pages.
 **Independent Test**: search "sugar", "HbA1c", "cbc"; filter every category; open a test page; all required fields and the "Sample price" label are present.
 
-- [ ] T050 [P] [US3] Create `frontend/src/components/lab-tests/LabTestBrowser.tsx` (client): search field, category `ChipGroup` with counts and icons, `ResultCount`, grid of `LabTestCard`, `EmptyState` "No lab tests match your search" with clear
-- [ ] T051 [US3] Create `frontend/src/app/lab-tests/page.tsx` (breadcrumb Home › Lab Tests, Suspense fallback with the full list, "All prices are sample prices" note, manifest metadata)
-- [ ] T052 [P] [US3] Create `frontend/src/components/lab-tests/LabTestFacts.tsx` (definition list: category, sample type, report time, preparation, home collection yes/no, price with "Sample price" badge; adds "Follow your doctor's instructions about preparation" and a no-interpretation note)
-- [ ] T053 [US3] Create `frontend/src/app/lab-tests/[slug]/page.tsx` (`generateStaticParams`, `dynamicParams = false`, breadcrumb Home › Lab Tests › name, facts, `about`, related departments as links, "Included in packages" block rendered only when packages exist — wired in T058) and `frontend/src/app/lab-tests/[slug]/opengraph-image.tsx`
-- [ ] T054 [US3] Remove `/lab-tests` and all `/lab-tests/<slug>` entries from the placeholder registry; update `routes.test.ts`
-- [ ] T055 [P] [US3] Component test `frontend/tests/unit/lab-test-browser.test.tsx` (search by name and also-known-as, category chip `aria-pressed`, combined filters, empty state) and add lab-test data guards to `data.test.ts` (`about` has no digits-with-units reference ranges, preparation non-empty)
-- [ ] T056 [US3] Playwright `frontend/tests/e2e/lab-tests.spec.ts`: catalog fields and price format, searches ("sugar", "hba1c", "cbc"), each category, empty state, test page fields and breadcrumb, unknown slug 404, no non-same-origin requests; add pages to `a11y.spec.ts`
+- [X] T050 [P] [US3] Create `frontend/src/components/lab-tests/LabTestBrowser.tsx` (client): search field, category `ChipGroup` with counts and icons, `ResultCount`, grid of `LabTestCard`, `EmptyState` "No lab tests match your search" with clear
+- [X] T051 [US3] Create `frontend/src/app/lab-tests/page.tsx` (breadcrumb Home › Lab Tests, Suspense fallback with the full list, "All prices are sample prices" note, manifest metadata)
+- [X] T052 [P] [US3] Create `frontend/src/components/lab-tests/LabTestFacts.tsx` (definition list: category, sample type, report time, preparation, home collection yes/no, price with "Sample price" badge; adds "Follow your doctor's instructions about preparation" and a no-interpretation note)
+- [X] T053 [US3] Create `frontend/src/app/lab-tests/[slug]/page.tsx` (`generateStaticParams`, `dynamicParams = false`, breadcrumb Home › Lab Tests › name, facts, `about`, related departments as links, "Included in packages" block rendered only when packages exist — wired in T058) and `frontend/src/app/lab-tests/[slug]/opengraph-image.tsx` **Done:** the "Included in packages" block is not rendered yet; it is added with T058.
+- [X] T054 [US3] Remove `/lab-tests` and all `/lab-tests/<slug>` entries from the placeholder registry; update `routes.test.ts`
+- [X] T055 [P] [US3] Component test `frontend/tests/unit/lab-test-browser.test.tsx` (search by name and also-known-as, category chip `aria-pressed`, combined filters, empty state) and add lab-test data guards to `data.test.ts` (`about` has no digits-with-units reference ranges, preparation non-empty) **Done:** the lab-test data guards already live in `public-data.test.ts` (invariant 5), so `data.test.ts` was not touched.
+- [X] T056 [US3] Playwright `frontend/tests/e2e/lab-tests.spec.ts`: catalog fields and price format, searches ("sugar", "hba1c", "cbc"), each category, empty state, test page fields and breadcrumb, unknown slug 404, no non-same-origin requests; add pages to `a11y.spec.ts`
 
 **Checkpoint**: US3 passes; run quickstart P2 step 1.
 
