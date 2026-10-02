@@ -181,6 +181,21 @@ export interface AboutContent {
   visitSteps: AboutVisitStep[];
 }
 
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export interface FaqGroup {
+  id: string;
+  /** Used as the anchor, for example /faq#home-sample-collection. */
+  slug: string;
+  title: string;
+  /** At least three. */
+  items: FaqItem[];
+}
+
 export interface PageManifestEntry {
   /** Starts with "/", no trailing slash. */
   path: string;

@@ -1,11 +1,12 @@
 import { aboutContent } from "@/data/aboutContent";
 import { departments } from "@/data/departments";
 import { doctors } from "@/data/doctors";
+import { faqGroups } from "@/data/faq";
 import { healthPackages } from "@/data/healthPackages";
 import { healthTips } from "@/data/healthTips";
 import { labTestCategories, labTests } from "@/data/labTests";
 import { siteConfig } from "@/data/siteConfig";
-import type { AboutContent, Department, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
+import type { AboutContent, Department, FaqGroup, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
 
 /**
  * The only place components read content from. Every accessor is async so a
@@ -111,4 +112,9 @@ export async function getRelatedTips(slug: string, limit = 3): Promise<HealthTip
 /** The About page content. */
 export async function getAboutContent(): Promise<AboutContent> {
   return aboutContent;
+}
+
+/** The five FAQ groups, in display order. */
+export async function getFaqGroups(): Promise<FaqGroup[]> {
+  return faqGroups;
 }

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { aboutContent } from "@/data/aboutContent";
 import { departments } from "@/data/departments";
 import { doctors } from "@/data/doctors";
+import { faqGroups } from "@/data/faq";
 import { healthPackages } from "@/data/healthPackages";
 import { healthTips } from "@/data/healthTips";
 import { facts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
@@ -48,7 +49,7 @@ const codeFiles = filesUnder(SRC, [".ts", ".tsx"]).map((path) => ({
 
 describe("no fabricated claims", () => {
   it("none of the sample data contains a claim word", () => {
-    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, healthPackages, aboutContent, heroFacts, quickActions, facts, whyPoints, siteConfig]);
+    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, healthPackages, aboutContent, faqGroups, heroFacts, quickActions, facts, whyPoints, siteConfig]);
     const offenders = text.filter((value) => BANNED_CLAIMS.test(value));
     expect(offenders).toEqual([]);
   });
