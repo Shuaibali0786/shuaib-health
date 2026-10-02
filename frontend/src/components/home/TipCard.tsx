@@ -3,11 +3,15 @@ import { Card } from "@/components/ui/Card";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { formatKarachiDate } from "@/lib/format";
+import { readingMinutes } from "@/lib/readingTime";
 import { tipPath } from "@/lib/routes";
 import type { HealthTip } from "@/types/content";
 
-/** A sample health-tip card. The title is the link, stretched over the card. */
-export function TipCard({ tip }: { tip: HealthTip }) {
+/**
+ * A sample health-tip card. The title is the link, stretched over the card.
+ * `showMeta` adds the reading time beside the date (Health Tips page); Home leaves it off.
+ */
+export function TipCard({ tip, showMeta = false }: { tip: HealthTip; showMeta?: boolean }) {
   return (
     <Card as="article" interactive className="flex w-full flex-col overflow-hidden">
       <ImageWithFallback image={tip.image} sizes="(min-width: 1024px) 360px, (min-width: 640px) 45vw, 78vw" />
@@ -24,9 +28,10 @@ export function TipCard({ tip }: { tip: HealthTip }) {
           </Link>
         </h3>
         <p className="mt-2 text-sm text-muted">{tip.summary}</p>
-        <time dateTime={tip.publishedAt} className="mt-auto pt-4 text-sm text-muted">
-          {formatKarachiDate(tip.publishedAt)}
-        </time>
+        <p className="mt-auto pt-4 text-sm text-muted">
+          <time dateTime={tip.publishedAt}>{formatKarachiDate(tip.publishedAt)}</time>
+          {showMeta ? <span> · {readingMinutes(tip.body)} min read</span> : null}
+        </p>
       </div>
     </Card>
   );

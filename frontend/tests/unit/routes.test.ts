@@ -42,18 +42,19 @@ describe("route registry", () => {
     }
   });
 
-  it("registers one path per tip, and none for pages that now exist", () => {
+  it("registers only the five static placeholders, and none for pages that now exist", () => {
     for (const doctor of doctors) expect(placeholderPaths).not.toContain(doctorPath(doctor.slug));
     expect(placeholderPaths).not.toContain("/doctors");
     expect(placeholderPaths).not.toContain("/book-appointment");
     expect(placeholderPaths).not.toContain("/home-sample-collection");
     for (const test of labTests) expect(placeholderPaths).not.toContain(labTestPath(test.slug));
     expect(placeholderPaths).not.toContain("/lab-tests");
-    for (const tip of healthTips) expect(placeholderPaths).toContain(tipPath(tip.slug));
+    for (const tip of healthTips) expect(placeholderPaths).not.toContain(tipPath(tip.slug));
+    expect(placeholderPaths).not.toContain("/health-tips");
     for (const department of departments) expect(placeholderPaths).not.toContain(departmentPath(department.slug));
     expect(placeholderPaths).not.toContain("/departments");
     expect(placeholderPaths).not.toContain("/health-packages");
-    expect(placeholderPaths.size).toBe(6 + healthTips.length);
+    expect(placeholderPaths.size).toBe(5);
   });
 
   it("gives every placeholder a title", () => {

@@ -84,3 +84,25 @@ export async function getHealthPackages(): Promise<HealthPackage[]> {
 export async function getPackagesIncludingTest(slug: string): Promise<HealthPackage[]> {
   return healthPackages.filter((pkg) => pkg.testSlugs.includes(slug));
 }
+
+/** All health tips, newest first; ties break by id. */
+export async function getHealthTips(): Promise<HealthTip[]> {
+  return getLatestHealthTips(healthTips.length);
+}
+
+/** The distinct tip categories, in the order they first appear among the newest-first tips. */
+export async function getHealthTipCategories(): Promise<string[]> {
+  return [...new Set((await getHealthTips()).map((tip) => tip.category))];
+}
+
+/**
+ * Other articles to read next: same category first, then the rest, each group newest first.
+ * Never includes the article itself.
+ */
+export async function getRelatedTips(slug: string, limit = 3): Promise<HealthTip[]> {
+  const current = healthTips.find((tip) => tip.slug === slug);
+  const others = (await getHealthTips()).filter((tip) => tip.slug !== slug);
+  const sameCategory = others.filter((tip) => current && tip.category === current.category);
+  const rest = others.filter((tip) => !sameCategory.includes(tip));
+  return [...sameCategory, ...rest].slice(0, Math.max(0, Math.trunc(limit)));
+}

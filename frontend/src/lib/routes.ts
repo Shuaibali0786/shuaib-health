@@ -33,7 +33,7 @@ export const departmentPath = (slug: string): string => `${ROUTES.departments}/$
 export const labTestPath = (slug: string): string => `${ROUTES.labTests}/${slug}`;
 export const tipPath = (slug: string): string => `${ROUTES.healthTips}/${slug}`;
 
-export type PlaceholderKind = "static" | "tip";
+export type PlaceholderKind = "static";
 
 export interface PlaceholderRoute {
   /** Starts with "/", no trailing slash. */
@@ -45,26 +45,20 @@ export interface PlaceholderRoute {
 
 const STATIC_PLACEHOLDERS: PlaceholderRoute[] = [
   { path: ROUTES.about, title: "About", kind: "static" },
-  { path: ROUTES.healthTips, title: "Health Tips", kind: "static" },
   { path: ROUTES.contact, title: "Contact", kind: "static" },
   { path: ROUTES.faq, title: "FAQ", kind: "static" },
   { path: ROUTES.privacy, title: "Privacy", kind: "static" },
   { path: ROUTES.terms, title: "Terms", kind: "static" },
 ];
 
-/** Every path served as "Coming soon": the fixed paths plus one per tip. */
+/** Every path served as "Coming soon": the fixed paths. */
 export function placeholderRoutes(): PlaceholderRoute[] {
   return [
     ...STATIC_PLACEHOLDERS,
-    ...healthTips.map((tip): PlaceholderRoute => ({
-      path: tipPath(tip.slug),
-      title: tip.title,
-      kind: "tip",
-    })),
   ];
 }
 
-/** Paths that have a real page: Home, the booking holding page, and the Doctors, Departments, Lab Tests and Health Packages pages. */
+/** Paths that have a real page: Home, the booking holding page, and the Doctors, Departments, Lab Tests, Health Packages and Health Tips pages. */
 export function realPaths(): string[] {
   return [
     ROUTES.home,
@@ -76,6 +70,8 @@ export function realPaths(): string[] {
     ROUTES.labTests,
     ...labTests.map((test) => labTestPath(test.slug)),
     ROUTES.healthPackages,
+    ROUTES.healthTips,
+    ...healthTips.map((tip) => tipPath(tip.slug)),
   ];
 }
 

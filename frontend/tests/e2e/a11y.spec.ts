@@ -21,7 +21,10 @@ test.describe("accessibility (WCAG 2.2 AA)", () => {
     "/lab-tests?q=zzzz",
     "/lab-tests/hba1c",
     "/health-packages",
+    "/health-tips",
+    "/health-tips?category=sleep",
     "/health-tips/staying-hydrated",
+    "/health-tips/managing-stress",
     "/no-such-page",
   ]) {
     test(`${path} has no axe violations`, async ({ page }) => {

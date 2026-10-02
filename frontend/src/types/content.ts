@@ -71,8 +71,16 @@ export interface HealthTip {
   /** ISO 8601 with the Karachi offset, for example "2026-09-12T09:00:00+05:00". */
   publishedAt: string;
   image: ImageAsset;
+  /** The article text, as blocks. Rendered by components/tips/ArticleBody.tsx; never raw HTML. */
+  body: ArticleBlock[];
   isSample: boolean;
 }
+
+/** One block of article text: a heading, a paragraph or a bulleted list. */
+export type ArticleBlock =
+  | { type: "heading"; text: string }
+  | { type: "paragraph"; text: string }
+  | { type: "list"; items: string[] };
 
 export type Weekday = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 

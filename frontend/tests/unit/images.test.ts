@@ -28,8 +28,8 @@ function filesUnder(dir: string): string[] {
 }
 
 describe("images referenced by the data files", () => {
-  it("covers all expected images (22 now; 24 once the two Feature 002 health-tip photos are used, task T071)", () => {
-    expect(referenced).toHaveLength(22);
+  it("covers all 24 expected images", () => {
+    expect(referenced).toHaveLength(24);
   });
 
   it.each(referenced.map((entry) => [entry.owner, entry.image] as const))("%s: file exists and matches its declared size", async (_owner, image) => {
@@ -48,9 +48,7 @@ describe("images referenced by the data files", () => {
   });
 
   it("has no image file that nothing references", () => {
-    // Added in Feature 002 but not used by any record yet. Delete this list in task T071 (health tips).
-    const PENDING = ["/images/tips/hand-hygiene.jpg", "/images/tips/managing-stress.jpg"];
-    const used = new Set([...referenced.map((entry) => entry.image.src), ...PENDING].map((src) => join(PUBLIC, src)));
+    const used = new Set(referenced.map((entry) => entry.image.src).map((src) => join(PUBLIC, src)));
     const unused = filesUnder(IMAGES)
       .filter((file) => !used.has(file))
       .map((file) => file.replace(PUBLIC, ""));

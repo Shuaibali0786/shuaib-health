@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { departments } from "@/data/departments";
 import { doctors } from "@/data/doctors";
+import { healthTips } from "@/data/healthTips";
 import { labTestCategories, labTests } from "@/data/labTests";
 import {
   doctorFiltersToQuery,
   filterDoctors,
   filterLabTests,
+  filterTips,
+  hasTipFilters,
+  NO_TIP_FILTERS,
+  parseTipFilters,
+  tipCategorySlug,
+  tipFiltersToQuery,
   hasDoctorFilters,
   labTestFiltersToQuery,
   normalizeQuery,
@@ -124,5 +131,30 @@ describe("query-string helpers", () => {
     expect(query).toBe("category=heart&q=lipid");
     expect(parseLabTestFilters((key) => new URLSearchParams(query).get(key), labTestCategories)).toEqual({ categoryId: "cat-heart", query: "lipid" });
     expect(parseLabTestFilters(get({ category: "zzz" }), labTestCategories).categoryId).toBe("");
+  });
+});
+
+describe("health tip filters", () => {
+  const categories = [...new Set(healthTips.map((tip) => tip.category))];
+
+  it("shows every tip with no filter, and only the chosen category otherwise", () => {
+    expect(filterTips(healthTips, NO_TIP_FILTERS)).toHaveLength(healthTips.length);
+    expect(filterTips(healthTips, { category: "Nutrition" }).map((tip) => tip.slug)).toEqual(["staying-hydrated", "balanced-plate"]);
+    expect(filterTips(healthTips, { category: "Nothing" })).toEqual([]);
+    expect(hasTipFilters(NO_TIP_FILTERS)).toBe(false);
+    expect(hasTipFilters({ category: "Sleep" })).toBe(true);
+  });
+
+  it("writes category names as slugs and reads them back", () => {
+    expect(tipCategorySlug("Mental wellbeing")).toBe("mental-wellbeing");
+    const query = tipFiltersToQuery({ category: "Mental wellbeing" });
+    expect(query).toBe("category=mental-wellbeing");
+    expect(parseTipFilters((key) => new URLSearchParams(query).get(key), categories)).toEqual({ category: "Mental wellbeing" });
+  });
+
+  it("ignores an unknown category and writes nothing for no filter", () => {
+    expect(parseTipFilters((key) => (key === "category" ? "zzz" : null), categories)).toEqual({ category: "" });
+    expect(parseTipFilters(() => null, categories)).toEqual({ category: "" });
+    expect(tipFiltersToQuery(NO_TIP_FILTERS)).toBe("");
   });
 });

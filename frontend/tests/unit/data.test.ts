@@ -6,6 +6,8 @@ import { labTests } from "@/data/labTests";
 import { facts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
 import { footerQuickLinks, legalLinks, primaryNav } from "@/data/navigation";
 import { siteConfig } from "@/data/siteConfig";
+import { countWords } from "@/lib/readingTime";
+import { BANNED_CLAIMS, BRAND_WORDS, stringValues } from "./helpers/forbidden";
 import {
   getDepartmentBySlug,
   getDepartments,
@@ -112,6 +114,29 @@ describe("doctors (rule 3)", () => {
 describe("health tips (rule 4)", () => {
   it("has at least three tips, so showing the latest three is a real selection", () => {
     expect(healthTips.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("has at least six articles of 250-400 words, each with a body, and no forbidden phrases (invariant 6)", () => {
+    expect(healthTips.length).toBeGreaterThanOrEqual(6);
+    for (const tip of healthTips) {
+      expect(tip.body.length, tip.slug).toBeGreaterThan(0);
+      expect(countWords(tip.body), tip.slug).toBeGreaterThanOrEqual(250);
+      expect(countWords(tip.body), tip.slug).toBeLessThanOrEqual(400);
+      const text = stringValues(tip.body);
+      expect(text.filter((value) => BANNED_CLAIMS.test(value) || BRAND_WORDS.test(value)), tip.slug).toEqual([]);
+      expect(text.filter((value) => /(dosage|prescribe[ds]?|cures?|diagnos(e|is|ed))/i.test(value)), tip.slug).toEqual([]);
+    }
+  });
+
+  it("uses every category on at least one article, with the five expected categories", () => {
+    expect([...new Set(healthTips.map((tip) => tip.category))].sort()).toEqual(["Activity", "Hygiene", "Mental wellbeing", "Nutrition", "Sleep"]);
+  });
+
+  it("keeps the original four articles as Home's three newest", async () => {
+    expect((await getLatestHealthTips(3)).map((tip) => tip.slug)).toEqual(["staying-hydrated", "healthy-sleep-habits", "balanced-plate"]);
+    for (const tip of healthTips.filter((candidate) => ["hand-hygiene", "managing-stress"].includes(candidate.slug))) {
+      expect(Date.parse(tip.publishedAt)).toBeLessThan(Date.parse("2026-08-14T09:00:00+05:00"));
+    }
   });
 
   it("have Karachi-offset timestamps that parse", () => {

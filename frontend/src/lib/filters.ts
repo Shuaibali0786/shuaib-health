@@ -1,5 +1,5 @@
 import { availableDays } from "@/lib/schedule";
-import type { Department, Doctor, LabTest, LabTestCategory, Weekday } from "@/types/content";
+import type { Department, Doctor, HealthTip, LabTest, LabTestCategory, Weekday } from "@/types/content";
 
 /**
  * Pure list filtering for the Doctors and Lab Tests pages, plus the query-string helpers that
@@ -106,5 +106,38 @@ export function labTestFiltersToQuery(filters: LabTestFilters, categories: Pick<
   const category = categories.find((candidate) => candidate.id === filters.categoryId);
   if (category) params.set("category", category.slug);
   if (clean(filters.query)) params.set("q", filters.query.trim());
+  return params.toString();
+}
+
+export interface TipFilters {
+  /** A category name such as "Sleep", or "" for all. */
+  category: string;
+}
+
+export const NO_TIP_FILTERS: TipFilters = { category: "" };
+
+export function hasTipFilters(filters: TipFilters): boolean {
+  return filters.category !== "";
+}
+
+export function filterTips(tips: HealthTip[], filters: TipFilters): HealthTip[] {
+  return filters.category ? tips.filter((tip) => tip.category === filters.category) : tips;
+}
+
+/** "Mental wellbeing" becomes "mental-wellbeing", for the ?category= parameter. */
+export function tipCategorySlug(category: string): string {
+  return clean(category).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+/** Reads `?category=<slug>`. An unknown value is ignored. */
+export function parseTipFilters(get: ParamReader, categories: string[]): TipFilters {
+  const wanted = get("category");
+  const category = categories.find((candidate) => tipCategorySlug(candidate) === wanted);
+  return { category: category ?? "" };
+}
+
+export function tipFiltersToQuery(filters: TipFilters): string {
+  const params = new URLSearchParams();
+  if (filters.category) params.set("category", tipCategorySlug(filters.category));
   return params.toString();
 }
