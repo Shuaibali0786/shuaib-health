@@ -48,9 +48,10 @@ describe("route registry", () => {
     expect(placeholderPaths).not.toContain("/book-appointment");
     expect(placeholderPaths).not.toContain("/home-sample-collection");
     for (const test of labTests) expect(placeholderPaths).toContain(labTestPath(test.slug));
-    for (const department of departments) expect(placeholderPaths).toContain(departmentPath(department.slug));
     for (const tip of healthTips) expect(placeholderPaths).toContain(tipPath(tip.slug));
-    expect(placeholderPaths.size).toBe(9 + departments.length + labTests.length + healthTips.length);
+    for (const department of departments) expect(placeholderPaths).not.toContain(departmentPath(department.slug));
+    expect(placeholderPaths).not.toContain("/departments");
+    expect(placeholderPaths.size).toBe(8 + labTests.length + healthTips.length);
   });
 
   it("gives every placeholder a title", () => {

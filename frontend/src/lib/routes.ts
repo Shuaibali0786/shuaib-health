@@ -33,7 +33,7 @@ export const departmentPath = (slug: string): string => `${ROUTES.departments}/$
 export const labTestPath = (slug: string): string => `${ROUTES.labTests}/${slug}`;
 export const tipPath = (slug: string): string => `${ROUTES.healthTips}/${slug}`;
 
-export type PlaceholderKind = "static" | "department" | "lab-test" | "tip";
+export type PlaceholderKind = "static" | "lab-test" | "tip";
 
 export interface PlaceholderRoute {
   /** Starts with "/", no trailing slash. */
@@ -45,7 +45,6 @@ export interface PlaceholderRoute {
 
 const STATIC_PLACEHOLDERS: PlaceholderRoute[] = [
   { path: ROUTES.about, title: "About", kind: "static" },
-  { path: ROUTES.departments, title: "Departments", kind: "static" },
   { path: ROUTES.labTests, title: "Lab Tests", kind: "static" },
   { path: ROUTES.healthPackages, title: "Health Packages", kind: "static" },
   { path: ROUTES.healthTips, title: "Health Tips", kind: "static" },
@@ -55,15 +54,10 @@ const STATIC_PLACEHOLDERS: PlaceholderRoute[] = [
   { path: ROUTES.terms, title: "Terms", kind: "static" },
 ];
 
-/** Every path served as "Coming soon": the fixed paths plus one per department, lab test and tip. */
+/** Every path served as "Coming soon": the fixed paths plus one per lab test and tip. */
 export function placeholderRoutes(): PlaceholderRoute[] {
   return [
     ...STATIC_PLACEHOLDERS,
-    ...departments.map((department): PlaceholderRoute => ({
-      path: departmentPath(department.slug),
-      title: department.name,
-      kind: "department",
-    })),
     ...labTests.map((test): PlaceholderRoute => ({
       path: labTestPath(test.slug),
       title: test.name,
@@ -77,9 +71,16 @@ export function placeholderRoutes(): PlaceholderRoute[] {
   ];
 }
 
-/** Paths that have a real page: Home, the booking holding page, and the Doctors pages. */
+/** Paths that have a real page: Home, the booking holding page, and the Doctors and Departments pages. */
 export function realPaths(): string[] {
-  return [ROUTES.home, ROUTES.bookAppointment, ROUTES.doctors, ...doctors.map((doctor) => doctorPath(doctor.slug))];
+  return [
+    ROUTES.home,
+    ROUTES.bookAppointment,
+    ROUTES.doctors,
+    ...doctors.map((doctor) => doctorPath(doctor.slug)),
+    ROUTES.departments,
+    ...departments.map((department) => departmentPath(department.slug)),
+  ];
 }
 
 /**

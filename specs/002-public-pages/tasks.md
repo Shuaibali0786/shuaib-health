@@ -125,11 +125,11 @@ description: "Task list for Feature 002: all remaining public pages of Shuaib He
 **Goal**: `/departments` and `/departments/[slug]` with doctors and related tests.
 **Independent Test**: open all seven departments; each has overview, conditions, services, ≥ 1 doctor linking to a profile, ≥ 3 related tests with working links, and a booking button.
 
-- [ ] T045 [P] [US2] Create `frontend/src/components/departments/DepartmentSections.tsx` (overview, "Common conditions (general list)", services list, doctors grid reusing `DoctorCard`, related tests reusing compact `LabTestCard`, booking `Button`)
-- [ ] T046 [US2] Create `frontend/src/app/departments/page.tsx` (breadcrumb Home › Departments, seven cards reusing `DepartmentCard`, manifest metadata)
-- [ ] T047 [US2] Create `frontend/src/app/departments/[slug]/page.tsx` (`generateStaticParams`, `dynamicParams = false`, breadcrumb Home › Departments › name, hero image via `ImageWithFallback`, sections from T045, per-department metadata) and `frontend/src/app/departments/[slug]/opengraph-image.tsx`
-- [ ] T048 [US2] Remove `/departments` and `/departments/<slug>` from the placeholder registry; update `routes.test.ts`
-- [ ] T049 [P] [US2] Playwright `frontend/tests/e2e/departments.spec.ts`: seven cards in order; each department page shows required sections, General Medicine and Pediatrics list two doctors, doctor and test links return 200 with breadcrumb, booking button goes to "Booking coming soon", unknown slug 404; add the pages to `a11y.spec.ts`
+- [X] T045 [P] [US2] Create `frontend/src/components/departments/DepartmentSections.tsx` (overview, "Common conditions (general list)", services list, doctors grid reusing `DoctorCard`, related tests reusing compact `LabTestCard`, booking `Button`)
+- [X] T046 [US2] Create `frontend/src/app/departments/page.tsx` (breadcrumb Home › Departments, seven cards reusing `DepartmentCard`, manifest metadata)
+- [X] T047 [US2] Create `frontend/src/app/departments/[slug]/page.tsx` (`generateStaticParams`, `dynamicParams = false`, breadcrumb Home › Departments › name, hero image via `ImageWithFallback`, sections from T045, per-department metadata) and `frontend/src/app/departments/[slug]/opengraph-image.tsx`
+- [X] T048 [US2] Remove `/departments` and `/departments/<slug>` from the placeholder registry; update `routes.test.ts`
+- [X] T049 [P] [US2] Playwright `frontend/tests/e2e/departments.spec.ts`: seven cards in order; each department page shows required sections, General Medicine and Pediatrics list two doctors, doctor and test links return 200 with breadcrumb, booking button goes to "Booking coming soon", unknown slug 404; add the pages to `a11y.spec.ts`
 
 **Checkpoint**: US1 and US2 both pass; run quickstart P1 step 3.
 

@@ -13,6 +13,9 @@ test.describe("accessibility (WCAG 2.2 AA)", () => {
     "/doctors/dr-imran-qureshi",
     "/doctors/dr-zainab-memon",
     "/book-appointment",
+    "/departments",
+    "/departments/pediatrics",
+    "/departments/pathology-lab",
     "/health-tips/staying-hydrated",
     "/no-such-page",
   ]) {
