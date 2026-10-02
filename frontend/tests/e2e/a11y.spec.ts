@@ -16,6 +16,10 @@ test.describe("accessibility (WCAG 2.2 AA)", () => {
     "/departments",
     "/departments/pediatrics",
     "/departments/pathology-lab",
+    "/lab-tests",
+    "/lab-tests?category=heart",
+    "/lab-tests?q=zzzz",
+    "/lab-tests/hba1c",
     "/health-tips/staying-hydrated",
     "/no-such-page",
   ]) {

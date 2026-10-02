@@ -42,16 +42,17 @@ describe("route registry", () => {
     }
   });
 
-  it("registers one path per department, lab test and tip, and none for pages that now exist", () => {
+  it("registers one path per tip, and none for pages that now exist", () => {
     for (const doctor of doctors) expect(placeholderPaths).not.toContain(doctorPath(doctor.slug));
     expect(placeholderPaths).not.toContain("/doctors");
     expect(placeholderPaths).not.toContain("/book-appointment");
     expect(placeholderPaths).not.toContain("/home-sample-collection");
-    for (const test of labTests) expect(placeholderPaths).toContain(labTestPath(test.slug));
+    for (const test of labTests) expect(placeholderPaths).not.toContain(labTestPath(test.slug));
+    expect(placeholderPaths).not.toContain("/lab-tests");
     for (const tip of healthTips) expect(placeholderPaths).toContain(tipPath(tip.slug));
     for (const department of departments) expect(placeholderPaths).not.toContain(departmentPath(department.slug));
     expect(placeholderPaths).not.toContain("/departments");
-    expect(placeholderPaths.size).toBe(8 + labTests.length + healthTips.length);
+    expect(placeholderPaths.size).toBe(7 + healthTips.length);
   });
 
   it("gives every placeholder a title", () => {
@@ -65,7 +66,9 @@ describe("route registry", () => {
     expect(isKnownPath("/doctors/dr-imran-qureshi")).toBe(true);
     expect(isKnownPath("/no-such-page")).toBe(false);
     expect(isKnownPath("/doctors/not-a-doctor")).toBe(false);
-    expect(findPlaceholderRoute("/lab-tests")?.title).toBe("Lab Tests");
+    expect(isKnownPath("/lab-tests")).toBe(true);
+    expect(isKnownPath("/lab-tests/esr")).toBe(true);
+    expect(findPlaceholderRoute("/about")?.title).toBe("About");
     expect(findPlaceholderRoute("/")).toBeUndefined();
   });
 
