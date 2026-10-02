@@ -4,7 +4,7 @@ type Subject = "facility" | "person";
 
 const TEXT: Record<Subject, string> = {
   facility: "Illustrative image, not our actual facility.",
-  person: "Illustrative photo of a sample doctor, not a real person.",
+  person: "Stock photo of a model. Sample profile — name and details are fictional.",
 };
 
 /** A small caption for stock photos that stand in for a facility or a person (constitution I). */

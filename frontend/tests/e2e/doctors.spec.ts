@@ -135,7 +135,7 @@ test.describe("doctor profile", () => {
     await expect(page.getByText("(sample figure)")).toBeVisible();
     await expect(page.getByText("Urdu, English", { exact: true })).toBeVisible();
     await expect(page.getByText("PKR 3,500")).toBeVisible();
-    await expect(page.getByText("Illustrative photo of a sample doctor")).toBeVisible();
+    await expect(page.getByText("Stock photo of a model. Sample profile — name and details are fictional.")).toBeVisible();
 
     const table = page.getByRole("table");
     await expect(table.getByRole("rowheader", { name: "Monday" })).toBeVisible();
