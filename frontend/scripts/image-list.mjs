@@ -1,4 +1,4 @@
-// The images the site expects (specs/001-brand-home-page/image-manifest.md).
+// The images the site expects (specs/001-brand-home-page/image-manifest.md and specs/002-public-pages/spec.md).
 // Shared by generate-placeholder-images.mjs and images.mjs.
 
 import { dirname, join } from "node:path";
@@ -10,8 +10,8 @@ export const imagesRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "p
 export const PLACEHOLDER_MARKER = "shuaib-health-placeholder";
 
 const departments = ["general-medicine", "cardiology", "pediatrics", "gynecology", "dermatology", "dental", "pathology-lab"];
-const doctors = ["dr-ayesha-rahman", "dr-imran-qureshi", "dr-sana-farooqui", "dr-hassan-mirza"];
-const tips = ["staying-hydrated", "healthy-sleep-habits", "balanced-plate", "daily-walk"];
+const doctors = ["dr-ayesha-rahman", "dr-imran-qureshi", "dr-sana-farooqui", "dr-hassan-mirza", "dr-maryam-baloch", "dr-bilal-ansari", "dr-zainab-memon", "dr-omar-sheikh", "dr-faisal-chaudhry"];
+const tips = ["staying-hydrated", "healthy-sleep-habits", "balanced-plate", "daily-walk", "hand-hygiene", "managing-stress"];
 
 /** `key` is the short name used by `npm run images -- fit <file> <key>`. */
 export const images = [
