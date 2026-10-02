@@ -67,9 +67,9 @@ Alt text for the doctor photos begins "Stock photo of a model presented as sampl
 | File | Alt text |
 |------|----------|
 | `doctors/dr-maryam-baloch.jpg` | Stock photo of a model presented as sample doctor Dr. Maryam Baloch: a smiling woman with long dark hair in a white coat with a stethoscope around her neck |
-| `doctors/dr-bilal-ansari.jpg` | Stock photo of a model presented as sample doctor Dr. Bilal Ansari: a man in teal scrubs with a stethoscope, reading a book |
+| `doctors/dr-bilal-ansari.jpg` | Stock photo of a model presented as sample doctor Dr. Bilal Ansari: a man in glasses with short dark hair and light stubble, in a white coat over a dark blue shirt with a stethoscope around his neck, against a light background|
 | `doctors/dr-zainab-memon.jpg` | Stock photo of a model presented as sample doctor Dr. Zainab Memon: a woman in a white lab coat and gloves working at a laboratory bench |
-| `doctors/dr-omar-sheikh.jpg` | Stock photo of a model presented as sample doctor Dr. Omar Sheikh: a bearded man in a white coat over a maroon shirt, hands in pockets |
+| `doctors/dr-omar-sheikh.jpg` | Stock photo of a model presented as sample doctor Dr. Omar Sheikh: a grey-haired man in a white coat with a stethoscope around his neck, one hand on his collar, against a softly blurred outdoor background|
 | `doctors/dr-faisal-chaudhry.jpg` | Stock photo of a model presented as sample doctor Dr. Faisal Chaudhry: a smiling man in glasses and a white coat with a stethoscope, holding a measuring tape |
 | `tips/hand-hygiene.jpg` | Hands being washed with soap under a running tap |
 | `tips/managing-stress.jpg` | Woman sitting calmly with her eyes closed against a plain wall, breathing slowly |
