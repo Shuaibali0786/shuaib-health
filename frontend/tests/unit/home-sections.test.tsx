@@ -29,7 +29,7 @@ describe("QuickActions", () => {
       "/book-appointment",
       "/lab-tests",
       "/health-packages",
-      "/home-sample-collection",
+      "/faq#home-sample-collection",
     ]);
     expect(links.map((link) => within(link).getAllByText(/./)[0]?.textContent)).toEqual([
       "Find a Doctor",

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { departments } from "@/data/departments";
 import { doctors } from "@/data/doctors";
 import { healthTips } from "@/data/healthTips";
+import { labTests } from "@/data/labTests";
 import { quickActions } from "@/data/homeContent";
 import { footerQuickLinks, legalLinks, primaryNav } from "@/data/navigation";
 import {
@@ -11,6 +12,7 @@ import {
   doctorPath,
   findPlaceholderRoute,
   isKnownPath,
+  labTestPath,
   placeholderRoutes,
   ROUTES,
   tipPath,
@@ -40,11 +42,15 @@ describe("route registry", () => {
     }
   });
 
-  it("registers one path per doctor, department and tip", () => {
-    for (const doctor of doctors) expect(placeholderPaths).toContain(doctorPath(doctor.slug));
+  it("registers one path per department, lab test and tip, and none for pages that now exist", () => {
+    for (const doctor of doctors) expect(placeholderPaths).not.toContain(doctorPath(doctor.slug));
+    expect(placeholderPaths).not.toContain("/doctors");
+    expect(placeholderPaths).not.toContain("/book-appointment");
+    expect(placeholderPaths).not.toContain("/home-sample-collection");
+    for (const test of labTests) expect(placeholderPaths).toContain(labTestPath(test.slug));
     for (const department of departments) expect(placeholderPaths).toContain(departmentPath(department.slug));
     for (const tip of healthTips) expect(placeholderPaths).toContain(tipPath(tip.slug));
-    expect(placeholderPaths.size).toBe(11 + doctors.length + departments.length + healthTips.length);
+    expect(placeholderPaths.size).toBe(9 + departments.length + labTests.length + healthTips.length);
   });
 
   it("gives every placeholder a title", () => {
@@ -76,6 +82,7 @@ describe("no dead links (FR-024)", () => {
     ...quickActions.map((action): [string, string] => [`quick action ${action.label}`, action.href]),
     ...doctors.map((doctor): [string, string] => [`doctor ${doctor.slug}`, doctorPath(doctor.slug)]),
     ...departments.map((department): [string, string] => [`department ${department.slug}`, departmentPath(department.slug)]),
+    ...labTests.map((test): [string, string] => [`lab test ${test.slug}`, labTestPath(test.slug)]),
     ...healthTips.map((tip): [string, string] => [`tip ${tip.slug}`, tipPath(tip.slug)]),
     ...Object.entries(ROUTES).map(([name, href]): [string, string] => [`ROUTES.${name}`, href]),
   ];

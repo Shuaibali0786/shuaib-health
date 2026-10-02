@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { departments } from "@/data/departments";
 import { doctors } from "@/data/doctors";
 import { healthTips } from "@/data/healthTips";
+import { labTests } from "@/data/labTests";
 import { facts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
 import { footerQuickLinks, legalLinks, primaryNav } from "@/data/navigation";
 import { siteConfig } from "@/data/siteConfig";
@@ -47,7 +48,7 @@ describe("departments (data-model rule 1)", () => {
 
 describe("slugs (rule 2)", () => {
   it("are kebab-case and unique within their type", () => {
-    for (const list of [departments, doctors, healthTips]) {
+    for (const list of [departments, doctors, healthTips, labTests]) {
       for (const item of list) expect(item.slug).toMatch(SLUG);
       expect(unique(list.map((item) => item.slug))).toBe(true);
     }
@@ -76,13 +77,32 @@ describe("doctors (rule 3)", () => {
     }
   });
 
-  it("feature three or four doctors, with no credentials, ratings or experience fields", () => {
+  it("feature the original four on Home, and carry no rating or review fields", () => {
     const featured = doctors.filter((doctor) => doctor.isFeatured);
-    expect(featured.length).toBeGreaterThanOrEqual(3);
-    expect(featured.length).toBeLessThanOrEqual(4);
+    expect(featured.map((doctor) => doctor.slug)).toEqual([
+      "dr-hassan-mirza",
+      "dr-imran-qureshi",
+      "dr-sana-farooqui",
+      "dr-ayesha-rahman",
+    ]);
     for (const doctor of doctors) {
       expect(Object.keys(doctor).sort()).toEqual(
-        ["departmentId", "feePkr", "fullName", "id", "isFeatured", "isSample", "photo", "slug", "specialty"].sort(),
+        [
+          "bio",
+          "departmentId",
+          "experienceYears",
+          "feePkr",
+          "fullName",
+          "id",
+          "isFeatured",
+          "isSample",
+          "languages",
+          "photo",
+          "qualifications",
+          "schedule",
+          "slug",
+          "specialty",
+        ].sort(),
       );
       expect(doctor.fullName.startsWith("Dr. ")).toBe(true);
     }
@@ -106,7 +126,7 @@ describe("health tips (rule 4)", () => {
 
 describe("sample flags (rule 5)", () => {
   it("marks every record as sample", () => {
-    for (const record of [...departments, ...doctors, ...healthTips, siteConfig]) {
+    for (const record of [...departments, ...doctors, ...healthTips, ...labTests, siteConfig]) {
       expect(record.isSample).toBe(true);
     }
   });

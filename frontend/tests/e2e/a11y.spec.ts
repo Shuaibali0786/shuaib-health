@@ -5,7 +5,17 @@ import { scrollThrough } from "./helpers";
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 test.describe("accessibility (WCAG 2.2 AA)", () => {
-  for (const path of ["/", "/doctors", "/doctors/dr-imran-qureshi", "/health-tips/staying-hydrated", "/no-such-page"]) {
+  for (const path of [
+    "/",
+    "/doctors",
+    "/doctors?department=pediatrics",
+    "/doctors?q=zzzz",
+    "/doctors/dr-imran-qureshi",
+    "/doctors/dr-zainab-memon",
+    "/book-appointment",
+    "/health-tips/staying-hydrated",
+    "/no-such-page",
+  ]) {
     test(`${path} has no axe violations`, async ({ page }) => {
       await page.goto(path);
       await scrollThrough(page);

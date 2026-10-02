@@ -1,4 +1,8 @@
 import type { Page } from "@playwright/test";
+import { departments } from "../../src/data/departments";
+import { doctors } from "../../src/data/doctors";
+import { healthTips } from "../../src/data/healthTips";
+import { labTests } from "../../src/data/labTests";
 
 /** Exact strings from the spec, repeated here on purpose: if the product text changes, a test must fail. */
 export const NOTICE = "Portfolio demo — not a real clinic, not medical advice.";
@@ -30,8 +34,8 @@ export const HOME_SECTION_HEADINGS = [
   "Book your appointment",
 ] as const;
 
-/** Every page the site serves: Home plus the 26 "Coming soon" placeholders (contracts/routes.md). */
-export const ALL_PATHS = [
+/** Every page the site serves, built from the same data as the site (contracts/routes.md). */
+export const ALL_PATHS: string[] = [
   "/",
   "/about",
   "/doctors",
@@ -40,26 +44,15 @@ export const ALL_PATHS = [
   "/health-packages",
   "/health-tips",
   "/contact",
+  "/faq",
   "/book-appointment",
-  "/home-sample-collection",
   "/privacy",
   "/terms",
-  "/doctors/dr-hassan-mirza",
-  "/doctors/dr-imran-qureshi",
-  "/doctors/dr-sana-farooqui",
-  "/doctors/dr-ayesha-rahman",
-  "/departments/general-medicine",
-  "/departments/cardiology",
-  "/departments/pediatrics",
-  "/departments/gynecology",
-  "/departments/dermatology",
-  "/departments/dental",
-  "/departments/pathology-lab",
-  "/health-tips/staying-hydrated",
-  "/health-tips/healthy-sleep-habits",
-  "/health-tips/balanced-plate",
-  "/health-tips/daily-walk",
-] as const;
+  ...doctors.map((doctor) => `/doctors/${doctor.slug}`),
+  ...departments.map((department) => `/departments/${department.slug}`),
+  ...labTests.map((test) => `/lab-tests/${test.slug}`),
+  ...healthTips.map((tip) => `/health-tips/${tip.slug}`),
+];
 
 /** Scrolls the whole page in steps so every scroll-triggered reveal runs, then returns to the top. */
 export async function scrollThrough(page: Page): Promise<void> {

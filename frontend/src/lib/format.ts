@@ -67,7 +67,7 @@ function formatDays(days: Weekday[]): string {
 }
 
 /** "09:00" -> "9 AM", "21:00" -> "9 PM", "09:30" -> "9:30 AM", "12:00" -> "12 PM". */
-function formatTime(time: string): string {
+export function formatTime(time: string): string {
   const [hourText, minuteText] = time.split(":");
   const hour = Number(hourText);
   const minute = Number(minuteText);
@@ -77,6 +77,31 @@ function formatTime(time: string): string {
   const suffix = hour >= 12 ? "PM" : "AM";
   const displayHour = hour % 12 === 0 ? 12 : hour % 12;
   return minute === 0 ? `${displayHour} ${suffix}` : `${displayHour}:${String(minute).padStart(2, "0")} ${suffix}`;
+}
+
+/** "09:00", "13:00" -> "9 AM – 1 PM". */
+export function formatTimeRange(start: string, end: string): string {
+  return `${formatTime(start)} – ${formatTime(end)}`;
+}
+
+const WEEKDAY_LONG: Record<Weekday, string> = {
+  mon: "Monday",
+  tue: "Tuesday",
+  wed: "Wednesday",
+  thu: "Thursday",
+  fri: "Friday",
+  sat: "Saturday",
+  sun: "Sunday",
+};
+
+/** "mon" -> "Monday". */
+export function formatDayLong(day: Weekday): string {
+  return WEEKDAY_LONG[day];
+}
+
+/** "mon" -> "Mon". */
+export function formatDayShort(day: Weekday): string {
+  return WEEKDAY_LABEL[day];
 }
 
 function formatRuleTimes(rule: OpeningHoursRule): string {

@@ -70,6 +70,10 @@ describe("brand tokens", () => {
     const apple = read("src/app/apple-icon.tsx").toLowerCase();
     expect(apple).toContain(tokens["navy-900"]);
     expect(apple).toContain(tokens["teal-500"]);
+    const share = read("src/lib/og.tsx").toLowerCase();
+    expect(share).toContain(tokens["navy-900"]);
+    expect(share).toContain(tokens["teal-500"]);
+    expect(share).toContain(tokens["teal-700"]);
     const icon = read("src/app/icon.svg").toLowerCase();
     expect(icon).toContain(tokens["navy-900"]);
     expect(icon).toContain(tokens["teal-500"]);
@@ -127,6 +131,7 @@ describe("source guardrails", () => {
     "src/app/globals.css",
     "src/app/icon.svg",
     "src/app/apple-icon.tsx",
+    "src/lib/og.tsx",
     "src/app/theme-color.ts",
   ]);
 

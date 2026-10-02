@@ -1,13 +1,16 @@
 import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
 import { healthTips } from "@/data/healthTips";
+import { doctors } from "@/data/doctors";
+import { labTests } from "@/data/labTests";
 
 /**
- * Route registry (specs/001-brand-home-page/contracts/routes.md).
- * "/" is the only real page in Feature 001. Every other path below is served
- * by app/[...slug]/page.tsx as a "Coming soon" page. When a later feature adds
- * a real page for a path, remove that path from `STATIC_PLACEHOLDERS` in the
- * same change.
+ * Route registry (specs/001-brand-home-page/contracts/routes.md and
+ * specs/002-public-pages/contracts/routes.md).
+ *
+ * Pages that exist are listed in `realPaths()`. Pages that do not exist yet are still served
+ * by app/[...slug]/page.tsx as "Coming soon" and are listed in `placeholderRoutes()`. When a
+ * feature adds a real page for a path, remove that path from `STATIC_PLACEHOLDERS` (or drop its
+ * kind below) in the same change. Feature 002 removes the last placeholders and the catch-all.
  */
 
 export const ROUTES = {
@@ -19,17 +22,18 @@ export const ROUTES = {
   healthPackages: "/health-packages",
   healthTips: "/health-tips",
   contact: "/contact",
+  faq: "/faq",
   bookAppointment: "/book-appointment",
-  homeSampleCollection: "/home-sample-collection",
   privacy: "/privacy",
   terms: "/terms",
 } as const;
 
 export const doctorPath = (slug: string): string => `${ROUTES.doctors}/${slug}`;
 export const departmentPath = (slug: string): string => `${ROUTES.departments}/${slug}`;
+export const labTestPath = (slug: string): string => `${ROUTES.labTests}/${slug}`;
 export const tipPath = (slug: string): string => `${ROUTES.healthTips}/${slug}`;
 
-export type PlaceholderKind = "static" | "doctor" | "department" | "tip";
+export type PlaceholderKind = "static" | "department" | "lab-test" | "tip";
 
 export interface PlaceholderRoute {
   /** Starts with "/", no trailing slash. */
@@ -41,31 +45,29 @@ export interface PlaceholderRoute {
 
 const STATIC_PLACEHOLDERS: PlaceholderRoute[] = [
   { path: ROUTES.about, title: "About", kind: "static" },
-  { path: ROUTES.doctors, title: "Doctors", kind: "static" },
   { path: ROUTES.departments, title: "Departments", kind: "static" },
   { path: ROUTES.labTests, title: "Lab Tests", kind: "static" },
   { path: ROUTES.healthPackages, title: "Health Packages", kind: "static" },
   { path: ROUTES.healthTips, title: "Health Tips", kind: "static" },
   { path: ROUTES.contact, title: "Contact", kind: "static" },
-  { path: ROUTES.bookAppointment, title: "Book Appointment", kind: "static" },
-  { path: ROUTES.homeSampleCollection, title: "Home Sample Collection", kind: "static" },
+  { path: ROUTES.faq, title: "FAQ", kind: "static" },
   { path: ROUTES.privacy, title: "Privacy", kind: "static" },
   { path: ROUTES.terms, title: "Terms", kind: "static" },
 ];
 
-/** Every path served as "Coming soon": the fixed paths plus one per doctor, department and tip. */
+/** Every path served as "Coming soon": the fixed paths plus one per department, lab test and tip. */
 export function placeholderRoutes(): PlaceholderRoute[] {
   return [
     ...STATIC_PLACEHOLDERS,
-    ...doctors.map((doctor): PlaceholderRoute => ({
-      path: doctorPath(doctor.slug),
-      title: doctor.fullName,
-      kind: "doctor",
-    })),
     ...departments.map((department): PlaceholderRoute => ({
       path: departmentPath(department.slug),
       title: department.name,
       kind: "department",
+    })),
+    ...labTests.map((test): PlaceholderRoute => ({
+      path: labTestPath(test.slug),
+      title: test.name,
+      kind: "lab-test",
     })),
     ...healthTips.map((tip): PlaceholderRoute => ({
       path: tipPath(tip.slug),
@@ -73,6 +75,11 @@ export function placeholderRoutes(): PlaceholderRoute[] {
       kind: "tip",
     })),
   ];
+}
+
+/** Paths that have a real page: Home, the booking holding page, and the Doctors pages. */
+export function realPaths(): string[] {
+  return [ROUTES.home, ROUTES.bookAppointment, ROUTES.doctors, ...doctors.map((doctor) => doctorPath(doctor.slug))];
 }
 
 /**
@@ -85,7 +92,9 @@ export function isActivePath(pathname: string, href: string): boolean {
 }
 
 function normalize(path: string): string {
-  return path.length > 1 ? path.replace(/\/+$/, "") : path;
+  // Ignore a #fragment or ?query, so "/faq#home-sample-collection" is the page "/faq".
+  const bare = path.split("#")[0]?.split("?")[0] ?? path;
+  return bare.length > 1 ? bare.replace(/\/+$/, "") : bare;
 }
 
 /** The Coming soon entry for a path, or undefined if the path is not registered. */
@@ -94,7 +103,8 @@ export function findPlaceholderRoute(path: string): PlaceholderRoute | undefined
   return placeholderRoutes().find((route) => route.path === target);
 }
 
-/** True for the Home page and for every registered Coming soon path. */
+/** True for every real page and every registered Coming soon path. */
 export function isKnownPath(path: string): boolean {
-  return normalize(path) === ROUTES.home || findPlaceholderRoute(path) !== undefined;
+  const target = normalize(path);
+  return realPaths().includes(target) || findPlaceholderRoute(target) !== undefined;
 }
