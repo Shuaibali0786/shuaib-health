@@ -45,7 +45,6 @@ export interface PlaceholderRoute {
 
 const STATIC_PLACEHOLDERS: PlaceholderRoute[] = [
   { path: ROUTES.about, title: "About", kind: "static" },
-  { path: ROUTES.healthPackages, title: "Health Packages", kind: "static" },
   { path: ROUTES.healthTips, title: "Health Tips", kind: "static" },
   { path: ROUTES.contact, title: "Contact", kind: "static" },
   { path: ROUTES.faq, title: "FAQ", kind: "static" },
@@ -65,7 +64,7 @@ export function placeholderRoutes(): PlaceholderRoute[] {
   ];
 }
 
-/** Paths that have a real page: Home, the booking holding page, and the Doctors, Departments and Lab Tests pages. */
+/** Paths that have a real page: Home, the booking holding page, and the Doctors, Departments, Lab Tests and Health Packages pages. */
 export function realPaths(): string[] {
   return [
     ROUTES.home,
@@ -76,6 +75,7 @@ export function realPaths(): string[] {
     ...departments.map((department) => departmentPath(department.slug)),
     ROUTES.labTests,
     ...labTests.map((test) => labTestPath(test.slug)),
+    ROUTES.healthPackages,
   ];
 }
 

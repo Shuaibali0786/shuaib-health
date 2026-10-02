@@ -1,9 +1,10 @@
 import { departments } from "@/data/departments";
 import { doctors } from "@/data/doctors";
+import { healthPackages } from "@/data/healthPackages";
 import { healthTips } from "@/data/healthTips";
 import { labTestCategories, labTests } from "@/data/labTests";
 import { siteConfig } from "@/data/siteConfig";
-import type { Department, Doctor, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
+import type { Department, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
 
 /**
  * The only place components read content from. Every accessor is async so a
@@ -72,4 +73,14 @@ export async function getLabTestBySlug(slug: string): Promise<LabTest | undefine
 /** The tests for the given slugs, in the order given. Unknown slugs are skipped. */
 export async function getLabTestsBySlugs(slugs: string[]): Promise<LabTest[]> {
   return slugs.flatMap((slug) => labTests.filter((test) => test.slug === slug));
+}
+
+/** The five health packages, in display order. */
+export async function getHealthPackages(): Promise<HealthPackage[]> {
+  return [...healthPackages];
+}
+
+/** Packages that include the given lab test, in display order. Empty when none does. */
+export async function getPackagesIncludingTest(slug: string): Promise<HealthPackage[]> {
+  return healthPackages.filter((pkg) => pkg.testSlugs.includes(slug));
 }

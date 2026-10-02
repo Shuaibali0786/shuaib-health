@@ -20,6 +20,7 @@ test.describe("accessibility (WCAG 2.2 AA)", () => {
     "/lab-tests?category=heart",
     "/lab-tests?q=zzzz",
     "/lab-tests/hba1c",
+    "/health-packages",
     "/health-tips/staying-hydrated",
     "/no-such-page",
   ]) {

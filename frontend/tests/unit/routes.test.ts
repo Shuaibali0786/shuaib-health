@@ -52,7 +52,8 @@ describe("route registry", () => {
     for (const tip of healthTips) expect(placeholderPaths).toContain(tipPath(tip.slug));
     for (const department of departments) expect(placeholderPaths).not.toContain(departmentPath(department.slug));
     expect(placeholderPaths).not.toContain("/departments");
-    expect(placeholderPaths.size).toBe(7 + healthTips.length);
+    expect(placeholderPaths).not.toContain("/health-packages");
+    expect(placeholderPaths.size).toBe(6 + healthTips.length);
   });
 
   it("gives every placeholder a title", () => {

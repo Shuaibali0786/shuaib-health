@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { departments } from "@/data/departments";
 import { doctors } from "@/data/doctors";
+import { healthPackages } from "@/data/healthPackages";
 import { healthTips } from "@/data/healthTips";
 import { facts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
 import { labTestCategories, labTests } from "@/data/labTests";
@@ -46,7 +47,7 @@ const codeFiles = filesUnder(SRC, [".ts", ".tsx"]).map((path) => ({
 
 describe("no fabricated claims", () => {
   it("none of the sample data contains a claim word", () => {
-    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, heroFacts, quickActions, facts, whyPoints, siteConfig]);
+    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, healthPackages, heroFacts, quickActions, facts, whyPoints, siteConfig]);
     const offenders = text.filter((value) => BANNED_CLAIMS.test(value));
     expect(offenders).toEqual([]);
   });
@@ -69,7 +70,7 @@ describe("no fabricated claims", () => {
 
 describe("no third-party brands", () => {
   it("the sample data, components, pages and image file names contain none", () => {
-    const text = stringValues([departments, doctors, healthTips, labTests, siteConfig]);
+    const text = stringValues([departments, doctors, healthTips, labTests, healthPackages, siteConfig]);
     expect(text.filter((value) => BRAND_WORDS.test(value))).toEqual([]);
     const offenders = codeFiles.filter((file) => BRAND_WORDS.test(file.code)).map((file) => file.path);
     expect(offenders).toEqual([]);

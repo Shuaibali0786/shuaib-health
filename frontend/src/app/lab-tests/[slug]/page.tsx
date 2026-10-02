@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
 import { labTests } from "@/data/labTests";
-import { getDepartments, getLabTestBySlug, getLabTestCategories } from "@/lib/content";
+import { getDepartments, getLabTestBySlug, getLabTestCategories, getPackagesIncludingTest } from "@/lib/content";
 import { getManifestEntry } from "@/lib/pages";
 import { departmentPath, labTestPath, ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
@@ -29,7 +29,11 @@ export default async function LabTestPage({ params }: PageProps<"/lab-tests/[slu
   const test = await getLabTestBySlug(slug);
   if (!test) notFound();
 
-  const [categories, departments] = await Promise.all([getLabTestCategories(), getDepartments()]);
+  const [categories, departments, packages] = await Promise.all([
+    getLabTestCategories(),
+    getDepartments(),
+    getPackagesIncludingTest(test.slug),
+  ]);
   const category = categories.find((candidate) => candidate.id === test.categoryId);
   const related = departments.filter((department) => test.relatedDepartmentIds.includes(department.id));
 
@@ -53,6 +57,24 @@ export default async function LabTestPage({ params }: PageProps<"/lab-tests/[slu
           ) : null}
 
           <LabTestFacts test={test} category={category} />
+
+          {packages.length > 0 ? (
+            <div>
+              <h2 className="text-xl font-bold">Included in packages</h2>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {packages.map((pkg) => (
+                  <li key={pkg.id}>
+                    <Link
+                      href={ROUTES.healthPackages}
+                      className="inline-flex min-h-11 items-center rounded-pill border-2 border-border-strong bg-white px-4 text-sm font-semibold text-teal-700 underline-offset-2 hover:bg-surface hover:underline"
+                    >
+                      {pkg.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           {related.length > 0 ? (
             <div>
