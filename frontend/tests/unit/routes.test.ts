@@ -42,7 +42,7 @@ describe("route registry", () => {
     }
   });
 
-  it("registers only the five static placeholders, and none for pages that now exist", () => {
+  it("registers only the four static placeholders, and none for pages that now exist", () => {
     for (const doctor of doctors) expect(placeholderPaths).not.toContain(doctorPath(doctor.slug));
     expect(placeholderPaths).not.toContain("/doctors");
     expect(placeholderPaths).not.toContain("/book-appointment");
@@ -54,7 +54,8 @@ describe("route registry", () => {
     for (const department of departments) expect(placeholderPaths).not.toContain(departmentPath(department.slug));
     expect(placeholderPaths).not.toContain("/departments");
     expect(placeholderPaths).not.toContain("/health-packages");
-    expect(placeholderPaths.size).toBe(5);
+    expect(placeholderPaths).not.toContain("/about");
+    expect(placeholderPaths.size).toBe(4);
   });
 
   it("gives every placeholder a title", () => {
@@ -70,7 +71,7 @@ describe("route registry", () => {
     expect(isKnownPath("/doctors/not-a-doctor")).toBe(false);
     expect(isKnownPath("/lab-tests")).toBe(true);
     expect(isKnownPath("/lab-tests/esr")).toBe(true);
-    expect(findPlaceholderRoute("/about")?.title).toBe("About");
+    expect(findPlaceholderRoute("/contact")?.title).toBe("Contact");
     expect(findPlaceholderRoute("/")).toBeUndefined();
   });
 

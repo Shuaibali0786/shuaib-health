@@ -21,6 +21,7 @@ test.describe("accessibility (WCAG 2.2 AA)", () => {
     "/lab-tests?q=zzzz",
     "/lab-tests/hba1c",
     "/health-packages",
+    "/about",
     "/health-tips",
     "/health-tips?category=sleep",
     "/health-tips/staying-hydrated",

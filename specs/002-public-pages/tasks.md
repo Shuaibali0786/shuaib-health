@@ -193,10 +193,10 @@ description: "Task list for Feature 002: all remaining public pages of Shuaib He
 **Goal**: honest About page.
 **Independent Test**: read `/about`; mission, values, labelled illustrative photos and a five-step visit flow exist and no banned claims appear.
 
-- [ ] T073 [US6] Create `frontend/src/data/aboutContent.ts` (`AboutContent`: honest story paragraphs stating it is a portfolio demo and not a real clinic, mission, 3–5 values, five `visitSteps` — find a doctor or test, book (coming soon), visit or home collection, receive reports online (planned), follow up; `facilityPhotos` reusing `/images/clinic/clinic-interior.jpg` and department images `general-medicine`, `pathology-lab`, `dental` with captions "Illustrative image …"); no founding date, counts, awards, accreditations, testimonials; add `getAboutContent` to `content.ts`
-- [ ] T074 [P] [US6] Create `frontend/src/components/about/VisitSteps.tsx` (`<ol>` with numbered `IconTile`s) 
-- [ ] T075 [US6] Create `frontend/src/app/about/page.tsx` (breadcrumb, story, mission, values, photo grid with `IllustrativeNote`, `VisitSteps`, link to doctors and lab tests, manifest metadata); remove `/about` from the placeholder registry; update `routes.test.ts`
-- [ ] T076 [P] [US6] Extend `honesty.test.ts` to scan `aboutContent.ts` and the About page source (also for digits followed by "years", "patients", "+" claims); Playwright `frontend/tests/e2e/about.spec.ts` (sections, numbered steps, every photo has an "Illustrative" caption, banned-words scan of rendered text); add to `a11y.spec.ts`
+- [X] T073 [US6] Create `frontend/src/data/aboutContent.ts` (`AboutContent`: honest story paragraphs stating it is a portfolio demo and not a real clinic, mission, 3–5 values, five `visitSteps` — find a doctor or test, book (coming soon), visit or home collection, receive reports online (planned), follow up; `facilityPhotos` reusing `/images/clinic/clinic-interior.jpg` and department images `general-medicine`, `pathology-lab`, `dental` with captions "Illustrative image …"); no founding date, counts, awards, accreditations, testimonials; add `getAboutContent` to `content.ts`
+- [X] T074 [P] [US6] Create `frontend/src/components/about/VisitSteps.tsx` (`<ol>` with numbered `IconTile`s) 
+- [X] T075 [US6] Create `frontend/src/app/about/page.tsx` (breadcrumb, story, mission, values, photo grid with `IllustrativeNote`, `VisitSteps`, link to doctors and lab tests, manifest metadata); remove `/about` from the placeholder registry; update `routes.test.ts`
+- [X] T076 [P] [US6] Extend `honesty.test.ts` to scan `aboutContent.ts` and the About page source (also for digits followed by "years", "patients", "+" claims); Playwright `frontend/tests/e2e/about.spec.ts` (sections, numbered steps, every photo has an "Illustrative" caption, banned-words scan of rendered text); add to `a11y.spec.ts`
 
 **Checkpoint**: US6 passes.
 

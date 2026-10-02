@@ -156,6 +156,31 @@ export interface HealthPackage {
   isSample: boolean;
 }
 
+export interface AboutValue {
+  id: string;
+  title: string;
+  text: string;
+}
+
+export interface AboutVisitStep {
+  id: string;
+  title: string;
+  text: string;
+  iconName: IconName;
+}
+
+export interface AboutContent {
+  mission: string;
+  /** Honest story paragraphs: this is a portfolio demo, not a real clinic. */
+  story: string[];
+  /** Three to five values. */
+  values: AboutValue[];
+  /** Existing images, each shown with an "Illustrative image ..." caption. */
+  facilityPhotos: Array<{ image: ImageAsset; caption: string }>;
+  /** The five steps of a typical visit. */
+  visitSteps: AboutVisitStep[];
+}
+
 export interface PageManifestEntry {
   /** Starts with "/", no trailing slash. */
   path: string;

@@ -1,10 +1,11 @@
+import { aboutContent } from "@/data/aboutContent";
 import { departments } from "@/data/departments";
 import { doctors } from "@/data/doctors";
 import { healthPackages } from "@/data/healthPackages";
 import { healthTips } from "@/data/healthTips";
 import { labTestCategories, labTests } from "@/data/labTests";
 import { siteConfig } from "@/data/siteConfig";
-import type { Department, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
+import type { AboutContent, Department, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
 
 /**
  * The only place components read content from. Every accessor is async so a
@@ -105,4 +106,9 @@ export async function getRelatedTips(slug: string, limit = 3): Promise<HealthTip
   const sameCategory = others.filter((tip) => current && tip.category === current.category);
   const rest = others.filter((tip) => !sameCategory.includes(tip));
   return [...sameCategory, ...rest].slice(0, Math.max(0, Math.trunc(limit)));
+}
+
+/** The About page content. */
+export async function getAboutContent(): Promise<AboutContent> {
+  return aboutContent;
 }

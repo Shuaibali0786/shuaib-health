@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { aboutContent } from "@/data/aboutContent";
 import { departments } from "@/data/departments";
 import { doctors } from "@/data/doctors";
 import { healthPackages } from "@/data/healthPackages";
@@ -47,7 +48,7 @@ const codeFiles = filesUnder(SRC, [".ts", ".tsx"]).map((path) => ({
 
 describe("no fabricated claims", () => {
   it("none of the sample data contains a claim word", () => {
-    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, healthPackages, heroFacts, quickActions, facts, whyPoints, siteConfig]);
+    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, healthPackages, aboutContent, heroFacts, quickActions, facts, whyPoints, siteConfig]);
     const offenders = text.filter((value) => BANNED_CLAIMS.test(value));
     expect(offenders).toEqual([]);
   });
@@ -70,7 +71,7 @@ describe("no fabricated claims", () => {
 
 describe("no third-party brands", () => {
   it("the sample data, components, pages and image file names contain none", () => {
-    const text = stringValues([departments, doctors, healthTips, labTests, healthPackages, siteConfig]);
+    const text = stringValues([departments, doctors, healthTips, labTests, healthPackages, aboutContent, siteConfig]);
     expect(text.filter((value) => BRAND_WORDS.test(value))).toEqual([]);
     const offenders = codeFiles.filter((file) => BRAND_WORDS.test(file.code)).map((file) => file.path);
     expect(offenders).toEqual([]);
@@ -113,5 +114,29 @@ describe("the checks themselves", () => {
     expect(withoutImports('import {\n  A,\n  B,\n} from "@/x/google";\nconst keep = 1;')).toContain("keep");
     // Only imports are skipped: the same word in a visible string is still caught.
     expect(withoutImports('const label = "Powered by Google";')).toMatch(/Google/);
+  });
+});
+
+describe("the About page makes no invented claims (FR-061)", () => {
+  const aboutText = stringValues(aboutContent);
+  const aboutSource = codeFiles.filter((file) => file.path === "/src/app/about/page.tsx" || file.path.startsWith("/src/components/about/"));
+
+  it("has the page and its component to scan", () => {
+    expect(aboutSource.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("states that it is a portfolio demo and not a real clinic", () => {
+    expect(aboutContent.story[0]).toMatch(/portfolio demo/i);
+    expect(aboutContent.story[0]).toMatch(/not a real clinic/i);
+  });
+
+  it("has no numbers with years, patients, staff or plus signs, and no founding or history wording", () => {
+    const claim = /\d+\s*\+|\d[\d,]*\s*(years?|patients?|doctors?|staff|visits|branches|clinics)\b|\b(since|established|founded in|est\.)\s+\d{4}|\b(founded|established) (in|on)\b/i;
+    expect(aboutText.filter((value) => claim.test(value))).toEqual([]);
+    expect(aboutSource.filter((file) => claim.test(file.code)).map((file) => file.path)).toEqual([]);
+  });
+
+  it("has no claim words or brand names", () => {
+    expect(aboutText.filter((value) => BANNED_CLAIMS.test(value) || BRAND_WORDS.test(value))).toEqual([]);
   });
 });
