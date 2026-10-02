@@ -60,17 +60,17 @@ Run `npm run build && npm run start`, then Lighthouse on `/doctors`, `/lab-tests
 
 ## Images
 
-The seven new photos are already in `frontend/public/images` (`doctors/` ×5, `tips/` ×2) and registered in `scripts/image-list.mjs`. The `images.test.ts` "no unreferenced file" check stays red until Phase B and Phase D add the data records that reference them; this is expected.
+The seven new photos are already in `frontend/public/images` (`doctors/` ×5, `tips/` ×2) and registered in `scripts/image-list.mjs`. The five doctor photos are referenced by `data/doctors.ts`. The two tip photos are listed in a `PENDING` allow-list in `images.test.ts` until the health tip records (US5, task T071) reference them.
 
-Alt text to use when the records are added (describe what is visible):
+Alt text for the doctor photos begins "Stock photo of a model presented as sample doctor …" (the photos are real models, not our staff); describe what is visible after that:
 
 | File | Alt text |
 |------|----------|
-| `doctors/dr-maryam-baloch.jpg` | Sample doctor Dr. Maryam Baloch: a smiling woman with long dark hair in a white coat with a stethoscope around her neck |
-| `doctors/dr-bilal-ansari.jpg` | Sample doctor Dr. Bilal Ansari: a man in teal scrubs with a stethoscope, reading a book |
-| `doctors/dr-zainab-memon.jpg` | Sample doctor Dr. Zainab Memon: a woman in a white lab coat and gloves working at a laboratory bench |
-| `doctors/dr-omar-sheikh.jpg` | Sample doctor Dr. Omar Sheikh: a bearded man in a white coat over a maroon shirt, hands in pockets |
-| `doctors/dr-faisal-chaudhry.jpg` | Sample doctor Dr. Faisal Chaudhry: a smiling man in glasses and a white coat with a stethoscope, holding a measuring tape |
+| `doctors/dr-maryam-baloch.jpg` | Stock photo of a model presented as sample doctor Dr. Maryam Baloch: a smiling woman with long dark hair in a white coat with a stethoscope around her neck |
+| `doctors/dr-bilal-ansari.jpg` | Stock photo of a model presented as sample doctor Dr. Bilal Ansari: a man in teal scrubs with a stethoscope, reading a book |
+| `doctors/dr-zainab-memon.jpg` | Stock photo of a model presented as sample doctor Dr. Zainab Memon: a woman in a white lab coat and gloves working at a laboratory bench |
+| `doctors/dr-omar-sheikh.jpg` | Stock photo of a model presented as sample doctor Dr. Omar Sheikh: a bearded man in a white coat over a maroon shirt, hands in pockets |
+| `doctors/dr-faisal-chaudhry.jpg` | Stock photo of a model presented as sample doctor Dr. Faisal Chaudhry: a smiling man in glasses and a white coat with a stethoscope, holding a measuring tape |
 | `tips/hand-hygiene.jpg` | Hands being washed with soap under a running tap |
 | `tips/managing-stress.jpg` | Woman sitting calmly with her eyes closed against a plain wall, breathing slowly |
 

@@ -107,11 +107,13 @@ describe("DoctorCard and FeaturedDoctors", () => {
     expect(link).toHaveTextContent("View profile");
   });
 
-  it("shows four sample doctors, each marked Sample, and says they are not real", async () => {
+  it("shows four sample doctors, each marked Sample, and says the details are fictional and the photos are stock photos", async () => {
     const { container } = render(await FeaturedDoctors());
     expect(screen.getAllByRole("article")).toHaveLength(4);
     expect(screen.getAllByText("Sample")).toHaveLength(4);
     expect(screen.getByText(/sample doctors for the demo/i)).toBeInTheDocument();
+    expect(container.textContent).toMatch(/fictional/);
+    expect(container.textContent).toMatch(/stock photos of models/);
     expect(container.textContent).not.toMatch(BANNED);
     expect(container.querySelectorAll("a a")).toHaveLength(0);
   });

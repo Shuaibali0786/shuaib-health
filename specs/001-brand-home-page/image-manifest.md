@@ -32,10 +32,10 @@ Every image file the pages expect, so real photos can be added later. All paths 
 | 7 | `images/departments/dermatology.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Doctor examining a skin image on a tablet beside a patient" |
 | 8 | `images/departments/dental.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Two dental staff reviewing an X-ray on a screen beside a dental chair" |
 | 9 | `images/departments/pathology-lab.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Laboratory scientist in a blue gown using a microscope" |
-| 10 | `images/doctors/dr-ayesha-rahman.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Ayesha Rahman: a woman in a white coat taking a phone call and holding a notebook" |
-| 11 | `images/doctors/dr-imran-qureshi.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Imran Qureshi: a man in a white coat with a stethoscope" |
-| 12 | `images/doctors/dr-sana-farooqui.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Sana Farooqui: a smiling woman in a headscarf and dark scrubs holding a red book" |
-| 13 | `images/doctors/dr-hassan-mirza.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Hassan Mirza: a bearded man in glasses and a lavender coat with a stethoscope, arms crossed" |
+| 10 | `images/doctors/dr-ayesha-rahman.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Stock photo of a model presented as sample doctor Dr. Ayesha Rahman: a woman in a white coat taking a phone call and holding a notebook" |
+| 11 | `images/doctors/dr-imran-qureshi.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Stock photo of a model presented as sample doctor Dr. Imran Qureshi: a man in a white coat with a stethoscope" |
+| 12 | `images/doctors/dr-sana-farooqui.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Stock photo of a model presented as sample doctor Dr. Sana Farooqui: a smiling woman in a headscarf and dark scrubs holding a red book" |
+| 13 | `images/doctors/dr-hassan-mirza.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Stock photo of a model presented as sample doctor Dr. Hassan Mirza: a bearded man in glasses and a lavender coat with a stethoscope, arms crossed" |
 | 14 | `images/tips/staying-hydrated.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Water being poured from a glass jug into a drinking glass" |
 | 15 | `images/tips/healthy-sleep-habits.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Woman sleeping peacefully in a bed with light bedding" |
 | 16 | `images/tips/balanced-plate.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Plate with avocado, boiled egg, tomatoes, walnuts and leafy greens" |

@@ -21,7 +21,7 @@ test.describe("doctors list", () => {
     await expect(imran).toContainText("Urdu, English");
     await expect(imran).toContainText("PKR 3,500");
     await expect(imran).toContainText(/Available|Next available/);
-    await expect(imran.locator("img")).toHaveAttribute("alt", /Sample doctor Dr\. Imran Qureshi/);
+    await expect(imran.locator("img")).toHaveAttribute("alt", /Stock photo of a model presented as sample doctor Dr. Imran Qureshi/);
     await expect(page.getByText(NOTICE)).toHaveCount(2);
   });
 

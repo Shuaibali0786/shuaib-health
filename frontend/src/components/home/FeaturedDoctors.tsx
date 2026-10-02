@@ -21,7 +21,7 @@ export async function FeaturedDoctors() {
           id="doctors-title"
           eyebrow="Our doctors"
           title="Featured doctors"
-          intro="These are sample doctors for the demo. The names, photos and fees are not real."
+          intro="These are sample doctors for the demo. The names, fees and details are fictional, and the photos are stock photos of models."
         />
       </Reveal>
       <Reveal className="mt-10">

@@ -190,7 +190,7 @@ frontend/
 - Privacy/Terms: `LegalPage` with a table of contents (anchor links), `<h2>` per required topic, last-updated date (`2026-10-02`, formatted by `formatKarachiDate`), demo and not-legal-advice notices at top.
 
 ### Honesty, accessibility, motion
-- Notice and credit are untouched (layout). New content goes through the same `SampleBadge` and a new `IllustrativeNote` caption for stock photos. Breadcrumbs, headings (one `h1` per page, in order), focus visibility, 24 px targets, status messages and reduced-motion follow research R10. No new animation is added; `Reveal` is reused for below-the-fold sections only.
+- Notice and credit are untouched (layout). New content goes through the same `SampleBadge` and a new `IllustrativeNote` caption for stock photos: doctor profiles say "Stock photo of a model. Sample profile — name and details are fictional." (the photos are real models, so no text may say they are not real people), facility photos say "Illustrative image, not our actual facility.", and doctor photo alt text begins "Stock photo of a model presented as sample doctor …". Breadcrumbs, headings (one `h1` per page, in order), focus visibility, 24 px targets, status messages and reduced-motion follow research R10. No new animation is added; `Reveal` is reused for below-the-fold sections only.
 
 ### Requirement traceability
 

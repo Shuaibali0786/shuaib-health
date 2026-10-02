@@ -42,7 +42,7 @@ test.describe("honesty (constitution I)", () => {
     await expect(page.locator("section[aria-labelledby='doctors-title']").getByText("Sample", { exact: true })).toHaveCount(4);
     await expect(page.locator("section[aria-labelledby='tips-title']").getByText("Sample", { exact: true })).toHaveCount(3);
     await expect(page.locator("aside[aria-labelledby='emergency-title']")).toContainText("(sample)");
-    await expect(page.locator("section[aria-labelledby='doctors-title']")).toContainText("not real");
+    await expect(page.locator("section[aria-labelledby='doctors-title']")).toContainText("fictional");
   });
 
   test("the site never calls a backend: no request leaves the site's own origin", async ({ page, baseURL }) => {

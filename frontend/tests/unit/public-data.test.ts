@@ -41,7 +41,8 @@ describe("doctors (data-model invariants 1 and 2)", () => {
       expect(existsSync(join(process.cwd(), "public", doctor.photo.src)), doctor.slug).toBe(true);
       expect(doctor.photo.width).toBe(600);
       expect(doctor.photo.height).toBe(750);
-      expect(doctor.photo.alt.toLowerCase()).toContain("sample doctor");
+      expect(doctor.photo.alt).toMatch(/^Stock photo of a model presented as sample doctor Dr\. /);
+      expect(doctor.photo.alt.toLowerCase()).not.toContain("not a real");
     }
   });
 
