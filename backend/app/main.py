@@ -6,7 +6,7 @@ first access, so importing this module never reads configuration.
 
 from functools import lru_cache
 
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.errors import UnhandledErrorMiddleware, register_exception_handlers
@@ -14,15 +14,10 @@ from app.logging_config import configure_logging
 from app.middleware.access_log import AccessLogMiddleware
 from app.middleware.request_id import RequestIdMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
-from app.routers import health
+from app.routers import departments, doctors, health
 from app.settings import Settings, get_settings
 
 API_PREFIX = "/api/v1"
-
-
-def get_app_settings(request: Request) -> Settings:
-    settings: Settings = request.app.state.settings
-    return settings
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -43,7 +38,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(health.router)
     api = APIRouter(prefix=API_PREFIX)
-    # Catalog routers are added here per user story.
+    api.include_router(departments.router)
+    api.include_router(doctors.router)
     app.include_router(api)
 
     # add_middleware wraps the current stack, so the LAST one added is the OUTERMOST.

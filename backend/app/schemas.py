@@ -4,9 +4,12 @@ Routes return these models, never the SQLModel tables.
 """
 
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
+
+from app.params import Weekday
 
 
 class CamelModel(BaseModel):
@@ -51,3 +54,41 @@ def image_asset(key: str, alt: str, width: int, height: int, base_path: str) -> 
     """Build an ``ImageAsset`` from a stored key, joining base path and key with one slash."""
     src = f"{base_path.rstrip('/')}/{key.lstrip('/')}"
     return ImageAsset(src=src, alt=alt, width=width, height=height)
+
+
+class Department(CamelModel):
+    id: UUID
+    slug: str
+    name: str
+    summary: str
+    image: ImageAsset
+    sort_order: int
+    overview: str
+    conditions: list[str]
+    services: list[str]
+    related_test_slugs: list[str]
+    is_sample: bool
+
+
+class ScheduleSession(CamelModel):
+    day: Weekday
+    start: str
+    end: str
+    slot_minutes: int
+
+
+class Doctor(CamelModel):
+    id: UUID
+    slug: str
+    full_name: str
+    department_id: UUID
+    specialty: str
+    photo: ImageAsset
+    fee_pkr: int
+    qualifications: list[str]
+    experience_years: int
+    languages: list[str]
+    bio: str
+    schedule: list[ScheduleSession]
+    is_featured: bool
+    is_sample: bool
