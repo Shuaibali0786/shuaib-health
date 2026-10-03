@@ -196,6 +196,21 @@ export interface FaqGroup {
   items: FaqItem[];
 }
 
+export interface LegalSection {
+  id: string;
+  heading: string;
+  blocks: ArticleBlock[];
+}
+
+export interface LegalContent {
+  slug: "privacy" | "terms";
+  title: string;
+  /** ISO date, "2026-10-02". */
+  lastUpdated: string;
+  intro: string;
+  sections: LegalSection[];
+}
+
 export interface PageManifestEntry {
   /** Starts with "/", no trailing slash. */
   path: string;

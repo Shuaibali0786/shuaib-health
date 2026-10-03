@@ -56,10 +56,9 @@ test.describe("links", () => {
     expect((await request.get("/a/b/c")).status()).toBe(404);
   });
 
-  test("a Coming soon page keeps the layout and a way back Home", async ({ page }) => {
-    await page.goto("/privacy");
-    await expect(page.getByRole("heading", { level: 1, name: "Coming soon" })).toBeVisible();
-    await expect(page).toHaveTitle(/Privacy — Coming soon/);
+  test("the booking holding page keeps the layout and a way back Home", async ({ page }) => {
+    await page.goto("/book-appointment");
+    await expect(page.getByRole("heading", { level: 1, name: "Booking coming soon" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Back to Home" })).toHaveAttribute("href", "/");
     await page.getByRole("link", { name: "Back to Home" }).click();
     await expect(page).toHaveURL("/");

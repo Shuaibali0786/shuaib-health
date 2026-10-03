@@ -24,6 +24,8 @@ test.describe("accessibility (WCAG 2.2 AA)", () => {
     "/about",
     "/contact",
     "/faq",
+    "/privacy",
+    "/terms",
     "/health-tips",
     "/health-tips?category=sleep",
     "/health-tips/staying-hydrated",

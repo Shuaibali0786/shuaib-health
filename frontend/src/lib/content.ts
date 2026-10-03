@@ -2,11 +2,12 @@ import { aboutContent } from "@/data/aboutContent";
 import { departments } from "@/data/departments";
 import { doctors } from "@/data/doctors";
 import { faqGroups } from "@/data/faq";
+import { legalContent } from "@/data/legalContent";
 import { healthPackages } from "@/data/healthPackages";
 import { healthTips } from "@/data/healthTips";
 import { labTestCategories, labTests } from "@/data/labTests";
 import { siteConfig } from "@/data/siteConfig";
-import type { AboutContent, Department, FaqGroup, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
+import type { AboutContent, LegalContent, Department, FaqGroup, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
 
 /**
  * The only place components read content from. Every accessor is async so a
@@ -117,4 +118,9 @@ export async function getAboutContent(): Promise<AboutContent> {
 /** The five FAQ groups, in display order. */
 export async function getFaqGroups(): Promise<FaqGroup[]> {
   return faqGroups;
+}
+
+/** The Privacy or Terms page content. */
+export async function getLegalContent(slug: LegalContent["slug"]): Promise<LegalContent> {
+  return legalContent[slug];
 }

@@ -9,6 +9,7 @@ import { healthPackages } from "@/data/healthPackages";
 import { healthTips } from "@/data/healthTips";
 import { facts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
 import { labTestCategories, labTests } from "@/data/labTests";
+import { privacyContent, termsContent } from "@/data/legalContent";
 import { siteConfig } from "@/data/siteConfig";
 import { BANNED_CLAIMS, BRAND_WORDS, stringValues } from "./helpers/forbidden";
 
@@ -49,7 +50,7 @@ const codeFiles = filesUnder(SRC, [".ts", ".tsx"]).map((path) => ({
 
 describe("no fabricated claims", () => {
   it("none of the sample data contains a claim word", () => {
-    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, healthPackages, aboutContent, faqGroups, heroFacts, quickActions, facts, whyPoints, siteConfig]);
+    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, healthPackages, aboutContent, faqGroups, privacyContent, termsContent, heroFacts, quickActions, facts, whyPoints, siteConfig]);
     const offenders = text.filter((value) => BANNED_CLAIMS.test(value));
     expect(offenders).toEqual([]);
   });
@@ -72,7 +73,7 @@ describe("no fabricated claims", () => {
 
 describe("no third-party brands", () => {
   it("the sample data, components, pages and image file names contain none", () => {
-    const text = stringValues([departments, doctors, healthTips, labTests, healthPackages, aboutContent, siteConfig]);
+    const text = stringValues([departments, doctors, healthTips, labTests, healthPackages, aboutContent, privacyContent, termsContent, siteConfig]);
     expect(text.filter((value) => BRAND_WORDS.test(value))).toEqual([]);
     const offenders = codeFiles.filter((file) => BRAND_WORDS.test(file.code)).map((file) => file.path);
     expect(offenders).toEqual([]);
