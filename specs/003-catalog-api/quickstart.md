@@ -82,7 +82,7 @@ uv run pytest -m perf
 
 ```bat
 cd ..\frontend
-node scripts\export-catalog.mts
+npm run export:catalog
 npm test -- catalog-export
 ```
 

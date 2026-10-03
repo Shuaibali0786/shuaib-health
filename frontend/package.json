@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "images": "node scripts/images.mjs",
-    "images:placeholders": "node scripts/generate-placeholder-images.mjs"
+    "images:placeholders": "node scripts/generate-placeholder-images.mjs",
+    "export:catalog": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/export-catalog.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
