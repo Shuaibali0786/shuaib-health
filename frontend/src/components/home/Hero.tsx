@@ -22,8 +22,9 @@ const FACT_POSITION = [
 export function Hero() {
   return (
     <section aria-labelledby="hero-title" className="bg-soft-gradient">
-      <Container className="grid items-center gap-10 py-12 md:py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:py-20">
-        <div className="min-w-0">
+      <Container className="grid items-center gap-10 py-12 md:py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-14 lg:py-14">
+        {/* On large screens the text starts near the top of the tall photo (lg:pt-16) instead of floating in the middle of it. */}
+        <div className="min-w-0 lg:pt-16">
           <p className="mb-3 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-teal-700">
             Clinic &amp; Diagnostics, Karachi
           </p>

@@ -117,6 +117,18 @@ describe("DoctorCard and FeaturedDoctors", () => {
     expect(container.textContent).not.toMatch(BANNED);
     expect(container.querySelectorAll("a a")).toHaveLength(0);
   });
+
+  it("has a View all doctors button that opens the Doctors page, like View all tips", async () => {
+    render(await FeaturedDoctors());
+    expect(screen.getByRole("link", { name: "View all doctors" })).toHaveAttribute("href", "/doctors");
+  });
+
+  it("uses the current Sana Farooqui photo from the data file, with no second copy of the path", async () => {
+    render(await FeaturedDoctors());
+    const sana = doctors.find((doctor) => doctor.slug === "dr-sana-farooqui")!;
+    const image = screen.getByAltText(sana.photo.alt);
+    expect(decodeURIComponent(image.getAttribute("src") ?? "")).toContain("/images/doctors/dr-sana-farooqui.jpg");
+  });
 });
 
 describe("TipCard and HealthTips", () => {
@@ -166,7 +178,8 @@ describe("phone layouts", () => {
   it("shows departments as compact two-column cards", async () => {
     const { container } = render(await DepartmentGrid());
     const list = container.querySelector("ul");
-    expect(list).toHaveClass("grid", "grid-cols-2", "lg:grid-cols-3", "xl:grid-cols-4");
+    // Two columns up to tablets; from lg a centred wrapping row, so a short last row sits in the middle.
+    expect(list).toHaveClass("grid", "grid-cols-2", "lg:flex", "lg:flex-wrap", "lg:justify-center");
     // The decorative "Learn more" row is hidden on phones; summaries are never clipped (text-size safe).
     expect(screen.getAllByText("Learn more")[0]).toHaveClass("max-sm:hidden");
     expect(screen.getByText(departments[0]!.summary).className).not.toMatch(/line-clamp/);

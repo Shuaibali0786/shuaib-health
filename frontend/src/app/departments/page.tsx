@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DepartmentCard } from "@/components/home/DepartmentCard";
+import { DEPARTMENT_ITEM, DEPARTMENT_LIST } from "@/components/home/department-grid";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
@@ -29,9 +30,9 @@ export default async function DepartmentsPage() {
         </p>
       </PageHeader>
       <Section tone="background" spacing="compact" aria-label="Departments">
-        <ul className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+        <ul className={DEPARTMENT_LIST}>
           {departments.map((department) => (
-            <li key={department.id} className="flex">
+            <li key={department.id} className={DEPARTMENT_ITEM}>
               <DepartmentCard department={department} />
             </li>
           ))}

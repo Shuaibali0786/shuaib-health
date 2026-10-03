@@ -53,6 +53,13 @@ test.describe("Home page", () => {
     expect(headings.map((heading) => heading.trim())).toEqual([...HOME_SECTION_HEADINGS]);
   });
 
+  test("Featured doctors has a View all doctors button to the Doctors page", async ({ page }) => {
+    const button = page.locator("section[aria-labelledby='doctors-title']").getByRole("link", { name: "View all doctors" });
+    await expect(button).toHaveAttribute("href", "/doctors");
+    await button.click();
+    await expect(page).toHaveURL(/\/doctors$/);
+  });
+
   test("shows 5 quick actions, 7 departments, 4 sample doctors and 3 sample tips", async ({ page }) => {
     await expect(page.locator("section[aria-labelledby='quick-actions-title'] ul > li")).toHaveCount(5);
     await expect(page.locator("section[aria-labelledby='departments-title'] ul > li")).toHaveCount(7);
