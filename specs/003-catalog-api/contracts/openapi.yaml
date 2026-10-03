@@ -30,7 +30,7 @@ paths:
     get:
       summary: Clinic settings (white-label)
       responses:
-        "200": { description: OK, headers: { $ref: "#/components/headers/_cacheable" }, content: { application/json: { schema: { $ref: "#/components/schemas/ClinicSettings" } } } }
+        "200": { description: OK, headers: { ETag: { $ref: "#/components/headers/ETag" }, Cache-Control: { $ref: "#/components/headers/CacheControl" } }, content: { application/json: { schema: { $ref: "#/components/schemas/ClinicSettings" } } } }
         "304": { $ref: "#/components/responses/NotModified" }
         "429": { $ref: "#/components/responses/RateLimited" }
         "503": { $ref: "#/components/responses/Unavailable" }
@@ -149,8 +149,11 @@ components:
     q: { name: q, in: query, description: Case-insensitive contains; % and _ are literal, schema: { type: string, minLength: 1, maxLength: 60 } }
     slug: { name: slug, in: path, required: true, schema: { $ref: "#/components/schemas/Slug" } }
   headers:
-    _cacheable:
-      description: ETag (weak) and Cache-Control on every catalog 200
+    ETag:
+      description: Weak ETag on every catalog 200
+      schema: { type: string }
+    CacheControl:
+      description: Cache-Control on every catalog 200
       schema: { type: string }
   responses:
     NotModified: { description: If-None-Match matched; no body }

@@ -32,6 +32,11 @@
     "react-hook-form": "^7.89.0",
     "zod": "^4.6.5"
   },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
+  },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.63.0",
