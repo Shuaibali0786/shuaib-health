@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { departments } from "../../src/data/departments";
-import { doctors } from "../../src/data/doctors";
-import { labTests } from "../../src/data/labTests";
+import { departments } from "../fixtures/catalog/departments";
+import { doctors } from "../fixtures/catalog/doctors";
+import { labTests } from "../fixtures/catalog/labTests";
 import { scrollThrough } from "./helpers";
 
 /**

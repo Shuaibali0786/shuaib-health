@@ -35,8 +35,8 @@ export interface Department {
 export type Language = "Urdu" | "English" | "Sindhi" | "Punjabi";
 
 export interface ScheduleSession {
-  /** Never "sun": the sample clinic is closed on Sundays. */
-  day: Exclude<Weekday, "sun">;
+  /** The sample clinic is closed on Sundays, but the API allows any weekday for another clinic. */
+  day: Weekday;
   /** 24-hour "HH:MM" in Asia/Karachi, within 09:00-21:00. */
   start: string;
   end: string;

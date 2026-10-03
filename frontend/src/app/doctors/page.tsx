@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DoctorBrowser, DoctorBrowserFallback } from "@/components/doctors/DoctorBrowser";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { Section } from "@/components/ui/Section";
 import { SampleBadge } from "@/components/ui/SampleBadge";
-import { getDepartments, getDoctors } from "@/lib/content";
+import { loadDepartments, loadDoctors } from "@/lib/content";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
+
+export const revalidate = 300;
 
 export function generateMetadata(): Metadata {
   return pageMetadata(getManifestEntry(ROUTES.doctors));
@@ -18,8 +21,8 @@ export function generateMetadata(): Metadata {
  * over in the browser. The Suspense fallback is the same list, so it also works without JavaScript.
  */
 export default async function DoctorsPage() {
-  const [doctors, departments] = await Promise.all([getDoctors(), getDepartments()]);
-  const departmentOptions = departments.map(({ id, slug, name }) => ({ id, slug, name }));
+  const [doctors, departments] = await Promise.all([loadDoctors(), loadDepartments()]);
+  const departmentOptions = (departments.ok ? departments.data : []).map(({ id, slug, name }) => ({ id, slug, name }));
 
   return (
     <>
@@ -34,9 +37,13 @@ export default async function DoctorsPage() {
         </p>
       </PageHeader>
       <Section tone="background" spacing="compact" aria-label="Doctors">
-        <Suspense fallback={<DoctorBrowserFallback doctors={doctors} departments={departmentOptions} />}>
-          <DoctorBrowser doctors={doctors} departments={departmentOptions} />
-        </Suspense>
+        {doctors.ok ? (
+          <Suspense fallback={<DoctorBrowserFallback doctors={doctors.data} departments={departmentOptions} />}>
+            <DoctorBrowser doctors={doctors.data} departments={departmentOptions} />
+          </Suspense>
+        ) : (
+          <DataUnavailable href={ROUTES.doctors} />
+        )}
       </Section>
     </>
   );

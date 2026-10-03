@@ -2,13 +2,13 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { aboutContent } from "@/data/aboutContent";
-import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
+import { departments } from "../fixtures/catalog/departments";
+import { doctors } from "../fixtures/catalog/doctors";
 import { faqGroups } from "@/data/faq";
-import { healthPackages } from "@/data/healthPackages";
+import { healthPackages } from "../fixtures/catalog/healthPackages";
 import { healthTips } from "@/data/healthTips";
-import { facts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
-import { labTestCategories, labTests } from "@/data/labTests";
+import { buildFacts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
+import { labTestCategories, labTests } from "../fixtures/catalog/labTests";
 import { privacyContent, termsContent } from "@/data/legalContent";
 import { siteConfig } from "@/data/siteConfig";
 import { BANNED_CLAIMS, BRAND_WORDS, stringValues } from "./helpers/forbidden";
@@ -50,7 +50,7 @@ const codeFiles = filesUnder(SRC, [".ts", ".tsx"]).map((path) => ({
 
 describe("no fabricated claims", () => {
   it("none of the sample data contains a claim word", () => {
-    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, healthPackages, aboutContent, faqGroups, privacyContent, termsContent, heroFacts, quickActions, facts, whyPoints, siteConfig]);
+    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, healthPackages, aboutContent, faqGroups, privacyContent, termsContent, heroFacts, quickActions, buildFacts(departments.length), buildFacts(undefined), whyPoints, siteConfig]);
     const offenders = text.filter((value) => BANNED_CLAIMS.test(value));
     expect(offenders).toEqual([]);
   });
@@ -64,7 +64,7 @@ describe("no fabricated claims", () => {
   });
 
   it("the facts band and hero cards state no numbers except the department count and opening hours", () => {
-    const numbers = [...facts, ...heroFacts].flatMap((fact) => ("value" in fact ? [fact.value, fact.label] : [fact.label]));
+    const numbers = [...buildFacts(departments.length), ...heroFacts].flatMap((fact) => ("value" in fact ? [fact.value, fact.label] : [fact.label]));
     const withDigits = numbers.filter((text) => /\d/.test(text));
     // "7" (departments) and the hours ("9 AM – 9 PM PKT") are the only digits allowed.
     expect(withDigits.sort()).toEqual(["7", "9 AM – 9 PM PKT", "Open Mon–Sat, 9 AM – 9 PM PKT"].sort());

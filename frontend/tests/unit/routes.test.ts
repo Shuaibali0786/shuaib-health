@@ -1,10 +1,11 @@
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
+import { fixtureCatalog } from "../fixtures/catalog";
+import { departments } from "../fixtures/catalog/departments";
+import { doctors } from "../fixtures/catalog/doctors";
 import { healthTips } from "@/data/healthTips";
-import { labTests } from "@/data/labTests";
+import { labTests } from "../fixtures/catalog/labTests";
 import { quickActions } from "@/data/homeContent";
 import { footerQuickLinks, legalLinks, primaryNav } from "@/data/navigation";
 import { isKnownPath, knownPaths } from "@/lib/pages";
@@ -25,7 +26,7 @@ function pageRoutes(dir = APP, prefix = ""): string[] {
 
 describe("known paths", () => {
   it("has unique paths that start with / and have no trailing slash", () => {
-    const all = knownPaths();
+    const all = knownPaths(fixtureCatalog);
     expect(new Set(all).size).toBe(all.length);
     for (const path of all) {
       expect(path.startsWith("/")).toBe(true);
@@ -38,19 +39,19 @@ describe("known paths", () => {
   });
 
   it("knows real pages and rejects anything else", () => {
-    expect(isKnownPath("/")).toBe(true);
-    expect(isKnownPath("/doctors")).toBe(true);
-    expect(isKnownPath("/doctors/")).toBe(true);
-    expect(isKnownPath("/faq#home-sample-collection")).toBe(true);
-    expect(isKnownPath("/doctors/dr-imran-qureshi")).toBe(true);
-    expect(isKnownPath("/lab-tests/esr")).toBe(true);
-    expect(isKnownPath("/no-such-page")).toBe(false);
-    expect(isKnownPath("/doctors/not-a-doctor")).toBe(false);
-    expect(isKnownPath("/home-sample-collection")).toBe(false);
+    expect(isKnownPath("/", fixtureCatalog)).toBe(true);
+    expect(isKnownPath("/doctors", fixtureCatalog)).toBe(true);
+    expect(isKnownPath("/doctors/", fixtureCatalog)).toBe(true);
+    expect(isKnownPath("/faq#home-sample-collection", fixtureCatalog)).toBe(true);
+    expect(isKnownPath("/doctors/dr-imran-qureshi", fixtureCatalog)).toBe(true);
+    expect(isKnownPath("/lab-tests/esr", fixtureCatalog)).toBe(true);
+    expect(isKnownPath("/no-such-page", fixtureCatalog)).toBe(false);
+    expect(isKnownPath("/doctors/not-a-doctor", fixtureCatalog)).toBe(false);
+    expect(isKnownPath("/home-sample-collection", fixtureCatalog)).toBe(false);
   });
 
   it("lists every page.tsx route in the manifest", () => {
-    const known = knownPaths();
+    const known = knownPaths(fixtureCatalog);
     for (const route of pageRoutes()) expect(known, route).toContain(route);
   });
 });
@@ -69,6 +70,6 @@ describe("no dead links (FR-024)", () => {
   ];
 
   it.each(hrefs)("%s resolves", (_name, href) => {
-    expect(isKnownPath(href)).toBe(true);
+    expect(isKnownPath(href, fixtureCatalog)).toBe(true);
   });
 });

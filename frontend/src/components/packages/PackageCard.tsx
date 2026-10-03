@@ -10,7 +10,8 @@ import type { HealthPackage } from "@/types/content";
 
 interface PackageCardProps {
   pkg: HealthPackage;
-  summary: PackageSummary;
+  /** `null` when the lab test catalog is unavailable: the test names and the sums are left out. */
+  summary: PackageSummary | null;
 }
 
 /**
@@ -32,25 +33,33 @@ export function PackageCard({ pkg, summary }: PackageCardProps) {
         </div>
       </div>
 
-      <h3 className="mt-6 text-base font-bold text-navy-900">Included tests ({summary.tests.length})</h3>
-      <ul className="mt-2 flex flex-col gap-1">
-        {summary.tests.map((test) => (
-          <li key={test.slug}>
-            <Link
-              href={labTestPath(test.slug)}
-              className="inline-flex min-h-6 items-center text-base font-medium text-teal-700 underline underline-offset-2"
-            >
-              {test.name}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {summary ? (
+        <>
+          <h3 className="mt-6 text-base font-bold text-navy-900">Included tests ({summary.tests.length})</h3>
+          <ul className="mt-2 flex flex-col gap-1">
+            {summary.tests.map((test) => (
+              <li key={test.slug}>
+                <Link
+                  href={labTestPath(test.slug)}
+                  className="inline-flex min-h-6 items-center text-base font-medium text-teal-700 underline underline-offset-2"
+                >
+                  {test.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
 
       <dl className="mt-6 grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-2 border-t border-border pt-4 text-base">
-        <dt className="text-muted">Sum of individual tests</dt>
-        <dd className="text-right font-semibold text-navy-900">{formatPkr(summary.sumPkr)}</dd>
-        <dt className="text-muted">Difference</dt>
-        <dd className="text-right font-semibold text-navy-900">{formatPkr(summary.savingPkr)}</dd>
+        {summary ? (
+          <>
+            <dt className="text-muted">Sum of individual tests</dt>
+            <dd className="text-right font-semibold text-navy-900">{formatPkr(summary.sumPkr)}</dd>
+            <dt className="text-muted">Difference</dt>
+            <dd className="text-right font-semibold text-navy-900">{formatPkr(summary.savingPkr)}</dd>
+          </>
+        ) : null}
         <dt className="mt-2 rounded-l-control bg-teal-50 px-3 py-3 text-base font-semibold text-navy-900">Package price</dt>
         <dd className="mt-2 rounded-r-control bg-teal-50 px-3 py-2 text-right text-2xl font-bold text-navy-900">
           {formatPkr(pkg.packagePricePkr)}

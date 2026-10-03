@@ -1,13 +1,15 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
-import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
-import { labTestCategories, labTests } from "@/data/labTests";
-import { siteConfig } from "@/data/siteConfig";
+import { describe, expect, it, vi } from "vitest";
+import { departments } from "../fixtures/catalog/departments";
+import { doctors } from "../fixtures/catalog/doctors";
+import { labTestCategories, labTests } from "../fixtures/catalog/labTests";
+import { siteConfig } from "../fixtures/catalog/siteConfig";
 import { availableDays } from "@/lib/schedule";
 import { getDoctorsByDepartment, getLabTestBySlug, getLabTestCategories, getLabTests, getLabTestsBySlugs } from "@/lib/content";
 import { BANNED_CLAIMS, BRAND_WORDS, stringValues } from "./helpers/forbidden";
+
+vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
 
 const unique = (values: unknown[]) => new Set(values).size === values.length;
 const toMinutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));

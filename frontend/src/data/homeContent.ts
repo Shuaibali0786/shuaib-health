@@ -1,6 +1,5 @@
 import { formatOpeningHours, formatOpeningHoursParts } from "@/lib/format";
 import type { Fact, HeroFact, ImageAsset, QuickAction, WhyPoint } from "@/types/content";
-import { departments } from "./departments";
 import { siteConfig } from "./siteConfig";
 
 /**
@@ -72,9 +71,20 @@ export const quickActions: QuickAction[] = [
   },
 ];
 
-/** The honest facts band (FR-014): exactly four facts that are true within the demo. */
-export const facts: Fact[] = [
-  { id: "departments", value: String(departments.length), label: "Departments" },
+/**
+ * The honest facts band (FR-014): exactly four facts that are true within the demo. The department
+ * count comes from the catalog API; while it is unavailable a fact that needs no data stands in.
+ */
+export function buildFacts(departmentCount: number | undefined): Fact[] {
+  return [
+    departmentCount === undefined
+      ? { id: "clinic-and-lab", value: "Clinic + lab", label: "Under one roof" }
+      : { id: "departments", value: String(departmentCount), label: "Departments" },
+    ...staticFacts,
+  ];
+}
+
+const staticFacts: Fact[] = [
   { id: "reports", value: "Online", label: "Lab reports" },
   { id: "hours", value: hoursParts.days, label: hoursParts.times },
   { id: "same-day", value: "Same day", label: "Reports for common tests" },

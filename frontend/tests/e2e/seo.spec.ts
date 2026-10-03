@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { getPageManifest } from "../../src/lib/pages";
+import { fixtureCatalog } from "../fixtures/catalog";
 
-const manifest = getPageManifest();
+const manifest = getPageManifest(fixtureCatalog);
 
 test.describe("seo", () => {
   test("sitemap.xml lists every manifest page except booking", async ({ request }) => {

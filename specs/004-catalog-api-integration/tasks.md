@@ -146,18 +146,18 @@ Each server builds into its own `NEXT_DIST_DIR`, so builds never collide.
 
 ### Tests for US1 (write first; they must fail)
 
-- [ ] T030 [P] [US1] Rewrite `tests/unit/data.test.ts`, `tests/unit/public-data.test.ts`, `tests/unit/filters.test.ts`, `tests/unit/format.test.ts`, `tests/unit/packages.test.ts`, `tests/unit/images.test.ts`, `tests/unit/routes.test.ts`, `tests/unit/pages.test.ts`, `tests/unit/doctor-browser.test.tsx`, `tests/unit/lab-test-browser.test.tsx` and `tests/unit/home-sections.test.tsx` to import sample data from `tests/fixtures/catalog/*` instead of `@/data/*`. Do not change any assertions; only imports and any random-ID equality setup.
-- [ ] T031 [P] [US1] Create `tests/unit/content-api.test.ts`: mock `@/lib/api/cached` with the fixtures and test each `src/lib/content.ts` accessor in data-model §6. Cover sort orders, the featured clamp 3–4, `getLabTestsBySlugs` order with unknown slugs skipped, and `getPackagesIncludingTest`. The `load*` variants return `{ok:false}` when the cached loader throws, and `get*` helpers return `[]`/`undefined` in that case. Dangling references (spec edge case, U1):
+- [X] T030 [P] [US1] Rewrite `tests/unit/data.test.ts`, `tests/unit/public-data.test.ts`, `tests/unit/filters.test.ts`, `tests/unit/format.test.ts`, `tests/unit/packages.test.ts`, `tests/unit/images.test.ts`, `tests/unit/routes.test.ts`, `tests/unit/pages.test.ts`, `tests/unit/doctor-browser.test.tsx`, `tests/unit/lab-test-browser.test.tsx` and `tests/unit/home-sections.test.tsx` to import sample data from `tests/fixtures/catalog/*` instead of `@/data/*`. Do not change any assertions; only imports and any random-ID equality setup.
+- [X] T031 [P] [US1] Create `tests/unit/content-api.test.ts`: mock `@/lib/api/cached` with the fixtures and test each `src/lib/content.ts` accessor in data-model §6. Cover sort orders, the featured clamp 3–4, `getLabTestsBySlugs` order with unknown slugs skipped, and `getPackagesIncludingTest`. The `load*` variants return `{ok:false}` when the cached loader throws, and `get*` helpers return `[]`/`undefined` in that case. Dangling references (spec edge case, U1):
   - a doctor whose `departmentId` matches no department in the list is still listed, with no department label or link, and does not crash `getDoctorsByDepartment`;
   - a package whose test slugs include one missing from the lab-test list renders the other tests, skips the missing one silently and shows no empty entry.
-- [ ] T032 [P] [US1] Update the e2e specs that import data (`tests/e2e/helpers.ts`, `about.spec.ts`, `contact-faq.spec.ts`, `health-packages.spec.ts`, `health-tips.spec.ts`, `lab-tests.spec.ts`, `legal.spec.ts`) to import from `tests/fixtures/catalog/*`.
-- [ ] T033 [P] [US1] Create `tests/e2e/stateful/new-record.spec.ts` (stateful config; mode `extra` from T026 appends doctor `dr-test-new` in the first department):
+- [X] T032 [P] [US1] Update the e2e specs that import data (`tests/e2e/helpers.ts`, `about.spec.ts`, `contact-faq.spec.ts`, `health-packages.spec.ts`, `health-tips.spec.ts`, `lab-tests.spec.ts`, `legal.spec.ts`) to import from `tests/fixtures/catalog/*`.
+- [X] T033 [P] [US1] Create `tests/e2e/stateful/new-record.spec.ts` (stateful config; mode `extra` from T026 appends doctor `dr-test-new` in the first department):
   - open `/doctors` in `ok` mode;
   - `setMode("extra")` and wait 4 s;
   - `expect.poll` for up to 10 s that `/doctors/dr-test-new` returns 200 with the name visible, and that `/doctors` lists it;
   - `__log` shows a `doctors` request after the switch;
   - `/doctors/does-not-exist` returns 404.
-- [ ] T083 [P] [US1] Create `tests/e2e/stateful/rename.spec.ts` (U2, US1 scenario 2; mode `rename` from T026 changes the first featured doctor's `fullName` to "Dr Renamed Test"):
+- [X] T083 [P] [US1] Create `tests/e2e/stateful/rename.spec.ts` (U2, US1 scenario 2; mode `rename` from T026 changes the first featured doctor's `fullName` to "Dr Renamed Test"):
   - in `ok` mode, open `/`, `/doctors`, `/doctors/<slug>` and `/departments/<that doctor's department>`, and read the old name;
   - `setMode("rename")` and wait 4 s;
   - `expect.poll` for up to 10 s that every one of those pages shows "Dr Renamed Test" and none shows the old name;
@@ -165,20 +165,20 @@ Each server builds into its own `NEXT_DIST_DIR`, so builds never collide.
 
 ### Implementation for US1
 
-- [ ] T034 [US1] Rewrite `src/lib/content.ts` catalog accessors to read from `@/lib/api/cached` via `load` (keep the same exported names and semantics; add `loadDepartments`, `loadDoctors`, `loadLabTestCategories`, `loadLabTests`, `loadHealthPackages` returning `Loaded<T>`). Keep editorial accessors (tips, about, FAQ, legal) reading `src/data/*` unchanged. Keep the file header comment updated (remove the "Phase 2 will…" note). Make T031 pass.
-- [ ] T035 [US1] `src/app/doctors/page.tsx` + `src/components/doctors/*` server parents: use `Promise.all([loadDoctors(), loadDepartments()])`; on `!ok`, render `DataUnavailable` in the list section only (heading/intro/page header unchanged). Add `export const revalidate = 300`.
-- [ ] T036 [US1] `src/app/doctors/[slug]/page.tsx`: `dynamicParams = true`, `revalidate = 300`. `generateStaticParams` uses `getDoctors()` (returns `[]` when unavailable). The page uses `loadDoctors()`: `!ok` → `DataUnavailable` inside the normal page shell (never `notFound()`); `ok` but slug missing → `notFound()`. Update `generateMetadata` the same way (unavailable → generic title, not 404).
-- [ ] T037 [P] [US1] `src/app/doctors/[slug]/opengraph-image.tsx`: import from `@/lib/content` instead of `@/data/doctors`; `generateStaticParams` returns `[]` when unavailable; unknown or unavailable → the generic site OG image from `src/lib/og.tsx` (never throw).
-- [ ] T038 [US1] `src/app/departments/page.tsx` and `src/app/departments/[slug]/page.tsx` (+ `src/components/departments/DepartmentSections.tsx` parent data): same pattern as T035/T036, with `Promise.all` for department + doctors-by-department + related lab tests. A department page shows its sections even if a related resource is unavailable (that section gets `DataUnavailable`).
-- [ ] T039 [P] [US1] `src/app/departments/[slug]/opengraph-image.tsx`: same as T037.
-- [ ] T040 [US1] `src/app/lab-tests/page.tsx` (+ `LabTestBrowser` parent): `Promise.all([loadLabTests(), loadLabTestCategories()])`; `!ok` → `DataUnavailable` in place of the browser; `revalidate = 300`.
-- [ ] T041 [US1] `src/app/lab-tests/[slug]/page.tsx`: same pattern as T036; related departments and "included in packages" sections each degrade independently.
-- [ ] T042 [P] [US1] `src/app/lab-tests/[slug]/opengraph-image.tsx`: same as T037.
-- [ ] T043 [US1] `src/app/health-packages/page.tsx`: `Promise.all([loadHealthPackages(), loadLabTests()])`; `!ok` packages → `DataUnavailable`; tests unavailable → packages render with the test names hidden (no crash); `revalidate = 300`.
-- [ ] T044 [US1] Home `src/app/page.tsx` and `src/components/home/DepartmentGrid.tsx`, `FeaturedDoctors.tsx`: load in parallel at the page level (no component-level sequential awaits); each section shows `DataUnavailable` independently; `revalidate = 300`. Do not change the hero/facts/why/tips editorial sections.
-- [ ] T045 [US1] `src/app/sitemap.ts` and `src/lib/pages.ts`: catalog URLs come from `get*` helpers (unavailable → the static and editorial URLs only; never throw); add `export const revalidate = 300` to the sitemap.
-- [ ] T046 [US1] Find every remaining import: `rg "@/data/(departments|doctors|labTests|healthPackages)" src` must return nothing. Fix any stragglers by moving them to `@/lib/content`.
-- [ ] T047 [US1] Delete the shims `src/data/departments.ts`, `src/data/doctors.ts`, `src/data/labTests.ts`, `src/data/healthPackages.ts`. Run `npm run typecheck`.
+- [X] T034 [US1] Rewrite `src/lib/content.ts` catalog accessors to read from `@/lib/api/cached` via `load` (keep the same exported names and semantics; add `loadDepartments`, `loadDoctors`, `loadLabTestCategories`, `loadLabTests`, `loadHealthPackages` returning `Loaded<T>`). Keep editorial accessors (tips, about, FAQ, legal) reading `src/data/*` unchanged. Keep the file header comment updated (remove the "Phase 2 will…" note). Make T031 pass.
+- [X] T035 [US1] `src/app/doctors/page.tsx` + `src/components/doctors/*` server parents: use `Promise.all([loadDoctors(), loadDepartments()])`; on `!ok`, render `DataUnavailable` in the list section only (heading/intro/page header unchanged). Add `export const revalidate = 300`.
+- [X] T036 [US1] `src/app/doctors/[slug]/page.tsx`: `dynamicParams = true`, `revalidate = 300`. `generateStaticParams` uses `getDoctors()` (returns `[]` when unavailable). The page uses `loadDoctors()`: `!ok` → `DataUnavailable` inside the normal page shell (never `notFound()`); `ok` but slug missing → `notFound()`. Update `generateMetadata` the same way (unavailable → generic title, not 404).
+- [X] T037 [P] [US1] `src/app/doctors/[slug]/opengraph-image.tsx`: import from `@/lib/content` instead of `@/data/doctors`; `generateStaticParams` returns `[]` when unavailable; unknown or unavailable → the generic site OG image from `src/lib/og.tsx` (never throw).
+- [X] T038 [US1] `src/app/departments/page.tsx` and `src/app/departments/[slug]/page.tsx` (+ `src/components/departments/DepartmentSections.tsx` parent data): same pattern as T035/T036, with `Promise.all` for department + doctors-by-department + related lab tests. A department page shows its sections even if a related resource is unavailable (that section gets `DataUnavailable`).
+- [X] T039 [P] [US1] `src/app/departments/[slug]/opengraph-image.tsx`: same as T037.
+- [X] T040 [US1] `src/app/lab-tests/page.tsx` (+ `LabTestBrowser` parent): `Promise.all([loadLabTests(), loadLabTestCategories()])`; `!ok` → `DataUnavailable` in place of the browser; `revalidate = 300`.
+- [X] T041 [US1] `src/app/lab-tests/[slug]/page.tsx`: same pattern as T036; related departments and "included in packages" sections each degrade independently.
+- [X] T042 [P] [US1] `src/app/lab-tests/[slug]/opengraph-image.tsx`: same as T037.
+- [X] T043 [US1] `src/app/health-packages/page.tsx`: `Promise.all([loadHealthPackages(), loadLabTests()])`; `!ok` packages → `DataUnavailable`; tests unavailable → packages render with the test names hidden (no crash); `revalidate = 300`.
+- [X] T044 [US1] Home `src/app/page.tsx` and `src/components/home/DepartmentGrid.tsx`, `FeaturedDoctors.tsx`: load in parallel at the page level (no component-level sequential awaits); each section shows `DataUnavailable` independently; `revalidate = 300`. Do not change the hero/facts/why/tips editorial sections.
+- [X] T045 [US1] `src/app/sitemap.ts` and `src/lib/pages.ts`: catalog URLs come from `get*` helpers (unavailable → the static and editorial URLs only; never throw); add `export const revalidate = 300` to the sitemap.
+- [X] T046 [US1] Find every remaining import: `rg "@/data/(departments|doctors|labTests|healthPackages)" src` must return nothing. Fix any stragglers by moving them to `@/lib/content`.
+- [X] T047 [US1] Delete the shims `src/data/departments.ts`, `src/data/doctors.ts`, `src/data/labTests.ts`, `src/data/healthPackages.ts`. Run `npm run typecheck`.
 
 **CHECKPOINT 3 (US1)**: `npm run typecheck && npm run lint && npm test && npm run test:e2e && npm run test:e2e:stateful` all pass, including `visual-baseline.spec.ts` with **zero** screenshot diffs (siteConfig still served by its shim), and the stateful `cache-guard`, `new-record` and `rename` specs. The build output shows catalog routes as static/ISR (`○`/`●` with revalidate 5m), not dynamic `ƒ`; paste the route table into `results.md`.
 

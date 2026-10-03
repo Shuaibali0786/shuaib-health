@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
+import { describe, expect, it, vi } from "vitest";
+import { departments } from "../fixtures/catalog/departments";
+import { doctors } from "../fixtures/catalog/doctors";
 import { healthTips } from "@/data/healthTips";
-import { labTests } from "@/data/labTests";
-import { facts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
+import { labTests } from "../fixtures/catalog/labTests";
+import { buildFacts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
 import { footerQuickLinks, legalLinks, primaryNav } from "@/data/navigation";
-import { siteConfig } from "@/data/siteConfig";
+import { siteConfig } from "../fixtures/catalog/siteConfig";
 import { countWords } from "@/lib/readingTime";
 import { BANNED_CLAIMS, BRAND_WORDS, stringValues } from "./helpers/forbidden";
 import {
@@ -17,6 +17,8 @@ import {
   getLatestHealthTips,
   getSiteConfig,
 } from "@/lib/content";
+
+vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const unique = (values: unknown[]) => new Set(values).size === values.length;
@@ -206,7 +208,8 @@ describe("home page copy and navigation", () => {
       "Health Packages",
       "Home Sample Collection",
     ]);
-    expect(facts).toHaveLength(4);
+    expect(buildFacts(departments.length)).toHaveLength(4);
+    expect(buildFacts(undefined)).toHaveLength(4);
     expect(whyPoints.length).toBeGreaterThanOrEqual(4);
     expect(whyPoints.length).toBeLessThanOrEqual(5);
   });

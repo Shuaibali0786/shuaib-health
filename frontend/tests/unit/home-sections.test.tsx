@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { CtaBand } from "@/components/home/CtaBand";
 import { DepartmentCard } from "@/components/home/DepartmentCard";
 import { DepartmentGrid } from "@/components/home/DepartmentGrid";
@@ -11,11 +11,13 @@ import { HealthTips } from "@/components/home/HealthTips";
 import { QuickActions } from "@/components/home/QuickActions";
 import { TipCard } from "@/components/home/TipCard";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
-import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
+import { departments } from "../fixtures/catalog/departments";
+import { doctors } from "../fixtures/catalog/doctors";
 import { healthTips } from "@/data/healthTips";
-import { facts } from "@/data/homeContent";
-import { siteConfig } from "@/data/siteConfig";
+import { buildFacts } from "@/data/homeContent";
+import { siteConfig } from "../fixtures/catalog/siteConfig";
+
+vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
 
 const BANNED = /rating|review|testimonial|award|certified|accredited|patients served|years of experience|best |leading/i;
 
@@ -70,9 +72,9 @@ describe("DepartmentCard and DepartmentGrid", () => {
 
 describe("FactsBand", () => {
   it("shows exactly the four honest facts and no fabricated claims", () => {
-    const { container } = render(<FactsBand />);
+    const { container } = render(<FactsBand departmentCount={departments.length} />);
     expect(screen.getAllByRole("listitem")).toHaveLength(4);
-    expect(facts.map((fact) => fact.value)).toEqual(["7", "Online", "Mon–Sat", "Same day"]);
+    expect(buildFacts(departments.length).map((fact) => fact.value)).toEqual(["7", "Online", "Mon–Sat", "Same day"]);
     expect(container.textContent).not.toMatch(BANNED);
     expect(container.textContent).not.toMatch(/\d[\d,]*\+?\s*(patients|doctors|years)/i);
   });

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { healthPackages } from "../../src/data/healthPackages";
+import { healthPackages } from "../fixtures/catalog/healthPackages";
 import { NOTICE } from "./helpers";
 
 const cards = (page: Page) => page.getByRole("article");

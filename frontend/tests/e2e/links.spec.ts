@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { getPageManifest } from "../../src/lib/pages";
+import { fixtureCatalog } from "../fixtures/catalog";
 import { ALL_PATHS, NOTICE } from "./helpers";
 
 /** The links of the primary navigation that are currently on screen (menu opened first on phones). */
@@ -34,7 +35,7 @@ test.describe("links", () => {
     page,
     request,
   }) => {
-    expect(ALL_PATHS.length).toBe(getPageManifest().length);
+    expect(ALL_PATHS.length).toBe(getPageManifest(fixtureCatalog).length);
     const checked = new Set<string>();
     const topLevel = ALL_PATHS.filter((path) => path.split("/").length <= 2);
     for (const path of topLevel) {

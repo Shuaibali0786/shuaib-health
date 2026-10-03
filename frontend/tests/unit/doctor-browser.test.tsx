@@ -2,8 +2,8 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DoctorBrowser, DoctorBrowserFallback } from "@/components/doctors/DoctorBrowser";
-import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
+import { departments } from "../fixtures/catalog/departments";
+import { doctors } from "../fixtures/catalog/doctors";
 
 let search = "";
 vi.mock("next/navigation", () => ({

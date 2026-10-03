@@ -6,34 +6,51 @@ import { ScheduleTable } from "@/components/doctors/ScheduleTable";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { IllustrativeNote } from "@/components/ui/IllustrativeNote";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { doctors } from "@/data/doctors";
-import { getDepartments, getDoctorBySlug } from "@/lib/content";
+import { getDoctors, loadDepartments, loadDoctors } from "@/lib/content";
 import { formatPkr } from "@/lib/format";
-import { getManifestEntry } from "@/lib/pages";
+import { doctorEntry } from "@/lib/pages";
 import { departmentPath, doctorPath, ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
 
-/** Only the sample doctors exist; any other slug is the not-found page. */
-export const dynamicParams = false;
+export const revalidate = 300;
 
-export function generateStaticParams(): Array<{ slug: string }> {
-  return doctors.map((doctor) => ({ slug: doctor.slug }));
+/** Doctors added after the build render on first request; a slug not in the list is the not-found page. */
+export const dynamicParams = true;
+
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  return (await getDoctors()).map((doctor) => ({ slug: doctor.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/doctors/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  return pageMetadata(getManifestEntry(doctorPath(slug)));
+  const doctors = await loadDoctors();
+  const doctor = doctors.ok ? doctors.data.find((candidate) => candidate.slug === slug) : undefined;
+  // An outage or an unknown slug gets a generic title; the page itself decides between the
+  // friendly message and the not-found page.
+  return doctor ? pageMetadata(doctorEntry(doctor)) : { title: "Doctor profile", alternates: { canonical: doctorPath(slug) } };
 }
 
 export default async function DoctorProfilePage({ params }: PageProps<"/doctors/[slug]">) {
   const { slug } = await params;
-  const doctor = await getDoctorBySlug(slug);
+  const [doctors, departments] = await Promise.all([loadDoctors(), loadDepartments()]);
+  if (!doctors.ok) {
+    return (
+      <>
+        <PageHeader trail={[{ label: "Doctors", href: ROUTES.doctors }, { label: "Doctor profile" }]} title="Doctor profile" />
+        <Section tone="background" spacing="compact" aria-label="Doctor profile">
+          <DataUnavailable href={doctorPath(slug)} />
+        </Section>
+      </>
+    );
+  }
+  const doctor = doctors.data.find((candidate) => candidate.slug === slug);
   if (!doctor) notFound();
-  const department = (await getDepartments()).find((candidate) => candidate.id === doctor.departmentId);
+  const department = departments.ok ? departments.data.find((candidate) => candidate.id === doctor.departmentId) : undefined;
 
   return (
     <>

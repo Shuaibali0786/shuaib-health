@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { NOTICE } from "./helpers";
+import { departmentIdBySlug, NOTICE } from "./helpers";
 
 const cards = (page: Page) => page.getByRole("article");
 
@@ -39,7 +39,7 @@ test.describe("doctors list", () => {
     await expect(page.getByRole("status")).toContainText("Showing 2 of 9 doctors");
     await expect(page).toHaveURL(/\?department=pediatrics$/);
     await page.reload();
-    await expect(page.getByLabel("Department", { exact: true })).toHaveValue("dept-pediatrics");
+    await expect(page.getByLabel("Department", { exact: true })).toHaveValue(departmentIdBySlug("pediatrics"));
     await expect(cards(page)).toHaveCount(2);
   });
 
@@ -75,7 +75,7 @@ test.describe("doctors list", () => {
     await page.getByRole("link", { name: "View profile: Dr. Imran Qureshi" }).click();
     await expect(page).toHaveURL(/\/doctors\/dr-imran-qureshi$/);
     await page.goBack();
-    await expect(page.getByLabel("Department", { exact: true })).toHaveValue("dept-cardiology");
+    await expect(page.getByLabel("Department", { exact: true })).toHaveValue(departmentIdBySlug("cardiology"));
     await expect(cards(page)).toHaveCount(1);
   });
 

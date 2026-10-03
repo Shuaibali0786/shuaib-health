@@ -1,10 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { NoticeBar } from "@/components/layout/NoticeBar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SkipLink } from "@/components/layout/SkipLink";
-import { departments } from "@/data/departments";
+import { departments } from "../fixtures/catalog/departments";
 import { siteConfig } from "@/data/siteConfig";
+
+vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
 
 describe("NoticeBar", () => {
   it("shows the exact demo notice", async () => {
