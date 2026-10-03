@@ -83,8 +83,7 @@ def list_lab_tests(
     category: SlugQuery = None,
 ) -> Response:
     rows, total = repo.list_lab_tests(session, page, page_size, q, category)
-    departments = repo.related_department_ids(session, [require_id(r.id) for r in rows])
-    items = [to_schema(r, departments.get(require_id(r.id), [])) for r in rows]
+    items = [to_schema(row, department_ids) for row, department_ids in rows]
     body = schemas.Page[schemas.LabTest](items=items, total=total, page=page, page_size=page_size)
     return respond(request, body, settings.cache_max_age_seconds)
 
@@ -98,9 +97,8 @@ def list_lab_tests(
 def get_lab_test(
     request: Request, session: SessionDep, settings: SettingsDep, slug: SlugPath
 ) -> Response:
-    row = repo.get_lab_test(session, slug)
-    if row is None:
+    found = repo.get_lab_test(session, slug)
+    if found is None:
         raise NotFound("Lab test")
-    departments = repo.related_department_ids(session, [require_id(row.id)])
-    body = to_schema(row, departments.get(require_id(row.id), []))
-    return respond(request, body, settings.cache_max_age_seconds)
+    row, department_ids = found
+    return respond(request, to_schema(row, department_ids), settings.cache_max_age_seconds)

@@ -46,8 +46,7 @@ def list_departments(
     page_size: PageSizeParam = DEFAULT_PAGE_SIZE,
 ) -> Response:
     rows, total = repo.list_departments(session, page, page_size)
-    slugs = repo.related_test_slugs(session, [require_id(r.id) for r in rows])
-    items = [to_schema(r, slugs.get(require_id(r.id), []), settings.image_base_path) for r in rows]
+    items = [to_schema(row, slugs, settings.image_base_path) for row, slugs in rows]
     body = schemas.Page[schemas.Department](
         items=items, total=total, page=page, page_size=page_size
     )
@@ -63,9 +62,10 @@ def list_departments(
 def get_department(
     request: Request, session: SessionDep, settings: SettingsDep, slug: SlugPath
 ) -> Response:
-    row = repo.get_department(session, slug)
-    if row is None:
+    found = repo.get_department(session, slug)
+    if found is None:
         raise NotFound("Department")
-    slugs = repo.related_test_slugs(session, [require_id(row.id)])
-    body = to_schema(row, slugs.get(require_id(row.id), []), settings.image_base_path)
-    return respond(request, body, settings.cache_max_age_seconds)
+    row, slugs = found
+    return respond(
+        request, to_schema(row, slugs, settings.image_base_path), settings.cache_max_age_seconds
+    )

@@ -13,14 +13,18 @@ from app.repositories._common import require_id
 router = APIRouter(tags=["health packages"])
 
 
-def to_schema(row: m.HealthPackage, tests: list[m.LabTest]) -> schemas.HealthPackage:
+def _summaries(tests: list[repo.TestSummary]) -> list[schemas.LabTestSummary]:
+    return [schemas.LabTestSummary.model_validate(t) for t in tests]
+
+
+def to_schema(row: m.HealthPackage, tests: list[repo.TestSummary]) -> schemas.HealthPackage:
     return schemas.HealthPackage(
         id=require_id(row.id),
         slug=row.slug,
         name=row.name,
         icon_name=row.icon_name,
         who_for=row.who_for,
-        test_slugs=[t.slug for t in tests],
+        test_slugs=[t["slug"] for t in tests],
         package_price_pkr=row.package_price_pkr,
         preparation=row.preparation,
         home_collection=row.home_collection,
@@ -42,8 +46,7 @@ def list_packages(
     page_size: PageSizeParam = DEFAULT_PAGE_SIZE,
 ) -> Response:
     rows, total = repo.list_packages(session, page, page_size)
-    tests = repo.tests_for(session, [require_id(r.id) for r in rows])
-    items = [to_schema(r, tests.get(require_id(r.id), [])) for r in rows]
+    items = [to_schema(row, tests) for row, tests in rows]
     body = schemas.Page[schemas.HealthPackage](
         items=items, total=total, page=page, page_size=page_size
     )
@@ -59,20 +62,10 @@ def list_packages(
 def get_package(
     request: Request, session: SessionDep, settings: SettingsDep, slug: SlugPath
 ) -> Response:
-    row = repo.get_package(session, slug)
-    if row is None:
+    found = repo.get_package(session, slug)
+    if found is None:
         raise NotFound("Health package")
-    tests = repo.tests_for(session, [require_id(row.id)]).get(require_id(row.id), [])
-    summaries = [
-        schemas.LabTestSummary(
-            id=require_id(t.id),
-            slug=t.slug,
-            name=t.name,
-            price_pkr=t.price_pkr,
-            home_collection=t.home_collection,
-        )
-        for t in tests
-    ]
+    row, tests = found
     base = to_schema(row, tests)
-    body = schemas.HealthPackageDetail(**base.model_dump(), tests=summaries)
+    body = schemas.HealthPackageDetail(**base.model_dump(), tests=_summaries(tests))
     return respond(request, body, settings.cache_max_age_seconds)

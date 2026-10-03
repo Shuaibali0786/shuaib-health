@@ -1,19 +1,44 @@
 """Lab test and category queries (active rows only)."""
 
 import uuid
-from collections import defaultdict
 from collections.abc import Sequence
+from typing import Any
 
-from sqlalchemy import or_, text
+from sqlalchemy import ScalarSelect, func, or_, text
+from sqlalchemy.dialects.postgresql import aggregate_order_by
 from sqlmodel import Session, col, select
+from sqlmodel.sql.expression import Select
 
 from app import models as m
 from app.repositories._common import LIKE_ESCAPE, escape_like, paginate
+
+LabTestRow = tuple[m.LabTest, list[uuid.UUID]]
 
 _AKA_MATCH = text(
     "EXISTS (SELECT 1 FROM unnest(lab_test.also_known_as) AS aka "
     "WHERE aka ILIKE :aka_pattern ESCAPE '\\')"
 )
+
+
+def _related_department_ids() -> ScalarSelect[Any]:
+    """Ids of the test's active related departments, in link order."""
+    link = m.LabTestRelatedDepartment
+    return (
+        select(func.array_agg(aggregate_order_by(col(link.department_id), col(link.sort_order))))
+        .select_from(link)
+        .join(m.Department, col(m.Department.id) == col(link.department_id))
+        .where(col(link.lab_test_id) == col(m.LabTest.id), col(m.Department.is_active))
+        .correlate(m.LabTest)
+        .scalar_subquery()
+    )
+
+
+def _select_tests() -> Select[Any]:
+    return (
+        select(m.LabTest, _related_department_ids().label("related_department_ids"))
+        .join(m.LabTestCategory, col(m.LabTestCategory.id) == col(m.LabTest.category_id))
+        .where(col(m.LabTest.is_active))
+    )
 
 
 def list_categories(
@@ -22,17 +47,14 @@ def list_categories(
     stmt = select(m.LabTestCategory).order_by(
         col(m.LabTestCategory.sort_order), col(m.LabTestCategory.name), col(m.LabTestCategory.id)
     )
-    return paginate(session, stmt, page, page_size)
+    rows, total = paginate(session, stmt, page, page_size)
+    return [row[0] for row in rows], total
 
 
 def list_lab_tests(
     session: Session, page: int, page_size: int, q: str | None, category: str | None
-) -> tuple[Sequence[m.LabTest], int]:
-    stmt = (
-        select(m.LabTest)
-        .join(m.LabTestCategory, col(m.LabTestCategory.id) == col(m.LabTest.category_id))
-        .where(col(m.LabTest.is_active))
-    )
+) -> tuple[list[LabTestRow], int]:
+    stmt = _select_tests()
     if category is not None:
         stmt = stmt.where(col(m.LabTestCategory.slug) == category)
     if q is not None:
@@ -49,26 +71,10 @@ def list_lab_tests(
         col(m.LabTest.name),
         col(m.LabTest.id),
     )
-    return paginate(session, stmt, page, page_size)
+    rows, total = paginate(session, stmt, page, page_size)
+    return [(row[0], row[1] or []) for row in rows], total
 
 
-def get_lab_test(session: Session, slug: str) -> m.LabTest | None:
-    stmt = select(m.LabTest).where(col(m.LabTest.slug) == slug, col(m.LabTest.is_active))
-    return session.exec(stmt).first()
-
-
-def related_department_ids(
-    session: Session, test_ids: Sequence[uuid.UUID]
-) -> dict[uuid.UUID, list[uuid.UUID]]:
-    """Ids of active related departments per lab test, in link order (one query)."""
-    link = m.LabTestRelatedDepartment
-    stmt = (
-        select(col(link.lab_test_id), col(link.department_id))
-        .join(m.Department, col(m.Department.id) == col(link.department_id))
-        .where(col(link.lab_test_id).in_(test_ids), col(m.Department.is_active))
-        .order_by(col(link.lab_test_id), col(link.sort_order))
-    )
-    result: dict[uuid.UUID, list[uuid.UUID]] = defaultdict(list)
-    for test_id, department_id in session.exec(stmt):
-        result[test_id].append(department_id)
-    return result
+def get_lab_test(session: Session, slug: str) -> LabTestRow | None:
+    row = session.exec(_select_tests().where(col(m.LabTest.slug) == slug)).first()
+    return None if row is None else (row[0], row[1] or [])

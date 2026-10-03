@@ -18,4 +18,5 @@ def list_rules(session: Session, page: int, page_size: int) -> tuple[Sequence[m.
         .where(col(m.ClinicRule.is_active))
         .order_by(col(m.ClinicRule.sort_order), col(m.ClinicRule.id))
     )
-    return paginate(session, stmt, page, page_size)
+    rows, total = paginate(session, stmt, page, page_size)
+    return [row[0] for row in rows], total

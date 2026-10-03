@@ -1,6 +1,3 @@
-from datetime import time
-from typing import cast
-
 from fastapi import APIRouter, Request, Response
 
 from app import models as m
@@ -17,7 +14,6 @@ from app.params import (
     SearchParam,
     SlugPath,
     SlugQuery,
-    Weekday,
     WeekdayQuery,
 )
 from app.repositories import doctors as repo
@@ -27,24 +23,15 @@ from app.schemas import image_asset
 router = APIRouter(tags=["doctors"])
 
 
-def _hhmm(value: time) -> str:
-    return value.strftime("%H:%M")
-
-
-def _weekday(value: str) -> Weekday:
-    # The database CHECK constraint guarantees one of the seven values.
-    return cast(Weekday, value)
-
-
-def to_schema(
-    row: m.Doctor, sessions: list[m.DoctorWeeklySchedule], image_base: str
-) -> schemas.Doctor:
+def to_schema(row: m.Doctor, sessions: list[repo.SessionDict], image_base: str) -> schemas.Doctor:
     schedule = [
-        schemas.ScheduleSession(
-            day=_weekday(s.weekday),
-            start=_hhmm(s.start_time),
-            end=_hhmm(s.end_time),
-            slot_minutes=s.slot_minutes,
+        schemas.ScheduleSession.model_validate(
+            {
+                "day": s["weekday"],  # constrained to the seven weekdays by the database
+                "start": s["start"],
+                "end": s["end"],
+                "slotMinutes": s["slotMinutes"],
+            }
         )
         for s in sessions
     ]
@@ -85,10 +72,7 @@ def list_doctors(
     day: WeekdayQuery = None,
 ) -> Response:
     rows, total = repo.list_doctors(session, page, page_size, department, q, day)
-    schedules = repo.schedules_for(session, [require_id(r.id) for r in rows])
-    items = [
-        to_schema(r, schedules.get(require_id(r.id), []), settings.image_base_path) for r in rows
-    ]
+    items = [to_schema(row, sessions, settings.image_base_path) for row, sessions in rows]
     body = schemas.Page[schemas.Doctor](items=items, total=total, page=page, page_size=page_size)
     return respond(request, body, settings.cache_max_age_seconds)
 
@@ -102,9 +86,10 @@ def list_doctors(
 def get_doctor(
     request: Request, session: SessionDep, settings: SettingsDep, slug: SlugPath
 ) -> Response:
-    row = repo.get_doctor(session, slug)
-    if row is None:
+    found = repo.get_doctor(session, slug)
+    if found is None:
         raise NotFound("Doctor")
-    schedules = repo.schedules_for(session, [require_id(row.id)])
-    body = to_schema(row, schedules.get(require_id(row.id), []), settings.image_base_path)
-    return respond(request, body, settings.cache_max_age_seconds)
+    row, sessions = found
+    return respond(
+        request, to_schema(row, sessions, settings.image_base_path), settings.cache_max_age_seconds
+    )

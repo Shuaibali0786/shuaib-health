@@ -20,6 +20,7 @@ dev = [
     "pytest-cov>=7.1,<8",
     "ruff>=0.16,<0.17",
     "mypy>=2.4,<3",
+    "pyyaml>=6,<7",
 ]
 
 [tool.uv]
