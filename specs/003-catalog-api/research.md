@@ -118,3 +118,10 @@ Versions were checked against PyPI on 2026-10-03. Each item: Decision / Rational
 
 - **Decision**: `ruff check` (rules `E,F,I,B,UP,S,SIM,RUF,ASYNC`) and `ruff format --check`; `mypy --strict` on `app/` with the `pydantic.mypy` plugin. Commands exposed as documented `uv run ...` lines (Windows CMD-friendly, no Makefile).
 - **Alternatives**: pyright (also fine; mypy has the pydantic plugin and is what most FastAPI docs use).
+
+## R19. One database round trip per request (added during implementation)
+
+- **Finding**: the first implementation made three queries per list request (count, page, related rows). Measured on the dev database, each query cost about 88 ms of network round trip to Neon, so list endpoints had a p95 of 260-295 ms and missed the 200 ms target (SC-003); a one-query endpoint (`/clinic`) took 90 ms.
+- **Decision**: every catalog request makes exactly one query. `total` comes from a window `count(*) OVER()` added to the page query; related rows come from correlated aggregate subqueries in the same statement (`array_agg ... ORDER BY` for related test slugs, test slugs and department ids; `json_agg` for doctor sessions and package tests). Only a page past the end of the results runs a second `COUNT` query. This supersedes the separate `COUNT(*)` in R10.
+- **Result**: p95 is 93-105 ms for all ten endpoints (median 89-97 ms), which is the network round trip floor. Spikes up to about 200 ms were seen occasionally on a single endpoint; they are network noise, not query time.
+- **Alternatives**: connection keep-alive tuning (the pool already reuses connections); caching in the app (hides stale data and the ETag already covers repeat requests); a nearer Neon region (a deployment choice for later, and the only way to go below ~90 ms from this location).

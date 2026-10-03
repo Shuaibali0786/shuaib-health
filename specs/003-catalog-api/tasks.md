@@ -232,11 +232,26 @@ description: "Task list for Feature 003: backend foundation + read-only clinic c
 - [X] T066 [P] Contract diff test `backend/tests/unit/test_openapi_contract.py`: load `specs/003-catalog-api/contracts/openapi.yaml` (parse with `json`-compatible YAML subset loader: add `pyyaml` to the **dev** group only, justify in the PR) and the app's `app.openapi()`; assert the same set of `(path, method)` pairs under `/api/v1`, `/health`, `/ready`, and that each contract schema's `required` property names exist in the generated response schema (by alias). Fix code or contract until they agree
 - [X] T067 [P] Performance check `backend/tests/perf/test_latency.py` (`perf`, `db`): seed, warm up 5 requests, then 50 requests each to `/api/v1/departments`, `/doctors`, `/doctors?department=cardiology`, `/lab-tests`, `/lab-tests?q=test`, `/health-packages`, `/doctors/dr-hassan-mirza`; measure server time from the access-log `durationMs` (capture via a logging handler); assert p95 < 200 ms per endpoint and print a small table; run with `uv run pytest -m perf`
 - [X] T068 [P] Honesty test `backend/tests/api/test_honesty.py` (`db`): every item from every catalog list endpoint (all pages) has `isSample: true`; `/clinic` `isSample` true and `demoNotice` equals the constitution text
-- [ ] T069 Write `backend/README.md` from `specs/003-catalog-api/quickstart.md` (Windows CMD: install, configure, migrate, seed, run, test, regenerate seed data, troubleshooting: "app refuses to start" messages, Neon idle wake-up delay); add a short root `README.md` linking `backend/README.md`, the constitution and the specs folder (constitution Sync Impact Report follow-up)
-- [ ] T070 Run the full gate from `backend/`: `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy app`, `uv run pytest` (with `TEST_DATABASE_URL` set: 0 skipped DB tests), `uv run pytest -m perf`; from `frontend/`: `npm test`, `npm run lint`, `npm run typecheck`. Fix every failure
-- [ ] T071 Walk through every checkbox in `specs/003-catalog-api/quickstart.md` "Acceptance walk-through" against the dev DB with the server running (`uv run uvicorn app.main:app --port 8000 --no-access-log`) and record results in the PR description; run `git status` and `git diff --cached` to confirm no `.env`, no real URL and no `.venv` is staged
+- [X] T069 Write `backend/README.md` from `specs/003-catalog-api/quickstart.md` (Windows CMD: install, configure, migrate, seed, run, test, regenerate seed data, troubleshooting: "app refuses to start" messages, Neon idle wake-up delay); add a short root `README.md` linking `backend/README.md`, the constitution and the specs folder (constitution Sync Impact Report follow-up)
+- [X] T070 Run the full gate from `backend/`: `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy app`, `uv run pytest` (with `TEST_DATABASE_URL` set: 0 skipped DB tests), `uv run pytest -m perf`; from `frontend/`: `npm test`, `npm run lint`, `npm run typecheck`. Fix every failure
+- [X] T071 Walk through every checkbox in `specs/003-catalog-api/quickstart.md` "Acceptance walk-through" against the dev DB with the server running (`uv run uvicorn app.main:app --port 8000 --no-access-log`) and record results in the PR description; run `git status` and `git diff --cached` to confirm no `.env`, no real URL and no `.venv` is staged
 
 ---
+
+## Final result (2026-10-03)
+
+All 71 tasks done. **Backend**: `ruff check`, `ruff format --check`, `mypy --strict` clean; 181 tests passed, 0 skipped (database tests ran on the separate test database); `pytest -m perf` passed. **Frontend**: lint and typecheck clean, 475 tests passed (including the catalog parity test, which was also shown to fail when `catalog.json` is altered). **Quickstart walk-through** run against the real dev database with the server running: all 8 items pass (the 404 and 422 checks were re-verified with `curl` because the PowerShell test harness could not read error bodies). A scan of all 378 tracked files and the full git history found none of the real database passwords, hosts or users.
+
+Measured latency (server-side, dev database, p95): 93-105 ms for all ten endpoints.
+
+**Deviations recorded in Phases 3-8**:
+- T038-T041/T047-T048 (repositories): after measuring p95 of 260-295 ms on list endpoints, every request was cut to **one query** (window `count(*) OVER()` for the total, correlated `array_agg`/`json_agg` subqueries for related rows); see research R19. The helpers `related_test_slugs`, `schedules_for`, `related_department_ids` and `tests_for` no longer exist. `paginate` executes through SQLAlchemy's `Session.execute` because SQLModel's `exec` returns only the first column for single-entity statements.
+- T043/T049/T054: routers read settings through `app/deps.py` (`SettingsDep`), not `main.py`, to avoid a circular import. Response models are named as in the contract (`schemas.Department`, ...), and `app.models` is imported as `m`.
+- T054: malformed stored JSON raises `StoredDataInvalid` (generic 500, nothing echoed).
+- T061: Starlette adds `Access-Control-Expose-Headers` to responses for disallowed origins as well. Without `Access-Control-Allow-Origin` it grants nothing, so the test asserts no `Access-Control-Allow-*` headers. Failed preflights return Starlette's plain-text 400, not the JSON error format.
+- T063: the in-process test client (`httpx2`) logs its own request URL (with query string) through the root logger; the log-safety test excludes `httpx*` records because they are not server output.
+- T066: `openapi.yaml` had a YAML syntax error (a missing space after `DepartmentPage:`) that the new contract test found; fixed. `pyyaml` is a dev-only dependency.
+- T057: the frontend parity test stays in the default jsdom environment (the shared setup file needs `window`) and reads the JSON by plain path.
 
 ## Dependencies & Execution Order
 

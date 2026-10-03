@@ -88,11 +88,11 @@ npm test -- catalog-export
 
 ## Acceptance walk-through
 
-- [ ] `/health` 200; `/ready` 200 with DB up, 503 with a wrong password in `DATABASE_URL`
-- [ ] `/api/v1/departments` returns 7 items, `/doctors` 9, `/lab-tests?pageSize=100` 26, `/health-packages` 5, `/lab-test-categories` 9, `/clinic/rules` 5
-- [ ] `/api/v1/doctors/nope` → 404 `{ "error": { "code": "not_found", ... } }`
-- [ ] `/api/v1/doctors?pageSize=500` → 422 naming `pageSize`
-- [ ] Repeat `curl` with `-H "If-None-Match: <etag>"` → 304
-- [ ] 61 requests in a minute → 429 with `Retry-After`
-- [ ] Response headers include `X-Request-ID`, `X-Content-Type-Options`, `Content-Security-Policy`
-- [ ] Running the seed 3× leaves the same counts
+- [x] `/health` 200; `/ready` 200 with DB up, 503 with a wrong password in `DATABASE_URL`
+- [x] `/api/v1/departments` returns 7 items, `/doctors` 9, `/lab-tests?pageSize=100` 26, `/health-packages` 5, `/lab-test-categories` 9, `/clinic/rules` 5
+- [x] `/api/v1/doctors/nope` → 404 `{ "error": { "code": "not_found", ... } }`
+- [x] `/api/v1/doctors?pageSize=500` → 422 naming `pageSize`
+- [x] Repeat `curl` with `-H "If-None-Match: <etag>"` → 304
+- [x] 61 requests in a minute → 429 with `Retry-After`
+- [x] Response headers include `X-Request-ID`, `X-Content-Type-Options`, `Content-Security-Policy`
+- [x] Running the seed 3× leaves the same counts
