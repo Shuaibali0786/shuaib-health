@@ -18,3 +18,10 @@ npm run images:placeholders
 ```
 
 Feature specs, plan and quickstart live in `..\specs\001-brand-home-page\`. Project rules are in `..\.specify\memory\constitution.md`.
+
+## What changed in Feature 002 (public pages)
+
+- New routes: `/about`, `/doctors` (+ 9 profiles), `/departments` (+ 7), `/lab-tests` (+ all tests), `/health-packages`, `/health-tips` (+ articles), `/contact`, `/faq`, `/privacy`, `/terms`. `/book-appointment` stays a holding page. Unknown paths return the friendly 404.
+- Every page is listed in `src/lib/pages.ts` (the page manifest); metadata, the sitemap and the link and title tests all read it.
+- Optional `SITE_URL` sets the base for canonical links, Open Graph and the sitemap (default `http://localhost:3000`). Crawlers are still asked to stay out (`siteConfig.indexable` is false).
+- New dependencies: `react-hook-form`, `@hookform/resolvers` and `zod`, used only by the `/contact` form.

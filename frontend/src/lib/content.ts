@@ -1,8 +1,13 @@
+import { aboutContent } from "@/data/aboutContent";
 import { departments } from "@/data/departments";
 import { doctors } from "@/data/doctors";
+import { faqGroups } from "@/data/faq";
+import { legalContent } from "@/data/legalContent";
+import { healthPackages } from "@/data/healthPackages";
 import { healthTips } from "@/data/healthTips";
+import { labTestCategories, labTests } from "@/data/labTests";
 import { siteConfig } from "@/data/siteConfig";
-import type { Department, Doctor, HealthTip, SiteConfig } from "@/types/content";
+import type { AboutContent, LegalContent, Department, FaqGroup, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
 
 /**
  * The only place components read content from. Every accessor is async so a
@@ -43,4 +48,79 @@ export async function getLatestHealthTips(limit = 3): Promise<HealthTip[]> {
 
 export async function getHealthTipBySlug(slug: string): Promise<HealthTip | undefined> {
   return healthTips.find((tip) => tip.slug === slug);
+}
+
+/** All doctors, in data order. */
+export async function getDoctors(): Promise<Doctor[]> {
+  return [...doctors];
+}
+
+export async function getDoctorsByDepartment(departmentId: string): Promise<Doctor[]> {
+  return doctors.filter((doctor) => doctor.departmentId === departmentId);
+}
+
+/** The nine catalog categories, in display order. */
+export async function getLabTestCategories(): Promise<LabTestCategory[]> {
+  return [...labTestCategories];
+}
+
+/** All lab tests, in catalog order. */
+export async function getLabTests(): Promise<LabTest[]> {
+  return [...labTests];
+}
+
+export async function getLabTestBySlug(slug: string): Promise<LabTest | undefined> {
+  return labTests.find((test) => test.slug === slug);
+}
+
+/** The tests for the given slugs, in the order given. Unknown slugs are skipped. */
+export async function getLabTestsBySlugs(slugs: string[]): Promise<LabTest[]> {
+  return slugs.flatMap((slug) => labTests.filter((test) => test.slug === slug));
+}
+
+/** The five health packages, in display order. */
+export async function getHealthPackages(): Promise<HealthPackage[]> {
+  return [...healthPackages];
+}
+
+/** Packages that include the given lab test, in display order. Empty when none does. */
+export async function getPackagesIncludingTest(slug: string): Promise<HealthPackage[]> {
+  return healthPackages.filter((pkg) => pkg.testSlugs.includes(slug));
+}
+
+/** All health tips, newest first; ties break by id. */
+export async function getHealthTips(): Promise<HealthTip[]> {
+  return getLatestHealthTips(healthTips.length);
+}
+
+/** The distinct tip categories, in the order they first appear among the newest-first tips. */
+export async function getHealthTipCategories(): Promise<string[]> {
+  return [...new Set((await getHealthTips()).map((tip) => tip.category))];
+}
+
+/**
+ * Other articles to read next: same category first, then the rest, each group newest first.
+ * Never includes the article itself.
+ */
+export async function getRelatedTips(slug: string, limit = 3): Promise<HealthTip[]> {
+  const current = healthTips.find((tip) => tip.slug === slug);
+  const others = (await getHealthTips()).filter((tip) => tip.slug !== slug);
+  const sameCategory = others.filter((tip) => current && tip.category === current.category);
+  const rest = others.filter((tip) => !sameCategory.includes(tip));
+  return [...sameCategory, ...rest].slice(0, Math.max(0, Math.trunc(limit)));
+}
+
+/** The About page content. */
+export async function getAboutContent(): Promise<AboutContent> {
+  return aboutContent;
+}
+
+/** The five FAQ groups, in display order. */
+export async function getFaqGroups(): Promise<FaqGroup[]> {
+  return faqGroups;
+}
+
+/** The Privacy or Terms page content. */
+export async function getLegalContent(slug: LegalContent["slug"]): Promise<LegalContent> {
+  return legalContent[slug];
 }

@@ -44,6 +44,7 @@ export function ImageWithFallback({ image, sizes, priority = false, className }:
       // <link rel="preload"> tag with no href (the only unusual preload on the page).
       loading={priority ? "eager" : undefined}
       fetchPriority={priority ? "high" : undefined}
+      style={{ aspectRatio: `${image.width} / ${image.height}` }}
       className={cn("h-auto w-full", className)}
       onError={() => setFailed(true)}
       // An image that failed before hydration never fires onError; catch that case here.

@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { siteConfig } from "@/data/siteConfig";
+import { siteUrl } from "@/lib/seo";
 import { THEME_COLOR } from "./theme-color";
 import "./globals.css";
 
@@ -21,6 +22,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  // Base for canonical and Open Graph URLs; SITE_URL is optional (see .env.example).
+  metadataBase: new URL(siteUrl()),
   title: {
     default: siteConfig.fullTitle,
     template: `%s | ${siteConfig.name}`,

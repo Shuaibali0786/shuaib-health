@@ -67,7 +67,7 @@ export const quickActions: QuickAction[] = [
     id: "home-sample-collection",
     label: "Home Sample Collection",
     description: "Give a sample at home.",
-    href: "/home-sample-collection",
+    href: "/faq#home-sample-collection",
     iconName: "house",
   },
 ];

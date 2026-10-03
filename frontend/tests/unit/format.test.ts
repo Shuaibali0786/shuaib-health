@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { siteConfig } from "@/data/siteConfig";
-import { formatKarachiDate, formatOpeningHours, formatOpeningHoursParts, formatPkr } from "@/lib/format";
+import {
+  formatDayLong,
+  formatDayShort,
+  formatKarachiDate,
+  formatOpeningHours,
+  formatOpeningHoursParts,
+  formatPkr,
+  formatTime,
+  formatTimeRange,
+} from "@/lib/format";
 import type { OpeningHoursRule } from "@/types/content";
 
 describe("formatPkr", () => {
@@ -64,5 +73,26 @@ describe("formatOpeningHours", () => {
 
   it("rejects a malformed time", () => {
     expect(() => formatOpeningHours([{ days: ["mon"], opens: "25:00", closes: "26:00" }])).toThrow(RangeError);
+  });
+});
+
+describe("formatTime, formatTimeRange and day names", () => {
+  it("formats 24-hour times as 12-hour with AM and PM", () => {
+    expect(formatTime("09:00")).toBe("9 AM");
+    expect(formatTime("21:00")).toBe("9 PM");
+    expect(formatTime("12:00")).toBe("12 PM");
+    expect(formatTime("00:30")).toBe("12:30 AM");
+    expect(() => formatTime("25:00")).toThrow(RangeError);
+  });
+
+  it("formats a session as a time range", () => {
+    expect(formatTimeRange("09:00", "13:00")).toBe("9 AM – 1 PM");
+    expect(formatTimeRange("16:30", "20:00")).toBe("4:30 PM – 8 PM");
+  });
+
+  it("names weekdays in full and short form", () => {
+    expect(formatDayLong("mon")).toBe("Monday");
+    expect(formatDayLong("sat")).toBe("Saturday");
+    expect(formatDayShort("wed")).toBe("Wed");
   });
 });

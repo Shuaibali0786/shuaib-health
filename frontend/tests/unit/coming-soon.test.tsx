@@ -21,3 +21,20 @@ describe("ComingSoon", () => {
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
   });
 });
+
+describe("ComingSoon as the booking holding page", () => {
+  it("accepts a custom heading, message and a second link", () => {
+    render(
+      <ComingSoon
+        title="Book appointment"
+        heading="Booking coming soon"
+        message="Online booking is not available in this demo yet."
+        secondary={{ label: "Find a doctor", href: "/doctors" }}
+      />,
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Booking coming soon" })).toBeInTheDocument();
+    expect(screen.getByText("Online booking is not available in this demo yet.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Find a doctor" })).toHaveAttribute("href", "/doctors");
+    expect(screen.getByRole("link", { name: "Back to Home" })).toHaveAttribute("href", "/");
+  });
+});

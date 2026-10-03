@@ -15,6 +15,10 @@ export const siteConfig: SiteConfig = {
   address: ["Sample Road", "Karachi, Pakistan"],
   timeZone: "Asia/Karachi",
   openingHours: [{ days: ["mon", "tue", "wed", "thu", "fri", "sat"], opens: "09:00", closes: "21:00" }],
+  // Sample lab hours; sample collection ends when the lab closes.
+  labHours: [{ days: ["mon", "tue", "wed", "thu", "fri", "sat"], opens: "08:00", closes: "20:00" }],
+  // Bounding box of the general Karachi area shown on the Contact page map. No marker is placed.
+  mapArea: { bbox: [66.95, 24.78, 67.2, 24.96], label: "General area of Karachi" },
   credit: {
     text: "Designed & built by Shuaib Ali",
     href: "https://github.com/Shuaibali0786",

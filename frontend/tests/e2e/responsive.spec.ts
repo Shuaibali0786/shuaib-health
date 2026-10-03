@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { scrollThrough } from "./helpers";
+import { ALL_PATHS, scrollThrough } from "./helpers";
 
 // 640 px is a 1280 px window zoomed to 200%; 320 px is 400% zoom (WCAG 1.4.10 reflow).
 const WIDTHS = [320, 390, 640, 1280] as const;
@@ -104,4 +104,50 @@ test.describe("responsive layout: no horizontal scrolling", () => {
       .evaluateAll((items) => new Set(items.map((item) => Math.round(item.getBoundingClientRect().left))).size);
     expect(columns).toBe(4);
   });
+
+  test("the last row of departments is centred, on Home and on the Departments page", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    for (const path of ["/", "/departments"]) {
+      await page.goto(path);
+      const rows = await page.locator("section[aria-labelledby='departments-title'] ul > li, section[aria-label='Departments'] ul > li").evaluateAll((items) => {
+        const boxes = items.map((item) => item.getBoundingClientRect());
+        const list = items[0]!.parentElement!.getBoundingClientRect();
+        const lastTop = Math.max(...boxes.map((box) => Math.round(box.top)));
+        const last = boxes.filter((box) => Math.round(box.top) === lastTop);
+        return {
+          count: last.length,
+          leftGap: Math.min(...last.map((box) => box.left)) - list.left,
+          rightGap: list.right - Math.max(...last.map((box) => box.right)),
+        };
+      });
+      expect(rows.count, path).toBe(3);
+      expect(rows.leftGap, path).toBeGreaterThan(40);
+      expect(Math.abs(rows.leftGap - rows.rightGap), path).toBeLessThan(2);
+    }
+  });
+
+  test("Home's headline starts near the top of the hero photo, not in the middle of it", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    const offset = await page.evaluate(() => {
+      const heading = document.querySelector("#hero-title")!.previousElementSibling!.getBoundingClientRect();
+      const photo = document.querySelector("#hero-title")!.closest("section")!.querySelector("img")!.getBoundingClientRect();
+      return heading.top - photo.top;
+    });
+    expect(offset).toBeLessThan(110);
+  });
+});
+
+test.describe("responsive layout: every page fits at 320, 390 and 1280 px", () => {
+  for (const width of [320, 390, 1280] as const) {
+    for (const path of ALL_PATHS) {
+      test(`${path} at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 800 });
+        await page.goto(path);
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        expect(overflow, "page is not wider than the screen").toBeLessThanOrEqual(0);
+        expect(await elementsPastTheEdge(page)).toEqual([]);
+      });
+    }
+  }
 });

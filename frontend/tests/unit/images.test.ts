@@ -28,8 +28,8 @@ function filesUnder(dir: string): string[] {
 }
 
 describe("images referenced by the data files", () => {
-  it("covers all 17 expected images", () => {
-    expect(referenced).toHaveLength(17);
+  it("covers all 24 expected images", () => {
+    expect(referenced).toHaveLength(24);
   });
 
   it.each(referenced.map((entry) => [entry.owner, entry.image] as const))("%s: file exists and matches its declared size", async (_owner, image) => {
@@ -48,7 +48,7 @@ describe("images referenced by the data files", () => {
   });
 
   it("has no image file that nothing references", () => {
-    const used = new Set(referenced.map((entry) => join(PUBLIC, entry.image.src)));
+    const used = new Set(referenced.map((entry) => entry.image.src).map((src) => join(PUBLIC, src)));
     const unused = filesUnder(IMAGES)
       .filter((file) => !used.has(file))
       .map((file) => file.replace(PUBLIC, ""));

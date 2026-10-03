@@ -32,10 +32,10 @@ Every image file the pages expect, so real photos can be added later. All paths 
 | 7 | `images/departments/dermatology.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Doctor examining a skin image on a tablet beside a patient" |
 | 8 | `images/departments/dental.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Two dental staff reviewing an X-ray on a screen beside a dental chair" |
 | 9 | `images/departments/pathology-lab.jpg` | 800 × 600 | 4:3 | Department card | lazy | "Laboratory scientist in a blue gown using a microscope" |
-| 10 | `images/doctors/dr-ayesha-rahman.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Ayesha Rahman: a woman in a white coat taking a phone call and holding a notebook" |
-| 11 | `images/doctors/dr-imran-qureshi.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Imran Qureshi: a man in a white coat with a stethoscope" |
-| 12 | `images/doctors/dr-sana-farooqui.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Sana Farooqui: a smiling woman in a headscarf and dark scrubs holding a red book" |
-| 13 | `images/doctors/dr-hassan-mirza.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Sample doctor Dr. Hassan Mirza: a bearded man in glasses and a lavender coat with a stethoscope, arms crossed" |
+| 10 | `images/doctors/dr-ayesha-rahman.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Stock photo of a model presented as sample doctor Dr. Ayesha Rahman: a woman in a white coat taking a phone call and holding a notebook" |
+| 11 | `images/doctors/dr-imran-qureshi.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Stock photo of a model presented as sample doctor Dr. Imran Qureshi: a man in a white coat with a stethoscope" |
+| 12 | `images/doctors/dr-sana-farooqui.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Stock photo of a model presented as sample doctor Dr. Sana Farooqui: a woman in a white cap and white coat with a stethoscope, holding a red folder, against a light background" |
+| 13 | `images/doctors/dr-hassan-mirza.jpg` | 600 × 750 | 4:5 | Doctor card | lazy | "Stock photo of a model presented as sample doctor Dr. Hassan Mirza: a bearded man in glasses and a lavender coat with a stethoscope, arms crossed" |
 | 14 | `images/tips/staying-hydrated.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Water being poured from a glass jug into a drinking glass" |
 | 15 | `images/tips/healthy-sleep-habits.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Woman sleeping peacefully in a bed with light bedding" |
 | 16 | `images/tips/balanced-plate.jpg` | 800 × 500 | 16:10 | Health tip card | lazy | "Plate with avocado, boiled egg, tomatoes, walnuts and leafy greens" |
@@ -81,7 +81,9 @@ Fit settings used (run from `frontend\`, for example `npm run images -- fit "..\
 | pathology-lab | lab.jpg.jpg | 0.5,0.55 | 800 x 600, 49 KB |
 | dr-hassan-mirza | hassan.jpg.jpg | 0.49,0.5 | 600 x 750, 40 KB |
 | dr-imran-qureshi | imran.jpg.jpg | 0.5,0.5 | 600 x 750, 25 KB |
-| dr-sana-farooqui | sana.jpg.jpg | 0.5,0.5 | 600 x 750, 22 KB |
+| dr-sana-farooqui | sana.jpg.jpg | 0.5,0.4 | 600 x 750, 28 KB |
+| dr-bilal-ansari | dr-bilal-ansari.jpg.png | 0.52,0.5 (black borders trimmed first; the original is only 606 x 402 after trimming, so it is enlarged and slightly soft) | 600 x 750, 28 KB |
+| dr-omar-sheikh | dr-omar-sheikh.jpg.jpg | 0.5,0.4 | 600 x 750, 35 KB |
 | dr-ayesha-rahman | ayesha.jpg.jpg | 0.45,0.5 | 600 x 750, 36 KB |
 | staying-hydrated | water.jpg.jpg | 0.5,0.45 | 800 x 500, 22 KB |
 | healthy-sleep-habits | sleep.jpg.jpg | 0.53,0.5 | 800 x 500, 32 KB |
@@ -89,3 +91,5 @@ Fit settings used (run from `frontend\`, for example `npm run images -- fit "..\
 | daily-walk | walk.jpg.jpg | 0.5,0.64 | 800 x 500, 60 KB |
 
 Notes: the dermatology crop keeps the doctor's face and the tablet; the patient's face is mostly hidden behind the tablet in the original. The Dr. Ayesha Rahman original has almost no headroom, so her hair touches the top edge. The balanced-plate crop is tight on the plate rim. Alt text for all images now describes the real photos.
+
+Feature 002 adds 24 more images (doctors, departments, tips, About). They are listed in `specs/002-public-pages/quickstart.md` (Images table) and checked by `npm run images -- check`.
