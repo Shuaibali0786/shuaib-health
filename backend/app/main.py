@@ -14,7 +14,7 @@ from app.logging_config import configure_logging
 from app.middleware.access_log import AccessLogMiddleware
 from app.middleware.request_id import RequestIdMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
-from app.routers import departments, doctors, health
+from app.routers import departments, doctors, health, lab_tests, packages
 from app.settings import Settings, get_settings
 
 API_PREFIX = "/api/v1"
@@ -40,6 +40,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api = APIRouter(prefix=API_PREFIX)
     api.include_router(departments.router)
     api.include_router(doctors.router)
+    api.include_router(lab_tests.router)
+    api.include_router(packages.router)
     app.include_router(api)
 
     # add_middleware wraps the current stack, so the LAST one added is the OUTERMOST.

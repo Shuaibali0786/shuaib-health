@@ -92,3 +92,51 @@ class Doctor(CamelModel):
     schedule: list[ScheduleSession]
     is_featured: bool
     is_sample: bool
+
+
+class LabTestCategory(CamelModel):
+    id: UUID
+    slug: str
+    name: str
+    icon_name: str
+
+
+class LabTest(CamelModel):
+    id: UUID
+    slug: str
+    name: str
+    also_known_as: list[str]
+    category_id: UUID
+    price_pkr: int
+    sample_type: str
+    report_time: str
+    preparation: str
+    home_collection: bool
+    about: str
+    related_department_ids: list[UUID]
+    is_sample: bool
+
+
+class LabTestSummary(CamelModel):
+    id: UUID
+    slug: str
+    name: str
+    price_pkr: int
+    home_collection: bool
+
+
+class HealthPackage(CamelModel):
+    id: UUID
+    slug: str
+    name: str
+    icon_name: str
+    who_for: str
+    test_slugs: list[str]
+    package_price_pkr: int
+    preparation: str
+    home_collection: bool
+    is_sample: bool
+
+
+class HealthPackageDetail(HealthPackage):
+    tests: list[LabTestSummary]
