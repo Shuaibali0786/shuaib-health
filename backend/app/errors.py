@@ -1,0 +1,172 @@
+"""One JSON error format for every failure. Never returns stack traces, SQL or input values."""
+
+import logging
+from collections.abc import Mapping
+from typing import cast
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic.alias_generators import to_camel
+from sqlalchemy.exc import InterfaceError, OperationalError
+from sqlalchemy.exc import TimeoutError as PoolTimeoutError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
+
+from app.logging_config import request_id_var
+from app.schemas import ErrorDetail, ErrorInfo, ErrorResponse
+
+logger = logging.getLogger("app.errors")
+
+
+class NotFound(Exception):
+    def __init__(self, resource: str) -> None:
+        super().__init__(resource)
+        self.resource = resource
+
+
+class ClinicNotConfigured(Exception):
+    pass
+
+
+class StoredDataInvalid(Exception):
+    """Stored data does not match its schema. Becomes a generic 500; the data is never echoed."""
+
+
+class RateLimited(Exception):
+    def __init__(self, retry_after: int) -> None:
+        super().__init__(retry_after)
+        self.retry_after = retry_after
+
+
+_HTTP_CODES: dict[int, tuple[str, str]] = {
+    404: ("not_found", "Not found."),
+    405: ("method_not_allowed", "Method not allowed."),
+}
+
+
+def error_body(code: str, message: str, details: list[ErrorDetail] | None = None) -> bytes:
+    info = ErrorInfo(code=code, message=message, request_id=request_id_var.get(), details=details)
+    return ErrorResponse(error=info).model_dump_json(by_alias=True, exclude_none=True).encode()
+
+
+def error_response(
+    status: int,
+    code: str,
+    message: str,
+    details: list[ErrorDetail] | None = None,
+    headers: Mapping[str, str] | None = None,
+) -> JSONResponse:
+    response = JSONResponse(status_code=status, content=None, headers=dict(headers or {}))
+    response.body = error_body(code, message, details)
+    response.headers["Content-Length"] = str(len(response.body))
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+def _issue(error: Mapping[str, object]) -> str:
+    kind = str(error.get("type", ""))
+    ctx = error.get("ctx")
+    limits = ctx if isinstance(ctx, Mapping) else {}
+    messages = {
+        "missing": "is required",
+        "int_parsing": "must be a whole number",
+        "greater_than_equal": f"must be >= {limits.get('ge')}",
+        "less_than_equal": f"must be <= {limits.get('le')}",
+        "string_too_short": f"must be at least {limits.get('min_length')} characters",
+        "string_too_long": f"must be at most {limits.get('max_length')} characters",
+        "string_pattern_mismatch": "has an invalid format",
+        "literal_error": f"must be one of {limits.get('expected')}",
+        "enum": f"must be one of {limits.get('expected')}",
+    }
+    return messages.get(kind, "is invalid")
+
+
+def _field_name(loc: object) -> str:
+    if isinstance(loc, tuple | list) and loc:
+        return to_camel(str(loc[-1]))
+    return "request"
+
+
+async def _http_exception(_: Request, exc: Exception) -> JSONResponse:
+    http_exc = cast(StarletteHTTPException, exc)
+    code, message = _HTTP_CODES.get(http_exc.status_code, ("http_error", "Request failed."))
+    return error_response(http_exc.status_code, code, message, headers=http_exc.headers)
+
+
+async def _validation_error(_: Request, exc: Exception) -> JSONResponse:
+    errors = cast(RequestValidationError, exc).errors()
+    details = [
+        ErrorDetail(field=_field_name(error.get("loc")), issue=_issue(error)) for error in errors
+    ]
+    return error_response(422, "validation_error", "Some request parameters are invalid.", details)
+
+
+async def _not_found(_: Request, exc: Exception) -> JSONResponse:
+    resource = cast(NotFound, exc).resource
+    return error_response(404, "not_found", f"{resource} not found.")
+
+
+async def _not_configured(_: Request, __: Exception) -> JSONResponse:
+    return error_response(503, "not_configured", "The clinic has not been configured yet.")
+
+
+def rate_limited_response(retry_after: int) -> JSONResponse:
+    return error_response(
+        429,
+        "rate_limited",
+        "Too many requests. Please try again shortly.",
+        headers={"Retry-After": str(retry_after)},
+    )
+
+
+async def _rate_limited(_: Request, exc: Exception) -> JSONResponse:
+    return rate_limited_response(cast(RateLimited, exc).retry_after)
+
+
+async def _database_unavailable(_: Request, exc: Exception) -> JSONResponse:
+    logger.error("database unavailable: %s", type(exc).__name__)
+    return error_response(503, "service_unavailable", "The service is temporarily unavailable.")
+
+
+def register_exception_handlers(app: FastAPI) -> None:
+    app.add_exception_handler(StarletteHTTPException, _http_exception)
+    app.add_exception_handler(RequestValidationError, _validation_error)
+    app.add_exception_handler(NotFound, _not_found)
+    app.add_exception_handler(ClinicNotConfigured, _not_configured)
+    app.add_exception_handler(RateLimited, _rate_limited)
+    for db_error in (OperationalError, InterfaceError, PoolTimeoutError):
+        app.add_exception_handler(db_error, _database_unavailable)
+
+
+class UnhandledErrorMiddleware:
+    """Turn any unexpected exception into the standard 500 body.
+
+    Starlette sends ``Exception`` handlers to its outermost middleware, which would bypass the
+    request-ID and security-header middleware. This one sits inside them instead.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        started = False
+
+        async def track(message: Message) -> None:
+            nonlocal started
+            if message["type"] == "http.response.start":
+                started = True
+            await send(message)
+
+        try:
+            await self.app(scope, receive, track)
+        except Exception as exc:
+            logger.error("unhandled error: %s", type(exc).__name__, exc_info=exc)
+            if started:
+                raise
+            response = error_response(500, "internal_error", "Something went wrong.")
+            await response(scope, receive, send)

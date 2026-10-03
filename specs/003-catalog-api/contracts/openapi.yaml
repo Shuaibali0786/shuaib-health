@@ -1,0 +1,322 @@
+openapi: 3.1.0
+info:
+  title: Clinic Catalog API
+  version: 1.0.0
+  description: >
+    Public, read-only catalog API (Feature 003). Single-tenant: every clinic value comes from the
+    database. Field names and types match frontend/src/types/content.ts; fields marked
+    "additive" are new and optional for existing clients. All prices are whole PKR. Schedule
+    times are wall-clock "HH:MM" in the clinic's timeZone.
+
+    Every response carries X-Request-ID and security headers. Catalog 200 responses carry
+    ETag and Cache-Control: public, max-age=300; a matching If-None-Match returns 304.
+    Every /api/v1 endpoint is rate limited per IP (default 60/min) and may return 429.
+servers:
+  - url: http://localhost:8000
+paths:
+  /health:
+    get:
+      summary: Liveness (no database access, not rate limited)
+      responses:
+        "200": { description: Alive, content: { application/json: { schema: { $ref: "#/components/schemas/Health" } } } }
+  /ready:
+    get:
+      summary: Readiness (database reachable, migrations at head)
+      responses:
+        "200": { description: Ready, content: { application/json: { schema: { $ref: "#/components/schemas/Health" } } } }
+        "503": { $ref: "#/components/responses/Unavailable" }
+
+  /api/v1/clinic:
+    get:
+      summary: Clinic settings (white-label)
+      responses:
+        "200": { description: OK, headers: { $ref: "#/components/headers/_cacheable" }, content: { application/json: { schema: { $ref: "#/components/schemas/ClinicSettings" } } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/v1/clinic/rules:
+    get:
+      summary: Active clinic rules in display order
+      parameters: [ { $ref: "#/components/parameters/page" }, { $ref: "#/components/parameters/pageSize" } ]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/ClinicRulePage" } } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v1/departments:
+    get:
+      summary: List departments
+      parameters: [ { $ref: "#/components/parameters/page" }, { $ref: "#/components/parameters/pageSize" } ]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/DepartmentPage" } } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/departments/{slug}:
+    get:
+      summary: Department by slug
+      parameters: [ { $ref: "#/components/parameters/slug" } ]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Department" } } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v1/doctors:
+    get:
+      summary: List doctors
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+        - { name: department, in: query, description: Department slug; unknown slug gives an empty page, schema: { $ref: "#/components/schemas/Slug" } }
+        - $ref: "#/components/parameters/q"
+        - { name: day, in: query, description: Doctors with at least one session on this weekday, schema: { $ref: "#/components/schemas/Weekday" } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/DoctorPage" } } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/doctors/{slug}:
+    get:
+      summary: Doctor by slug, with weekly schedule
+      parameters: [ { $ref: "#/components/parameters/slug" } ]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Doctor" } } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v1/lab-test-categories:
+    get:
+      summary: Lab test categories in display order
+      parameters: [ { $ref: "#/components/parameters/page" }, { $ref: "#/components/parameters/pageSize" } ]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/LabTestCategoryPage" } } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/lab-tests:
+    get:
+      summary: List lab tests
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/q"
+        - { name: category, in: query, description: Category slug; unknown slug gives an empty page, schema: { $ref: "#/components/schemas/Slug" } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/LabTestPage" } } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/lab-tests/{slug}:
+    get:
+      summary: Lab test by slug
+      parameters: [ { $ref: "#/components/parameters/slug" } ]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/LabTest" } } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v1/health-packages:
+    get:
+      summary: List health packages
+      parameters: [ { $ref: "#/components/parameters/page" }, { $ref: "#/components/parameters/pageSize" } ]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/HealthPackagePage" } } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/health-packages/{slug}:
+    get:
+      summary: Health package by slug, with included tests
+      parameters: [ { $ref: "#/components/parameters/slug" } ]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/HealthPackageDetail" } } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+components:
+  parameters:
+    page: { name: page, in: query, schema: { type: integer, minimum: 1, maximum: 10000, default: 1 } }
+    pageSize: { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+    q: { name: q, in: query, description: Case-insensitive contains; % and _ are literal, schema: { type: string, minLength: 1, maxLength: 60 } }
+    slug: { name: slug, in: path, required: true, schema: { $ref: "#/components/schemas/Slug" } }
+  headers:
+    _cacheable:
+      description: ETag (weak) and Cache-Control on every catalog 200
+      schema: { type: string }
+  responses:
+    NotModified: { description: If-None-Match matched; no body }
+    NotFound: { description: Unknown or inactive slug, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+    ValidationError: { description: Invalid parameter, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+    RateLimited:
+      description: Too many requests from this IP
+      headers: { Retry-After: { schema: { type: integer, minimum: 1 } } }
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    Unavailable: { description: Database unreachable (service_unavailable) or clinic not configured (not_configured), content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+
+  schemas:
+    Slug: { type: string, minLength: 1, maxLength: 80, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$" }
+    Weekday: { type: string, enum: [mon, tue, wed, thu, fri, sat, sun] }
+    HHMM: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+    Uuid: { type: string, format: uuid }
+    Health:
+      type: object
+      required: [status]
+      properties: { status: { type: string, enum: [ok, unavailable] } }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code: { type: string, enum: [not_found, method_not_allowed, validation_error, rate_limited, internal_error, service_unavailable, not_configured] }
+            message: { type: string }
+            requestId: { type: string }
+            details:
+              type: array
+              items: { type: object, required: [field, issue], properties: { field: { type: string }, issue: { type: string } } }
+    ImageAsset:
+      type: object
+      required: [src, alt, width, height]
+      properties: { src: { type: string }, alt: { type: string }, width: { type: integer }, height: { type: integer } }
+    PhoneNumber:
+      type: object
+      required: [display, tel]
+      properties: { display: { type: string }, tel: { type: string } }
+    OpeningHoursRule:
+      type: object
+      required: [days, opens, closes]
+      properties: { days: { type: array, items: { $ref: "#/components/schemas/Weekday" } }, opens: { $ref: "#/components/schemas/HHMM" }, closes: { $ref: "#/components/schemas/HHMM" } }
+    ClinicSettings:
+      type: object
+      required: [name, tagline, fullTitle, demoNotice, emergencyPhone, generalPhone, address, timeZone, openingHours, labHours, mapArea, credit, indexable, isSample, logo, brandColors]
+      properties:
+        name: { type: string }
+        tagline: { type: string }
+        fullTitle: { type: string }
+        demoNotice: { type: string }
+        emergencyPhone: { $ref: "#/components/schemas/PhoneNumber" }
+        generalPhone: { $ref: "#/components/schemas/PhoneNumber" }
+        address: { type: array, items: { type: string } }
+        timeZone: { type: string, examples: [Asia/Karachi] }
+        openingHours: { type: array, items: { $ref: "#/components/schemas/OpeningHoursRule" } }
+        labHours: { type: array, items: { $ref: "#/components/schemas/OpeningHoursRule" } }
+        mapArea:
+          type: object
+          required: [bbox, label]
+          properties: { bbox: { type: array, items: { type: number }, minItems: 4, maxItems: 4 }, label: { type: string } }
+        credit: { type: object, required: [text, href], properties: { text: { type: string }, href: { type: string, format: uri } } }
+        indexable: { type: boolean }
+        isSample: { type: boolean }
+        logo: { $ref: "#/components/schemas/ImageAsset" }
+        brandColors: { type: object, required: [primary, accent], properties: { primary: { type: string, pattern: "^#[0-9A-Fa-f]{6}$" }, accent: { type: string, pattern: "^#[0-9A-Fa-f]{6}$" } } }
+    ClinicRule:
+      type: object
+      required: [id, sortOrder, text, isSample]
+      properties: { id: { $ref: "#/components/schemas/Uuid" }, sortOrder: { type: integer }, text: { type: string }, isSample: { type: boolean } }
+    Department:
+      type: object
+      required: [id, slug, name, summary, image, sortOrder, overview, conditions, services, relatedTestSlugs, isSample]
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        slug: { $ref: "#/components/schemas/Slug" }
+        name: { type: string }
+        summary: { type: string }
+        image: { $ref: "#/components/schemas/ImageAsset" }
+        sortOrder: { type: integer }
+        overview: { type: string }
+        conditions: { type: array, items: { type: string } }
+        services: { type: array, items: { type: string } }
+        relatedTestSlugs: { type: array, items: { $ref: "#/components/schemas/Slug" } }
+        isSample: { type: boolean }
+    ScheduleSession:
+      type: object
+      required: [day, start, end, slotMinutes]
+      properties:
+        day: { $ref: "#/components/schemas/Weekday" }
+        start: { $ref: "#/components/schemas/HHMM" }
+        end: { $ref: "#/components/schemas/HHMM" }
+        slotMinutes: { type: integer, minimum: 5, maximum: 120, description: additive }
+    Doctor:
+      type: object
+      required: [id, slug, fullName, departmentId, specialty, photo, feePkr, qualifications, experienceYears, languages, bio, schedule, isFeatured, isSample]
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        slug: { $ref: "#/components/schemas/Slug" }
+        fullName: { type: string }
+        departmentId: { $ref: "#/components/schemas/Uuid" }
+        specialty: { type: string }
+        photo: { $ref: "#/components/schemas/ImageAsset" }
+        feePkr: { type: integer, minimum: 0 }
+        qualifications: { type: array, items: { type: string } }
+        experienceYears: { type: integer }
+        languages: { type: array, items: { type: string, enum: [Urdu, English, Sindhi, Punjabi] } }
+        bio: { type: string }
+        schedule: { type: array, items: { $ref: "#/components/schemas/ScheduleSession" }, description: Included in list items too (the list page shows available days) }
+        isFeatured: { type: boolean }
+        isSample: { type: boolean }
+    LabTestCategory:
+      type: object
+      required: [id, slug, name, iconName]
+      properties: { id: { $ref: "#/components/schemas/Uuid" }, slug: { $ref: "#/components/schemas/Slug" }, name: { type: string }, iconName: { type: string } }
+    LabTest:
+      type: object
+      required: [id, slug, name, alsoKnownAs, categoryId, pricePkr, sampleType, reportTime, preparation, homeCollection, about, relatedDepartmentIds, isSample]
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        slug: { $ref: "#/components/schemas/Slug" }
+        name: { type: string }
+        alsoKnownAs: { type: array, items: { type: string } }
+        categoryId: { $ref: "#/components/schemas/Uuid" }
+        pricePkr: { type: integer, minimum: 0 }
+        sampleType: { type: string }
+        reportTime: { type: string }
+        preparation: { type: string }
+        homeCollection: { type: boolean }
+        about: { type: string }
+        relatedDepartmentIds: { type: array, items: { $ref: "#/components/schemas/Uuid" } }
+        isSample: { type: boolean }
+    LabTestSummary:
+      type: object
+      required: [id, slug, name, pricePkr, homeCollection]
+      properties: { id: { $ref: "#/components/schemas/Uuid" }, slug: { $ref: "#/components/schemas/Slug" }, name: { type: string }, pricePkr: { type: integer }, homeCollection: { type: boolean } }
+    HealthPackage:
+      type: object
+      required: [id, slug, name, iconName, whoFor, testSlugs, packagePricePkr, preparation, homeCollection, isSample]
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        slug: { $ref: "#/components/schemas/Slug" }
+        name: { type: string }
+        iconName: { type: string }
+        whoFor: { type: string }
+        testSlugs: { type: array, items: { $ref: "#/components/schemas/Slug" } }
+        packagePricePkr: { type: integer, minimum: 0 }
+        preparation: { type: string }
+        homeCollection: { type: boolean }
+        isSample: { type: boolean }
+    HealthPackageDetail:
+      allOf:
+        - $ref: "#/components/schemas/HealthPackage"
+        - type: object
+          required: [tests]
+          properties: { tests: { type: array, items: { $ref: "#/components/schemas/LabTestSummary" }, description: additive; same order as testSlugs } }
+    PageMeta:
+      type: object
+      required: [total, page, pageSize]
+      properties: { total: { type: integer }, page: { type: integer }, pageSize: { type: integer } }
+    ClinicRulePage: { allOf: [ { $ref: "#/components/schemas/PageMeta" }, { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/ClinicRule" } } } } ] }
+    LabTestCategoryPage: { allOf: [ { $ref: "#/components/schemas/PageMeta" }, { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/LabTestCategory" } } } } ] }
+    DepartmentPage: { allOf: [ { $ref: "#/components/schemas/PageMeta" }, { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/Department" } } } } ] }
+    DoctorPage: { allOf: [ { $ref: "#/components/schemas/PageMeta" }, { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/Doctor" } } } } ] }
+    LabTestPage: { allOf: [ { $ref: "#/components/schemas/PageMeta" }, { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/LabTest" } } } } ] }
+    HealthPackagePage: { allOf: [ { $ref: "#/components/schemas/PageMeta" }, { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/HealthPackage" } } } } ] }

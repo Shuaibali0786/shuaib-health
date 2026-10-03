@@ -1,0 +1,35 @@
+{
+  "clinicRules": [
+    {
+      "sortOrder": 1,
+      "text": "Please arrive 15 minutes before your appointment time."
+    },
+    {
+      "sortOrder": 2,
+      "text": "Cancel or reschedule at least 2 hours before your appointment."
+    },
+    {
+      "sortOrder": 3,
+      "text": "After 3 missed appointments without notice, online booking may be paused for your account."
+    },
+    {
+      "sortOrder": 4,
+      "text": "Follow the preparation instructions for lab tests, such as fasting, so results can be processed."
+    },
+    {
+      "sortOrder": 5,
+      "text": "For emergencies, call the emergency number. Do not use online booking."
+    }
+  ],
+  "logo": {
+    "key": "brand/logo-mark.svg",
+    "alt": "Shuaib Health logo",
+    "width": 64,
+    "height": 64
+  },
+  "brandColors": {
+    "primary": "#0B2545",
+    "accent": "#14B8A6"
+  },
+  "defaultSlotMinutes": 15
+}

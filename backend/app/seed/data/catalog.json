@@ -1,0 +1,1418 @@
+{
+  "siteConfig": {
+    "name": "Shuaib Health",
+    "tagline": "Clinic & Diagnostics, Karachi",
+    "fullTitle": "Shuaib Health — Clinic & Diagnostics, Karachi",
+    "demoNotice": "Portfolio demo — not a real clinic, not medical advice.",
+    "emergencyPhone": {
+      "display": "+92 21 0000 0000",
+      "tel": "+922100000000"
+    },
+    "generalPhone": {
+      "display": "+92 21 0000 0001",
+      "tel": "+922100000001"
+    },
+    "address": [
+      "Sample Road",
+      "Karachi, Pakistan"
+    ],
+    "timeZone": "Asia/Karachi",
+    "openingHours": [
+      {
+        "days": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri",
+          "sat"
+        ],
+        "opens": "09:00",
+        "closes": "21:00"
+      }
+    ],
+    "labHours": [
+      {
+        "days": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri",
+          "sat"
+        ],
+        "opens": "08:00",
+        "closes": "20:00"
+      }
+    ],
+    "mapArea": {
+      "bbox": [
+        66.95,
+        24.78,
+        67.2,
+        24.96
+      ],
+      "label": "General area of Karachi"
+    },
+    "credit": {
+      "text": "Designed & built by Shuaib Ali",
+      "href": "https://github.com/Shuaibali0786"
+    },
+    "indexable": false,
+    "isSample": true
+  },
+  "departments": [
+    {
+      "id": "dept-general-medicine",
+      "slug": "general-medicine",
+      "name": "General Medicine",
+      "summary": "Everyday health concerns, checkups and ongoing care for adults.",
+      "image": {
+        "src": "/images/departments/general-medicine.jpg",
+        "alt": "Doctor reviewing a folder with a patient in a consultation room",
+        "width": 800,
+        "height": 600
+      },
+      "sortOrder": 1,
+      "overview": "General Medicine is the first stop for most adult health concerns. Doctors go through symptoms, order tests when needed and agree a follow-up plan, and can refer you to another department if that is the better fit.",
+      "conditions": [
+        "Fever and flu-like illness",
+        "Cough and sore throat",
+        "Stomach upset and acidity",
+        "Headache and tiredness",
+        "High blood pressure checks",
+        "Routine adult checkups"
+      ],
+      "services": [
+        "Consultation for adults",
+        "Routine checkups",
+        "Follow-up visits",
+        "Referral to other departments",
+        "Test requests and report explanation"
+      ],
+      "relatedTestSlugs": [
+        "complete-blood-count",
+        "fasting-blood-sugar",
+        "lipid-profile",
+        "liver-function-tests",
+        "urine-routine-examination"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "dept-cardiology",
+      "slug": "cardiology",
+      "name": "Cardiology",
+      "summary": "Heart and blood-pressure care, including routine heart checkups.",
+      "image": {
+        "src": "/images/departments/cardiology.jpg",
+        "alt": "Smiling nurse in green scrubs holding a paper heart",
+        "width": 800,
+        "height": 600
+      },
+      "sortOrder": 2,
+      "overview": "Cardiology looks after heart and blood-pressure concerns. Visits cover routine heart checkups, explanation of test reports and follow-up for ongoing care.",
+      "conditions": [
+        "Chest discomfort needing a check",
+        "High blood pressure",
+        "Palpitations",
+        "Shortness of breath on effort",
+        "Cholesterol concerns",
+        "Follow-up after heart care"
+      ],
+      "services": [
+        "Cardiology consultation",
+        "Blood pressure check",
+        "Heart checkup planning",
+        "Explaining lab reports",
+        "Follow-up visits"
+      ],
+      "relatedTestSlugs": [
+        "lipid-profile",
+        "hs-crp",
+        "fasting-blood-sugar",
+        "serum-creatinine"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "dept-pediatrics",
+      "slug": "pediatrics",
+      "name": "Pediatrics",
+      "summary": "Care for babies, children and teenagers, from routine checkups onward.",
+      "image": {
+        "src": "/images/departments/pediatrics.jpg",
+        "alt": "Doctor listening to a young girl's chest with a stethoscope",
+        "width": 800,
+        "height": 600
+      },
+      "sortOrder": 3,
+      "overview": "Pediatrics cares for babies, children and teenagers. Doctors see routine checkups and common childhood illnesses, and talk with parents and children together.",
+      "conditions": [
+        "Fever and colds",
+        "Cough and ear complaints",
+        "Tummy aches and loose motions",
+        "Skin rashes",
+        "Growth and weight questions",
+        "Routine child checkups"
+      ],
+      "services": [
+        "Child consultation",
+        "Growth and development check",
+        "Routine checkups",
+        "Guidance for parents",
+        "Follow-up visits"
+      ],
+      "relatedTestSlugs": [
+        "complete-blood-count",
+        "urine-routine-examination",
+        "vitamin-d",
+        "esr"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "dept-gynecology",
+      "slug": "gynecology",
+      "name": "Gynecology",
+      "summary": "Women's health, from routine checkups to pregnancy care.",
+      "image": {
+        "src": "/images/departments/gynecology.jpg",
+        "alt": "Doctor and two women gathered around a table during a consultation",
+        "width": 800,
+        "height": 600
+      },
+      "sortOrder": 4,
+      "overview": "Gynecology provides women's health care, from routine checkups to pregnancy care. Visits are private and unhurried, with time to talk through any concern.",
+      "conditions": [
+        "Irregular or painful periods",
+        "Pregnancy checkups",
+        "Urinary complaints",
+        "Hormone-related concerns",
+        "Routine women's health checkups",
+        "Follow-up care"
+      ],
+      "services": [
+        "Gynecology consultation",
+        "Pregnancy care visits",
+        "Routine women's health checkups",
+        "Test requests and report explanation",
+        "Follow-up visits"
+      ],
+      "relatedTestSlugs": [
+        "complete-blood-count",
+        "tsh",
+        "prolactin",
+        "urine-pregnancy-test",
+        "vitamin-d"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "dept-dermatology",
+      "slug": "dermatology",
+      "name": "Dermatology",
+      "summary": "Skin, hair and nail care for common conditions.",
+      "image": {
+        "src": "/images/departments/dermatology.jpg",
+        "alt": "Doctor examining a skin image on a tablet beside a patient",
+        "width": 800,
+        "height": 600
+      },
+      "sortOrder": 5,
+      "overview": "Dermatology looks after skin, hair and nail concerns. Doctors explain skin-care routines and what to expect between visits.",
+      "conditions": [
+        "Acne",
+        "Rashes and itching",
+        "Dandruff and hair fall",
+        "Dry skin",
+        "Fungal infections of skin and nails",
+        "Pigmentation concerns"
+      ],
+      "services": [
+        "Skin, hair and nail consultation",
+        "Skin-care guidance",
+        "Test requests and report explanation",
+        "Follow-up visits",
+        "Referral to other departments"
+      ],
+      "relatedTestSlugs": [
+        "complete-blood-count",
+        "vitamin-d",
+        "vitamin-b12",
+        "tsh"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "dept-dental",
+      "slug": "dental",
+      "name": "Dental",
+      "summary": "Dental checkups, cleaning and everyday tooth care.",
+      "image": {
+        "src": "/images/departments/dental.jpg",
+        "alt": "Two dental staff reviewing an X-ray on a screen beside a dental chair",
+        "width": 800,
+        "height": 600
+      },
+      "sortOrder": 6,
+      "overview": "Dental covers checkups, cleaning and everyday tooth care. The dentist explains each step before starting so there are no surprises.",
+      "conditions": [
+        "Toothache",
+        "Cavities",
+        "Bleeding gums",
+        "Bad breath",
+        "Sensitive teeth",
+        "Routine dental checkups"
+      ],
+      "services": [
+        "Dental checkup",
+        "Cleaning and polishing",
+        "Fillings",
+        "Advice on tooth care at home",
+        "Follow-up visits"
+      ],
+      "relatedTestSlugs": [
+        "complete-blood-count",
+        "random-blood-sugar",
+        "hepatitis-b-surface-antigen"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "dept-pathology-lab",
+      "slug": "pathology-lab",
+      "name": "Pathology Lab",
+      "summary": "Blood and other lab tests, with reports available online.",
+      "image": {
+        "src": "/images/departments/pathology-lab.jpg",
+        "alt": "Laboratory scientist in a blue gown using a microscope",
+        "width": 800,
+        "height": 600
+      },
+      "sortOrder": 7,
+      "overview": "The Pathology Lab runs blood, urine and other tests requested by doctors, with reports available online. Samples are collected at the lab, and at home for many tests.",
+      "conditions": [
+        "Tests requested by a doctor",
+        "Routine health checkups",
+        "Monitoring of ongoing care",
+        "Pre-visit blood and urine tests"
+      ],
+      "services": [
+        "Blood and urine sample collection",
+        "Home sample collection for many tests",
+        "Report preparation",
+        "Answers about preparation, such as fasting"
+      ],
+      "relatedTestSlugs": [
+        "complete-blood-count",
+        "hba1c",
+        "lipid-profile",
+        "liver-function-tests",
+        "tsh",
+        "urine-routine-examination"
+      ],
+      "isSample": true
+    }
+  ],
+  "doctors": [
+    {
+      "id": "doc-hassan-mirza",
+      "slug": "dr-hassan-mirza",
+      "fullName": "Dr. Hassan Mirza",
+      "departmentId": "dept-general-medicine",
+      "specialty": "General Medicine",
+      "photo": {
+        "src": "/images/doctors/dr-hassan-mirza.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Hassan Mirza: a bearded man in glasses and a lavender coat with a stethoscope, arms crossed",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 2000,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Medicine)"
+      ],
+      "experienceYears": 12,
+      "languages": [
+        "Urdu",
+        "English",
+        "Punjabi"
+      ],
+      "bio": "Dr. Hassan Mirza sees adults for everyday health concerns, routine checkups and ongoing care. He likes to explain the plan in plain language and to leave time for questions.",
+      "schedule": [
+        {
+          "day": "mon",
+          "start": "09:00",
+          "end": "13:00"
+        },
+        {
+          "day": "wed",
+          "start": "09:00",
+          "end": "13:00"
+        },
+        {
+          "day": "fri",
+          "start": "14:00",
+          "end": "18:00"
+        }
+      ],
+      "isFeatured": true,
+      "isSample": true
+    },
+    {
+      "id": "doc-imran-qureshi",
+      "slug": "dr-imran-qureshi",
+      "fullName": "Dr. Imran Qureshi",
+      "departmentId": "dept-cardiology",
+      "specialty": "Cardiology",
+      "photo": {
+        "src": "/images/doctors/dr-imran-qureshi.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Imran Qureshi: a man in a white coat with a stethoscope",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 3500,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Cardiology)"
+      ],
+      "experienceYears": 15,
+      "languages": [
+        "Urdu",
+        "English"
+      ],
+      "bio": "Dr. Imran Qureshi looks after heart and blood-pressure concerns, from routine heart checkups to follow-up visits. Appointments focus on a clear explanation of what each test is for.",
+      "schedule": [
+        {
+          "day": "mon",
+          "start": "16:00",
+          "end": "20:00"
+        },
+        {
+          "day": "wed",
+          "start": "16:00",
+          "end": "20:00"
+        },
+        {
+          "day": "sat",
+          "start": "09:00",
+          "end": "13:00"
+        }
+      ],
+      "isFeatured": true,
+      "isSample": true
+    },
+    {
+      "id": "doc-sana-farooqui",
+      "slug": "dr-sana-farooqui",
+      "fullName": "Dr. Sana Farooqui",
+      "departmentId": "dept-pediatrics",
+      "specialty": "Pediatrics",
+      "photo": {
+        "src": "/images/doctors/dr-sana-farooqui.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Sana Farooqui: a woman in a white cap and white coat with a stethoscope, holding a red folder, against a light background",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 2500,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Pediatrics)"
+      ],
+      "experienceYears": 10,
+      "languages": [
+        "Urdu",
+        "English",
+        "Sindhi"
+      ],
+      "bio": "Dr. Sana Farooqui cares for babies, children and teenagers, including routine checkups and common childhood illnesses. She speaks to parents and children together so everyone understands the next step.",
+      "schedule": [
+        {
+          "day": "mon",
+          "start": "10:00",
+          "end": "14:00"
+        },
+        {
+          "day": "tue",
+          "start": "10:00",
+          "end": "14:00"
+        },
+        {
+          "day": "thu",
+          "start": "10:00",
+          "end": "14:00"
+        }
+      ],
+      "isFeatured": true,
+      "isSample": true
+    },
+    {
+      "id": "doc-ayesha-rahman",
+      "slug": "dr-ayesha-rahman",
+      "fullName": "Dr. Ayesha Rahman",
+      "departmentId": "dept-gynecology",
+      "specialty": "Gynecology",
+      "photo": {
+        "src": "/images/doctors/dr-ayesha-rahman.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Ayesha Rahman: a woman in a white coat taking a phone call and holding a notebook",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 3000,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Gynecology)"
+      ],
+      "experienceYears": 14,
+      "languages": [
+        "Urdu",
+        "English",
+        "Sindhi"
+      ],
+      "bio": "Dr. Ayesha Rahman provides women's health care, from routine checkups to pregnancy care. Visits are unhurried and private, with time to talk through any concern.",
+      "schedule": [
+        {
+          "day": "tue",
+          "start": "11:00",
+          "end": "16:00"
+        },
+        {
+          "day": "thu",
+          "start": "11:00",
+          "end": "16:00"
+        },
+        {
+          "day": "sat",
+          "start": "11:00",
+          "end": "15:00"
+        }
+      ],
+      "isFeatured": true,
+      "isSample": true
+    },
+    {
+      "id": "doc-maryam-baloch",
+      "slug": "dr-maryam-baloch",
+      "fullName": "Dr. Maryam Baloch",
+      "departmentId": "dept-dermatology",
+      "specialty": "Dermatology",
+      "photo": {
+        "src": "/images/doctors/dr-maryam-baloch.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Maryam Baloch: a smiling woman with long dark hair in a white coat with a stethoscope around her neck",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 3000,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Dermatology)"
+      ],
+      "experienceYears": 9,
+      "languages": [
+        "Urdu",
+        "English"
+      ],
+      "bio": "Dr. Maryam Baloch sees patients with common skin, hair and nail concerns. She takes time to explain skin-care routines and what to expect between visits.",
+      "schedule": [
+        {
+          "day": "mon",
+          "start": "12:00",
+          "end": "17:00"
+        },
+        {
+          "day": "wed",
+          "start": "17:00",
+          "end": "20:00"
+        },
+        {
+          "day": "fri",
+          "start": "10:00",
+          "end": "15:00"
+        }
+      ],
+      "isFeatured": false,
+      "isSample": true
+    },
+    {
+      "id": "doc-bilal-ansari",
+      "slug": "dr-bilal-ansari",
+      "fullName": "Dr. Bilal Ansari",
+      "departmentId": "dept-dental",
+      "specialty": "Dental",
+      "photo": {
+        "src": "/images/doctors/dr-bilal-ansari.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Bilal Ansari: a man in glasses with short dark hair and light stubble, in a white coat over a dark blue shirt with a stethoscope around his neck, against a light background",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 2000,
+      "qualifications": [
+        "BDS",
+        "MCPS (Operative Dentistry)"
+      ],
+      "experienceYears": 11,
+      "languages": [
+        "Urdu",
+        "English",
+        "Punjabi"
+      ],
+      "bio": "Dr. Bilal Ansari provides dental checkups, cleaning and everyday tooth care. He walks patients through each step before starting so there are no surprises.",
+      "schedule": [
+        {
+          "day": "tue",
+          "start": "09:00",
+          "end": "13:00"
+        },
+        {
+          "day": "thu",
+          "start": "17:00",
+          "end": "21:00"
+        },
+        {
+          "day": "sat",
+          "start": "10:00",
+          "end": "16:00"
+        }
+      ],
+      "isFeatured": false,
+      "isSample": true
+    },
+    {
+      "id": "doc-zainab-memon",
+      "slug": "dr-zainab-memon",
+      "fullName": "Dr. Zainab Memon",
+      "departmentId": "dept-pathology-lab",
+      "specialty": "Pathology Lab",
+      "photo": {
+        "src": "/images/doctors/dr-zainab-memon.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Zainab Memon: a woman with dark curly hair in a white lab coat and purple gloves, working at a laboratory bench",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 1500,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Chemical Pathology)"
+      ],
+      "experienceYears": 13,
+      "languages": [
+        "Urdu",
+        "English",
+        "Sindhi"
+      ],
+      "bio": "Dr. Zainab Memon oversees the sample pathology lab and answers patients' questions about how tests are collected and reported. She is available by appointment to talk through which tests a doctor has asked for.",
+      "schedule": [
+        {
+          "day": "mon",
+          "start": "09:00",
+          "end": "12:00"
+        },
+        {
+          "day": "wed",
+          "start": "10:00",
+          "end": "13:00"
+        },
+        {
+          "day": "fri",
+          "start": "16:00",
+          "end": "19:00"
+        }
+      ],
+      "isFeatured": false,
+      "isSample": true
+    },
+    {
+      "id": "doc-omar-sheikh",
+      "slug": "dr-omar-sheikh",
+      "fullName": "Dr. Omar Sheikh",
+      "departmentId": "dept-general-medicine",
+      "specialty": "General Medicine",
+      "photo": {
+        "src": "/images/doctors/dr-omar-sheikh.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Omar Sheikh: a grey-haired man in a white coat with a stethoscope around his neck, one hand on his collar, against a softly blurred outdoor background",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 1800,
+      "qualifications": [
+        "MBBS",
+        "MCPS (Family Medicine)"
+      ],
+      "experienceYears": 8,
+      "languages": [
+        "Urdu",
+        "English",
+        "Sindhi"
+      ],
+      "bio": "Dr. Omar Sheikh provides general care for adults and families, including routine checkups and follow-up visits. Afternoon and Saturday sessions make it easier to fit a visit around work.",
+      "schedule": [
+        {
+          "day": "tue",
+          "start": "14:00",
+          "end": "20:00"
+        },
+        {
+          "day": "thu",
+          "start": "14:00",
+          "end": "20:00"
+        },
+        {
+          "day": "sat",
+          "start": "10:00",
+          "end": "14:00"
+        }
+      ],
+      "isFeatured": false,
+      "isSample": true
+    },
+    {
+      "id": "doc-faisal-chaudhry",
+      "slug": "dr-faisal-chaudhry",
+      "fullName": "Dr. Faisal Chaudhry",
+      "departmentId": "dept-pediatrics",
+      "specialty": "Pediatrics",
+      "photo": {
+        "src": "/images/doctors/dr-faisal-chaudhry.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Faisal Chaudhry: a smiling man in glasses and a white coat with a stethoscope, holding a measuring tape",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 2200,
+      "qualifications": [
+        "MBBS",
+        "DCH"
+      ],
+      "experienceYears": 7,
+      "languages": [
+        "Urdu",
+        "English",
+        "Punjabi"
+      ],
+      "bio": "Dr. Faisal Chaudhry cares for children from infancy to the teenage years, including routine checkups and growth checks. His evening and Saturday sessions suit families with school-day schedules.",
+      "schedule": [
+        {
+          "day": "wed",
+          "start": "15:00",
+          "end": "20:00"
+        },
+        {
+          "day": "fri",
+          "start": "15:00",
+          "end": "20:00"
+        },
+        {
+          "day": "sat",
+          "start": "15:00",
+          "end": "19:00"
+        }
+      ],
+      "isFeatured": false,
+      "isSample": true
+    }
+  ],
+  "labTestCategories": [
+    {
+      "id": "cat-blood",
+      "slug": "blood",
+      "name": "Blood",
+      "iconName": "droplet"
+    },
+    {
+      "id": "cat-diabetes",
+      "slug": "diabetes",
+      "name": "Diabetes",
+      "iconName": "candy"
+    },
+    {
+      "id": "cat-heart",
+      "slug": "heart",
+      "name": "Heart",
+      "iconName": "heart-pulse"
+    },
+    {
+      "id": "cat-liver",
+      "slug": "liver",
+      "name": "Liver",
+      "iconName": "flame"
+    },
+    {
+      "id": "cat-kidney",
+      "slug": "kidney",
+      "name": "Kidney",
+      "iconName": "bean"
+    },
+    {
+      "id": "cat-thyroid",
+      "slug": "thyroid",
+      "name": "Thyroid",
+      "iconName": "activity"
+    },
+    {
+      "id": "cat-vitamins",
+      "slug": "vitamins",
+      "name": "Vitamins",
+      "iconName": "sun"
+    },
+    {
+      "id": "cat-hormones",
+      "slug": "hormones",
+      "name": "Hormones",
+      "iconName": "sparkles"
+    },
+    {
+      "id": "cat-urine",
+      "slug": "urine",
+      "name": "Urine",
+      "iconName": "test-tube"
+    }
+  ],
+  "labTests": [
+    {
+      "id": "test-complete-blood-count",
+      "slug": "complete-blood-count",
+      "name": "Complete Blood Count (CBC)",
+      "alsoKnownAs": [
+        "CBC",
+        "Complete blood picture",
+        "CBP"
+      ],
+      "categoryId": "cat-blood",
+      "pricePkr": 800,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Counts the red cells, white cells and platelets in a blood sample.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-esr",
+      "slug": "esr",
+      "name": "Erythrocyte Sedimentation Rate (ESR)",
+      "alsoKnownAs": [
+        "ESR",
+        "Sed rate"
+      ],
+      "categoryId": "cat-blood",
+      "pricePkr": 400,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures how quickly red cells settle in a blood sample over one hour.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-blood-group-rh",
+      "slug": "blood-group-rh",
+      "name": "Blood Group & Rh Factor",
+      "alsoKnownAs": [
+        "Blood grouping",
+        "ABO and Rh typing"
+      ],
+      "categoryId": "cat-blood",
+      "pricePkr": 500,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Identifies the ABO blood group and the Rh factor from a blood sample.",
+      "relatedDepartmentIds": [
+        "dept-gynecology",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-fasting-blood-sugar",
+      "slug": "fasting-blood-sugar",
+      "name": "Fasting Blood Sugar (FBS)",
+      "alsoKnownAs": [
+        "FBS",
+        "Fasting glucose",
+        "Sugar test (fasting)"
+      ],
+      "categoryId": "cat-diabetes",
+      "pricePkr": 400,
+      "sampleType": "Blood (fasting)",
+      "reportTime": "Same day",
+      "preparation": "8–10 hours fasting; plain water is allowed",
+      "homeCollection": true,
+      "about": "Measures the glucose level in a blood sample taken after fasting.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-hba1c",
+      "slug": "hba1c",
+      "name": "HbA1c",
+      "alsoKnownAs": [
+        "Glycated hemoglobin",
+        "A1c",
+        "Average sugar test"
+      ],
+      "categoryId": "cat-diabetes",
+      "pricePkr": 1500,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Shows the average blood glucose level over the previous two to three months.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-random-blood-sugar",
+      "slug": "random-blood-sugar",
+      "name": "Random Blood Sugar (RBS)",
+      "alsoKnownAs": [
+        "RBS",
+        "Random glucose",
+        "Sugar test"
+      ],
+      "categoryId": "cat-diabetes",
+      "pricePkr": 350,
+      "sampleType": "Blood",
+      "reportTime": "Within 2 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures the glucose level in a blood sample taken at any time of day.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-dental"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-lipid-profile",
+      "slug": "lipid-profile",
+      "name": "Lipid Profile",
+      "alsoKnownAs": [
+        "Cholesterol test",
+        "Lipid panel"
+      ],
+      "categoryId": "cat-heart",
+      "pricePkr": 1800,
+      "sampleType": "Blood (fasting)",
+      "reportTime": "Same day",
+      "preparation": "10–12 hours fasting; plain water is allowed",
+      "homeCollection": true,
+      "about": "Measures cholesterol and triglyceride levels in a blood sample taken after fasting.",
+      "relatedDepartmentIds": [
+        "dept-cardiology",
+        "dept-general-medicine"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-hs-crp",
+      "slug": "hs-crp",
+      "name": "High-Sensitivity CRP (hs-CRP)",
+      "alsoKnownAs": [
+        "hs-CRP",
+        "High sensitivity C-reactive protein"
+      ],
+      "categoryId": "cat-heart",
+      "pricePkr": 1800,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures a protein in the blood that rises with inflammation, as requested by a doctor.",
+      "relatedDepartmentIds": [
+        "dept-cardiology"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-liver-function-tests",
+      "slug": "liver-function-tests",
+      "name": "Liver Function Tests (LFT)",
+      "alsoKnownAs": [
+        "LFT",
+        "Liver profile"
+      ],
+      "categoryId": "cat-liver",
+      "pricePkr": 1500,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed unless your doctor asks you to fast",
+      "homeCollection": true,
+      "about": "A group of blood measurements that a doctor uses to look at how the liver is working.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-hepatitis-b-surface-antigen",
+      "slug": "hepatitis-b-surface-antigen",
+      "name": "Hepatitis B Surface Antigen (HBsAg)",
+      "alsoKnownAs": [
+        "HBsAg",
+        "Hepatitis B screening"
+      ],
+      "categoryId": "cat-liver",
+      "pricePkr": 1200,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "A blood test that looks for the hepatitis B surface antigen.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-dental"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-hepatitis-c-antibody",
+      "slug": "hepatitis-c-antibody",
+      "name": "Hepatitis C Antibody (Anti-HCV)",
+      "alsoKnownAs": [
+        "Anti-HCV",
+        "Hepatitis C screening"
+      ],
+      "categoryId": "cat-liver",
+      "pricePkr": 1800,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "A blood test that looks for antibodies to the hepatitis C virus.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-serum-creatinine",
+      "slug": "serum-creatinine",
+      "name": "Serum Creatinine",
+      "alsoKnownAs": [
+        "Creatinine",
+        "Kidney function test"
+      ],
+      "categoryId": "cat-kidney",
+      "pricePkr": 600,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures creatinine in a blood sample, one of the values a doctor looks at for kidney function.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-cardiology"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-blood-urea",
+      "slug": "blood-urea",
+      "name": "Blood Urea",
+      "alsoKnownAs": [
+        "Urea",
+        "BUN"
+      ],
+      "categoryId": "cat-kidney",
+      "pricePkr": 500,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures urea in a blood sample, as part of a doctor's check of kidney function.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-uric-acid",
+      "slug": "uric-acid",
+      "name": "Serum Uric Acid",
+      "alsoKnownAs": [
+        "Uric acid"
+      ],
+      "categoryId": "cat-kidney",
+      "pricePkr": 600,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "8 hours fasting; plain water is allowed",
+      "homeCollection": true,
+      "about": "Measures uric acid in a blood sample.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-cardiology"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-tsh",
+      "slug": "tsh",
+      "name": "Thyroid Stimulating Hormone (TSH)",
+      "alsoKnownAs": [
+        "TSH",
+        "Thyroid screening"
+      ],
+      "categoryId": "cat-thyroid",
+      "pricePkr": 1200,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures the thyroid stimulating hormone in a blood sample.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-gynecology"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-free-t4",
+      "slug": "free-t4",
+      "name": "Free T4 (FT4)",
+      "alsoKnownAs": [
+        "FT4",
+        "Free thyroxine"
+      ],
+      "categoryId": "cat-thyroid",
+      "pricePkr": 1400,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures free thyroxine, a thyroid hormone, in a blood sample.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-free-t3",
+      "slug": "free-t3",
+      "name": "Free T3 (FT3)",
+      "alsoKnownAs": [
+        "FT3",
+        "Free triiodothyronine"
+      ],
+      "categoryId": "cat-thyroid",
+      "pricePkr": 1400,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures free triiodothyronine, a thyroid hormone, in a blood sample.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-vitamin-d",
+      "slug": "vitamin-d",
+      "name": "Vitamin D (25-Hydroxy)",
+      "alsoKnownAs": [
+        "Vitamin D3",
+        "25-OH vitamin D"
+      ],
+      "categoryId": "cat-vitamins",
+      "pricePkr": 3500,
+      "sampleType": "Blood",
+      "reportTime": "24–48 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures the main stored form of vitamin D in a blood sample.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pediatrics"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-vitamin-b12",
+      "slug": "vitamin-b12",
+      "name": "Vitamin B12",
+      "alsoKnownAs": [
+        "B12",
+        "Cobalamin"
+      ],
+      "categoryId": "cat-vitamins",
+      "pricePkr": 2800,
+      "sampleType": "Blood",
+      "reportTime": "24–48 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures the vitamin B12 level in a blood sample.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-dermatology"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-folate",
+      "slug": "folate",
+      "name": "Folate",
+      "alsoKnownAs": [
+        "Folic acid",
+        "Vitamin B9"
+      ],
+      "categoryId": "cat-vitamins",
+      "pricePkr": 2500,
+      "sampleType": "Blood (fasting)",
+      "reportTime": "24–48 hours",
+      "preparation": "8 hours fasting; plain water is allowed",
+      "homeCollection": true,
+      "about": "Measures the folate level in a blood sample.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-gynecology"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-prolactin",
+      "slug": "prolactin",
+      "name": "Prolactin",
+      "alsoKnownAs": [
+        "PRL"
+      ],
+      "categoryId": "cat-hormones",
+      "pricePkr": 2200,
+      "sampleType": "Blood",
+      "reportTime": "24–48 hours",
+      "preparation": "Morning sample preferred; ask the lab for timing",
+      "homeCollection": true,
+      "about": "Measures the hormone prolactin in a blood sample, as requested by a doctor.",
+      "relatedDepartmentIds": [
+        "dept-gynecology",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-total-testosterone",
+      "slug": "total-testosterone",
+      "name": "Total Testosterone",
+      "alsoKnownAs": [
+        "Testosterone",
+        "Serum testosterone"
+      ],
+      "categoryId": "cat-hormones",
+      "pricePkr": 2500,
+      "sampleType": "Blood",
+      "reportTime": "24–48 hours",
+      "preparation": "Morning sample preferred; ask the lab for timing",
+      "homeCollection": true,
+      "about": "Measures total testosterone in a blood sample, as requested by a doctor.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pathology-lab"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-fsh",
+      "slug": "fsh",
+      "name": "Follicle Stimulating Hormone (FSH)",
+      "alsoKnownAs": [
+        "FSH"
+      ],
+      "categoryId": "cat-hormones",
+      "pricePkr": 2000,
+      "sampleType": "Blood",
+      "reportTime": "24–48 hours",
+      "preparation": "Your doctor may ask for a sample on a particular day; confirm before you visit",
+      "homeCollection": true,
+      "about": "Measures follicle stimulating hormone in a blood sample, as requested by a doctor.",
+      "relatedDepartmentIds": [
+        "dept-gynecology"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-urine-routine-examination",
+      "slug": "urine-routine-examination",
+      "name": "Urine Routine Examination (Urine R/E)",
+      "alsoKnownAs": [
+        "Urine R/E",
+        "Urine DR",
+        "Urinalysis"
+      ],
+      "categoryId": "cat-urine",
+      "pricePkr": 450,
+      "sampleType": "Urine",
+      "reportTime": "Same day",
+      "preparation": "Mid-stream sample in the lab's clean container; first-morning sample preferred",
+      "homeCollection": true,
+      "about": "A physical, chemical and microscopic check of a urine sample.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-pediatrics"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-urine-culture-sensitivity",
+      "slug": "urine-culture-sensitivity",
+      "name": "Urine Culture & Sensitivity",
+      "alsoKnownAs": [
+        "Urine C/S",
+        "Urine culture"
+      ],
+      "categoryId": "cat-urine",
+      "pricePkr": 1800,
+      "sampleType": "Urine",
+      "reportTime": "2–3 working days",
+      "preparation": "Mid-stream sample in the lab's sterile container; collect it at the lab",
+      "homeCollection": false,
+      "about": "Grows a urine sample in the lab to see whether bacteria are present and which medicines they respond to.",
+      "relatedDepartmentIds": [
+        "dept-general-medicine",
+        "dept-gynecology"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "test-urine-pregnancy-test",
+      "slug": "urine-pregnancy-test",
+      "name": "Urine Pregnancy Test",
+      "alsoKnownAs": [
+        "UPT",
+        "Pregnancy test"
+      ],
+      "categoryId": "cat-urine",
+      "pricePkr": 500,
+      "sampleType": "Urine",
+      "reportTime": "Within 1 hour",
+      "preparation": "First-morning urine sample preferred",
+      "homeCollection": true,
+      "about": "Checks a urine sample for the pregnancy hormone hCG.",
+      "relatedDepartmentIds": [
+        "dept-gynecology"
+      ],
+      "isSample": true
+    }
+  ],
+  "healthPackages": [
+    {
+      "id": "pkg-basic-health-check",
+      "slug": "basic-health-check",
+      "name": "Basic Health Check",
+      "iconName": "clipboard-check",
+      "whoFor": "Adults who want a general look at blood, sugar, cholesterol, liver, kidney and urine tests in one visit.",
+      "testSlugs": [
+        "complete-blood-count",
+        "fasting-blood-sugar",
+        "lipid-profile",
+        "liver-function-tests",
+        "serum-creatinine",
+        "urine-routine-examination"
+      ],
+      "packagePricePkr": 4500,
+      "preparation": "10–12 hours fasting; plain water is allowed. Bring a first-morning urine sample if you can.",
+      "homeCollection": true,
+      "isSample": true
+    },
+    {
+      "id": "pkg-diabetes-care",
+      "slug": "diabetes-care",
+      "name": "Diabetes Care",
+      "iconName": "candy",
+      "whoFor": "People who live with diabetes or are keeping an eye on their blood sugar, and want the usual tests together.",
+      "testSlugs": [
+        "fasting-blood-sugar",
+        "hba1c",
+        "random-blood-sugar",
+        "lipid-profile",
+        "serum-creatinine",
+        "urine-routine-examination"
+      ],
+      "packagePricePkr": 4200,
+      "preparation": "10–12 hours fasting; plain water is allowed. Ask your doctor before changing any medicine on the day.",
+      "homeCollection": true,
+      "isSample": true
+    },
+    {
+      "id": "pkg-heart-check",
+      "slug": "heart-check",
+      "name": "Heart Check",
+      "iconName": "heart-pulse",
+      "whoFor": "Adults who want heart-related blood tests along with sugar, kidney and blood count tests.",
+      "testSlugs": [
+        "lipid-profile",
+        "hs-crp",
+        "fasting-blood-sugar",
+        "serum-creatinine",
+        "uric-acid",
+        "complete-blood-count"
+      ],
+      "packagePricePkr": 5000,
+      "preparation": "10–12 hours fasting; plain water is allowed",
+      "homeCollection": true,
+      "isSample": true
+    },
+    {
+      "id": "pkg-womens-health",
+      "slug": "womens-health",
+      "name": "Women's Health",
+      "iconName": "flower",
+      "whoFor": "Women who want a general check covering blood count, thyroid, vitamins and hormones.",
+      "testSlugs": [
+        "complete-blood-count",
+        "tsh",
+        "vitamin-d",
+        "vitamin-b12",
+        "prolactin",
+        "urine-routine-examination"
+      ],
+      "packagePricePkr": 9500,
+      "preparation": "No fasting needed. A morning sample is preferred; ask the lab about timing for the hormone test.",
+      "homeCollection": true,
+      "isSample": true
+    },
+    {
+      "id": "pkg-senior-citizen",
+      "slug": "senior-citizen",
+      "name": "Senior Citizen",
+      "iconName": "hourglass",
+      "whoFor": "Older adults who want a wide set of routine tests together, so fewer visits are needed.",
+      "testSlugs": [
+        "complete-blood-count",
+        "fasting-blood-sugar",
+        "hba1c",
+        "lipid-profile",
+        "liver-function-tests",
+        "serum-creatinine",
+        "uric-acid",
+        "tsh",
+        "vitamin-d",
+        "urine-routine-examination"
+      ],
+      "packagePricePkr": 10500,
+      "preparation": "10–12 hours fasting; plain water is allowed. Home collection can be arranged for those who find travelling hard.",
+      "homeCollection": true,
+      "isSample": true
+    }
+  ]
+}

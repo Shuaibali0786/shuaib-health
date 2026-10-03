@@ -4,3 +4,13 @@
 
 # Original photos (about 30 MB, from Pexels). Only the fitted images in frontend/public/images go to git.
 assets/photos/
+
+# Python (backend)
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
