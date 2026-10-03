@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.errors import UnhandledErrorMiddleware, register_exception_handlers
 from app.logging_config import configure_logging
 from app.middleware.access_log import AccessLogMiddleware
+from app.middleware.rate_limit import InMemoryFixedWindowLimiter, RateLimitMiddleware
 from app.middleware.request_id import RequestIdMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.routers import clinic, departments, doctors, health, lab_tests, packages
@@ -47,8 +48,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # add_middleware wraps the current stack, so the LAST one added is the OUTERMOST.
     # Effective order, outermost first: RequestId -> AccessLog -> SecurityHeaders -> CORS
-    # -> UnhandledError -> routes.
+    # -> RateLimit -> UnhandledError -> routes. Rate limiting sits inside CORS so a 429 still
+    # carries CORS and security headers, and preflight requests are not counted.
     app.add_middleware(UnhandledErrorMiddleware)
+    app.add_middleware(
+        RateLimitMiddleware,
+        limiter=InMemoryFixedWindowLimiter(settings.rate_limit_per_minute),
+        trusted_proxy_hops=settings.trusted_proxy_hops,
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
