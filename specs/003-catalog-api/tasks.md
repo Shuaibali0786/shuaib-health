@@ -192,13 +192,13 @@ description: "Task list for Feature 003: backend foundation + read-only clinic c
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T055 [P] [US4] DB tests in `backend/tests/api/test_seed_idempotency.py` (`db`): on a freshly migrated test DB run `run_seed` 3×; after each run table counts equal (1, 5, 7, 9, 9, 26, 5 and the expected schedule and link row counts computed from `catalog.json`) and the set of `(slug, id)` pairs is unchanged; modify a sample price, re-run → restored to the mock value; insert an extra non-sample department, re-run → it still exists; `/api/v1/doctors` `ETag` identical across runs
-- [ ] T056 [P] [US4] Unit test in `backend/tests/unit/test_seed_cli.py`: invoking `app.seed.__main__.main()` with settings `app_env="production"` exits with code 2, prints the refusal message, and never calls `run_seed` (monkeypatch); output never contains a URL
-- [ ] T057 [P] [US4] Frontend parity test `frontend/tests/unit/catalog-export.test.ts` (Vitest): build the same object as `scripts/export-catalog.mts` from `@/data/*` and `expect` it to deep-equal `JSON.parse` of `../backend/app/seed/data/catalog.json`; failure message tells the developer to run `node scripts\export-catalog.mts`. Factor the object-building into `frontend/scripts/catalog-object.mts` (or export a function from the script) so script and test share it; run `npm test -- catalog-export` from `frontend/`
+- [X] T055 [P] [US4] DB tests in `backend/tests/api/test_seed_idempotency.py` (`db`): on a freshly migrated test DB run `run_seed` 3×; after each run table counts equal (1, 5, 7, 9, 9, 26, 5 and the expected schedule and link row counts computed from `catalog.json`) and the set of `(slug, id)` pairs is unchanged; modify a sample price, re-run → restored to the mock value; insert an extra non-sample department, re-run → it still exists; `/api/v1/doctors` `ETag` identical across runs
+- [X] T056 [P] [US4] Unit test in `backend/tests/unit/test_seed_cli.py`: invoking `app.seed.__main__.main()` with settings `app_env="production"` exits with code 2, prints the refusal message, and never calls `run_seed` (monkeypatch); output never contains a URL
+- [X] T057 [P] [US4] Frontend parity test `frontend/tests/unit/catalog-export.test.ts` (Vitest): build the same object as `scripts/export-catalog.mts` from `@/data/*` and `expect` it to deep-equal `JSON.parse` of `../backend/app/seed/data/catalog.json`; failure message tells the developer to run `node scripts\export-catalog.mts`. Factor the object-building into `frontend/scripts/catalog-object.mts` (or export a function from the script) so script and test share it; run `npm test -- catalog-export` from `frontend/`
 
 ### Implementation for User Story 4
 
-- [ ] T058 [US4] Fix any gaps the T055–T057 tests expose in `backend/app/seed/loader.py` / `backend/app/seed/__main__.py` / `frontend/scripts/export-catalog.mts`; then run `uv run python -m app.seed` three times against the **dev** DB and record the printed counts in the PR description (no URLs)
+- [X] T058 [US4] Fix any gaps the T055–T057 tests expose in `backend/app/seed/loader.py` / `backend/app/seed/__main__.py` / `frontend/scripts/export-catalog.mts`; then run `uv run python -m app.seed` three times against the **dev** DB and record the printed counts in the PR description (no URLs)
 
 **Checkpoint**: seed guarantees proven.
 
