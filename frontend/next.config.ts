@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Each e2e server builds into its own folder (NEXT_DIST_DIR) so builds never collide. Unset means .next.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
   reactStrictMode: true,
   images: {

@@ -51,26 +51,26 @@ Each server builds into its own `NEXT_DIST_DIR`, so builds never collide.
 
 ### 2a. Types, fixtures, schemas
 
-- [ ] T007 Move `src/data/departments.ts`, `src/data/doctors.ts`, `src/data/labTests.ts`, `src/data/healthPackages.ts`, `src/data/siteConfig.ts` to `tests/fixtures/catalog/` unchanged (`git mv`). Leave temporary re-export shims at the old paths (`export * from "../../tests/fixtures/catalog/doctors";` etc.) so nothing breaks yet; shims are deleted in T047/T062. Update `scripts/catalog-object.mjs` imports to `../tests/fixtures/catalog/*.ts`. Run `npm test`; `tests/unit/catalog-export.test.ts` must stay green.
-- [ ] T008 Widen white-label types in `src/types/content.ts` (additive only, data-model §3): `SiteConfig.timeZone: string` (was literal `"Asia/Karachi"`), add optional `SiteConfig.logo?: ImageAsset` and `SiteConfig.brandColors?: { primary: string; accent: string }`, add optional `ScheduleSession.slotMinutes?: number`, add `export interface ClinicRule { id: string; sortOrder: number; text: string; isSample: boolean }`. Fix any type errors this causes; `npm run typecheck` must pass.
-- [ ] T009 Generate `src/lib/api/schema.gen.ts` with `npm run api:types`; add a header comment "GENERATED — do not edit; run npm run api:types". Exclude it from ESLint in `eslint.config.mjs` if lint complains.
-- [ ] T010 Create `src/lib/api/schemas.ts`: zod 4 schemas `ImageAssetSchema`, `PhoneNumberSchema`, `OpeningHoursRuleSchema`, `ClinicSettingsSchema`, `ClinicRuleSchema`, `DepartmentSchema`, `ScheduleSessionSchema`, `DoctorSchema`, `LabTestCategorySchema`, `LabTestSchema`, `HealthPackageSchema`, and `pageSchema(item)` for `{items,total,page,pageSize}`. Follow the field lists in `specs/003-catalog-api/contracts/openapi.yaml` (components.schemas). Apply the data-model §2 rules: strip unknown keys; slug regex `^[a-z0-9]+(?:-[a-z0-9]+)*$`; integer ≥ 0 prices; hex colours `^#[0-9A-Fa-f]{6}$`; image `src` must start with `/images/`. Export the inferred types.
-- [ ] T011 Create `scripts/record-api-fixtures.mjs`: reads `CATALOG_API_URL` (default `http://localhost:8000`) and GETs `/api/v1/clinic` and the six list endpoints with `pageSize=100`. It writes pretty JSON to `tests/fixtures/api/{clinic,clinic-rules,departments,doctors,lab-test-categories,lab-tests,health-packages}.json` and exits non-zero with a clear message if the API is unreachable.
-- [ ] T012 Start the seeded backend (see `quickstart.md` §1), run `npm run api:record`, and commit `tests/fixtures/api/*.json`. In `tests/fixtures/api/README.md`, note that the fixtures were recorded from the Feature 003 seed and how to re-record them.
+- [X] T007 Move `src/data/departments.ts`, `src/data/doctors.ts`, `src/data/labTests.ts`, `src/data/healthPackages.ts`, `src/data/siteConfig.ts` to `tests/fixtures/catalog/` unchanged (`git mv`). Leave temporary re-export shims at the old paths (`export * from "../../tests/fixtures/catalog/doctors";` etc.) so nothing breaks yet; shims are deleted in T047/T062. Update `scripts/catalog-object.mjs` imports to `../tests/fixtures/catalog/*.ts`. Run `npm test`; `tests/unit/catalog-export.test.ts` must stay green.
+- [X] T008 Widen white-label types in `src/types/content.ts` (additive only, data-model §3): `SiteConfig.timeZone: string` (was literal `"Asia/Karachi"`), add optional `SiteConfig.logo?: ImageAsset` and `SiteConfig.brandColors?: { primary: string; accent: string }`, add optional `ScheduleSession.slotMinutes?: number`, add `export interface ClinicRule { id: string; sortOrder: number; text: string; isSample: boolean }`. Fix any type errors this causes; `npm run typecheck` must pass.
+- [X] T009 Generate `src/lib/api/schema.gen.ts` with `npm run api:types`; add a header comment "GENERATED — do not edit; run npm run api:types". Exclude it from ESLint in `eslint.config.mjs` if lint complains.
+- [X] T010 Create `src/lib/api/schemas.ts`: zod 4 schemas `ImageAssetSchema`, `PhoneNumberSchema`, `OpeningHoursRuleSchema`, `ClinicSettingsSchema`, `ClinicRuleSchema`, `DepartmentSchema`, `ScheduleSessionSchema`, `DoctorSchema`, `LabTestCategorySchema`, `LabTestSchema`, `HealthPackageSchema`, and `pageSchema(item)` for `{items,total,page,pageSize}`. Follow the field lists in `specs/003-catalog-api/contracts/openapi.yaml` (components.schemas). Apply the data-model §2 rules: strip unknown keys; slug regex `^[a-z0-9]+(?:-[a-z0-9]+)*$`; integer ≥ 0 prices; hex colours `^#[0-9A-Fa-f]{6}$`; image `src` must start with `/images/`. Export the inferred types.
+- [X] T011 Create `scripts/record-api-fixtures.mjs`: reads `CATALOG_API_URL` (default `http://localhost:8000`) and GETs `/api/v1/clinic` and the six list endpoints with `pageSize=100`. It writes pretty JSON to `tests/fixtures/api/{clinic,clinic-rules,departments,doctors,lab-test-categories,lab-tests,health-packages}.json` and exits non-zero with a clear message if the API is unreachable.
+- [X] T012 Start the seeded backend (see `quickstart.md` §1), run `npm run api:record`, and commit `tests/fixtures/api/*.json`. In `tests/fixtures/api/README.md`, note that the fixtures were recorded from the Feature 003 seed and how to re-record them.
 
 ### 2b. Contract tests (US4 groundwork, written first)
 
-- [ ] T013 [P] Create `tests/unit/api-contract.test.ts` with these checks:
+- [X] T013 [P] Create `tests/unit/api-contract.test.ts` with these checks:
   - (1) run `openapi-typescript` programmatically (its Node API) on the contract and compare with `src/lib/api/schema.gen.ts`; on mismatch, name the first differing line and say "run npm run api:types";
   - (2) `expectTypeOf<z.infer<typeof XSchema>>().toEqualTypeOf<components["schemas"]["X"]>()` for each schema in T010 (relax to `toMatchTypeOf` only where the generator emits wider types, with a comment);
   - (3) `expectTypeOf<components["schemas"]["Doctor"]>().toMatchTypeOf<Doctor>()` and the same for Department, LabTestCategory, LabTest, HealthPackage, ImageAsset, and ClinicSettings→SiteConfig;
   - (4) every file in `tests/fixtures/api/` parses with its schema.
-- [ ] T014 [P] Create `tests/unit/api-fixture-parity.test.ts`: for each resource, compare recorded API fixtures with `tests/fixtures/catalog/*.ts` field by field, matched by slug, ignoring `id`, `departmentId`, `categoryId`, `relatedDepartmentIds` (compare them by resolved slug instead) and the additive fields (`slotMinutes`, `logo`, `brandColors`). Clinic settings are compared with `siteConfig`.
-- [ ] T015 [P] Create `tests/unit/api-contract-drift.test.ts`: take a deep copy of the parsed OpenAPI YAML (add `yaml` as a dev dependency if no YAML parser is available; check `node_modules` first). Apply four injected drifts to `Doctor` (remove `bio`, rename `fullName`→`name`, change `feePkr` to string, add newly required `rating`), regenerate types or validate a fixture against a schema built from each drift, and assert that checks (1) and (4) **detect** each drift (SC-007).
+- [X] T014 [P] Create `tests/unit/api-fixture-parity.test.ts`: for each resource, compare recorded API fixtures with `tests/fixtures/catalog/*.ts` field by field, matched by slug, ignoring `id`, `departmentId`, `categoryId`, `relatedDepartmentIds` (compare them by resolved slug instead) and the additive fields (`slotMinutes`, `logo`, `brandColors`). Clinic settings are compared with `siteConfig`.
+- [X] T015 [P] Create `tests/unit/api-contract-drift.test.ts`: take a deep copy of the parsed OpenAPI YAML (add `yaml` as a dev dependency if no YAML parser is available; check `node_modules` first). Apply four injected drifts to `Doctor` (remove `bio`, rename `fullName`→`name`, change `feePkr` to string, add newly required `rating`), regenerate types or validate a fixture against a schema built from each drift, and assert that checks (1) and (4) **detect** each drift (SC-007).
 
 ### 2c. Data-access layer (contracts/data-access.md)
 
-- [ ] T016 [P] Write `tests/unit/api-http.test.ts` (fails first). Stub `globalThis.fetch` with `vi.fn` and test `getJson`:
+- [X] T016 [P] Write `tests/unit/api-http.test.ts` (fails first). Stub `globalThis.fetch` with `vi.fn` and test `getJson`:
   - 200 valid → parsed data;
   - unset URL → `ApiError{kind:"unconfigured"}` and no fetch call;
   - invalid URL scheme → `unconfigured`;
@@ -81,43 +81,43 @@ Each server builds into its own `NEXT_DIST_DIR`, so builds never collide.
   - `requestId` copied from the `X-Request-ID` header;
   - the request URL is `${CATALOG_API_URL}/api/v1${path}` and `cache: "no-store"` is passed;
   - a caller-supplied `signal` is used instead of the default 3000 ms one (paging shares one deadline, FR-011).
-- [ ] T017 [P] Write `tests/unit/api-paginate.test.ts` (fails first):
+- [X] T017 [P] Write `tests/unit/api-paginate.test.ts` (fails first):
   - total ≤ 100 → one call;
   - total 250 → page 1 first, then pages 2 and 3 requested **concurrently** (assert both started before either resolved), results concatenated in page order;
   - any page failing → throws;
   - **one 3 s budget per resource** (FR-011): every page call receives the same `AbortSignal`. With fake timers, page 1 answering at 2500 ms and page 2 hanging → `timeout` at 3000 ms total, not 5500 ms.
-- [ ] T018 Create `src/lib/api/config.ts` (`import "server-only"`):
+- [X] T018 Create `src/lib/api/config.ts` (`import "server-only"`):
   - `getApiBase()` returns a validated `http(s)` origin without a trailing slash, or `null`. It reads `process.env.CATALOG_API_URL` at call time, not module load, so tests can change it.
   - `getClinicFallback()` parses and validates `CLINIC_FALLBACK_JSON` with `ClinicSettingsSchema`. It returns `null` when the value is missing or invalid; an invalid value logs one `console.warn` with no value echoed.
   - `getDataRevalidateSeconds()` returns `CATALOG_DATA_REVALIDATE_SECONDS` when it is an integer from 1 to 3600, else 300 (one `console.warn` when set but invalid). It is only for the stateful e2e server; production leaves it unset.
   - Add unit cases for all three functions to `tests/unit/api-http.test.ts`.
-- [ ] T019 Create `src/lib/api/http.ts` (`import "server-only"`): `class ApiError` and `getJson(path, schema, signal?)` per contracts/data-access.md §2–3, with `fetch(url, { cache: "no-store", signal: signal ?? AbortSignal.timeout(3000), headers: { accept: "application/json" } })`. This is the only `fetch` call in `src/`. Make T016 pass.
-- [ ] T020 Create `src/lib/api/paginate.ts`: `getAllPages(path, itemSchema)` with `pageSize=100`. It creates **one** `AbortSignal.timeout(3000)` and passes it to page 1 and to pages 2..n (fetched via `Promise.all`), so a whole list never takes more than 3 s. Make T017 pass.
-- [ ] T021 Write `tests/unit/api-cached.test.ts` (fails first). Mock `next/cache` so `unstable_cache(fn, key, opts)` records `key`/`opts` and simulates Next's semantics with an in-memory map: when there is no entry, run `fn` and store it on success (rethrow on failure); when there is an entry, run `fn`, store it on success, and return the stale value on failure. Assert:
+- [X] T019 Create `src/lib/api/http.ts` (`import "server-only"`): `class ApiError` and `getJson(path, schema, signal?)` per contracts/data-access.md §2–3, with `fetch(url, { cache: "no-store", signal: signal ?? AbortSignal.timeout(3000), headers: { accept: "application/json" } })`. This is the only `fetch` call in `src/`. Make T016 pass.
+- [X] T020 Create `src/lib/api/paginate.ts`: `getAllPages(path, itemSchema)` with `pageSize=100`. It creates **one** `AbortSignal.timeout(3000)` and passes it to page 1 and to pages 2..n (fetched via `Promise.all`), so a whole list never takes more than 3 s. Make T017 pass.
+- [X] T021 Write `tests/unit/api-cached.test.ts` (fails first). Mock `next/cache` so `unstable_cache(fn, key, opts)` records `key`/`opts` and simulates Next's semantics with an in-memory map: when there is no entry, run `fn` and store it on success (rethrow on failure); when there is an entry, run `fn`, store it on success, and return the stale value on failure. Assert:
   - each of the 7 loaders uses key `["api", <resource>]`, `revalidate: 300` and tags `["catalog", <resource>]` when `CATALOG_DATA_REVALIDATE_SECONDS` is unset, and `revalidate: 3` when it is `"3"` (re-import the module after setting the variable);
   - after one success, later failures still return the first data (last good);
   - with no success ever, it throws.
-- [ ] T022 Create `src/lib/api/cached.ts` (`import "server-only"`) with the 7 `unstable_cache` loaders from data-model §4: `cachedClinic` (`getJson("/clinic", ClinicSettingsSchema)`) and `cachedClinicRules`, `cachedDepartments`, `cachedDoctors`, `cachedLabTestCategories`, `cachedLabTests`, `cachedHealthPackages` (`getAllPages`). Each loader's `revalidate` is `getDataRevalidateSeconds()`. Export a `CATALOG_REVALIDATE = 300` constant for documentation; route segments still write the literal `300`, because Next requires it to be static. Make T021 pass.
-- [ ] T023 Write `tests/unit/api-load.test.ts` (fails first): `load(name, fn)` returns `{ok:true,data}` on success; maps `ApiError` `unconfigured` → `{ok:false,reason:"unconfigured"}` and everything else → `"unavailable"`; never throws, even on a non-ApiError; logs exactly one `console.warn` JSON line `{"event":"catalog_api_unavailable","resource":name,"kind":...,"requestId":...}` with no URL, query or body.
-- [ ] T024 Create `src/lib/api/load.ts` (`import "server-only"`) with `type Loaded<T>` and `load()`. Make T023 pass.
-- [ ] T025 [P] Create `src/components/ui/DataUnavailable.tsx` (server component). Compose the existing `EmptyState` from `src/components/ui/EmptyState.tsx` with no new styles. Props `{ title?: string; phone?: PhoneNumber }`. Copy: "This information is temporarily unavailable", "Please try again in a few minutes.", a "Try again" link to the current path (prop `href`), and "Call the clinic" `tel:` when `phone` is given, else a link to `/contact`. Add `tests/unit/data-unavailable.test.tsx`: renders the text, a working retry link, a phone link when given and a contact link when not, and no technical words ("error", "500", "fetch", "API").
+- [X] T022 Create `src/lib/api/cached.ts` (`import "server-only"`) with the 7 `unstable_cache` loaders from data-model §4: `cachedClinic` (`getJson("/clinic", ClinicSettingsSchema)`) and `cachedClinicRules`, `cachedDepartments`, `cachedDoctors`, `cachedLabTestCategories`, `cachedLabTests`, `cachedHealthPackages` (`getAllPages`). Each loader's `revalidate` is `getDataRevalidateSeconds()`. Export a `CATALOG_REVALIDATE = 300` constant for documentation; route segments still write the literal `300`, because Next requires it to be static. Make T021 pass.
+- [X] T023 Write `tests/unit/api-load.test.ts` (fails first): `load(name, fn)` returns `{ok:true,data}` on success; maps `ApiError` `unconfigured` → `{ok:false,reason:"unconfigured"}` and everything else → `"unavailable"`; never throws, even on a non-ApiError; logs exactly one `console.warn` JSON line `{"event":"catalog_api_unavailable","resource":name,"kind":...,"requestId":...}` with no URL, query or body.
+- [X] T024 Create `src/lib/api/load.ts` (`import "server-only"`) with `type Loaded<T>` and `load()`. Make T023 pass.
+- [X] T025 [P] Create `src/components/ui/DataUnavailable.tsx` (server component). Compose the existing `EmptyState` from `src/components/ui/EmptyState.tsx` with no new styles. Props `{ title?: string; phone?: PhoneNumber }`. Copy: "This information is temporarily unavailable", "Please try again in a few minutes.", a "Try again" link to the current path (prop `href`), and "Call the clinic" `tel:` when `phone` is given, else a link to `/contact`. Add `tests/unit/data-unavailable.test.tsx`: renders the text, a working retry link, a phone link when given and a contact link when not, and no technical words ("error", "500", "fetch", "API").
 
 ### 2d. Mock API and e2e harness (contracts/mock-api.md)
 
-- [ ] T026 Create `tests/mock-api/server.mjs` (Node `http` only). It serves the 7 endpoints from `tests/fixtures/api/*.json` with `page`/`pageSize` slicing and `X-Request-ID`.
+- [X] T026 Create `tests/mock-api/server.mjs` (Node `http` only). It serves the 7 endpoints from `tests/fixtures/api/*.json` with `page`/`pageSize` slicing and `X-Request-ID`.
   - Modes `ok|down|slow|error500|malformed|partial|extra|rename|rules-empty|rebrand` (contracts/mock-api.md), controlled by `POST /__mode` (`{mode, resources?}`), `GET /__mode` and `POST /__reset`.
   - The starting mode comes from `MOCK_API_MODE` (default `ok`); `__reset` returns to `ok`.
   - **Request log**: `GET /__log` returns the number of catalog requests per resource since the last `__reset`. Stateful specs use it to prove the API was really called after a mode switch.
   - Port `MOCK_API_PORT` defaults to 4010. A `GET /` health response lets Playwright wait for it.
   - `slow` waits 60 s but must stop when the client disconnects.
-- [ ] T027 Add `tests/unit/mock-api.test.ts`: start the server on a random port. Check that `ok` responses match the fixtures and the paging envelope, that each mode has the documented status/behaviour, that `MOCK_API_MODE` sets the starting mode, that `__log` counts per resource, and that `__reset` restores `ok` and clears the log.
-- [ ] T081 Per-server build folders (C5). In `next.config.ts`, set `distDir: process.env.NEXT_DIST_DIR || ".next"` (read the `distDir` page in `node_modules/next/dist/docs/` first). Add `.next-*` to `tsconfig.json` `exclude`, to the ESLint ignores in `eslint.config.mjs` and to `.gitignore` (T006). `npm run build` with the variable unset must still write to `.next`.
-- [ ] T028 Update `playwright.config.ts` (main):
+- [X] T027 Add `tests/unit/mock-api.test.ts`: start the server on a random port. Check that `ok` responses match the fixtures and the paging envelope, that each mode has the documented status/behaviour, that `MOCK_API_MODE` sets the starting mode, that `__log` counts per resource, and that `__reset` restores `ok` and clears the log.
+- [X] T081 Per-server build folders (C5). In `next.config.ts`, set `distDir: process.env.NEXT_DIST_DIR || ".next"` (read the `distDir` page in `node_modules/next/dist/docs/` first). Add `.next-*` to `tsconfig.json` `exclude`, to the ESLint ignores in `eslint.config.mjs` and to `.gitignore` (T006). `npm run build` with the variable unset must still write to `.next`.
+- [X] T028 Update `playwright.config.ts` (main):
   - make `webServer` an array: (1) `node tests/mock-api/server.mjs` at `http://127.0.0.1:4010/`; (2) the existing Next command with `env: { CATALOG_API_URL: "http://127.0.0.1:4010", CLINIC_FALLBACK_JSON: <stringified tests/fixtures/api/clinic.json> }`;
   - add `testIgnore: ["**/stateful/**", "**/offline/**"]` (C4);
   - keep `fullyParallel: true`. Main specs never change the mock mode.
   - Add `tests/e2e/mock-api.ts` with helpers `setMode(apiBase, mode, resources?)`, `resetMode(apiBase)` and `requestLog(apiBase)`, for stateful specs only.
-- [ ] T082 Create `playwright.stateful.config.ts` (C1–C3):
+- [X] T082 Create `playwright.stateful.config.ts` (C1–C3):
   - `testDir: "./tests/e2e/stateful"`, `workers: 1`, `fullyParallel: false`, one project (Desktop Chrome);
   - `webServer` array, all with `reuseExistingServer: false`:
     - (1) mock on 4011;
@@ -130,7 +130,7 @@ Each server builds into its own `NEXT_DIST_DIR`, so builds never collide.
     - open `/doctors` twice within 1 s → `__log` shows 1 `doctors` request (the data cache is active in dev);
     - wait 4 s and open it twice more → `__log` shows at least 2 (the refresh reaches the API).
   - If either check fails, **stop and report to the user**: the stateful design does not hold.
-- [ ] T029 Create `playwright.offline.config.ts`: `testDir: "./tests/e2e/offline"`, Desktop Chrome and Pixel 7. Two variants, each with its own build folder so the two builds never share `.next` (C5):
+- [X] T029 Create `playwright.offline.config.ts`: `testDir: "./tests/e2e/offline"`, Desktop Chrome and Pixel 7. Two variants, each with its own build folder so the two builds never share `.next` (C5):
   - **dead**: `npm run build && npm run start -- --port 3200` with `NEXT_DIST_DIR=.next-offline-dead`, `CATALOG_API_URL=http://127.0.0.1:9` and `CLINIC_FALLBACK_JSON`; projects `dead-*` match `site.spec.ts`;
   - **unset**: port 3201, `NEXT_DIST_DIR=.next-offline-unset`, with `CATALOG_API_URL` and `CLINIC_FALLBACK_JSON` both unset; projects `unset-*` match `unset.spec.ts`.
 

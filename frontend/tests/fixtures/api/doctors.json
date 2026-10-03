@@ -1,0 +1,428 @@
+{
+  "items": [
+    {
+      "id": "7559595d-497a-4484-9c4e-0ecdf0768c8a",
+      "slug": "dr-hassan-mirza",
+      "fullName": "Dr. Hassan Mirza",
+      "departmentId": "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+      "specialty": "General Medicine",
+      "photo": {
+        "src": "/images/doctors/dr-hassan-mirza.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Hassan Mirza: a bearded man in glasses and a lavender coat with a stethoscope, arms crossed",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 2000,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Medicine)"
+      ],
+      "experienceYears": 12,
+      "languages": [
+        "Urdu",
+        "English",
+        "Punjabi"
+      ],
+      "bio": "Dr. Hassan Mirza sees adults for everyday health concerns, routine checkups and ongoing care. He likes to explain the plan in plain language and to leave time for questions.",
+      "schedule": [
+        {
+          "day": "mon",
+          "start": "09:00",
+          "end": "13:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "wed",
+          "start": "09:00",
+          "end": "13:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "fri",
+          "start": "14:00",
+          "end": "18:00",
+          "slotMinutes": 15
+        }
+      ],
+      "isFeatured": true,
+      "isSample": true
+    },
+    {
+      "id": "df798cc3-87a0-4be0-b2aa-9b00376cdf3f",
+      "slug": "dr-imran-qureshi",
+      "fullName": "Dr. Imran Qureshi",
+      "departmentId": "e4ebb983-18ee-434c-ba37-a2398d7d3881",
+      "specialty": "Cardiology",
+      "photo": {
+        "src": "/images/doctors/dr-imran-qureshi.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Imran Qureshi: a man in a white coat with a stethoscope",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 3500,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Cardiology)"
+      ],
+      "experienceYears": 15,
+      "languages": [
+        "Urdu",
+        "English"
+      ],
+      "bio": "Dr. Imran Qureshi looks after heart and blood-pressure concerns, from routine heart checkups to follow-up visits. Appointments focus on a clear explanation of what each test is for.",
+      "schedule": [
+        {
+          "day": "mon",
+          "start": "16:00",
+          "end": "20:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "wed",
+          "start": "16:00",
+          "end": "20:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "sat",
+          "start": "09:00",
+          "end": "13:00",
+          "slotMinutes": 15
+        }
+      ],
+      "isFeatured": true,
+      "isSample": true
+    },
+    {
+      "id": "bada98bf-f911-434d-a57d-a4d805e20d04",
+      "slug": "dr-sana-farooqui",
+      "fullName": "Dr. Sana Farooqui",
+      "departmentId": "0742dcab-7e08-4c72-bbe5-1b1143bac797",
+      "specialty": "Pediatrics",
+      "photo": {
+        "src": "/images/doctors/dr-sana-farooqui.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Sana Farooqui: a woman in a white cap and white coat with a stethoscope, holding a red folder, against a light background",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 2500,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Pediatrics)"
+      ],
+      "experienceYears": 10,
+      "languages": [
+        "Urdu",
+        "English",
+        "Sindhi"
+      ],
+      "bio": "Dr. Sana Farooqui cares for babies, children and teenagers, including routine checkups and common childhood illnesses. She speaks to parents and children together so everyone understands the next step.",
+      "schedule": [
+        {
+          "day": "mon",
+          "start": "10:00",
+          "end": "14:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "tue",
+          "start": "10:00",
+          "end": "14:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "thu",
+          "start": "10:00",
+          "end": "14:00",
+          "slotMinutes": 15
+        }
+      ],
+      "isFeatured": true,
+      "isSample": true
+    },
+    {
+      "id": "2d247962-d93a-4456-9637-63bc97c164b1",
+      "slug": "dr-ayesha-rahman",
+      "fullName": "Dr. Ayesha Rahman",
+      "departmentId": "921ecdb7-cbd7-4716-9eff-5f66e745f100",
+      "specialty": "Gynecology",
+      "photo": {
+        "src": "/images/doctors/dr-ayesha-rahman.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Ayesha Rahman: a woman in a white coat taking a phone call and holding a notebook",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 3000,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Gynecology)"
+      ],
+      "experienceYears": 14,
+      "languages": [
+        "Urdu",
+        "English",
+        "Sindhi"
+      ],
+      "bio": "Dr. Ayesha Rahman provides women's health care, from routine checkups to pregnancy care. Visits are unhurried and private, with time to talk through any concern.",
+      "schedule": [
+        {
+          "day": "tue",
+          "start": "11:00",
+          "end": "16:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "thu",
+          "start": "11:00",
+          "end": "16:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "sat",
+          "start": "11:00",
+          "end": "15:00",
+          "slotMinutes": 15
+        }
+      ],
+      "isFeatured": true,
+      "isSample": true
+    },
+    {
+      "id": "8b9bdb5a-ce82-4a47-b497-ec0b6fe2abc3",
+      "slug": "dr-maryam-baloch",
+      "fullName": "Dr. Maryam Baloch",
+      "departmentId": "61d1fa22-6f4e-475a-b162-10ccc3da03c9",
+      "specialty": "Dermatology",
+      "photo": {
+        "src": "/images/doctors/dr-maryam-baloch.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Maryam Baloch: a smiling woman with long dark hair in a white coat with a stethoscope around her neck",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 3000,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Dermatology)"
+      ],
+      "experienceYears": 9,
+      "languages": [
+        "Urdu",
+        "English"
+      ],
+      "bio": "Dr. Maryam Baloch sees patients with common skin, hair and nail concerns. She takes time to explain skin-care routines and what to expect between visits.",
+      "schedule": [
+        {
+          "day": "mon",
+          "start": "12:00",
+          "end": "17:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "wed",
+          "start": "17:00",
+          "end": "20:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "fri",
+          "start": "10:00",
+          "end": "15:00",
+          "slotMinutes": 15
+        }
+      ],
+      "isFeatured": false,
+      "isSample": true
+    },
+    {
+      "id": "9e8121af-39dc-4180-b91a-6e9afe0923c3",
+      "slug": "dr-bilal-ansari",
+      "fullName": "Dr. Bilal Ansari",
+      "departmentId": "3f13f820-ac9e-4482-a7d2-0094144d52c6",
+      "specialty": "Dental",
+      "photo": {
+        "src": "/images/doctors/dr-bilal-ansari.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Bilal Ansari: a man in glasses with short dark hair and light stubble, in a white coat over a dark blue shirt with a stethoscope around his neck, against a light background",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 2000,
+      "qualifications": [
+        "BDS",
+        "MCPS (Operative Dentistry)"
+      ],
+      "experienceYears": 11,
+      "languages": [
+        "Urdu",
+        "English",
+        "Punjabi"
+      ],
+      "bio": "Dr. Bilal Ansari provides dental checkups, cleaning and everyday tooth care. He walks patients through each step before starting so there are no surprises.",
+      "schedule": [
+        {
+          "day": "tue",
+          "start": "09:00",
+          "end": "13:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "thu",
+          "start": "17:00",
+          "end": "21:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "sat",
+          "start": "10:00",
+          "end": "16:00",
+          "slotMinutes": 15
+        }
+      ],
+      "isFeatured": false,
+      "isSample": true
+    },
+    {
+      "id": "1457ef88-dd6b-455d-9306-32c30ad4d424",
+      "slug": "dr-zainab-memon",
+      "fullName": "Dr. Zainab Memon",
+      "departmentId": "57d79003-c430-488c-a234-585f9e228b65",
+      "specialty": "Pathology Lab",
+      "photo": {
+        "src": "/images/doctors/dr-zainab-memon.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Zainab Memon: a woman with dark curly hair in a white lab coat and purple gloves, working at a laboratory bench",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 1500,
+      "qualifications": [
+        "MBBS",
+        "FCPS (Chemical Pathology)"
+      ],
+      "experienceYears": 13,
+      "languages": [
+        "Urdu",
+        "English",
+        "Sindhi"
+      ],
+      "bio": "Dr. Zainab Memon oversees the sample pathology lab and answers patients' questions about how tests are collected and reported. She is available by appointment to talk through which tests a doctor has asked for.",
+      "schedule": [
+        {
+          "day": "mon",
+          "start": "09:00",
+          "end": "12:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "wed",
+          "start": "10:00",
+          "end": "13:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "fri",
+          "start": "16:00",
+          "end": "19:00",
+          "slotMinutes": 15
+        }
+      ],
+      "isFeatured": false,
+      "isSample": true
+    },
+    {
+      "id": "ee6f7abc-cbcd-468a-86c2-421c63630140",
+      "slug": "dr-omar-sheikh",
+      "fullName": "Dr. Omar Sheikh",
+      "departmentId": "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+      "specialty": "General Medicine",
+      "photo": {
+        "src": "/images/doctors/dr-omar-sheikh.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Omar Sheikh: a grey-haired man in a white coat with a stethoscope around his neck, one hand on his collar, against a softly blurred outdoor background",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 1800,
+      "qualifications": [
+        "MBBS",
+        "MCPS (Family Medicine)"
+      ],
+      "experienceYears": 8,
+      "languages": [
+        "Urdu",
+        "English",
+        "Sindhi"
+      ],
+      "bio": "Dr. Omar Sheikh provides general care for adults and families, including routine checkups and follow-up visits. Afternoon and Saturday sessions make it easier to fit a visit around work.",
+      "schedule": [
+        {
+          "day": "tue",
+          "start": "14:00",
+          "end": "20:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "thu",
+          "start": "14:00",
+          "end": "20:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "sat",
+          "start": "10:00",
+          "end": "14:00",
+          "slotMinutes": 15
+        }
+      ],
+      "isFeatured": false,
+      "isSample": true
+    },
+    {
+      "id": "216866df-71b2-448f-9159-650ebf92e987",
+      "slug": "dr-faisal-chaudhry",
+      "fullName": "Dr. Faisal Chaudhry",
+      "departmentId": "0742dcab-7e08-4c72-bbe5-1b1143bac797",
+      "specialty": "Pediatrics",
+      "photo": {
+        "src": "/images/doctors/dr-faisal-chaudhry.jpg",
+        "alt": "Stock photo of a model presented as sample doctor Dr. Faisal Chaudhry: a smiling man in glasses and a white coat with a stethoscope, holding a measuring tape",
+        "width": 600,
+        "height": 750
+      },
+      "feePkr": 2200,
+      "qualifications": [
+        "MBBS",
+        "DCH"
+      ],
+      "experienceYears": 7,
+      "languages": [
+        "Urdu",
+        "English",
+        "Punjabi"
+      ],
+      "bio": "Dr. Faisal Chaudhry cares for children from infancy to the teenage years, including routine checkups and growth checks. His evening and Saturday sessions suit families with school-day schedules.",
+      "schedule": [
+        {
+          "day": "wed",
+          "start": "15:00",
+          "end": "20:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "fri",
+          "start": "15:00",
+          "end": "20:00",
+          "slotMinutes": 15
+        },
+        {
+          "day": "sat",
+          "start": "15:00",
+          "end": "19:00",
+          "slotMinutes": 15
+        }
+      ],
+      "isFeatured": false,
+      "isSample": true
+    }
+  ],
+  "total": 9,
+  "page": 1,
+  "pageSize": 100
+}

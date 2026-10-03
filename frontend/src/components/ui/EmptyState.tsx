@@ -1,4 +1,5 @@
 import { SearchX } from "lucide-react";
+import type { ReactNode } from "react";
 
 interface EmptyStateProps {
   /** For example "No doctors match your filters". */
@@ -7,10 +8,12 @@ interface EmptyStateProps {
   /** Shows a "Clear filters" button when given. */
   onClear?: () => void;
   clearLabel?: string;
+  /** Extra content under the description, for example links. */
+  children?: ReactNode;
 }
 
 /** Shown when a filtered list has no results. Never a blank area. */
-export function EmptyState({ title, description, onClear, clearLabel = "Clear filters" }: EmptyStateProps) {
+export function EmptyState({ title, description, onClear, clearLabel = "Clear filters", children }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center rounded-card border border-border bg-surface px-6 py-12 text-center">
       <SearchX className="size-10 text-muted" aria-hidden="true" />
@@ -25,6 +28,7 @@ export function EmptyState({ title, description, onClear, clearLabel = "Clear fi
           {clearLabel}
         </button>
       ) : null}
+      {children}
     </div>
   );
 }

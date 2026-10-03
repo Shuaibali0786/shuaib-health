@@ -1,0 +1,61 @@
+{
+  "items": [
+    {
+      "id": "4230da9e-9d97-48b7-9f00-ebbc0e1cb447",
+      "slug": "blood",
+      "name": "Blood",
+      "iconName": "droplet"
+    },
+    {
+      "id": "47912537-702a-4a77-8be1-3ea5ba5846a6",
+      "slug": "diabetes",
+      "name": "Diabetes",
+      "iconName": "candy"
+    },
+    {
+      "id": "9e5eead6-1fd3-4f91-84e4-689a2ac4d840",
+      "slug": "heart",
+      "name": "Heart",
+      "iconName": "heart-pulse"
+    },
+    {
+      "id": "18f45c2e-bbfd-4efe-9038-2086deea0b0c",
+      "slug": "liver",
+      "name": "Liver",
+      "iconName": "flame"
+    },
+    {
+      "id": "9cf81a88-f83c-4ce6-b66f-8a120368bdb1",
+      "slug": "kidney",
+      "name": "Kidney",
+      "iconName": "bean"
+    },
+    {
+      "id": "743c7f0e-5367-4e0c-af0f-d7590c284c47",
+      "slug": "thyroid",
+      "name": "Thyroid",
+      "iconName": "activity"
+    },
+    {
+      "id": "f1a9970c-80e1-4c79-9842-fb51a94314e4",
+      "slug": "vitamins",
+      "name": "Vitamins",
+      "iconName": "sun"
+    },
+    {
+      "id": "8f040414-08ff-4260-9d6b-435e470e83e6",
+      "slug": "hormones",
+      "name": "Hormones",
+      "iconName": "sparkles"
+    },
+    {
+      "id": "106e33c9-a4a1-42f2-b3c8-ae76ea519fda",
+      "slug": "urine",
+      "name": "Urine",
+      "iconName": "test-tube"
+    }
+  ],
+  "total": 9,
+  "page": 1,
+  "pageSize": 100
+}

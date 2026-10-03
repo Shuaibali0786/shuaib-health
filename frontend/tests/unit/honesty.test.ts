@@ -83,14 +83,17 @@ describe("no third-party brands", () => {
 });
 
 describe("no backend dependency (constitution V)", () => {
-  it("src contains no fetch() call", () => {
-    const offenders = codeFiles.filter((file) => /\bfetch\s*\(/.test(file.code)).map((file) => file.path);
+  it("src contains no fetch() call except the catalog API client", () => {
+    const offenders = codeFiles
+      .filter((file) => file.path !== "/src/lib/api/http.ts")
+      .filter((file) => /\bfetch\s*\(/.test(file.code))
+      .map((file) => file.path);
     expect(offenders).toEqual([]);
   });
 
-  it("src reads no environment variables except the optional public SITE_URL in lib/seo.ts", () => {
+  it("src reads no environment variables except SITE_URL in lib/seo.ts and the catalog API settings in lib/api/config.ts", () => {
     const offenders = codeFiles
-      .filter((file) => file.path !== "/src/lib/seo.ts")
+      .filter((file) => file.path !== "/src/lib/seo.ts" && file.path !== "/src/lib/api/config.ts")
       .filter((file) => /\bprocess\.env\b/.test(file.code))
       .map((file) => file.path);
     expect(offenders).toEqual([]);

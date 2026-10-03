@@ -1,0 +1,552 @@
+{
+  "items": [
+    {
+      "id": "4412be95-bbb5-4e4e-b940-b78a1c8e0a69",
+      "slug": "complete-blood-count",
+      "name": "Complete Blood Count (CBC)",
+      "alsoKnownAs": [
+        "CBC",
+        "Complete blood picture",
+        "CBP"
+      ],
+      "categoryId": "4230da9e-9d97-48b7-9f00-ebbc0e1cb447",
+      "pricePkr": 800,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Counts the red cells, white cells and platelets in a blood sample.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "2a2e2595-a935-4c92-ab36-9cd9b1b318ed",
+      "slug": "esr",
+      "name": "Erythrocyte Sedimentation Rate (ESR)",
+      "alsoKnownAs": [
+        "ESR",
+        "Sed rate"
+      ],
+      "categoryId": "4230da9e-9d97-48b7-9f00-ebbc0e1cb447",
+      "pricePkr": 400,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures how quickly red cells settle in a blood sample over one hour.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "eaa5c645-6739-4a25-8290-45257138d7cf",
+      "slug": "blood-group-rh",
+      "name": "Blood Group & Rh Factor",
+      "alsoKnownAs": [
+        "Blood grouping",
+        "ABO and Rh typing"
+      ],
+      "categoryId": "4230da9e-9d97-48b7-9f00-ebbc0e1cb447",
+      "pricePkr": 500,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Identifies the ABO blood group and the Rh factor from a blood sample.",
+      "relatedDepartmentIds": [
+        "921ecdb7-cbd7-4716-9eff-5f66e745f100",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "fd980362-c1c8-4d1d-bd04-d20921af9e14",
+      "slug": "fasting-blood-sugar",
+      "name": "Fasting Blood Sugar (FBS)",
+      "alsoKnownAs": [
+        "FBS",
+        "Fasting glucose",
+        "Sugar test (fasting)"
+      ],
+      "categoryId": "47912537-702a-4a77-8be1-3ea5ba5846a6",
+      "pricePkr": 400,
+      "sampleType": "Blood (fasting)",
+      "reportTime": "Same day",
+      "preparation": "8–10 hours fasting; plain water is allowed",
+      "homeCollection": true,
+      "about": "Measures the glucose level in a blood sample taken after fasting.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "cb4cbff1-099d-4a72-8005-1f5f707ae9a7",
+      "slug": "hba1c",
+      "name": "HbA1c",
+      "alsoKnownAs": [
+        "Glycated hemoglobin",
+        "A1c",
+        "Average sugar test"
+      ],
+      "categoryId": "47912537-702a-4a77-8be1-3ea5ba5846a6",
+      "pricePkr": 1500,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Shows the average blood glucose level over the previous two to three months.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "a14bd649-a629-446c-8210-d8bf75e5ec23",
+      "slug": "random-blood-sugar",
+      "name": "Random Blood Sugar (RBS)",
+      "alsoKnownAs": [
+        "RBS",
+        "Random glucose",
+        "Sugar test"
+      ],
+      "categoryId": "47912537-702a-4a77-8be1-3ea5ba5846a6",
+      "pricePkr": 350,
+      "sampleType": "Blood",
+      "reportTime": "Within 2 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures the glucose level in a blood sample taken at any time of day.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "3f13f820-ac9e-4482-a7d2-0094144d52c6"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "57734d0f-f188-4b38-8444-a69da8f6c6a9",
+      "slug": "lipid-profile",
+      "name": "Lipid Profile",
+      "alsoKnownAs": [
+        "Cholesterol test",
+        "Lipid panel"
+      ],
+      "categoryId": "9e5eead6-1fd3-4f91-84e4-689a2ac4d840",
+      "pricePkr": 1800,
+      "sampleType": "Blood (fasting)",
+      "reportTime": "Same day",
+      "preparation": "10–12 hours fasting; plain water is allowed",
+      "homeCollection": true,
+      "about": "Measures cholesterol and triglyceride levels in a blood sample taken after fasting.",
+      "relatedDepartmentIds": [
+        "e4ebb983-18ee-434c-ba37-a2398d7d3881",
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "b5e4d208-db2e-4ae9-bd34-691d61ca1206",
+      "slug": "hs-crp",
+      "name": "High-Sensitivity CRP (hs-CRP)",
+      "alsoKnownAs": [
+        "hs-CRP",
+        "High sensitivity C-reactive protein"
+      ],
+      "categoryId": "9e5eead6-1fd3-4f91-84e4-689a2ac4d840",
+      "pricePkr": 1800,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures a protein in the blood that rises with inflammation, as requested by a doctor.",
+      "relatedDepartmentIds": [
+        "e4ebb983-18ee-434c-ba37-a2398d7d3881"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "4b9e823d-d004-4dab-8595-1ebeced10df7",
+      "slug": "liver-function-tests",
+      "name": "Liver Function Tests (LFT)",
+      "alsoKnownAs": [
+        "LFT",
+        "Liver profile"
+      ],
+      "categoryId": "18f45c2e-bbfd-4efe-9038-2086deea0b0c",
+      "pricePkr": 1500,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed unless your doctor asks you to fast",
+      "homeCollection": true,
+      "about": "A group of blood measurements that a doctor uses to look at how the liver is working.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "675fa809-8bb1-4f41-9f82-39a23c1a85fc",
+      "slug": "hepatitis-b-surface-antigen",
+      "name": "Hepatitis B Surface Antigen (HBsAg)",
+      "alsoKnownAs": [
+        "HBsAg",
+        "Hepatitis B screening"
+      ],
+      "categoryId": "18f45c2e-bbfd-4efe-9038-2086deea0b0c",
+      "pricePkr": 1200,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "A blood test that looks for the hepatitis B surface antigen.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "3f13f820-ac9e-4482-a7d2-0094144d52c6"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "d534313b-0210-4877-9be5-71de60f3e7f6",
+      "slug": "hepatitis-c-antibody",
+      "name": "Hepatitis C Antibody (Anti-HCV)",
+      "alsoKnownAs": [
+        "Anti-HCV",
+        "Hepatitis C screening"
+      ],
+      "categoryId": "18f45c2e-bbfd-4efe-9038-2086deea0b0c",
+      "pricePkr": 1800,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "A blood test that looks for antibodies to the hepatitis C virus.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "15c44886-7111-4991-844e-e94740c25ef4",
+      "slug": "serum-creatinine",
+      "name": "Serum Creatinine",
+      "alsoKnownAs": [
+        "Creatinine",
+        "Kidney function test"
+      ],
+      "categoryId": "9cf81a88-f83c-4ce6-b66f-8a120368bdb1",
+      "pricePkr": 600,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures creatinine in a blood sample, one of the values a doctor looks at for kidney function.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "e4ebb983-18ee-434c-ba37-a2398d7d3881"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "b6519ce7-f803-4a07-8d23-022157b94a4b",
+      "slug": "blood-urea",
+      "name": "Blood Urea",
+      "alsoKnownAs": [
+        "Urea",
+        "BUN"
+      ],
+      "categoryId": "9cf81a88-f83c-4ce6-b66f-8a120368bdb1",
+      "pricePkr": 500,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures urea in a blood sample, as part of a doctor's check of kidney function.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "0bd494b9-0cf9-49d3-a451-10c7ecdcc313",
+      "slug": "uric-acid",
+      "name": "Serum Uric Acid",
+      "alsoKnownAs": [
+        "Uric acid"
+      ],
+      "categoryId": "9cf81a88-f83c-4ce6-b66f-8a120368bdb1",
+      "pricePkr": 600,
+      "sampleType": "Blood",
+      "reportTime": "Same day",
+      "preparation": "8 hours fasting; plain water is allowed",
+      "homeCollection": true,
+      "about": "Measures uric acid in a blood sample.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "e4ebb983-18ee-434c-ba37-a2398d7d3881"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "146898ec-4c31-4406-9985-55ad835694a0",
+      "slug": "tsh",
+      "name": "Thyroid Stimulating Hormone (TSH)",
+      "alsoKnownAs": [
+        "TSH",
+        "Thyroid screening"
+      ],
+      "categoryId": "743c7f0e-5367-4e0c-af0f-d7590c284c47",
+      "pricePkr": 1200,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures the thyroid stimulating hormone in a blood sample.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "921ecdb7-cbd7-4716-9eff-5f66e745f100"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "27c487e3-e426-4785-879c-5f0507445bf3",
+      "slug": "free-t4",
+      "name": "Free T4 (FT4)",
+      "alsoKnownAs": [
+        "FT4",
+        "Free thyroxine"
+      ],
+      "categoryId": "743c7f0e-5367-4e0c-af0f-d7590c284c47",
+      "pricePkr": 1400,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures free thyroxine, a thyroid hormone, in a blood sample.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "8f2af55f-d3b0-4542-8d03-d5e9b2c10ff6",
+      "slug": "free-t3",
+      "name": "Free T3 (FT3)",
+      "alsoKnownAs": [
+        "FT3",
+        "Free triiodothyronine"
+      ],
+      "categoryId": "743c7f0e-5367-4e0c-af0f-d7590c284c47",
+      "pricePkr": 1400,
+      "sampleType": "Blood",
+      "reportTime": "24 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures free triiodothyronine, a thyroid hormone, in a blood sample.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "30069895-4e28-461b-b3a7-1efab1815e98",
+      "slug": "vitamin-d",
+      "name": "Vitamin D (25-Hydroxy)",
+      "alsoKnownAs": [
+        "Vitamin D3",
+        "25-OH vitamin D"
+      ],
+      "categoryId": "f1a9970c-80e1-4c79-9842-fb51a94314e4",
+      "pricePkr": 3500,
+      "sampleType": "Blood",
+      "reportTime": "24–48 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures the main stored form of vitamin D in a blood sample.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "0742dcab-7e08-4c72-bbe5-1b1143bac797"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "bb558d77-c6ff-4291-a856-11e002b5e27b",
+      "slug": "vitamin-b12",
+      "name": "Vitamin B12",
+      "alsoKnownAs": [
+        "B12",
+        "Cobalamin"
+      ],
+      "categoryId": "f1a9970c-80e1-4c79-9842-fb51a94314e4",
+      "pricePkr": 2800,
+      "sampleType": "Blood",
+      "reportTime": "24–48 hours",
+      "preparation": "No preparation needed",
+      "homeCollection": true,
+      "about": "Measures the vitamin B12 level in a blood sample.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "61d1fa22-6f4e-475a-b162-10ccc3da03c9"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "82124569-e9a9-4b30-b971-819358a0951b",
+      "slug": "folate",
+      "name": "Folate",
+      "alsoKnownAs": [
+        "Folic acid",
+        "Vitamin B9"
+      ],
+      "categoryId": "f1a9970c-80e1-4c79-9842-fb51a94314e4",
+      "pricePkr": 2500,
+      "sampleType": "Blood (fasting)",
+      "reportTime": "24–48 hours",
+      "preparation": "8 hours fasting; plain water is allowed",
+      "homeCollection": true,
+      "about": "Measures the folate level in a blood sample.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "921ecdb7-cbd7-4716-9eff-5f66e745f100"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "8035960c-135f-46f5-9d6b-68a3561e366a",
+      "slug": "prolactin",
+      "name": "Prolactin",
+      "alsoKnownAs": [
+        "PRL"
+      ],
+      "categoryId": "8f040414-08ff-4260-9d6b-435e470e83e6",
+      "pricePkr": 2200,
+      "sampleType": "Blood",
+      "reportTime": "24–48 hours",
+      "preparation": "Morning sample preferred; ask the lab for timing",
+      "homeCollection": true,
+      "about": "Measures the hormone prolactin in a blood sample, as requested by a doctor.",
+      "relatedDepartmentIds": [
+        "921ecdb7-cbd7-4716-9eff-5f66e745f100",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "20a4c804-4b71-4cbc-985b-df5f0e6e7feb",
+      "slug": "total-testosterone",
+      "name": "Total Testosterone",
+      "alsoKnownAs": [
+        "Testosterone",
+        "Serum testosterone"
+      ],
+      "categoryId": "8f040414-08ff-4260-9d6b-435e470e83e6",
+      "pricePkr": 2500,
+      "sampleType": "Blood",
+      "reportTime": "24–48 hours",
+      "preparation": "Morning sample preferred; ask the lab for timing",
+      "homeCollection": true,
+      "about": "Measures total testosterone in a blood sample, as requested by a doctor.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "57d79003-c430-488c-a234-585f9e228b65"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "9214545b-ea58-4834-bff9-4a7a701cdc22",
+      "slug": "fsh",
+      "name": "Follicle Stimulating Hormone (FSH)",
+      "alsoKnownAs": [
+        "FSH"
+      ],
+      "categoryId": "8f040414-08ff-4260-9d6b-435e470e83e6",
+      "pricePkr": 2000,
+      "sampleType": "Blood",
+      "reportTime": "24–48 hours",
+      "preparation": "Your doctor may ask for a sample on a particular day; confirm before you visit",
+      "homeCollection": true,
+      "about": "Measures follicle stimulating hormone in a blood sample, as requested by a doctor.",
+      "relatedDepartmentIds": [
+        "921ecdb7-cbd7-4716-9eff-5f66e745f100"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "c1259c91-c676-4170-9912-7f5909c0ada7",
+      "slug": "urine-routine-examination",
+      "name": "Urine Routine Examination (Urine R/E)",
+      "alsoKnownAs": [
+        "Urine R/E",
+        "Urine DR",
+        "Urinalysis"
+      ],
+      "categoryId": "106e33c9-a4a1-42f2-b3c8-ae76ea519fda",
+      "pricePkr": 450,
+      "sampleType": "Urine",
+      "reportTime": "Same day",
+      "preparation": "Mid-stream sample in the lab's clean container; first-morning sample preferred",
+      "homeCollection": true,
+      "about": "A physical, chemical and microscopic check of a urine sample.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "0742dcab-7e08-4c72-bbe5-1b1143bac797"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "cb2be734-03e3-4e51-ab38-778d82f849ae",
+      "slug": "urine-culture-sensitivity",
+      "name": "Urine Culture & Sensitivity",
+      "alsoKnownAs": [
+        "Urine C/S",
+        "Urine culture"
+      ],
+      "categoryId": "106e33c9-a4a1-42f2-b3c8-ae76ea519fda",
+      "pricePkr": 1800,
+      "sampleType": "Urine",
+      "reportTime": "2–3 working days",
+      "preparation": "Mid-stream sample in the lab's sterile container; collect it at the lab",
+      "homeCollection": false,
+      "about": "Grows a urine sample in the lab to see whether bacteria are present and which medicines they respond to.",
+      "relatedDepartmentIds": [
+        "2635061e-3f7d-4b63-bb1d-ee4f08c891d7",
+        "921ecdb7-cbd7-4716-9eff-5f66e745f100"
+      ],
+      "isSample": true
+    },
+    {
+      "id": "c8b540db-c7e7-4210-8223-317c54b7334e",
+      "slug": "urine-pregnancy-test",
+      "name": "Urine Pregnancy Test",
+      "alsoKnownAs": [
+        "UPT",
+        "Pregnancy test"
+      ],
+      "categoryId": "106e33c9-a4a1-42f2-b3c8-ae76ea519fda",
+      "pricePkr": 500,
+      "sampleType": "Urine",
+      "reportTime": "Within 1 hour",
+      "preparation": "First-morning urine sample preferred",
+      "homeCollection": true,
+      "about": "Checks a urine sample for the pregnancy hormone hCG.",
+      "relatedDepartmentIds": [
+        "921ecdb7-cbd7-4716-9eff-5f66e745f100"
+      ],
+      "isSample": true
+    }
+  ],
+  "total": 26,
+  "page": 1,
+  "pageSize": 100
+}
