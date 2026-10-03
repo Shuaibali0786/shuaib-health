@@ -140,3 +140,62 @@ class HealthPackage(CamelModel):
 
 class HealthPackageDetail(HealthPackage):
     tests: list[LabTestSummary]
+
+
+class PhoneNumber(CamelModel):
+    display: str
+    tel: str
+
+
+class OpeningHoursRule(CamelModel):
+    days: list[Weekday]
+    opens: str
+    closes: str
+
+
+class MapArea(CamelModel):
+    bbox: tuple[float, float, float, float]
+    label: str
+
+
+class Credit(CamelModel):
+    text: str
+    href: str
+
+
+class BrandColors(CamelModel):
+    primary: str
+    accent: str
+
+
+class StoredLogo(CamelModel):
+    key: str
+    alt: str
+    width: int
+    height: int
+
+
+class ClinicSettings(CamelModel):
+    name: str
+    tagline: str
+    full_title: str
+    demo_notice: str
+    emergency_phone: PhoneNumber
+    general_phone: PhoneNumber
+    address: list[str]
+    time_zone: str
+    opening_hours: list[OpeningHoursRule]
+    lab_hours: list[OpeningHoursRule]
+    map_area: MapArea
+    credit: Credit
+    indexable: bool
+    is_sample: bool
+    logo: ImageAsset
+    brand_colors: BrandColors
+
+
+class ClinicRule(CamelModel):
+    id: UUID
+    sort_order: int
+    text: str
+    is_sample: bool

@@ -29,6 +29,10 @@ class ClinicNotConfigured(Exception):
     pass
 
 
+class StoredDataInvalid(Exception):
+    """Stored data does not match its schema. Becomes a generic 500; the data is never echoed."""
+
+
 class RateLimited(Exception):
     def __init__(self, retry_after: int) -> None:
         super().__init__(retry_after)
