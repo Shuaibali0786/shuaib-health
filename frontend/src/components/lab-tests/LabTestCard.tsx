@@ -2,6 +2,8 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { IconTile } from "@/components/ui/IconTile";
+import { getCategoryAccent } from "@/lib/categoryAccent";
+import { cn } from "@/lib/cn";
 import { formatPkr } from "@/lib/format";
 import { labTestPath } from "@/lib/routes";
 import type { LabTest, LabTestCategory } from "@/types/content";
@@ -19,10 +21,11 @@ interface LabTestCardProps {
  * preparation and home collection. The name is the one link, stretched over the card.
  */
 export function LabTestCard({ test, category, compact = false }: LabTestCardProps) {
+  const accent = category ? getCategoryAccent(category.slug) : undefined;
   return (
-    <Card as="article" interactive className="flex w-full flex-col p-5">
+    <Card as="article" interactive className={cn("flex w-full flex-col p-5", accent && cn("border-t-4", accent.bar))}>
       <div className="flex items-start gap-3">
-        {category ? <IconTile name={category.iconName} /> : null}
+        {category ? <IconTile name={category.iconName} tint={accent?.tint} /> : null}
         <div className="min-w-0">
           {category ? <p className="text-sm font-semibold text-teal-700">{category.name}</p> : null}
           <h3 className="text-lg font-bold">

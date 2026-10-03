@@ -136,6 +136,18 @@ export function getPageManifest(): PageManifestEntry[] {
   ];
 }
 
+/** Every public path, from the manifest. */
+export function knownPaths(): string[] {
+  return getPageManifest().map((entry) => entry.path);
+}
+
+/** True for every path that has a real page. Ignores a #fragment, ?query and trailing slash. */
+export function isKnownPath(path: string): boolean {
+  const bare = path.split("#")[0]?.split("?")[0] ?? path;
+  const target = bare.length > 1 ? bare.replace(/\/+$/, "") : bare;
+  return knownPaths().includes(target);
+}
+
 /** The manifest entry for a path. Throws for an unknown path so a missing entry fails the build. */
 export function getManifestEntry(path: string): PageManifestEntry {
   const entry = getPageManifest().find((candidate) => candidate.path === path);

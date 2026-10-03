@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconTile } from "@/components/ui/IconTile";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { formatPkr } from "@/lib/format";
 import type { PackageSummary } from "@/lib/packages";
-import { labTestPath } from "@/lib/routes";
+import { labTestPath, ROUTES } from "@/lib/routes";
 import type { HealthPackage } from "@/types/content";
 
 interface PackageCardProps {
@@ -20,7 +21,7 @@ interface PackageCardProps {
 export function PackageCard({ pkg, summary }: PackageCardProps) {
   const titleId = `package-${pkg.slug}`;
   return (
-    <Card as="article" aria-labelledby={titleId} className="flex w-full flex-col p-6">
+    <Card as="article" aria-labelledby={titleId} className="flex h-full w-full flex-col p-6">
       <div className="flex items-start gap-3">
         <IconTile name={pkg.iconName} />
         <div className="min-w-0">
@@ -45,13 +46,15 @@ export function PackageCard({ pkg, summary }: PackageCardProps) {
         ))}
       </ul>
 
-      <dl className="mt-6 grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 border-t border-border pt-4 text-base">
+      <dl className="mt-6 grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-2 border-t border-border pt-4 text-base">
         <dt className="text-muted">Sum of individual tests</dt>
         <dd className="text-right font-semibold text-navy-900">{formatPkr(summary.sumPkr)}</dd>
-        <dt className="text-muted">Package price</dt>
-        <dd className="text-right font-bold text-navy-900">{formatPkr(pkg.packagePricePkr)}</dd>
         <dt className="text-muted">Difference</dt>
         <dd className="text-right font-semibold text-navy-900">{formatPkr(summary.savingPkr)}</dd>
+        <dt className="mt-2 rounded-l-control bg-teal-50 px-3 py-3 text-base font-semibold text-navy-900">Package price</dt>
+        <dd className="mt-2 rounded-r-control bg-teal-50 px-3 py-2 text-right text-2xl font-bold text-navy-900">
+          {formatPkr(pkg.packagePricePkr)}
+        </dd>
       </dl>
       <div className="mt-2">
         <SampleBadge label="Sample price" />
@@ -63,6 +66,16 @@ export function PackageCard({ pkg, summary }: PackageCardProps) {
         <dt className="text-muted">Home collection</dt>
         <dd className="font-medium text-ink">{pkg.homeCollection ? "Yes" : "No"}</dd>
       </dl>
+
+      <Button
+        href={ROUTES.bookAppointment}
+        variant="accent"
+        fullWidth
+        className="mt-6 self-stretch"
+        aria-label={`Book this package: ${pkg.name}`}
+      >
+        Book this package
+      </Button>
     </Card>
   );
 }

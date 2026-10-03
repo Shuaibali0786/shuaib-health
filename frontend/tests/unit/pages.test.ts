@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
+import { healthTips } from "@/data/healthTips";
+import { labTests } from "@/data/labTests";
 import { siteConfig } from "@/data/siteConfig";
-import { getManifestEntry, getPageManifest } from "@/lib/pages";
-import { ROUTES, realPaths } from "@/lib/routes";
+import { getManifestEntry, getPageManifest, knownPaths } from "@/lib/pages";
+import { ROUTES } from "@/lib/routes";
 import { pageMetadata, siteUrl } from "@/lib/seo";
 
 const manifest = getPageManifest();
@@ -34,7 +36,15 @@ describe("page manifest (FR-005, FR-008)", () => {
   it("covers every static route and every real page that exists", () => {
     const paths = manifest.map((entry) => entry.path);
     for (const path of Object.values(ROUTES)) expect(paths, path).toContain(path);
-    for (const path of realPaths()) expect(paths, path).toContain(path);
+    for (const path of knownPaths()) expect(paths, path).toContain(path);
+  });
+
+  it("has every route family: 9 doctors, 7 departments, all lab tests and all tips", () => {
+    const count = (kind: string) => manifest.filter((entry) => entry.kind === kind).length;
+    expect(count("doctor")).toBe(9);
+    expect(count("department")).toBe(7);
+    expect(count("lab-test")).toBe(labTests.length);
+    expect(count("tip")).toBe(healthTips.length);
   });
 
   it("throws for a path with no entry, so a missing entry fails loudly", () => {

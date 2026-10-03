@@ -42,6 +42,26 @@
   --color-danger-700: #b42318;
   --color-danger-50: #fef3f2;
 
+  /* Lab test category accents: a bar colour and a pale tint per category, used only as decoration */
+  --color-cat-rose: #fb7185;
+  --color-cat-rose-tint: #fff1f2;
+  --color-cat-violet: #a78bfa;
+  --color-cat-violet-tint: #f5f3ff;
+  --color-cat-pink: #f472b6;
+  --color-cat-pink-tint: #fdf2f8;
+  --color-cat-amber: #fbbf24;
+  --color-cat-amber-tint: #fffbeb;
+  --color-cat-orange: #fb923c;
+  --color-cat-orange-tint: #fff7ed;
+  --color-cat-indigo: #818cf8;
+  --color-cat-indigo-tint: #eef2ff;
+  --color-cat-lime: #a3e635;
+  --color-cat-lime-tint: #f7fee7;
+  --color-cat-fuchsia: #e879f9;
+  --color-cat-fuchsia-tint: #fdf4ff;
+  --color-cat-cyan: #22d3ee;
+  --color-cat-cyan-tint: #ecfeff;
+
   /* Shape */
   --radius-control: 0.75rem;
   --radius-card: 1.25rem;

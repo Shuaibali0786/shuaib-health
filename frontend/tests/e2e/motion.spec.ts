@@ -85,3 +85,28 @@ test.describe("motion", () => {
     await context.close();
   });
 });
+
+test.describe("motion on the new pages", () => {
+  test("with reduced motion the FAQ accordion and lab test filters still work and nothing is transformed", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/faq");
+    const first = page.locator("details").first();
+    await first.locator("summary").click();
+    await expect(first).toHaveAttribute("open", "");
+
+    await page.goto("/lab-tests");
+    await page.getByLabel("Search tests").fill("HbA1c");
+    await expect(page.getByRole("article").first()).toContainText("HbA1c");
+
+    for (const path of ["/faq", "/lab-tests", "/health-packages", "/contact"]) {
+      await page.goto(path);
+      const moving = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>("main *")].filter((element) => {
+          const transform = getComputedStyle(element).transform;
+          return transform !== "none" && transform !== "matrix(1, 0, 0, 1, 0, 0)";
+        }).length,
+      );
+      expect(moving, path).toBe(0);
+    }
+  });
+});

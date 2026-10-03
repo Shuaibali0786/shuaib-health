@@ -34,3 +34,4 @@
 - Zero clarification markers: every open point has a documented default in the spec's Assumptions (lab tests get their own pages, map shown only after opt-in, indexing setting unchanged, home sample collection link goes to the FAQ group).
 - The New Images table names file paths because the request required exact file names; this is the only place file-level detail appears.
 - Constitution check: honesty (FR-002, FR-003, FR-024, FR-061), health-data privacy wording (FR-077), resilience (FR-009, SC-008), accessibility (FR-011, SC-006), build order (Phase 1 only, backend out of scope).
+- Phase 11 (polish): the catch-all and placeholder registry are gone, `isKnownPath` and `knownPaths` read the manifest, and guards, pages, SEO, offline, links, responsive and motion tests cover every route. Lighthouse (T099) and the manual walkthrough (T100) are still open.

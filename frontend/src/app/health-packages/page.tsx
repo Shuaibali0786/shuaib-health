@@ -30,9 +30,9 @@ export default async function HealthPackagesPage() {
         </p>
       </PageHeader>
       <Section tone="background" spacing="compact" aria-label="Health packages">
-        <ul className="grid gap-6 lg:grid-cols-2">
+        <ul className="flex flex-wrap justify-center gap-6">
           {packages.map((pkg) => (
-            <li key={pkg.id} className="flex">
+            <li key={pkg.id} className="flex w-full md:w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-3rem)/3)]">
               <PackageCard pkg={pkg} summary={summarizePackage(pkg, catalog)} />
             </li>
           ))}

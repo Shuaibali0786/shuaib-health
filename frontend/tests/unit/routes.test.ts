@@ -7,81 +7,51 @@ import { healthTips } from "@/data/healthTips";
 import { labTests } from "@/data/labTests";
 import { quickActions } from "@/data/homeContent";
 import { footerQuickLinks, legalLinks, primaryNav } from "@/data/navigation";
-import {
-  departmentPath,
-  doctorPath,
-  findPlaceholderRoute,
-  isKnownPath,
-  labTestPath,
-  placeholderRoutes,
-  ROUTES,
-  tipPath,
-} from "@/lib/routes";
+import { isKnownPath, knownPaths } from "@/lib/pages";
+import { departmentPath, doctorPath, labTestPath, ROUTES, tipPath } from "@/lib/routes";
 
 const APP = join(process.cwd(), "src", "app");
-const placeholderPaths = new Set(placeholderRoutes().map((route) => route.path));
 
-/** Routes that have their own page.tsx under src/app (the catch-all is excluded). */
-function realPageRoutes(dir = APP, prefix = ""): string[] {
+/** Routes that have their own page.tsx under src/app. */
+function pageRoutes(dir = APP, prefix = ""): string[] {
   const routes: string[] = [];
   if (existsSync(join(dir, "page.tsx")) && prefix !== "") routes.push(prefix);
   for (const entry of readdirSync(dir)) {
     const path = join(dir, entry);
-    if (statSync(path).isDirectory() && !entry.startsWith("[")) routes.push(...realPageRoutes(path, `${prefix}/${entry}`));
+    if (statSync(path).isDirectory() && !entry.startsWith("[")) routes.push(...pageRoutes(path, `${prefix}/${entry}`));
   }
   return routes;
 }
 
-describe("route registry", () => {
+describe("known paths", () => {
   it("has unique paths that start with / and have no trailing slash", () => {
-    const all = placeholderRoutes().map((route) => route.path);
+    const all = knownPaths();
     expect(new Set(all).size).toBe(all.length);
     for (const path of all) {
       expect(path.startsWith("/")).toBe(true);
-      expect(path.endsWith("/")).toBe(false);
+      if (path !== "/") expect(path.endsWith("/")).toBe(false);
     }
   });
 
-  it("registers no placeholder at all, and none for pages that now exist", () => {
-    for (const doctor of doctors) expect(placeholderPaths).not.toContain(doctorPath(doctor.slug));
-    expect(placeholderPaths).not.toContain("/doctors");
-    expect(placeholderPaths).not.toContain("/book-appointment");
-    expect(placeholderPaths).not.toContain("/home-sample-collection");
-    for (const test of labTests) expect(placeholderPaths).not.toContain(labTestPath(test.slug));
-    expect(placeholderPaths).not.toContain("/lab-tests");
-    for (const tip of healthTips) expect(placeholderPaths).not.toContain(tipPath(tip.slug));
-    expect(placeholderPaths).not.toContain("/health-tips");
-    for (const department of departments) expect(placeholderPaths).not.toContain(departmentPath(department.slug));
-    expect(placeholderPaths).not.toContain("/departments");
-    expect(placeholderPaths).not.toContain("/health-packages");
-    expect(placeholderPaths).not.toContain("/about");
-    expect(placeholderPaths).not.toContain("/contact");
-    expect(placeholderPaths).not.toContain("/faq");
-    expect(placeholderPaths).not.toContain("/privacy");
-    expect(placeholderPaths).not.toContain("/terms");
-    expect(placeholderPaths.size).toBe(0);
+  it("has no catch-all route", () => {
+    expect(existsSync(join(APP, "[...slug]"))).toBe(false);
   });
 
-  it("gives every placeholder a title", () => {
-    for (const route of placeholderRoutes()) expect(route.title.trim().length).toBeGreaterThan(0);
-  });
-
-  it("knows Home and the placeholders, and rejects anything else", () => {
+  it("knows real pages and rejects anything else", () => {
     expect(isKnownPath("/")).toBe(true);
     expect(isKnownPath("/doctors")).toBe(true);
     expect(isKnownPath("/doctors/")).toBe(true);
+    expect(isKnownPath("/faq#home-sample-collection")).toBe(true);
     expect(isKnownPath("/doctors/dr-imran-qureshi")).toBe(true);
+    expect(isKnownPath("/lab-tests/esr")).toBe(true);
     expect(isKnownPath("/no-such-page")).toBe(false);
     expect(isKnownPath("/doctors/not-a-doctor")).toBe(false);
-    expect(isKnownPath("/lab-tests")).toBe(true);
-    expect(isKnownPath("/lab-tests/esr")).toBe(true);
-    expect(findPlaceholderRoute("/privacy")).toBeUndefined();
-    expect(findPlaceholderRoute("/")).toBeUndefined();
+    expect(isKnownPath("/home-sample-collection")).toBe(false);
   });
 
-  it("does not register a path that now has a real page (remove it from the registry when one is added)", () => {
-    const overlap = realPageRoutes().filter((route) => placeholderPaths.has(route));
-    expect(overlap).toEqual([]);
+  it("lists every page.tsx route in the manifest", () => {
+    const known = knownPaths();
+    for (const route of pageRoutes()) expect(known, route).toContain(route);
   });
 });
 

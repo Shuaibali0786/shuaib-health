@@ -91,3 +91,5 @@ Fit settings used (run from `frontend\`, for example `npm run images -- fit "..\
 | daily-walk | walk.jpg.jpg | 0.5,0.64 | 800 x 500, 60 KB |
 
 Notes: the dermatology crop keeps the doctor's face and the tablet; the patient's face is mostly hidden behind the tablet in the original. The Dr. Ayesha Rahman original has almost no headroom, so her hair touches the top edge. The balanced-plate crop is tight on the plate rim. Alt text for all images now describes the real photos.
+
+Feature 002 adds 24 more images (doctors, departments, tips, About). They are listed in `specs/002-public-pages/quickstart.md` (Images table) and checked by `npm run images -- check`.

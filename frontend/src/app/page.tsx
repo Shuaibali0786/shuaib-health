@@ -12,6 +12,7 @@ import { siteConfig } from "@/data/siteConfig";
 // "absolute" skips the "%s | Shuaib Health" template, so the Home title is not doubled.
 export const metadata: Metadata = {
   title: { absolute: siteConfig.fullTitle },
+  alternates: { canonical: "/" },
 };
 
 /** The eight Home sections, in the order required by the spec. Backgrounds alternate for a calm rhythm. */

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
-import { NOTICE } from "./helpers";
+import { getPageManifest } from "../../src/lib/pages";
+import { ALL_PATHS, NOTICE } from "./helpers";
 
 /** The links of the primary navigation that are currently on screen (menu opened first on phones). */
 async function visibleNav(page: Page, isMobile: boolean) {
@@ -29,6 +30,32 @@ test.describe("links", () => {
     }
   });
 
+  test("every internal link on Home and on each top-level page resolves, has one h1 and is not Coming soon (except booking)", async ({
+    page,
+    request,
+  }) => {
+    expect(ALL_PATHS.length).toBe(getPageManifest().length);
+    const checked = new Set<string>();
+    const topLevel = ALL_PATHS.filter((path) => path.split("/").length <= 2);
+    for (const path of topLevel) {
+      await page.goto(path);
+      const hrefs = await page
+        .locator("a[href^='/']")
+        .evaluateAll((anchors) => [...new Set(anchors.map((anchor) => (anchor.getAttribute("href") ?? "").split("#")[0] ?? ""))]);
+      for (const href of hrefs.filter((candidate) => candidate && !checked.has(candidate))) {
+        checked.add(href);
+        const response = await request.get(href);
+        expect(response.status(), `${href} (linked from ${path})`).toBe(200);
+        const html = await response.text();
+        const h1s = [...html.matchAll(/<h1[^>]*>([\s\S]*?)<\/h1>/g)].map((match) => (match[1] ?? "").replace(/<[^>]+>/g, "").trim());
+        expect(h1s.length, `${href} should have one h1`).toBe(1);
+        expect(h1s[0], href).not.toBe("");
+        expect(h1s[0], href).not.toBe("Page not found");
+        if (href !== "/book-appointment") expect(h1s[0], href).not.toMatch(/coming soon/i);
+      }
+    }
+  });
+
   test("an unknown URL returns 404 and shows the friendly page inside the site layout", async ({ page }) => {
     const response = await page.goto("/definitely-not-a-page");
     expect(response?.status()).toBe(404);
@@ -50,9 +77,12 @@ test.describe("links", () => {
     await context.close();
   });
 
-  test("an unknown doctor or department slug is a 404 too, not an empty Coming soon page", async ({ request }) => {
+  test("an unknown doctor or department slug is a 404 too, not a Coming soon page", async ({ request }) => {
     expect((await request.get("/doctors/not-a-doctor")).status()).toBe(404);
     expect((await request.get("/departments/not-a-department")).status()).toBe(404);
+    expect((await request.get("/lab-tests/not-a-test")).status()).toBe(404);
+    expect((await request.get("/health-tips/not-a-tip")).status()).toBe(404);
+    expect((await request.get("/home-sample-collection")).status()).toBe(404);
     expect((await request.get("/a/b/c")).status()).toBe(404);
   });
 

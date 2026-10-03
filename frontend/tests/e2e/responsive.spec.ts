@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { scrollThrough } from "./helpers";
+import { ALL_PATHS, scrollThrough } from "./helpers";
 
 // 640 px is a 1280 px window zoomed to 200%; 320 px is 400% zoom (WCAG 1.4.10 reflow).
 const WIDTHS = [320, 390, 640, 1280] as const;
@@ -136,4 +136,18 @@ test.describe("responsive layout: no horizontal scrolling", () => {
     });
     expect(offset).toBeLessThan(110);
   });
+});
+
+test.describe("responsive layout: every page fits at 320, 390 and 1280 px", () => {
+  for (const width of [320, 390, 1280] as const) {
+    for (const path of ALL_PATHS) {
+      test(`${path} at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 800 });
+        await page.goto(path);
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        expect(overflow, "page is not wider than the screen").toBeLessThanOrEqual(0);
+        expect(await elementsPastTheEdge(page)).toEqual([]);
+      });
+    }
+  }
 });
