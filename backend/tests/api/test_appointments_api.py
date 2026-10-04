@@ -72,6 +72,7 @@ def test_success_returns_a_masked_confirmed_booking(api: TestClient, db_session:
     assert view["status"] == "confirmed"
     assert view["patientNameMasked"] == "A**** K****"
     assert view["mobileMasked"] == "0300****567"
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", view["bookedAt"])
     assert view["isSample"] is True
     assert view["doctor"]["slug"] == DOCTOR
     assert view["department"]["slug"]

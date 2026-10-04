@@ -71,6 +71,7 @@ function Action({ icon, children, ...rest }: { icon: ReactNode; children: ReactN
  */
 export function ConfirmationActions({ view, clinic }: { view: AppointmentView; clinic: SlipClinic }) {
   const [status, setStatus] = useState("");
+  const [calendarNote, setCalendarNote] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function download() {
@@ -89,7 +90,7 @@ export function ConfirmationActions({ view, clinic }: { view: AppointmentView; c
 
   function addToCalendar() {
     saveBlob(new Blob([buildCalendarIcs(view, clinic)], { type: "text/calendar;charset=utf-8" }), `appointment-${view.reference}.ics`);
-    setStatus("Calendar file saved. Open it to add the appointment to your calendar.");
+    setCalendarNote("Calendar file saved. Open it to add the appointment to your calendar.");
   }
 
   return (
@@ -116,9 +117,14 @@ export function ConfirmationActions({ view, clinic }: { view: AppointmentView; c
         <Action icon={<MessageCircle aria-hidden="true" className="size-5" />} href={whatsappLink(view, clinic)}>
           Share on WhatsApp
         </Action>
-        <Action icon={<CalendarPlus aria-hidden="true" className="size-5" />} onClick={addToCalendar}>
-          Add to calendar
-        </Action>
+        <div>
+          <Action icon={<CalendarPlus aria-hidden="true" className="size-5" />} onClick={addToCalendar}>
+            Add to calendar
+          </Action>
+          <p aria-live="polite" className={calendarNote ? "mt-2 text-center text-sm text-muted" : "text-center text-sm"}>
+            {calendarNote}
+          </p>
+        </div>
         <Link href={ROUTES.bookAppointment} className={SECONDARY}>
           <Plus aria-hidden="true" className="size-5" />
           Book another appointment

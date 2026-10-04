@@ -50,6 +50,7 @@ export const AppointmentViewSchema = z.object({
   feePkr: z.number().int(),
   patientNameMasked: z.string(),
   mobileMasked: z.string(),
+  bookedAt: Instant,
   isSample: z.boolean(),
 });
 

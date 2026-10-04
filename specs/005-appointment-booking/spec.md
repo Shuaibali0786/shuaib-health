@@ -233,6 +233,19 @@ Patient details never appear in page addresses, browser history or logs. Every s
   - the flow's step headings show a subtle focus outline only for keyboard focus (`:focus-visible`).
   No PDF, share text or calendar file may contain the full name, full mobile, email or reason (FR-051, FR-052).
 
+**Luxury appointment slip (added after Phase 4b)**
+
+- **FR-057a**: The confirmation page and the downloaded PDF MUST share one luxury, professional clinic-slip design (mobile-first, A5/phone-friendly), built from the masked view only (patient name and mobile stay masked; no real personal data):
+  1. brand navy and teal with a subtle gold accent, elegant type, generous spacing, a faint logo watermark, and a ticket-style perforated divider above a stub holding the reference and a QR code;
+  2. a top highlight box with the date (with year), the time (PKT) and "Please arrive by <time minus 15 minutes>", computed from the appointment time;
+  3. a round, slightly rotated "CONFIRMED" seal (clinic name and booking date) with a small "Demo" label;
+  4. a QR code that encodes ONLY the booking reference, labelled "Show at reception";
+  5. the real clinic logo mark instead of a plain cross;
+  6. a "Before you come" box: arrive 15 minutes early, bring your CNIC and previous reports, and for emergencies call the clinic emergency number from the site settings (the line is left out if no number is set);
+  7. a footer: "Booked on <date, time PKT>" and "Demo booking, no one will contact you";
+  8. page fixes: "Calendar file saved" appears under Add to calendar, and there is no large gap between Download and the secondary buttons.
+- **FR-057b**: To print "Booked on", the booking view MUST carry `bookedAt` (the UTC instant the booking was made). This is an additive contract change and carries no personal data.
+
 **Abuse protection**
 
 - **FR-060**: Booking attempts MUST be rate limited per client IP (default 10 per fixed one-hour window) and per normalized mobile number (default 5 per fixed 24-hour window), with counters shared by all running backend instances; booking-lookup requests MUST be rate limited per IP (default 20 per minute) the same way; slot reads fall under the general per-IP API limit (default 60 per minute). Limits MUST be configurable. Exceeding a limit gives a friendly "too many attempts" message.

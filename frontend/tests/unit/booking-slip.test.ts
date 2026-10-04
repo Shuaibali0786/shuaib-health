@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCalendarIcs, buildSlipPdf, slipFileName, whatsappLink, whatsappText, type SlipClinic } from "@/lib/booking/slip";
+import { arriveByTime } from "@/lib/booking/labels";
+import { formatBookedOn, buildCalendarIcs, buildSlipPdf, slipFileName, whatsappLink, whatsappText, type SlipClinic } from "@/lib/booking/slip";
 import type { AppointmentView } from "@/lib/booking/schemas";
 
 const view: AppointmentView = {
@@ -16,6 +17,7 @@ const view: AppointmentView = {
   feePkr: 2500,
   patientNameMasked: "A**** K****",
   mobileMasked: "0300****567",
+  bookedAt: "2026-10-04T09:05:00Z",
   isSample: true,
 };
 
@@ -24,6 +26,7 @@ const clinic: SlipClinic = {
   address: ["12 Example Road", "Karachi"],
   phoneDisplay: "+92 21 111 000 111",
   phoneTel: "+9221111000111",
+  emergencyDisplay: "1122",
 };
 
 const FORBIDDEN = /Ali Khan|03001234567|0300 ?1234567|ali@example\.com|chest pain/i;
@@ -125,5 +128,47 @@ describe("WhatsApp message", () => {
     const link = whatsappLink(view, clinic);
     expect(link.startsWith("https://wa.me/?text=")).toBe(true);
     expect(decodeURIComponent(link.slice("https://wa.me/?text=".length))).toBe(whatsappText(view, clinic));
+  });
+});
+
+describe("luxury slip (FR-057a)", () => {
+  const pdf = pdfText(buildSlipPdf(view, clinic));
+
+  it("computes arrive-by as the appointment time minus 15 minutes, wrapping past midnight", () => {
+    expect(arriveByTime("14:00")).toBe("13:45");
+    expect(arriveByTime("09:10")).toBe("08:55");
+    expect(arriveByTime("00:05")).toBe("23:50");
+  });
+
+  it("formats the booking time in the clinic zone", () => {
+    expect(formatBookedOn("2026-10-04T09:05:00Z", "Asia/Karachi")).toBe("4 Oct 2026, 14:05 PKT");
+  });
+
+  it("carries the highlight box, seal, before-you-come box, QR label and footer", () => {
+    for (const expected of [
+      "Tue 6 Oct 2026",
+      "Please arrive by 13:45",
+      "CONFIRMED",
+      "04 Oct 2026",
+      "DEMO",
+      "Before you come",
+      "Arrive 15 minutes early.",
+      "Bring your CNIC and any previous reports.",
+      "Emergency? Call 1122.",
+      "Show at reception",
+      "Booked on 4 Oct 2026, 14:05 PKT",
+      "Demo booking, no one will contact you",
+    ]) {
+      expect(pdf).toContain(expected);
+    }
+  });
+
+  it("leaves the emergency line out when the clinic has no emergency number", () => {
+    const quiet = pdfText(buildSlipPdf(view, { ...clinic, emergencyDisplay: undefined }));
+    expect(quiet).not.toContain("Emergency?");
+  });
+
+  it("draws the QR for the reference as filled squares", () => {
+    expect(pdf.match(/ re f/g)?.length).toBeGreaterThan(60);
   });
 });

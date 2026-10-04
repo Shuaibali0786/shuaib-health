@@ -47,6 +47,7 @@ const view = {
   feePkr: 3500,
   patientNameMasked: "A**** K****",
   mobileMasked: "0300****567",
+  bookedAt: "2026-10-04T09:05:00Z",
   isSample: true,
 };
 

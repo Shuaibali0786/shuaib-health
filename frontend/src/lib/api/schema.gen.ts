@@ -981,6 +981,11 @@ export interface components {
             patientNameMasked: string;
             /** @example 0300****567 */
             mobileMasked: string;
+            /**
+             * Format: date-time
+             * @description When the booking was made
+             */
+            bookedAt: string;
             isSample: boolean;
         };
         BookingConflict: {

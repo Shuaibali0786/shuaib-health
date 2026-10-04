@@ -308,6 +308,7 @@ class AppointmentView(CamelModel):
     fee_pkr: int
     patient_name_masked: str
     mobile_masked: str
+    booked_at: str
     is_sample: bool
 
 

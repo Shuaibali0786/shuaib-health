@@ -64,6 +64,7 @@ def view_of(
         fee_pkr=row.fee_pkr,
         patient_name_masked=mask_name(row.patient_name),
         mobile_masked=mask_mobile(row.patient_phone),
+        booked_at=utc_iso(row.created_at),
         is_sample=row.is_sample,
     )
 

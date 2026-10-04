@@ -457,7 +457,7 @@ components:
         trap: { type: [string, "null"], maxLength: 200, description: Honeypot; must be empty }
     AppointmentView:
       type: object
-      required: [reference, status, doctor, department, startsAt, endsAt, localDate, localTime, timeZone, feePkr, patientNameMasked, mobileMasked, isSample]
+      required: [reference, status, doctor, department, startsAt, endsAt, localDate, localTime, timeZone, feePkr, patientNameMasked, mobileMasked, bookedAt, isSample]
       properties:
         reference: { type: string, description: "Display form XXXXX-XXXXX" }
         status: { type: string, enum: [confirmed, cancelled, completed] }
@@ -477,6 +477,7 @@ components:
         feePkr: { type: integer }
         patientNameMasked: { type: string, examples: ["A**** K****"] }
         mobileMasked: { type: string, examples: ["0300****567"] }
+        bookedAt: { type: string, format: date-time, description: When the booking was made }
         isSample: { type: boolean }
     BookingConflict:
       type: object

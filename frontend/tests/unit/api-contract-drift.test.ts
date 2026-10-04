@@ -129,6 +129,7 @@ const sample = {
     feePkr: 1500,
     patientNameMasked: "A**** K****",
     mobileMasked: "0300****567",
+    bookedAt: "2026-10-04T09:05:00Z",
     isSample: true,
   },
   BookingConflict: { error: { code: "slot_taken", message: "Sorry, this slot was just taken.", requestId: "r1" } },

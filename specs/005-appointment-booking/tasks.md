@@ -453,6 +453,22 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ---
 
+## Phase 4c: Luxury appointment slip (US1 follow-up, FR-057a/b)
+
+**Purpose**: one luxury slip design on the confirmation page and in the PDF. Added at the user's request.
+
+- [X] T114 [P] [US1] Add `bookedAt` to the booking view: backend `AppointmentView` and `view_of`, both contract files, `schema.gen.ts`, the zod schema, the mock API; backend and drift tests assert it.
+- [X] T115 [P] [US1] Write unit tests: `qr.ts` (size, finder patterns, deterministic), `slip.ts` (arrive-by minus 15 minutes incl. midnight wrap, "Booked on" in PKT, PDF has year, "Show at reception", "CONFIRMED", "Before you come", emergency number, no private data), and the card/actions components.
+- [X] T116 [US1] Implement `frontend/src/lib/booking/qr.ts`: dependency-free QR encoder (byte mode, ECC M) for the reference only.
+- [X] T117 [US1] Rebuild `ConfirmationCard.tsx` as the luxury slip (highlight box, seal, perforation + stub with QR, logo mark, watermark, Before you come, footer); pass the emergency phone from the page.
+- [X] T118 [US1] Rebuild the PDF in `slip.ts` with the same design (A5, vector logo, seal, QR, perforation).
+- [X] T119 [US1] Page fixes in `ConfirmationActions.tsx`: calendar message under Add to calendar; remove the gap between Download and the secondary buttons.
+- [X] T120 [US1] Update e2e `confirmation-slip.spec.ts`; run typecheck, lint, tests, e2e and backend tests one at a time; all stay green.
+
+**CHECKPOINT 4c**: slip looks right on phone and in the PDF; all checks green.
+
+---
+
 ## Phase 5: User Story 2 — No double-booking, ever (Priority: P1)
 
 **Goal**: simultaneous bookings for one slot give exactly one success. The loser gets a "slot just taken" message with alternatives and keeps their details (FR-030–FR-032).

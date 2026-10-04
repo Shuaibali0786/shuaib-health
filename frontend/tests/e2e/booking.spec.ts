@@ -93,7 +93,7 @@ test.describe("booking an appointment", () => {
     await expect(card).toContainText(String(time));
     await expect(card).toContainText(String(TIME_ZONE_LABEL));
     await expect(card).toContainText(/PKR [\d,]+/);
-    await expect(card).toContainText("This is a demo booking. No one will contact you.");
+    await expect(card).toContainText("Demo booking, no one will contact you");
     await expect(card).not.toContainText("Ali Khan");
     await expect(card).not.toContainText("1234567");
     await expect(page.getByRole("heading", { name: "Before your visit" })).toBeVisible();

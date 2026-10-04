@@ -51,6 +51,19 @@ test.describe("confirmation slip", () => {
       for (const control of [download, print, whatsapp, calendar, another]) await expect(control).toBeVisible();
     });
 
+    await test.step("the slip is the luxury design: highlight box, seal, before-you-come, QR and footer", async () => {
+      await expect(card).toContainText(/\b20\d\d\b/); // the date carries its year
+      await expect(card).toContainText(/Please arrive by \d\d:\d\d/);
+      await expect(card.getByTestId("confirmed-seal")).toContainText("CONFIRMED");
+      await expect(card.getByTestId("confirmed-seal")).toContainText("Demo");
+      await expect(card.getByRole("img", { name: `QR code for booking reference ${reference}` })).toBeVisible();
+      await expect(card.getByText("Show at reception")).toBeVisible();
+      await expect(card.getByRole("heading", { name: "Before you come" })).toBeVisible();
+      await expect(card).toContainText("Bring your CNIC and any previous reports.");
+      await expect(card).toContainText(/Booked on \d{1,2} \w{3} 20\d\d, \d\d:\d\d PKT/);
+      await expect(card).toContainText("Demo booking, no one will contact you");
+    });
+
     await test.step("layout follows the screen", async () => {
       const [n, c, d, p, a] = await Promise.all([notice, card, download, print, another].map((l) => l.boundingBox()));
       expect(n!.y).toBeLessThan(c!.y);
@@ -60,6 +73,8 @@ test.describe("confirmation slip", () => {
         expect(d!.x).toBeGreaterThanOrEqual(c!.x + c!.width);
         expect(d!.y).toBeLessThan(c!.y + 200);
         expect(a!.x).toBeGreaterThanOrEqual(c!.x + c!.width);
+        // No big gap between Download and the secondary buttons.
+        expect(p!.y - (d!.y + d!.height)).toBeLessThan(60);
       } else {
         // One column: card, then Download, then the other actions.
         expect(c!.y).toBeLessThan(d!.y);
@@ -121,6 +136,9 @@ test.describe("confirmation slip", () => {
       expect(text).toContain(name);
       expect(text).toContain("A**** K****");
       expect(text).toContain("0300****567");
+      expect(text).toContain("Show at reception");
+      expect(text).toContain("Before you come");
+      expect(text).toContain("Please arrive by");
       expect(text).not.toMatch(PRIVATE);
     });
 
@@ -132,6 +150,9 @@ test.describe("confirmation slip", () => {
       expect(text).toContain("DTSTART;TZID=Asia/Karachi:");
       expect(text).toContain(reference);
       expect(text).not.toMatch(PRIVATE);
+      await expect(page.getByText("Calendar file saved")).toBeVisible();
+      const [c, n] = await Promise.all([calendar.boundingBox(), page.getByText("Calendar file saved").boundingBox()]);
+      expect(n!.y).toBeGreaterThanOrEqual(c!.y + c!.height); // the message sits under the button
     });
 
     await test.step("WhatsApp message has the visit facts and nothing private", async () => {

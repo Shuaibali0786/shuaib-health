@@ -53,13 +53,13 @@ export default async function ConfirmedPage({ params }: { params: Promise<{ refe
             Save this slip: tap Download or take a screenshot. Show this reference at the clinic.
           </p>
           {/* Mobile: card, Download (sticky), other actions. Desktop: card left, actions right. */}
-          <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start lg:gap-x-8">
+          <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_21rem] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-x-8">
             <div className="lg:row-span-2">
               <ConfirmationCard view={view.data} site={site} />
             </div>
             <ConfirmationActions
               view={view.data}
-              clinic={{ name: site.name, address: site.address, phoneDisplay: site.generalPhone.display, phoneTel: site.generalPhone.tel }}
+              clinic={{ name: site.name, address: site.address, phoneDisplay: site.generalPhone.display, phoneTel: site.generalPhone.tel, emergencyDisplay: site.emergencyPhone.display }}
             />
           </div>
         </Section>

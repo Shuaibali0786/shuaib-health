@@ -27,6 +27,10 @@
   --color-teal-600: #0d9488;
   --color-teal-700: #0f766e;
 
+  /* A restrained gold accent for the luxury appointment slip: hairlines and small labels only. */
+  --color-gold-500: #b8923a;
+  --color-gold-700: #7a5c14;
+
   --color-sky-400: #38bdf8;
   --color-blue-50: #eff6ff;
   --color-blue-600: #2563eb;

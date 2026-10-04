@@ -36,6 +36,18 @@ export function formatLocalDate(date: string): string {
   return `${pick("weekday")} ${pick("day")} ${pick("month")}`;
 }
 
+/** "Tue 6 Oct 2026": the same local date, with the year (the luxury slip, FR-057a). */
+export function formatLocalDateWithYear(date: string): string {
+  return `${formatLocalDate(date)} ${date.slice(0, 4)}`;
+}
+
+/** "13:45" for an "HH:MM" clinic-local time minus 15 minutes; wraps past midnight. */
+export function arriveByTime(localTime: string): string {
+  const [hours = 0, minutes = 0] = localTime.split(":").map(Number);
+  const total = (((hours * 60 + minutes - 15) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
 /** The long zone name, for example "Pakistan Standard Time". */
 export function timeZoneLabel(timeZone: string, at: Date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "long" }).formatToParts(at);

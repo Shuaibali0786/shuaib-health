@@ -164,6 +164,7 @@ export function createBooking({
       feePkr: doctor.feePkr,
       patientNameMasked: maskName(record.fullName),
       mobileMasked: maskMobile(record.mobile),
+      bookedAt: record.bookedAt,
       isSample: true,
     };
   }
@@ -270,7 +271,7 @@ export function createBooking({
 
         let reference = newReference();
         while (byReference.has(reference)) reference = newReference();
-        const record = { reference, doctorSlug: doctor.slug, startsAt: slot.startsAt, endsAt: slot.endsAt, fullName: body.fullName, mobile: body.mobile };
+        const record = { reference, bookedAt: new Date().toISOString(), doctorSlug: doctor.slug, startsAt: slot.startsAt, endsAt: slot.endsAt, fullName: body.fullName, mobile: body.mobile };
         const view = viewOf(record);
         booked.set(slotKey(doctor.slug, slot.startsAt), record);
         byReference.set(reference, view);
