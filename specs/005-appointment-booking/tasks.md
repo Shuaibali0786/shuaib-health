@@ -49,31 +49,31 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 **Purpose**: record today's state, then agree the API contract before any code.
 
-- [ ] T001 Record the backend baseline.
+- [X] T001 Record the backend baseline.
   - Run `uv run ruff check .`, `uv run mypy` and `uv run pytest`.
   - Write pass counts and durations to `specs/005-appointment-booking/results.md`, section "Baseline — backend" (create the file).
-- [ ] T002 [P] Record the frontend baseline.
+- [X] T002 [P] Record the frontend baseline.
   - Run `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:e2e`, `npm run test:e2e:stateful` and `npm run test:e2e:offline`.
   - Write the results to `specs/005-appointment-booking/results.md`, section "Baseline — frontend".
-- [ ] T003 [P] Record the Lighthouse baseline.
+- [X] T003 [P] Record the Lighthouse baseline.
   - Mobile preset, 3 runs, median, against `npm run build && npm run start`, for `/book-appointment` and `/doctors/dr-ayesha-rahman`.
   - Record performance score, LCP, TBT, CLS and JS kB in `specs/005-appointment-booking/results.md`, section "Baseline — Lighthouse".
-- [ ] T004 Merge `specs/005-appointment-booking/contracts/booking-api.openapi.yaml` into `specs/003-catalog-api/contracts/openapi.yaml`.
+- [X] T004 Merge `specs/005-appointment-booking/contracts/booking-api.openapi.yaml` into `specs/003-catalog-api/contracts/openapi.yaml`.
   - Add the three paths: `/api/v1/doctors/{slug}/slots`, `/api/v1/appointments`, `/api/v1/appointments/{reference}`.
   - Add the schemas `Slot`, `AlternativeSlot`, `SlotDay`, `DoctorSlots`, `AppointmentCreate`, `AppointmentView`, `BookingConflict`.
   - Add a new `ErrorInfo` schema whose properties equal the existing `Error.error` object (`code`, `message`, `requestId`, `details`). Point `BookingConflict.error` at `#/components/schemas/ErrorInfo` instead of a nested-property `$ref`.
   - Set `info.version` to `1.1.0` and append the booking paragraph from the delta's `info.description`.
-- [ ] T005 Edit `backend/tests/unit/test_openapi_contract.py` for the new contract.
+- [X] T005 Edit `backend/tests/unit/test_openapi_contract.py` for the new contract.
   - Add a module constant `PENDING_BOOKING_OPERATIONS = {("/api/v1/doctors/{slug}/slots","get"), ("/api/v1/appointments","post"), ("/api/v1/appointments/{reference}","get")}`.
   - In `test_same_paths_and_methods` and the other operation loops, compare `operations(contract) - PENDING_BOOKING_OPERATIONS` with the generated operations.
   - Add a comment: "remove entries as routes land (T038, T058)".
   - Add `Slot`, `SlotDay`, `DoctorSlots`, `AppointmentView` to the expected-schemas tuple, but leave them commented until T038/T058.
   - Run `uv run pytest tests/unit/test_openapi_contract.py`. It must be green.
-- [ ] T006 Regenerate the frontend API types and add zod schemas for the new shapes.
+- [X] T006 Regenerate the frontend API types and add zod schemas for the new shapes.
   - Run `npm run api:types`, regenerating `frontend/src/lib/api/schema.gen.ts`.
   - Create `frontend/src/lib/booking/schemas.ts` with zod 4 schemas `SlotSchema`, `AlternativeSlotSchema`, `SlotDaySchema`, `DoctorSlotsSchema`, `AppointmentViewSchema`, `ErrorInfoSchema`, `BookingConflictSchema` (unknown keys stripped; instants validated with `z.iso.datetime()`; `localTime` with `^([01]\d|2[0-3]):[0-5]\d$`).
   - Export the inferred types.
-- [ ] T007 [P] Extend the existing drift tests (helper `frontend/tests/unit/helpers/api-contract.ts`) to the new schemas.
+- [X] T007 [P] Extend the existing drift tests (helper `frontend/tests/unit/helpers/api-contract.ts`) to the new schemas.
   - Files: `frontend/tests/unit/api-contract.test.ts` and `frontend/tests/unit/api-contract-drift.test.ts`.
   - Every property of `DoctorSlots`, `SlotDay`, `Slot`, `AppointmentView` and `BookingConflict` in the contract must exist in the zod schema with a compatible type.
   - Injected drifts (removed field, renamed field, changed type, newly required field) must each fail.
