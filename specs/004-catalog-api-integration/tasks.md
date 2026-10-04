@@ -192,20 +192,20 @@ Each server builds into its own `NEXT_DIST_DIR`, so builds never collide.
 
 ### Tests for US2 (write first; they must fail where behaviour is missing)
 
-- [ ] T048 [P] [US2] Create `tests/e2e/stateful/resilience.spec.ts` (stateful config, 3 s data window). For each mode `down`, `slow`, `error500` and `malformed`, for the routes `/`, `/doctors`, `/doctors/<slug>`, `/departments/<slug>`, `/lab-tests`, `/lab-tests/<slug>` and `/health-packages`:
+- [X] T048 [P] [US2] Create `tests/e2e/stateful/resilience.spec.ts` (stateful config, 3 s data window). For each mode `down`, `slow`, `error500` and `malformed`, for the routes `/`, `/doctors`, `/doctors/<slug>`, `/departments/<slug>`, `/lab-tests`, `/lab-tests/<slug>` and `/health-packages`:
   - open the route in `ok` (loads the data and compiles the route), `resetMode` to clear the log, `setMode(mode)`, wait 4 s (past the data window), then request it 3 times;
   - `__log` shows at least one request for the route's resource after the switch, so the failure path really ran (C1);
   - each response has status 200 and arrives in < 4000 ms (`Date.now()` around `page.goto`);
   - the previously visible doctor/test name is still present (last good);
   - no "temporarily unavailable" text;
   - no console errors on the client.
-- [ ] T049 [P] [US2] Create `tests/e2e/stateful/partial-cold.spec.ts` with `test.use({ baseURL: "http://localhost:3301" })`. This is the cold server, started in `partial` mode with an empty data cache (T082), and no other spec uses it. Open `/departments` as the first request ever: the page returns 200, header/footer render, and `DataUnavailable` appears in the departments section only. Then open `/doctors`: the doctors render (only departments fail).
-- [ ] T050 [P] [US2] Recovery (SC-005). Route segment `export const revalidate` must be a static literal in Next, so the e2e check uses the stateful server's 3 s data window instead. Prove recovery in three places:
+- [X] T049 [P] [US2] Create `tests/e2e/stateful/partial-cold.spec.ts` with `test.use({ baseURL: "http://localhost:3301" })`. This is the cold server, started in `partial` mode with an empty data cache (T082), and no other spec uses it. Open `/departments` as the first request ever: the page returns 200, header/footer render, and `DataUnavailable` appears in the departments section only. Then open `/doctors`: the doctors render (only departments fail).
+- [X] T050 [P] [US2] Recovery (SC-005). Route segment `export const revalidate` must be a static literal in Next, so the e2e check uses the stateful server's 3 s data window instead. Prove recovery in three places:
   - (a) Unit: extend `tests/unit/api-cached.test.ts`. After failures, when the next loader call succeeds, the new data replaces the last good value.
   - (b) E2E: in `tests/e2e/stateful/resilience.spec.ts`, open `/doctors` in `ok`, `setMode("down")`, wait 4 s, open it, then `setMode("rename")`, wait 4 s, and `expect.poll` for up to 10 s that "Dr Renamed Test" appears.
   - (c) Manual: covered in T075. Stop the backend for over 5 minutes while the production site runs, restart it, and confirm fresh data within about 5 minutes; record the timing in `results.md`.
   Do **not** add a test-only revalidation endpoint.
-- [ ] T051 [P] [US2] Create `tests/e2e/offline/site.spec.ts` (offline config, dead-host variant) for every public route:
+- [X] T051 [P] [US2] Create `tests/e2e/offline/site.spec.ts` (offline config, dead-host variant) for every public route:
   - status 200, with header, footer, navigation and demo notice visible;
   - the demo notice text equals "Portfolio demo — not a real clinic, not medical advice.";
   - the footer shows the credit "Designed & built by Shuaib Ali" with `href="https://github.com/Shuaibali0786"` (constitution I, K2);
@@ -213,15 +213,15 @@ Each server builds into its own `NEXT_DIST_DIR`, so builds never collide.
   - the emergency number from the fallback JSON is visible in the header/emergency card;
   - `/doctors/any-slug` → 200 with `DataUnavailable` (not 404);
   - axe has no serious or critical violations on `/` and `/doctors`.
-- [ ] T052 [P] [US2] Create `tests/e2e/offline/unset.spec.ts` (unset-URL variant, no fallback JSON): status 200; pages render with a neutral identity; no `tel:` links; the same demo notice text and credit text/`href` checks as T051 (K2).
-- [ ] T053 [P] [US2] Create `tests/unit/no-api-url-in-client.test.ts`: for every production build folder that exists (`.next/static`, `.next-offline-dead/static`, `.next-offline-unset/static`), scan every file for `127.0.0.1:4010`, `127.0.0.1:4011`, `127.0.0.1:4012`, `localhost:8000`, `CATALOG_API_URL`, `CATALOG_DATA_REVALIDATE_SECONDS` and `CLINIC_FALLBACK_JSON`. Any hit fails (SC-006). Skip with a clear message when no build exists. Also add the same scan as a step in `playwright.config.ts` `globalSetup` (`tests/e2e/global-setup.ts`) so it always runs after the e2e build.
+- [X] T052 [P] [US2] Create `tests/e2e/offline/unset.spec.ts` (unset-URL variant, no fallback JSON): status 200; pages render with a neutral identity; no `tel:` links; the same demo notice text and credit text/`href` checks as T051 (K2).
+- [X] T053 [P] [US2] Create `tests/unit/no-api-url-in-client.test.ts`: for every production build folder that exists (`.next/static`, `.next-offline-dead/static`, `.next-offline-unset/static`), scan every file for `127.0.0.1:4010`, `127.0.0.1:4011`, `127.0.0.1:4012`, `localhost:8000`, `CATALOG_API_URL`, `CATALOG_DATA_REVALIDATE_SECONDS` and `CLINIC_FALLBACK_JSON`. Any hit fails (SC-006). Skip with a clear message when no build exists. Also add the same scan as a step in `playwright.config.ts` `globalSetup` (`tests/e2e/global-setup.ts`) so it always runs after the e2e build.
 
 ### Implementation for US2
 
-- [ ] T054 [US2] Make every catalog route render its never-loaded state through `DataUnavailable` (audit T035–T045 against T049/T051). Pass `phone={siteConfig.emergencyPhone}` where a phone is known.
-- [ ] T055 [US2] Make `generateMetadata` in all `[slug]` pages, `src/app/layout.tsx` metadata and `src/lib/seo.ts` safe when data is unavailable: generic titles from the clinic name, no throw, no `notFound()` on outage.
-- [ ] T056 [US2] Verify the build without the API: run `set CATALOG_API_URL=http://127.0.0.1:9 && npm run build`, then `set CATALOG_API_URL= && npm run build`; both must succeed. Record the build durations in `results.md` and make sure no build step waits longer than about 3 s per resource (if it does, check the timeout wiring in `http.ts`).
-- [ ] T057 [US2] Make T048–T053 pass. Any fix goes in `src/lib/api/*` or the page that failed; do not raise the timeout above 3 s.
+- [X] T054 [US2] Make every catalog route render its never-loaded state through `DataUnavailable` (audit T035–T045 against T049/T051). Pass `phone={siteConfig.emergencyPhone}` where a phone is known.
+- [X] T055 [US2] Make `generateMetadata` in all `[slug]` pages, `src/app/layout.tsx` metadata and `src/lib/seo.ts` safe when data is unavailable: generic titles from the clinic name, no throw, no `notFound()` on outage.
+- [X] T056 [US2] Verify the build without the API: run `set CATALOG_API_URL=http://127.0.0.1:9 && npm run build`, then `set CATALOG_API_URL= && npm run build`; both must succeed. Record the build durations in `results.md` and make sure no build step waits longer than about 3 s per resource (if it does, check the timeout wiring in `http.ts`).
+- [X] T057 [US2] Make T048–T053 pass. Any fix goes in `src/lib/api/*` or the page that failed; do not raise the timeout above 3 s.
 
 **CHECKPOINT 4 (US2)**: `npm test`, `npm run test:e2e`, `npm run test:e2e:stateful` (incl. resilience and partial-cold) and `npm run test:e2e:offline` (both variants) pass; the API URL scan is clean. **MVP (US1+US2) is shippable here.** Report to the user.
 

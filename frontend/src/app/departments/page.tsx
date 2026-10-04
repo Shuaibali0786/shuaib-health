@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { loadDepartments } from "@/lib/content";
+import { getSiteConfig, loadDepartments } from "@/lib/content";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
@@ -18,6 +18,7 @@ export function generateMetadata(): Metadata {
 
 /** The seven sample departments, in display order, with the same cards as Home. */
 export default async function DepartmentsPage() {
+  const { emergencyPhone: phone } = await getSiteConfig();
   const departments = await loadDepartments();
 
   return (
@@ -42,7 +43,7 @@ export default async function DepartmentsPage() {
             ))}
           </ul>
         ) : (
-          <DataUnavailable href={ROUTES.departments} />
+          <DataUnavailable phone={phone} href={ROUTES.departments} />
         )}
       </Section>
     </>

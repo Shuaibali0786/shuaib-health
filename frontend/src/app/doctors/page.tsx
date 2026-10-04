@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { Section } from "@/components/ui/Section";
 import { SampleBadge } from "@/components/ui/SampleBadge";
-import { loadDepartments, loadDoctors } from "@/lib/content";
+import { getSiteConfig, loadDepartments, loadDoctors } from "@/lib/content";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
@@ -21,6 +21,7 @@ export function generateMetadata(): Metadata {
  * over in the browser. The Suspense fallback is the same list, so it also works without JavaScript.
  */
 export default async function DoctorsPage() {
+  const { emergencyPhone: phone } = await getSiteConfig();
   const [doctors, departments] = await Promise.all([loadDoctors(), loadDepartments()]);
   const departmentOptions = (departments.ok ? departments.data : []).map(({ id, slug, name }) => ({ id, slug, name }));
 
@@ -42,7 +43,7 @@ export default async function DoctorsPage() {
             <DoctorBrowser doctors={doctors.data} departments={departmentOptions} />
           </Suspense>
         ) : (
-          <DataUnavailable href={ROUTES.doctors} />
+          <DataUnavailable phone={phone} href={ROUTES.doctors} />
         )}
       </Section>
     </>

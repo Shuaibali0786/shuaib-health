@@ -52,3 +52,35 @@ Notes on deviations from the task text:
 - **`summarizePackage`** keeps throwing for unknown tests by default; pages pass `{ skipMissing: true }` so live data with a dangling test slug renders the other tests (spec edge case).
 - **Home** (T044): `DepartmentGrid` and `FeaturedDoctors` still load their own data (sibling async server components run concurrently and `React.cache` shares one load per render) so their unit tests render them unchanged; the page loads departments once more for the facts band.
 - `rename.spec.ts` checks headings and links rather than all text: the mock changes `fullName` only, so the old name legitimately remains in the free-text bio.
+
+## Phase 4 — US2 resilience (T048–T057)
+
+| Command | Result |
+|---------|--------|
+| `npm run typecheck` | pass |
+| `npm run lint` | pass, 0 warnings |
+| `npm test` (Vitest) | **586 passed** (46 files) |
+| `npm run test:e2e` (main) | **1015 passed**, 11 skipped; visual baseline 62/62; `globalSetup` bundle scan clean |
+| `npm run test:e2e:stateful` | **9/9**: cache-guard, new-record, rename, partial-cold, resilience for `down`/`slow`/`error500`/`malformed`, recovery |
+| `npm run test:e2e:offline` | **248 passed**, 2 skipped (both `test.fixme`, see below); dead-API and unset variants, desktop and mobile |
+
+**T056 — builds without the API** (`NEXT_DIST_DIR=.next-build-check`, `CLINIC_FALLBACK_JSON` unset, run from `frontend/`):
+
+| `CATALOG_API_URL` | Result | Duration |
+|---|---|---|
+| `http://127.0.0.1:9` (refused) | build succeeds | 50 s (includes compile and fonts) |
+| empty (unset) | build succeeds | 14 s |
+
+Both builds log one `catalog_api_unavailable` line per failed load (53 lines) and wait on nothing: a refused connection fails at once and an unset URL never calls `fetch`.
+
+**What was added**
+- Resilience: `getSiteConfig()` is API → validated `CLINIC_FALLBACK_JSON` → bundled sample, so the emergency number is always present; every catalog page and section passes that phone to `DataUnavailable` ("Call the clinic").
+- Offline config now uses a fallback phone that differs from the recorded clinic (`tests/e2e/offline/fallback.ts`), so the offline spec proves the fallback was used.
+- `tests/unit/no-api-url-in-client.test.ts` and `tests/e2e/global-setup.ts` scan `.next*/static` for the API URL and server-only variable names (SC-006).
+- T055: `[slug]` pages already return generic titles on an outage (Phase 3); `layout.tsx` and `seo.ts` still read the bundled `siteConfig` until Phase 5, which cannot throw.
+
+**Deviations and findings**
+- `unset.spec.ts` has one `test.fixme` ("neutral identity, no `tel:` links"): it needs T062/T064 (Phase 5); the bundled sample clinic still supplies phones when nothing is configured.
+- The offline `site.spec.ts` checks the menu button on phones (the nav only exists once opened).
+- **Visual baseline is now deterministic.** The "Next available" label on doctor pages is computed in the browser from the current time, so the Phase 3 snapshots only matched when run near the time they were recorded (23 failures on a later run, only on the 16 pages that show doctors, both projects). The spec now fixes the browser clock (`page.clock.setFixedTime`, Monday 11:00 Karachi) and **32 snapshots were regenerated** (those 16 pages × 2 projects). Every other snapshot is unchanged; 62/62 pass.
+- Stateful specs: an expired entry in the 3 s data cache is served once more while it refreshes, so `resilience.spec.ts` touches every route, waits, then checks. One earlier run hit `ERR_NETWORK_IO_SUSPENDED` (machine sleep), not a product failure; the clean re-run passed.

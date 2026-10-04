@@ -5,13 +5,16 @@ import { legalContent } from "@/data/legalContent";
 import { healthTips } from "@/data/healthTips";
 import { siteConfig } from "@/data/siteConfig";
 import {
+  cachedClinic,
   cachedDepartments,
   cachedDoctors,
   cachedHealthPackages,
   cachedLabTestCategories,
   cachedLabTests,
 } from "@/lib/api/cached";
+import { getClinicFallback } from "@/lib/api/config";
 import { load, type Loaded } from "@/lib/api/load";
+import type { ClinicSettings } from "@/lib/api/schemas";
 import { toIconName } from "@/components/ui/icons";
 import type { AboutContent, LegalContent, Department, FaqGroup, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
 
@@ -26,14 +29,30 @@ import type { AboutContent, LegalContent, Department, FaqGroup, Doctor, HealthPa
 
 export type { Loaded };
 
+function toSiteConfig(clinic: ClinicSettings): SiteConfig {
+  // The generated type has a plain number[] for the four-number bounding box.
+  const [west = 0, south = 0, east = 0, north = 0] = clinic.mapArea.bbox;
+  return { ...clinic, mapArea: { bbox: [west, south, east, north], label: clinic.mapArea.label } };
+}
+
+/**
+ * Clinic identity, in this order (FR-022): the live or last-good API value, else the validated
+ * `CLINIC_FALLBACK_JSON`, else the bundled sample. The emergency number is therefore always
+ * available, whatever state the API is in. (The last step becomes a neutral identity in the
+ * identity-from-data phase.)
+ */
 export async function getSiteConfig(): Promise<SiteConfig> {
-  return siteConfig;
+  const clinic = await clinicLoaded();
+  if (clinic.ok) return toSiteConfig(clinic.data);
+  const fallback = getClinicFallback();
+  return fallback ? toSiteConfig(fallback) : siteConfig;
 }
 
 const bySortOrder = <T extends { sortOrder: number }>(a: T, b: T) => a.sortOrder - b.sortOrder;
 
 // React's cache() shares one result per render, so a page that calls several accessors for the
 // same resource asks the data cache (and logs a failure) once.
+const clinicLoaded = cache(() => load("clinic", cachedClinic));
 const departmentsLoaded = cache(() => load("departments", cachedDepartments));
 const doctorsLoaded = cache(() => load("doctors", cachedDoctors));
 const categoriesLoaded = cache(() => load("lab-test-categories", cachedLabTestCategories));

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { getLabTests, loadDepartments, loadHealthPackages, loadLabTestCategories, loadLabTests } from "@/lib/content";
+import { getSiteConfig, getLabTests, loadDepartments, loadHealthPackages, loadLabTestCategories, loadLabTests } from "@/lib/content";
 import { labTestEntry } from "@/lib/pages";
 import { departmentPath, labTestPath, ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
@@ -31,6 +31,7 @@ export async function generateMetadata({ params }: PageProps<"/lab-tests/[slug]"
 }
 
 export default async function LabTestPage({ params }: PageProps<"/lab-tests/[slug]">) {
+  const { emergencyPhone: phone } = await getSiteConfig();
   const { slug } = await params;
   const [tests, categories, departments, allPackages] = await Promise.all([
     loadLabTests(),
@@ -43,7 +44,7 @@ export default async function LabTestPage({ params }: PageProps<"/lab-tests/[slu
       <>
         <PageHeader trail={[{ label: "Lab Tests", href: ROUTES.labTests }, { label: "Lab test" }]} title="Lab test" />
         <Section tone="background" spacing="compact" aria-label="Lab test">
-          <DataUnavailable href={labTestPath(slug)} />
+          <DataUnavailable phone={phone} href={labTestPath(slug)} />
         </Section>
       </>
     );

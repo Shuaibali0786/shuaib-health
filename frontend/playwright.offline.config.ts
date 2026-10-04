@@ -1,11 +1,9 @@
-import { readFileSync } from "node:fs";
-
 import { defineConfig, devices } from "@playwright/test";
+
+import { FALLBACK_CLINIC_JSON } from "./tests/e2e/offline/fallback";
 
 // Offline config: production builds made and served while the catalog API is dead or not configured.
 // Each variant builds into its own folder so the two builds never share `.next`.
-const clinicFallback = JSON.stringify(JSON.parse(readFileSync("tests/fixtures/api/clinic.json", "utf8")));
-
 const DEAD_PORT = 3200;
 const UNSET_PORT = 3201;
 
@@ -33,7 +31,7 @@ export default defineConfig({
       env: {
         NEXT_DIST_DIR: ".next-offline-dead",
         CATALOG_API_URL: "http://127.0.0.1:9",
-        CLINIC_FALLBACK_JSON: clinicFallback,
+        CLINIC_FALLBACK_JSON: FALLBACK_CLINIC_JSON,
       },
     },
     {

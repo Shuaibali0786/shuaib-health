@@ -4,7 +4,7 @@ import { PackageCard } from "@/components/packages/PackageCard";
 import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { loadHealthPackages, loadLabTests } from "@/lib/content";
+import { getSiteConfig, loadHealthPackages, loadLabTests } from "@/lib/content";
 import { summarizePackage } from "@/lib/packages";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
@@ -18,6 +18,7 @@ export function generateMetadata(): Metadata {
 
 /** Five sample packages. Every total is worked out from the lab test catalog, never typed in. */
 export default async function HealthPackagesPage() {
+  const { emergencyPhone: phone } = await getSiteConfig();
   const [packages, tests] = await Promise.all([loadHealthPackages(), loadLabTests()]);
   // Without the lab test catalog the package totals cannot be worked out; the packages still render
   // without their test names and sums, never a crash.
@@ -44,7 +45,7 @@ export default async function HealthPackagesPage() {
             ))}
           </ul>
         ) : (
-          <DataUnavailable href={ROUTES.healthPackages} />
+          <DataUnavailable phone={phone} href={ROUTES.healthPackages} />
         )}
       </Section>
     </>

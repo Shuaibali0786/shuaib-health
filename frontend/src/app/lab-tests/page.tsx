@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { loadLabTestCategories, loadLabTests } from "@/lib/content";
+import { getSiteConfig, loadLabTestCategories, loadLabTests } from "@/lib/content";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
@@ -21,6 +21,7 @@ export function generateMetadata(): Metadata {
  * in the browser. The Suspense fallback is the same list, so it also works without JavaScript.
  */
 export default async function LabTestsPage() {
+  const { emergencyPhone: phone } = await getSiteConfig();
   const [tests, categories] = await Promise.all([loadLabTests(), loadLabTestCategories()]);
 
   return (
@@ -41,7 +42,7 @@ export default async function LabTestsPage() {
             <LabTestBrowser tests={tests.data} categories={categories.data} />
           </Suspense>
         ) : (
-          <DataUnavailable href={ROUTES.labTests} />
+          <DataUnavailable phone={phone} href={ROUTES.labTests} />
         )}
       </Section>
     </>

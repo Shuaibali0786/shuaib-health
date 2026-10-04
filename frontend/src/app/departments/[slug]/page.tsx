@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { getDepartments, loadDepartments, loadDoctors, loadLabTestCategories, loadLabTests } from "@/lib/content";
+import { getSiteConfig, getDepartments, loadDepartments, loadDoctors, loadLabTestCategories, loadLabTests } from "@/lib/content";
 import { departmentEntry } from "@/lib/pages";
 import { departmentPath, ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: PageProps<"/departments/[slug
 }
 
 export default async function DepartmentPage({ params }: PageProps<"/departments/[slug]">) {
+  const { emergencyPhone: phone } = await getSiteConfig();
   const { slug } = await params;
   const [departments, doctors, tests, categories] = await Promise.all([
     loadDepartments(),
@@ -41,7 +42,7 @@ export default async function DepartmentPage({ params }: PageProps<"/departments
       <>
         <PageHeader trail={[{ label: "Departments", href: ROUTES.departments }, { label: "Department" }]} title="Department" />
         <Section tone="background" spacing="compact" aria-label="Department">
-          <DataUnavailable href={departmentPath(slug)} />
+          <DataUnavailable phone={phone} href={departmentPath(slug)} />
         </Section>
       </>
     );
@@ -69,6 +70,7 @@ export default async function DepartmentPage({ params }: PageProps<"/departments
         doctors={departmentDoctors}
         tests={relatedTests}
         categories={categories.ok ? categories.data : []}
+        phone={phone}
       />
     </>
   );

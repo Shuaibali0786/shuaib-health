@@ -11,7 +11,7 @@ import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { IllustrativeNote } from "@/components/ui/IllustrativeNote";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { getDoctors, loadDepartments, loadDoctors } from "@/lib/content";
+import { getSiteConfig, getDoctors, loadDepartments, loadDoctors } from "@/lib/content";
 import { formatPkr } from "@/lib/format";
 import { doctorEntry } from "@/lib/pages";
 import { departmentPath, doctorPath, ROUTES } from "@/lib/routes";
@@ -36,6 +36,7 @@ export async function generateMetadata({ params }: PageProps<"/doctors/[slug]">)
 }
 
 export default async function DoctorProfilePage({ params }: PageProps<"/doctors/[slug]">) {
+  const { emergencyPhone: phone } = await getSiteConfig();
   const { slug } = await params;
   const [doctors, departments] = await Promise.all([loadDoctors(), loadDepartments()]);
   if (!doctors.ok) {
@@ -43,7 +44,7 @@ export default async function DoctorProfilePage({ params }: PageProps<"/doctors/
       <>
         <PageHeader trail={[{ label: "Doctors", href: ROUTES.doctors }, { label: "Doctor profile" }]} title="Doctor profile" />
         <Section tone="background" spacing="compact" aria-label="Doctor profile">
-          <DataUnavailable href={doctorPath(slug)} />
+          <DataUnavailable phone={phone} href={doctorPath(slug)} />
         </Section>
       </>
     );

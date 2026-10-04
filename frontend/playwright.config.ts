@@ -14,6 +14,7 @@ const clinicFallback = JSON.stringify(JSON.parse(readFileSync("tests/fixtures/ap
 export default defineConfig({
   testDir: "./tests/e2e",
   testIgnore: ["**/stateful/**", "**/offline/**"],
+  globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

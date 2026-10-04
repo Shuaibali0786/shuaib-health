@@ -119,3 +119,20 @@ describe("cached loaders", () => {
     expect(getAllPages.mock.calls.map((c) => c[0])).toEqual(["/clinic/rules", "/health-packages"]);
   });
 });
+
+describe("recovery after failures (SC-005)", () => {
+  it("replaces the last good value as soon as a later call succeeds", async () => {
+    const { cachedDoctors } = await importCached();
+    getAllPages.mockResolvedValueOnce(["first"]);
+    expect(await cachedDoctors()).toEqual(["first"]);
+
+    getAllPages.mockRejectedValueOnce(new Error("down")).mockRejectedValueOnce(new Error("down"));
+    expect(await cachedDoctors()).toEqual(["first"]);
+    expect(await cachedDoctors()).toEqual(["first"]);
+
+    getAllPages.mockResolvedValueOnce(["second"]);
+    expect(await cachedDoctors()).toEqual(["second"]);
+    getAllPages.mockRejectedValueOnce(new Error("down"));
+    expect(await cachedDoctors()).toEqual(["second"]);
+  });
+});

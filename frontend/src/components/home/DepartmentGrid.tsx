@@ -2,14 +2,14 @@ import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { loadDepartments } from "@/lib/content";
+import { getSiteConfig, loadDepartments } from "@/lib/content";
 import { REVEAL_STAGGER } from "@/lib/motion";
 import { DepartmentCard } from "./DepartmentCard";
 import { DEPARTMENT_ITEM, DEPARTMENT_LIST } from "./department-grid";
 
 /** The seven departments (FR-013): compact two-column cards on phones, three from lg, four from xl, with a short last row centred. */
 export async function DepartmentGrid() {
-  const departments = await loadDepartments();
+  const [departments, { emergencyPhone }] = await Promise.all([loadDepartments(), getSiteConfig()]);
 
   return (
     <Section tone="surface" labelledBy="departments-title">
@@ -31,7 +31,7 @@ export async function DepartmentGrid() {
         </ul>
       ) : (
         <div className="mt-10">
-          <DataUnavailable href="/" />
+          <DataUnavailable phone={emergencyPhone} href="/" />
         </div>
       )}
     </Section>

@@ -5,7 +5,7 @@ import { Section } from "@/components/ui/Section";
 import { SWIPE_ITEM, SWIPE_ROW } from "@/components/ui/swipe-row";
 import { SwipeList } from "@/components/ui/SwipeList";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { loadFeaturedDoctors } from "@/lib/content";
+import { getSiteConfig, loadFeaturedDoctors } from "@/lib/content";
 import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/routes";
 import { DoctorCard } from "./DoctorCard";
@@ -15,7 +15,7 @@ import { DoctorCard } from "./DoctorCard";
  * two columns from sm, four from xl, with a link to all doctors.
  */
 export async function FeaturedDoctors() {
-  const doctors = await loadFeaturedDoctors();
+  const [doctors, { emergencyPhone }] = await Promise.all([loadFeaturedDoctors(), getSiteConfig()]);
 
   return (
     <Section tone="surface" labelledBy="doctors-title">
@@ -40,7 +40,7 @@ export async function FeaturedDoctors() {
             ))}
           </SwipeList>
         ) : (
-          <DataUnavailable href="/" />
+          <DataUnavailable phone={emergencyPhone} href="/" />
         )}
       </Reveal>
     </Section>
