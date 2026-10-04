@@ -19,7 +19,6 @@ CONTRACT = (
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "options", "head"}
 # In the contract but not built yet; remove entries as routes land (T038, T058).
 PENDING_BOOKING_OPERATIONS = {
-    ("/api/v1/doctors/{slug}/slots", "get"),
     ("/api/v1/appointments", "post"),
     ("/api/v1/appointments/{reference}", "get"),
 }
@@ -114,7 +113,10 @@ def test_response_schemas_have_the_same_properties(
         "PhoneNumber",
         "OpeningHoursRule",
         "ImageAsset",
-        # "Slot", "SlotDay", "DoctorSlots" (T038), "AppointmentView" (T058): uncomment later
+        "Slot",
+        "SlotDay",
+        "DoctorSlots",
+        # "AppointmentView" (T058): uncomment later
     ):
         assert expected in shared, f"{expected} missing from the generated schema"
     for name in shared:

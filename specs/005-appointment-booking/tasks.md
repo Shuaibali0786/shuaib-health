@@ -237,7 +237,7 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T032 [P] [US4] Write the slot-engine table tests in `backend/tests/unit/test_slots.py` (pure, no database). Cover:
+- [X] T032 [P] [US4] Write the slot-engine table tests in `backend/tests/unit/test_slots.py` (pure, no database). Cover:
   - **Grid and breaks**: Monday 10:00–13:00 and 17:00–20:00 at 15 min give 10:00…12:45 and 17:00…19:45; a session ending 12:50 has its last slot at 12:30.
   - **Time filters**: lead time (now 11:05, lead 120 → first slot ≥ 13:05); past days.
   - **Blocking rules**: whole-day leave gives `doctor_unavailable`; partial leave removes only the overlapping slots; a holiday gives `clinic_closed` plus `holidayName`; a non-working weekday gives `not_working`.
@@ -245,7 +245,7 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
   - **Window**: `days > window` is clamped; `from` in the past is clamped to today.
   - **Time zones**: a Karachi day boundary (23:45 local belongs to that date) with the process `TZ=America/New_York` (set via `monkeypatch.setenv` + `time.tzset` where available, otherwise documented skip on Windows). A DST zone (`Europe/London`) skips nonexistent local times and uses `fold=0`.
   - **`next_free`**: returns at most 5 ascending slots after a given instant.
-- [ ] T033 [P] [US4] Write API tests in `backend/tests/api/test_slots_api.py` (db, frozen clock).
+- [X] T033 [P] [US4] Write API tests in `backend/tests/api/test_slots_api.py` (db, frozen clock).
   - `200` shape validates against the `DoctorSlots` schema; `Cache-Control: no-store`.
   - Unknown or inactive doctor → `404`; doctor in an inactive department → `404`; `days=0`/`days=61`/bad `from` → `422`.
   - A seeded `dr-omar-sheikh` Tuesday has no slot 17:00–17:59.
@@ -254,13 +254,13 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### Implementation for User Story 4
 
-- [ ] T034 [US4] Implement the pure slot engine in `backend/app/booking/slots.py`.
+- [X] T034 [US4] Implement the pure slot engine in `backend/app/booking/slots.py`.
   - Frozen dataclasses: `SessionRule(weekday, start: time, end: time, slot_minutes)`, `Busy(start: datetime, end: datetime)`, `Holiday(date, name)`, `SlotOut(starts_at, ends_at, local_time)`, `DayOut(date, weekday, status, holiday_name, slots)`.
   - `build_days(*, now, tz: ZoneInfo, window_days, lead_minutes, sessions, leave: list[Busy], holidays, bookings: list[Busy], from_date: date | None, days: int | None) -> list[DayOut]`.
   - `next_free(..., after: datetime, limit: int = 5) -> list[SlotOut]`.
   - `is_available(..., starts_at) -> SlotOut | None`.
   - No I/O and no `datetime.now()`. Follow data-model §9 exactly.
-- [ ] T035 [US4] Add the availability queries in `backend/app/repositories/availability.py`.
+- [X] T035 [US4] Add the availability queries in `backend/app/repositories/availability.py`.
   - `load_doctor_for_booking(session, slug)`: active doctor with an active department, fee, specialty, department slug and name.
   - `load_sessions(doctor_id)`.
   - `load_leave(doctor_id, start, end)`: overlap query.
@@ -268,20 +268,20 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
   - `load_confirmed_bookings(doctor_id, start, end)`.
   - `load_booking_settings(session)`: time zone, window, lead time, max active.
   - Every datetime returned goes through `to_utc`.
-- [ ] T036 [US4] Add response models to `backend/app/schemas.py`: `Slot`, `AlternativeSlot`, `SlotDay` (`status` Literal of the 6 values, optional `holiday_name`), `DoctorSlots`. Use camelCase aliases via `CamelModel`.
-- [ ] T037 [US4] Create `backend/app/routers/slots.py` and include it in `backend/app/main.py` under `API_PREFIX`.
+- [X] T036 [US4] Add response models to `backend/app/schemas.py`: `Slot`, `AlternativeSlot`, `SlotDay` (`status` Literal of the 6 values, optional `holiday_name`), `DoctorSlots`. Use camelCase aliases via `CamelModel`.
+- [X] T037 [US4] Create `backend/app/routers/slots.py` and include it in `backend/app/main.py` under `API_PREFIX`.
   - `GET /doctors/{slug}/slots`, query `from_` (alias `from`, a date) and `days` (1–60).
   - Uses `ClockDep` and the repositories, maps `DayOut` to `DoctorSlots` (instants via `utc_iso`), and sets `Cache-Control: no-store`.
   - `responses` documents 404/422/429/503.
-- [ ] T038 [US4] Remove `("/api/v1/doctors/{slug}/slots","get")` from `PENDING_BOOKING_OPERATIONS`, and uncomment `Slot`, `SlotDay` and `DoctorSlots` in the expected-schemas tuple of `backend/tests/unit/test_openapi_contract.py`. Run the contract tests.
-- [ ] T039 [P] [US4] Add a perf check to `backend/tests/perf/test_latency.py` (`-m perf`): the slots endpoint p95 is at most 300 ms over 50 calls for a seeded doctor with a 14-day window. Record the result in `results.md`.
-- [ ] T040 [US4] Create the website slots route `frontend/src/app/api/booking/slots/[doctorSlug]/route.ts`.
+- [X] T038 [US4] Remove `("/api/v1/doctors/{slug}/slots","get")` from `PENDING_BOOKING_OPERATIONS`, and uncomment `Slot`, `SlotDay` and `DoctorSlots` in the expected-schemas tuple of `backend/tests/unit/test_openapi_contract.py`. Run the contract tests.
+- [X] T039 [P] [US4] Add a perf check to `backend/tests/perf/test_latency.py` (`-m perf`): the slots endpoint p95 is at most 300 ms over 50 calls for a seeded doctor with a 14-day window. Record the result in `results.md`.
+- [X] T040 [US4] Create the website slots route `frontend/src/app/api/booking/slots/[doctorSlug]/route.ts`.
   - `GET`: validate the slug (`^[a-z0-9]+(-[a-z0-9]+)*$`, else `404`) and pass through `from` and `days` when valid.
   - Call `callBooking` with a 5 s timeout and validate `200` bodies with `DoctorSlotsSchema` (invalid → `502` `bad_gateway`).
   - Pass through `404/422/429` (with `Retry-After`) and `503`. Unconfigured or network failure → `503` `service_unavailable`.
   - Always set `Cache-Control: no-store`.
   - Test in `frontend/tests/unit/booking-slots-route.test.ts`.
-- [ ] T041 [P] [US4] Create the day and slot formatting helpers.
+- [X] T041 [P] [US4] Create the day and slot formatting helpers.
   - `frontend/src/lib/booking/labels.ts`:
     - `dayStatusLabel(status)`: Available, Fully booked, Not available, Clinic closed, Not available, No times left today;
     - `partOfDay(localTime)`: morning < 12:00, afternoon < 17:00, evening otherwise;

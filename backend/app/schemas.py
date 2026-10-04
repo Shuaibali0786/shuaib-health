@@ -206,3 +206,32 @@ class ClinicRule(CamelModel):
     sort_order: int
     text: str
     is_sample: bool
+
+
+class Slot(CamelModel):
+    starts_at: str
+    ends_at: str
+    local_time: str
+
+
+class SlotDay(CamelModel):
+    date: str
+    weekday: Weekday
+    status: Literal[
+        "available",
+        "fully_booked",
+        "doctor_unavailable",
+        "clinic_closed",
+        "not_working",
+        "no_longer_available",
+    ]
+    holiday_name: str | None = Field(default=None)
+    slots: list[Slot]
+
+
+class DoctorSlots(CamelModel):
+    doctor_slug: str
+    time_zone: str
+    window_days: int
+    generated_at: str
+    days: list[SlotDay]

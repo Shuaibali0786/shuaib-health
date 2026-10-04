@@ -80,3 +80,22 @@ Notes:
 - **`AlternativeSlot`** was added to `backend/app/schemas.py` in T017 (the 409 body needs it); T036 adds the other slot models.
 - **Mock API** gained `tests/mock-api/booking.mjs` (slot rules, bookings, idempotency, lookup, four new modes); `/__log` has a `booking` list of `{method, path, mode, idempotencyKey?}` and never a body. The booking modes only affect booking routes; the catalog behaves as in `ok`.
 - **Lighthouse** is not re-run in this phase (no user-facing change yet).
+
+## Phase 3 — real slots (T032–T041)
+
+Checkpoint 3, run on branch `005-appointment-booking`.
+
+| Command | Result |
+|---------|--------|
+| `uv run ruff check .` / `ruff format` | pass |
+| `uv run mypy` | pass, 40 source files |
+| `uv run pytest` | **289 passed**, 1 skipped (`test_process_time_zone_does_not_change_the_result` needs `time.tzset`, which Windows lacks), 2 deselected (perf) |
+| `uv run pytest -m perf -k slots` | **median 175.8 ms, p95 184.4 ms** against the 300 ms budget (Neon, about 85 ms per round trip) |
+| `npm run typecheck` / `npm run lint` | pass |
+| `npm test` (Vitest) | **714 passed** (58 files) |
+| Live `GET /api/v1/doctors/dr-omar-sheikh/slots` on the dev backend | Tuesday 14:00–19:45 with no 17:00–17:59 slot; Saturday 10 Oct `clinic_closed` ("Clinic closed (sample holiday)"); `dr-sana-farooqui` Tuesday 6 Oct `doctor_unavailable` |
+
+Notes:
+- **Two queries, not six.** The first version read settings, doctor, sessions, leave, holidays and bookings separately: median 519 ms, p95 547 ms, over budget because each round trip to the remote database costs about 85 ms. `load_booking_context` (settings, doctor, department and weekly sessions in one query) and `load_availability` (leave, holidays and confirmed bookings in one `UNION ALL`) bring it to p95 184 ms. T035's separate `load_*` functions were folded into these two for that reason.
+- **Website route not curled live.** Another `next dev` server (not started by this session) already holds port 3000 without `BOOKING_PROXY_SECRET`, so the route's output was proved by `booking-slots-route.test.ts` (11 tests) and the backend by the live call above.
+- **`tzset` test.** The process-time-zone test is skipped here by design (T032 allows it); the engine takes the zone as an argument and never reads the process zone.

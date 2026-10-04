@@ -75,3 +75,32 @@ def test_catalog_endpoints_stay_under_the_latency_budget(
         print(f"{path:<50} {statistics.median(values):8.1f} {p95(values):8.1f} {max(values):8.1f}")
     slow = {path: p95(v) for path, v in results.items() if p95(v) >= BUDGET_MS}
     assert not slow, f"p95 over {BUDGET_MS} ms: {slow}"
+
+
+SLOTS_BUDGET_MS = 300.0
+
+
+def test_slots_endpoint_stays_under_its_latency_budget(
+    make_client: Callable[..., TestClient],
+) -> None:
+    """Slots for a seeded doctor over 14 days: p95 at most 300 ms (SC-008)."""
+    client = make_client(rate_limit_per_minute=10000)
+    path = "/api/v1/doctors/dr-omar-sheikh/slots"
+    logging.getLogger("httpx2").setLevel(logging.WARNING)
+    logging.getLogger("app.access").setLevel(logging.INFO)
+    collector = DurationCollector()
+    logger = logging.getLogger("app.access")
+    logger.addHandler(collector)
+    try:
+        for _ in range(WARMUP):
+            assert client.get(path).status_code == 200
+        collector.durations.clear()
+        for _ in range(REQUESTS):
+            assert client.get(path).status_code == 200
+        values = list(collector.durations)
+    finally:
+        logger.removeHandler(collector)
+
+    print()
+    print(f"{path}: median {statistics.median(values):.1f} ms, p95 {p95(values):.1f} ms")
+    assert p95(values) < SLOTS_BUDGET_MS

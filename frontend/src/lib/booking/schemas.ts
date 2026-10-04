@@ -86,3 +86,6 @@ export type DoctorSlots = z.infer<typeof DoctorSlotsSchema>;
 export type AppointmentView = z.infer<typeof AppointmentViewSchema>;
 export type ErrorInfo = z.infer<typeof ErrorInfoSchema>;
 export type BookingConflict = z.infer<typeof BookingConflictSchema>;
+
+export const ErrorResponseSchema = z.object({ error: ErrorInfoSchema });
+export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
