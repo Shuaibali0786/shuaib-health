@@ -25,11 +25,11 @@ const offenders = (pattern: RegExp, skip: (path: string) => boolean = () => fals
   files.filter((file) => !skip(file.path) && pattern.test(file.code)).map((file) => file.path);
 
 describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
-  // Features 004 and 005: the catalog reader and the booking proxy are the only places that may call fetch;
+  // Features 004 and 005: the catalog reader, the booking proxy and the booking flow's browser client are the only places that may call fetch;
   // the API settings are read in lib/api/config.ts, and the start-up check in instrumentation.ts reads
   // the framework's own NEXT_RUNTIME / NEXT_PHASE.
-  it("has no fetch( in src outside lib/api/http.ts and lib/booking/backend.ts", () => {
-    expect(offenders(/\bfetch\s*\(/, (path) => path === "lib/api/http.ts" || path === "lib/booking/backend.ts")).toEqual([]);
+  it("has no fetch( in src outside lib/api/http.ts, lib/booking/backend.ts and lib/booking/client.ts", () => {
+    expect(offenders(/\bfetch\s*\(/, (path) => ["lib/api/http.ts", "lib/booking/backend.ts", "lib/booking/client.ts"].includes(path))).toEqual([]);
   });
 
   it("has no backend env names in src outside lib/api/config.ts and instrumentation.ts", () => {

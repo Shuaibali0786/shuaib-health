@@ -95,9 +95,9 @@ describe("no third-party brands", () => {
 });
 
 describe("no backend dependency (constitution V)", () => {
-  it("src contains no fetch() call except the catalog API client and the booking proxy", () => {
+  it("src contains no fetch() call except the catalog API client, the booking proxy and the booking flow's browser client", () => {
     const offenders = codeFiles
-      .filter((file) => file.path !== "/src/lib/api/http.ts" && file.path !== "/src/lib/booking/backend.ts")
+      .filter((file) => !["/src/lib/api/http.ts", "/src/lib/booking/backend.ts", "/src/lib/booking/client.ts"].includes(file.path))
       .filter((file) => /\bfetch\s*\(/.test(file.code))
       .map((file) => file.path);
     expect(offenders).toEqual([]);

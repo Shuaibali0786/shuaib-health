@@ -148,12 +148,11 @@ test.describe("doctor profile", () => {
     await expect(page.getByRole("link", { name: "Cardiology", exact: true }).first()).toHaveAttribute("href", "/departments/cardiology");
   });
 
-  test("Book appointment leads to the Booking coming soon page", async ({ page }) => {
+  test("Book appointment leads to the booking page", async ({ page }) => {
     await page.goto("/doctors/dr-imran-qureshi");
     await page.getByRole("main").getByRole("link", { name: "Book appointment", exact: true }).click();
     await expect(page).toHaveURL(/\/book-appointment$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Booking coming soon" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Back to Home" })).toHaveAttribute("href", "/");
+    await expect(page.getByRole("heading", { level: 1, name: "Book an appointment" })).toBeVisible();
     await expect(page.getByText(NOTICE)).toHaveCount(2);
   });
 

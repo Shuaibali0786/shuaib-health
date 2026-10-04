@@ -99,3 +99,27 @@ Notes:
 - **Two queries, not six.** The first version read settings, doctor, sessions, leave, holidays and bookings separately: median 519 ms, p95 547 ms, over budget because each round trip to the remote database costs about 85 ms. `load_booking_context` (settings, doctor, department and weekly sessions in one query) and `load_availability` (leave, holidays and confirmed bookings in one `UNION ALL`) bring it to p95 184 ms. T035's separate `load_*` functions were folded into these two for that reason.
 - **Website route not curled live.** Another `next dev` server (not started by this session) already holds port 3000 without `BOOKING_PROXY_SECRET`, so the route's output was proved by `booking-slots-route.test.ts` (11 tests) and the backend by the live call above.
 - **`tzset` test.** The process-time-zone test is skipped here by design (T032 allows it); the engine takes the zone as an argument and never reads the process zone.
+
+## Phase 4 — book in under a minute, MVP (T042–T068)
+
+Checkpoint 4, run on branch `005-appointment-booking`.
+
+| Command | Result |
+|---------|--------|
+| `uv run ruff check .` / `uv run mypy` | pass, 47 source files |
+| `uv run pytest` | **389 passed**, 1 skipped (`tzset`, Windows), 2 deselected (perf) |
+| `npm run typecheck` / `npm run lint` | pass |
+| `npm test` (Vitest) | **803 passed** (62 files) |
+| `npm run build` with `CATALOG_API_URL`, `BOOKING_PROXY_SECRET`, `CLINIC_FALLBACK_JSON` unset | pass |
+| `npm run test:e2e` | **1028 passed**, 11 skipped (same 11 as baseline); one unrelated lab-test search test failed once under load and passed alone |
+| `npx playwright test booking.spec.ts` | 6 passed (mobile and desktop): keyboard-only booking, axe on every step incl. error state and confirmation, reduced motion |
+| `npm run test:e2e:stateful` | 11 passed |
+| `npm run test:e2e:offline` | 252 passed |
+
+Notes:
+- **Steps.** The "confirm" stage is the Confirm button at the end of the Details step, under an "Your appointment" summary; the URL steps are the five in the contract.
+- **Browser fetch.** The flow's two browser calls to our own `/api/booking/*` routes live in `lib/booking/client.ts`, now the third allowed `fetch` site (guards updated); the browser never calls the catalog API.
+- **e2e without `/__reset`.** The mobile and desktop projects run in parallel against one mock, so a reset would wipe the other's booking. Each uses its own doctors and the first free day/time; the mock store starts empty on every run.
+- **Deferred.** `count_active_for_phone` (T054) is added in Phase 7 with its first user. A lost race (23P01) and the `Idempotency-Key` requirement on the backend land in Phases 5 and 6; until then the website route already requires a UUID v4 key and the backend ignores it.
+- **Alternatives for `slot_unavailable`** are the next free times after the requested one, or from now when nothing follows it (for example outside the window).
+- **Lighthouse** not re-run in this phase.

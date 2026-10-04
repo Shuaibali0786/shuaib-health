@@ -61,6 +61,15 @@ class BookingConflict(Exception):
         self.alternatives = alternatives
 
 
+class RequestInvalid(Exception):
+    """422 for a rule only the server can check (for example an inactive doctor)."""
+
+    def __init__(self, field: str, issue: str) -> None:
+        super().__init__(field)
+        self.field = field
+        self.issue = issue
+
+
 class Forbidden(Exception):
     """403. Missing or wrong proxy secret, or a browser origin that is not allowed."""
 
@@ -169,6 +178,12 @@ async def _booking_conflict(_: Request, exc: Exception) -> JSONResponse:
     return error_response(409, conflict.code, conflict.message, extra=extra)
 
 
+async def _request_invalid(_: Request, exc: Exception) -> JSONResponse:
+    invalid = cast(RequestInvalid, exc)
+    details = [ErrorDetail(field=invalid.field, issue=invalid.issue)]
+    return error_response(422, "validation_error", "Some request parameters are invalid.", details)
+
+
 async def _forbidden(_: Request, __: Exception) -> JSONResponse:
     return error_response(403, "forbidden", "Forbidden.")
 
@@ -189,6 +204,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(ClinicNotConfigured, _not_configured)
     app.add_exception_handler(RateLimited, _rate_limited)
     app.add_exception_handler(BookingConflict, _booking_conflict)
+    app.add_exception_handler(RequestInvalid, _request_invalid)
     app.add_exception_handler(Forbidden, _forbidden)
     app.add_exception_handler(RequestRejected, _request_rejected)
     for db_error in (OperationalError, InterfaceError, PoolTimeoutError):

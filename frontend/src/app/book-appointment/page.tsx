@@ -1,27 +1,47 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { BookingFlow } from "@/components/booking/BookingFlow";
+import { BookingUnavailable } from "@/components/booking/BookingUnavailable";
 import { BeforeYourVisit } from "@/components/contact/BeforeYourVisit";
-import { ComingSoon } from "@/components/coming-soon/ComingSoon";
-import { getClinicRules, getSiteConfig } from "@/lib/content";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Section } from "@/components/ui/Section";
+import { getClinicRules, getSiteConfig, loadDepartments, loadDoctors } from "@/lib/content";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
+
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata(getManifestEntry(ROUTES.bookAppointment), await getSiteConfig());
 }
 
-/** Holding page: booking is not built in the demo yet. Doctor and department pages link here. */
+/**
+ * Book an appointment. The page renders from the cached catalog; the times and the booking itself
+ * are fetched in the browser, so a sleeping API never blocks the page or the build.
+ */
 export default async function BookAppointmentPage() {
-  const rules = await getClinicRules();
+  const [site, rules, departments, doctors] = await Promise.all([getSiteConfig(), getClinicRules(), loadDepartments(), loadDoctors()]);
+
   return (
     <>
-      <ComingSoon
-        title="Book appointment"
-        heading="Booking coming soon"
-        message="Online booking is not available in this demo yet. No details are collected. You can still look at our sample doctors and their weekly schedules."
-        secondary={{ label: "Find a doctor", href: ROUTES.doctors }}
+      <PageHeader
+        trail={[{ label: "Book an appointment" }]}
+        title="Book an appointment"
+        intro="Choose a department, a doctor and a time. All times are Asia/Karachi. This is a portfolio demo: nobody will contact you."
       />
-      <BeforeYourVisit rules={rules} />
+      <Section tone="background" spacing="compact" aria-label="Booking">
+        {departments.ok && doctors.ok ? (
+          <Suspense fallback={<p role="status">Loading the booking steps…</p>}>
+            <BookingFlow departments={departments.data} doctors={doctors.data} clinicPhone={site.generalPhone} timeZone={site.timeZone} />
+          </Suspense>
+        ) : (
+          <BookingUnavailable phone={site.generalPhone} />
+        )}
+      </Section>
+      <div id="clinic-rules">
+        <BeforeYourVisit rules={rules} />
+      </div>
     </>
   );
 }

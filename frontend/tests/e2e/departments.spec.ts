@@ -73,13 +73,13 @@ test.describe("department pages", () => {
     }
   });
 
-  test("the booking buttons lead to Booking coming soon", async ({ page }) => {
+  test("the booking buttons lead to the booking page", async ({ page }) => {
     await page.goto("/departments/dental");
     const buttons = page.getByRole("main").getByRole("link", { name: "Book appointment", exact: true });
     expect(await buttons.count()).toBeGreaterThanOrEqual(1);
     await buttons.first().click();
     await expect(page).toHaveURL(/\/book-appointment$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Booking coming soon" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Book an appointment" })).toBeVisible();
   });
 
   test("a department link on a doctor profile leads back to the department", async ({ page }) => {

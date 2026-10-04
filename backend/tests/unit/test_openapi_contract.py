@@ -17,11 +17,6 @@ CONTRACT = (
     Path(__file__).resolve().parents[3] / "specs" / "003-catalog-api" / "contracts" / "openapi.yaml"
 )
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "options", "head"}
-# In the contract but not built yet; remove entries as routes land (T038, T058).
-PENDING_BOOKING_OPERATIONS = {
-    ("/api/v1/appointments", "post"),
-    ("/api/v1/appointments/{reference}", "get"),
-}
 
 
 @pytest.fixture(scope="module")
@@ -67,14 +62,12 @@ def flat_properties(spec: dict[str, Any], schema: dict[str, Any]) -> set[str]:
 
 
 def test_same_paths_and_methods(contract: dict[str, Any], generated: dict[str, Any]) -> None:
-    assert set(operations(contract)) - PENDING_BOOKING_OPERATIONS == set(operations(generated))
+    assert set(operations(contract)) == set(operations(generated))
 
 
 def test_same_query_parameters(contract: dict[str, Any], generated: dict[str, Any]) -> None:
     generated_ops = operations(generated)
     for key, op in operations(contract).items():
-        if key in PENDING_BOOKING_OPERATIONS:
-            continue
         assert query_parameter_names(contract, op) == query_parameter_names(
             generated, generated_ops[key]
         ), key
@@ -85,8 +78,6 @@ def test_documented_error_statuses_are_covered(
 ) -> None:
     generated_ops = operations(generated)
     for key, op in operations(contract).items():
-        if key in PENDING_BOOKING_OPERATIONS:
-            continue
         promised = set(op["responses"]) - {"304"}  # 304 is HTTP caching, not a body schema
         assert promised <= set(generated_ops[key]["responses"]), key
 
@@ -116,7 +107,10 @@ def test_response_schemas_have_the_same_properties(
         "Slot",
         "SlotDay",
         "DoctorSlots",
-        # "AppointmentView" (T058): uncomment later
+        "AppointmentCreate",
+        "AppointmentView",
+        "BookingConflict",
+        "ErrorInfo",
     ):
         assert expected in shared, f"{expected} missing from the generated schema"
     for name in shared:

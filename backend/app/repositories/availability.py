@@ -66,6 +66,19 @@ def _c(attribute: Any) -> Any:
     return col(attribute)
 
 
+def bookable_from(doctor: m.Doctor, department: m.Department) -> BookableDoctor:
+    return BookableDoctor(
+        id=require_id(doctor.id),
+        slug=doctor.slug,
+        full_name=doctor.full_name,
+        specialty=doctor.specialty,
+        fee_pkr=doctor.fee_pkr,
+        department_id=require_id(department.id),
+        department_slug=department.slug,
+        department_name=department.name,
+    )
+
+
 def _parse_time(text: str) -> time:
     hours, minutes = text.split(":")
     return time(int(hours), int(minutes))
@@ -98,21 +111,11 @@ def load_booking_context(session: Session, slug: str) -> BookingContext | None:
     )
     if doctor is None or department is None:
         return BookingContext(settings, None, [])
-    bookable = BookableDoctor(
-        id=require_id(doctor.id),
-        slug=doctor.slug,
-        full_name=doctor.full_name,
-        specialty=doctor.specialty,
-        fee_pkr=doctor.fee_pkr,
-        department_id=require_id(department.id),
-        department_slug=department.slug,
-        department_name=department.name,
-    )
     rules = [
         SessionRule(s["weekday"], _parse_time(s["start"]), _parse_time(s["end"]), s["slotMinutes"])
         for s in (raw_sessions or [])
     ]
-    return BookingContext(settings, bookable, rules)
+    return BookingContext(settings, bookable_from(doctor, department), rules)
 
 
 def window_bounds(

@@ -300,33 +300,33 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T042 [P] [US1] Write `backend/tests/unit/test_validation.py`.
+- [X] T042 [P] [US1] Write `backend/tests/unit/test_validation.py`.
   - Load `specs/005-appointment-booking/contracts/fixtures/phone-cases.json`; every case normalizes as listed.
   - Names: Urdu script, apostrophes and hyphens accepted; digits, `<`, one character and 81 characters rejected; trimmed.
   - Email: lowercased; invalid rejected; empty → `None`.
   - Reason: up to 300 characters; control characters stripped.
-- [ ] T043 [P] [US1] Write `backend/tests/unit/test_masking.py` and `backend/tests/unit/test_reference.py`.
+- [X] T043 [P] [US1] Write `backend/tests/unit/test_masking.py` and `backend/tests/unit/test_reference.py`.
   - Masking:
     - "Ali Khan" → `A**** K****`;
     - "Muhammad Ali Raza Khan" → `M**** A**** R****` (at most 3 words shown);
     - Urdu name → first letter + `****`;
     - `+923001234567` → `0300****567`.
   - Reference: 10 characters from the Crockford alphabet; `display()` gives `XXXXX-XXXXX`; `parse()` accepts lowercase, a dash and spaces and rejects I/L/O/U; 10 000 generated references are unique.
-- [ ] T044 [P] [US1] Write `backend/tests/api/test_appointments_api.py` (db, frozen clock, proxy secret header set). Cover:
+- [X] T044 [P] [US1] Write `backend/tests/api/test_appointments_api.py` (db, frozen clock, proxy secret header set). Cover:
   - **Success**: `201` returns an `AppointmentView` with masked name and mobile, fee equal to the doctor's fee, `isSample: true`, `Cache-Control: no-store`; afterwards the slots endpoint no longer lists that time.
   - **`422` validation**: extra field `feePkr` in the body (schema forbids extras), `acceptRules: false`, an inactive doctor.
   - **`409 slot_unavailable` with alternatives**: an off-grid time, a past time, a time inside the lead window, a leave time, a holiday, a time outside the window.
   - **`403`**: missing or wrong `X-Proxy-Secret`; a valid secret with a foreign `Origin` header (Principle VI).
   - **Lookup**: `GET /appointments/{reference}` → `200` masked, without email or reason keys; lowercase and dashless references work; an unknown reference returns `404` with a body identical to any other unknown reference.
   - **Audit**: an `audit_log` row `appointment.created` / `ok` exists with a fingerprint and no personal columns.
-- [ ] T045 [P] [US1] Write `frontend/tests/unit/booking-phone.test.ts`. It reads the same `phone-cases.json` (via `fs`, path relative to the repo) and asserts that `normalizePkMobile()` matches every case, plus the form zod schema messages.
-- [ ] T046 [P] [US1] Write `frontend/tests/unit/booking-appointments-route.test.ts`. Cover:
+- [X] T045 [P] [US1] Write `frontend/tests/unit/booking-phone.test.ts`. It reads the same `phone-cases.json` (via `fs`, path relative to the repo) and asserts that `normalizePkMobile()` matches every case, plus the form zod schema messages.
+- [X] T046 [P] [US1] Write `frontend/tests/unit/booking-appointments-route.test.ts`. Cover:
   - **Origin guard**: missing `Origin`, a cross-origin `Origin`, and `Sec-Fetch-Site: cross-site` all get `403`; a non-JSON content type gets `415`; a body over 4 KB gets `413`.
   - **Forwarding**: the secret, client IP, `X-Request-ID` and `Idempotency-Key` are forwarded; an invalid key gets `422`.
   - **Pass-through**: `201`/`409`/`422`/`429` (`Retry-After` kept) and `403` pass through after zod validation; an invalid backend body gets `502`; a timeout gets `504 timeout`, which the flow treats as "unknown, retry safe".
   - **Logging**: no body is logged.
-- [ ] T047 [P] [US1] Write `frontend/tests/unit/booking-flow-url.test.ts`. `parseFlowParams`/`serializeFlowParams` round-trip; invalid slug, date or time is dropped; the step is derived as the deepest valid step; no other keys are ever emitted.
-- [ ] T048 [P] [US1] Write `frontend/tests/unit/booking-flow.test.tsx` (Testing Library, mocked `fetch`). Cover:
+- [X] T047 [P] [US1] Write `frontend/tests/unit/booking-flow-url.test.ts`. `parseFlowParams`/`serializeFlowParams` round-trip; invalid slug, date or time is dropped; the step is derived as the deepest valid step; no other keys are ever emitted.
+- [X] T048 [P] [US1] Write `frontend/tests/unit/booking-flow.test.tsx` (Testing Library, mocked `fetch`). Cover:
   - **Step order**: department → doctor (filtered, "Sample" label, fee) → date (unavailable days disabled with their label) → time (grouped by part of day) → details → confirm.
   - **Rules checkbox**: an unchecked box blocks submit with an accessible error.
   - **Back**: Back keeps choices.
@@ -337,7 +337,7 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
     - A doctor whose 14 days have no `available` day shows "No online slots in the next 14 days — please call the clinic" with a `tel:` link.
     - A department with no active doctors shows the same call-the-clinic message, rather than being hidden.
     - A POST answered `422` with `details[].field == "doctorSlug"` (doctor became inactive) shows "This doctor is no longer available for online booking." and returns to the doctor step, keeping the form values.
-- [ ] T049 [US1] Write the main e2e `frontend/tests/e2e/booking.spec.ts` (mock API in `ok` mode, `POST /__reset` before each test).
+- [X] T049 [US1] Write the main e2e `frontend/tests/e2e/booking.spec.ts` (mock API in `ok` mode, `POST /__reset` before each test).
   - Keyboard-only booking at Pixel 7 and desktop; it must finish in under 60 s (record the time in the test annotation).
   - The confirmation shows a reference matching `^[0-9A-Z]{5}-[0-9A-Z]{5}$`, `A**** K****`-style name, `0300****567`-style mobile, doctor, date and time, fee and the "Before your visit" list.
   - The time is followed by the time zone label from `Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "long" })` (for Asia/Karachi: "Pakistan Standard Time"). The same label appears on the time step.
@@ -347,22 +347,22 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### Implementation for User Story 1
 
-- [ ] T050 [P] [US1] Implement `backend/app/booking/validation.py`.
+- [X] T050 [P] [US1] Implement `backend/app/booking/validation.py`.
   - `normalize_pk_mobile(raw) -> str | None` (research R9: strip `[\s\-.()]`, then `^(?:\+92|0092|92|0)(3\d{9})$` on ASCII digits only).
   - `clean_name`, `clean_email`, `clean_reason`.
   - Each raises `ValueError` with a short reason that never contains the input.
-- [ ] T051 [P] [US1] Implement `backend/app/booking/masking.py`: `mask_name(name)` and `mask_mobile(e164)` (local form `0` + digits: first 4 + `****` + last 3).
-- [ ] T052 [P] [US1] Implement `backend/app/booking/reference.py`: `ALPHABET`, `new_reference()` (`secrets.choice` × 10), `display(ref)`, `parse(text) -> str | None`.
-- [ ] T053 [US1] Add `AppointmentCreate` and `AppointmentView` to `backend/app/schemas.py`.
+- [X] T051 [P] [US1] Implement `backend/app/booking/masking.py`: `mask_name(name)` and `mask_mobile(e164)` (local form `0` + digits: first 4 + `****` + last 3).
+- [X] T052 [P] [US1] Implement `backend/app/booking/reference.py`: `ALPHABET`, `new_reference()` (`secrets.choice` × 10), `display(ref)`, `parse(text) -> str | None`.
+- [X] T053 [US1] Add `AppointmentCreate` and `AppointmentView` to `backend/app/schemas.py`.
   - `AppointmentCreate`: `extra="forbid"`; field validators call `validation.py` and the validated model holds normalized values; `accept_rules: Literal[True]`; `trap: str | None`; `starts_at` must be aware.
   - `AppointmentView`: nested `doctor` and `department` objects.
-- [ ] T054 [US1] Implement `backend/app/repositories/appointments.py`.
+- [X] T054 [US1] Implement `backend/app/repositories/appointments.py`.
   - `insert_appointment(session, **fields) -> Appointment`, which raises `IntegrityError` to the caller.
   - `get_by_reference(session, ref)`, joined with doctor and department for the view.
   - `count_active_for_phone(session, phone, now)`.
   - `active_rules_version(session)`: SHA-256 of the active rules' text in `sort_order`, first 16 hex characters.
-- [ ] T055 [P] [US1] Implement `backend/app/booking/audit.py`: `write_audit(session, *, action, outcome, fingerprint, target_id=None, request_id)`, which only accepts the enum values from data-model §8.
-- [ ] T056 [US1] Implement `create_appointment(session, *, data: AppointmentCreate, client_ip, request_id, clock, settings) -> AppointmentView` in `backend/app/booking/service.py`.
+- [X] T055 [P] [US1] Implement `backend/app/booking/audit.py`: `write_audit(session, *, action, outcome, fingerprint, target_id=None, request_id)`, which only accepts the enum values from data-model §8.
+- [X] T056 [US1] Implement `create_appointment(session, *, data: AppointmentCreate, client_ip, request_id, clock, settings) -> AppointmentView` in `backend/app/booking/service.py`.
   - **One transaction, in order**:
     1. load the doctor;
     2. load the window data and run `slots.is_available` (`None` → `BookingConflict("slot_unavailable", …, alternatives=next_free(...))`);
@@ -371,21 +371,21 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
     5. `write_audit(... "appointment.created", "ok")`;
     6. commit.
   - Leave clearly named hook points (comments `# US3 idempotency`, `# US6 limits/lock`, `# US7 purge`) for later phases. Return the masked view.
-- [ ] T057 [US1] Create `backend/app/routers/appointments.py` and include it in `backend/app/main.py`.
+- [X] T057 [US1] Create `backend/app/routers/appointments.py` and include it in `backend/app/main.py`.
   - `POST /appointments`: dependencies `require_proxy_secret`, `ClockDep`, `get_client_ip`; returns `201`; `Cache-Control: no-store`.
   - `GET /appointments/{reference}`: `parse()` → `404` when invalid or unknown, with the same body for both; `no-store`.
   - Document all statuses in `responses` per the contract.
-- [ ] T058 [US1] Remove both appointment operations from `PENDING_BOOKING_OPERATIONS` (the set is now empty, so delete it), and add `AppointmentView` and `BookingConflict` to the expected schemas in `backend/tests/unit/test_openapi_contract.py`. Run the contract tests.
-- [ ] T059 [P] [US1] Implement `frontend/src/lib/booking/phone.ts` (`normalizePkMobile`, same rules as the backend) and `frontend/src/lib/booking/form.ts` (zod `DetailsFormSchema`: `fullName`, `mobile` refined with `normalizePkMobile`, optional `email`, optional `reason` up to 300, `acceptRules: z.literal(true)` with the message "Please accept the clinic rules to continue.", `trap` optional).
-- [ ] T060 [US1] Create `frontend/src/app/api/booking/appointments/route.ts`.
+- [X] T058 [US1] Remove both appointment operations from `PENDING_BOOKING_OPERATIONS` (the set is now empty, so delete it), and add `AppointmentView` and `BookingConflict` to the expected schemas in `backend/tests/unit/test_openapi_contract.py`. Run the contract tests.
+- [X] T059 [P] [US1] Implement `frontend/src/lib/booking/phone.ts` (`normalizePkMobile`, same rules as the backend) and `frontend/src/lib/booking/form.ts` (zod `DetailsFormSchema`: `fullName`, `mobile` refined with `normalizePkMobile`, optional `email`, optional `reason` up to 300, `acceptRules: z.literal(true)` with the message "Please accept the clinic rules to continue.", `trap` optional).
+- [X] T060 [US1] Create `frontend/src/app/api/booking/appointments/route.ts`.
   - `POST` only.
   - **Guards**: Origin / `Sec-Fetch-Site`, content type and size (contracts/website-booking.md §1); the `Idempotency-Key` UUID v4 check.
   - **Call**: `callBooking` with a 15 s timeout and the client IP from `clientIpFrom(request.headers)`.
   - **Responses**: zod-validate and pass through; set `Cache-Control: no-store`.
-- [ ] T061 [P] [US1] Implement `frontend/src/lib/booking/flowUrl.ts`.
+- [X] T061 [P] [US1] Implement `frontend/src/lib/booking/flowUrl.ts`.
   - `FlowParams { department?, doctor?, date?, time?, step }`, with `parseFlowParams(searchParams, catalog)` and `serializeFlowParams(params)`.
   - Only slugs, a `YYYY-MM-DD` date, an `HH:MM` time and the step name are ever written.
-- [ ] T062 [P] [US1] Create the step components in `frontend/src/components/booking/`:
+- [X] T062 [P] [US1] Create the step components in `frontend/src/components/booking/`:
   - `StepIndicator.tsx`: an ordered list with `aria-current="step"`;
   - `DepartmentStep.tsx`: department cards using the existing card styles;
   - `DoctorStep.tsx`: the existing `DoctorCard` look, with the "Sample" badge and fee;
@@ -393,13 +393,13 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
   - `SlotGrid.tsx`: radio buttons of at least 44 × 44 px, grouped by part of day with headings.
 
   All use existing tokens only; no new colours.
-- [ ] T063 [US1] Create `frontend/src/components/booking/DetailsForm.tsx` (React Hook Form + `zodResolver(DetailsFormSchema)`).
+- [X] T063 [US1] Create `frontend/src/components/booking/DetailsForm.tsx` (React Hook Form + `zodResolver(DetailsFormSchema)`).
   - **Above the fields**: `<p id="booking-demo-notice">Demo site: please don't enter real medical details</p>`, with `aria-describedby="booking-demo-notice"` on the `<form>`.
   - **Fields**: labelled full name, mobile (`inputMode="tel"`, `autoComplete="tel"`), email, reason (with a counter).
   - **Rules**: a checkbox "I accept the clinic rules" linked to the rules list on the page.
   - **Trap field**: named `website`, hidden visually and from assistive technology (`aria-hidden`, `tabIndex=-1`, `autoComplete="off"`), mapped to `trap`.
   - **Errors**: tied to fields via `aria-describedby`, with an error summary that gets focus.
-- [ ] T064 [US1] Create `frontend/src/components/booking/BookingFlow.tsx` (`"use client"`).
+- [X] T064 [US1] Create `frontend/src/components/booking/BookingFlow.tsx` (`"use client"`).
   - **State**: `useReducer` state; props `departments`, `doctors`, `rules`, `clinicPhone`, `timeZone`.
   - **URL**: read with `useSearchParams` and `parseFlowParams`; `router.push` on step forward and `router.replace` when fixing invalid params.
   - **Slots**: fetched from `/api/booking/slots/{slug}` with `cache: "no-store"`; loading skeleton; an `aria-live="polite"` region announces step changes.
@@ -410,20 +410,20 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
     - A department with no active doctors gets the same message.
     - A `422` on `doctorSlug` gets the "no longer available" note and returns to the doctor step.
     - Every step transition uses the existing motion helpers in `src/lib/motion.ts`, which respect `prefers-reduced-motion`.
-- [ ] T065 [P] [US1] Create `frontend/src/components/booking/BookingUnavailable.tsx`. It reuses `DataUnavailable` / `EmptyState`: "Online booking is temporarily unavailable. Please call the clinic." with a `tel:` link to the clinic phone and a Retry button.
-- [ ] T066 [US1] Replace the holding page in `frontend/src/app/book-appointment/page.tsx`.
+- [X] T065 [P] [US1] Create `frontend/src/components/booking/BookingUnavailable.tsx`. It reuses `DataUnavailable` / `EmptyState`: "Online booking is temporarily unavailable. Please call the clinic." with a `tel:` link to the clinic phone and a Retry button.
+- [X] T066 [US1] Replace the holding page in `frontend/src/app/book-appointment/page.tsx`.
   - Replace `ComingSoon` with a `<Suspense>`-wrapped `<BookingFlow>`, fed from the cached catalog (`loadDepartments`, `loadDoctors`, `getClinicRules`, `getSiteConfig` from `src/lib/content.ts`).
   - Keep `<BeforeYourVisit rules={rules} />` with `id="clinic-rules"` for the checkbox link.
   - When the catalog data is unavailable, render `BookingUnavailable`.
   - In `frontend/src/lib/pages.ts`, change the `/book-appointment` entry: title "Book an appointment", description "Book an appointment with a sample doctor (portfolio demo)."
   - Keep the page out of the sitemap, as today (plan "Scope notes").
-- [ ] T067 [US1] Create `frontend/src/app/book-appointment/confirmed/[reference]/page.tsx` and `frontend/src/components/booking/ConfirmationCard.tsx`.
+- [X] T067 [US1] Create `frontend/src/app/book-appointment/confirmed/[reference]/page.tsx` and `frontend/src/components/booking/ConfirmationCard.tsx`.
   - Dynamic server component; `metadata: { robots: { index: false, follow: false }, referrer: "no-referrer" }`.
   - Validate the reference format (`notFound()` if invalid), then `callBooking({ method: "GET", path: "/appointments/" + ref, clientIp, timeoutMs: 5000 })`.
   - **`200`**: show the masked view, the time zone label, fee, clinic address and phone, `BeforeYourVisit`, and the note "This is a demo booking. No one will contact you."
   - **`404`**: the generic "Booking not found" page.
   - **Unavailable**: "We can't show your booking right now. Your reference is {display(ref)}." plus the clinic phone.
-- [ ] T068 [US1] Remove the holding page and update every test that expects it.
+- [X] T068 [US1] Remove the holding page and update every test that expects it.
   - **Delete** `frontend/src/components/coming-soon/ComingSoon.tsx` and `frontend/tests/unit/coming-soon.test.tsx`. Nothing else imports the component (verified with grep at planning time; re-check before deleting).
   - **Update these tests**, which assert "Booking coming soon":
     - `frontend/tests/e2e/links.spec.ts`, lines about 55 and 91–92: `/book-appointment` now has the h1 "Book an appointment" and must not match `/coming soon/i`;

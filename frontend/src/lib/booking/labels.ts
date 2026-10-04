@@ -41,3 +41,23 @@ export function timeZoneLabel(timeZone: string, at: Date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "long" }).formatToParts(at);
   return parts.find((p) => p.type === "timeZoneName")?.value ?? timeZone;
 }
+
+export const STEP_LABEL = {
+  department: "Department",
+  doctor: "Doctor",
+  date: "Date",
+  time: "Time",
+  details: "Details",
+} as const;
+
+export const STEP_HEADING = {
+  department: "Choose a department",
+  doctor: "Choose a doctor",
+  date: "Choose a date",
+  time: "Choose a time",
+  details: "Your details",
+} as const;
+
+export const NO_SLOTS_MESSAGE = "No online slots in the next 14 days — please call the clinic";
+export const DOCTOR_GONE_MESSAGE = "This doctor is no longer available for online booking.";
+export const DEMO_DETAILS_NOTICE = "Demo site: please don't enter real medical details";

@@ -31,7 +31,7 @@ test.describe("links", () => {
     }
   });
 
-  test("every internal link on Home and on each top-level page resolves, has one h1 and is not Coming soon (except booking)", async ({
+  test("every internal link on Home and on each top-level page resolves, has one h1 and is not Coming soon", async ({
     page,
     request,
   }) => {
@@ -52,7 +52,7 @@ test.describe("links", () => {
         expect(h1s.length, `${href} should have one h1`).toBe(1);
         expect(h1s[0], href).not.toBe("");
         expect(h1s[0], href).not.toBe("Page not found");
-        if (href !== "/book-appointment") expect(h1s[0], href).not.toMatch(/coming soon/i);
+        expect(h1s[0], href).not.toMatch(/coming soon/i);
       }
     }
   });
@@ -87,11 +87,10 @@ test.describe("links", () => {
     expect((await request.get("/a/b/c")).status()).toBe(404);
   });
 
-  test("the booking holding page keeps the layout and a way back Home", async ({ page }) => {
+  test("the booking page keeps the layout and a way back Home", async ({ page }) => {
     await page.goto("/book-appointment");
-    await expect(page.getByRole("heading", { level: 1, name: "Booking coming soon" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Back to Home" })).toHaveAttribute("href", "/");
-    await page.getByRole("link", { name: "Back to Home" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Book an appointment" })).toBeVisible();
+    await page.getByRole("main").getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Home" }).click();
     await expect(page).toHaveURL("/");
   });
 
