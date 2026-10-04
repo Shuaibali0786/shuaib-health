@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: PageProps<"/lab-tests/[slug]"
   const test = tests.ok ? tests.data.find((candidate) => candidate.slug === slug) : undefined;
   // An outage or an unknown slug gets a generic title; the page itself decides between the
   // friendly message and the not-found page.
-  return test ? pageMetadata(labTestEntry(test)) : { title: "Lab test", alternates: { canonical: labTestPath(slug) } };
+  return test ? pageMetadata(labTestEntry(test), await getSiteConfig()) : { title: "Lab test", alternates: { canonical: labTestPath(slug) } };
 }
 
 export default async function LabTestPage({ params }: PageProps<"/lab-tests/[slug]">) {

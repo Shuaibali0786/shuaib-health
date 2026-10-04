@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconTile } from "@/components/ui/IconTile";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
-import { heroFacts, heroImage } from "@/data/homeContent";
+import { buildHeroFacts, heroImage } from "@/data/homeContent";
+import { getSiteConfig } from "@/lib/content";
 import { ROUTES } from "@/lib/routes";
 
 /** On large screens the three fact cards float over the photo's edges; below that they stack under it. */
@@ -19,7 +20,9 @@ const FACT_POSITION = [
  * before hydration), and the photo is the only image loaded with priority.
  * The three cards state only demo-true facts: no counts, awards or ratings.
  */
-export function Hero() {
+export async function Hero() {
+  const { openingHours } = await getSiteConfig();
+  const heroFacts = buildHeroFacts(openingHours);
   return (
     <section aria-labelledby="hero-title" className="bg-soft-gradient">
       <Container className="grid items-center gap-10 py-12 md:py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-14 lg:py-14">

@@ -12,8 +12,8 @@ import { pageMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
 
-export function generateMetadata(): Metadata {
-  return pageMetadata(getManifestEntry(ROUTES.departments));
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata(getManifestEntry(ROUTES.departments), await getSiteConfig());
 }
 
 /** The seven sample departments, in display order, with the same cards as Home. */

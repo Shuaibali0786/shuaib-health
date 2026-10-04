@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/departments/[slug
   const department = departments.ok ? departments.data.find((candidate) => candidate.slug === slug) : undefined;
   // An outage or an unknown slug gets a generic title; the page itself decides between the
   // friendly message and the not-found page.
-  return department ? pageMetadata(departmentEntry(department)) : { title: "Department", alternates: { canonical: departmentPath(slug) } };
+  return department ? pageMetadata(departmentEntry(department), await getSiteConfig()) : { title: "Department", alternates: { canonical: departmentPath(slug) } };
 }
 
 export default async function DepartmentPage({ params }: PageProps<"/departments/[slug]">) {

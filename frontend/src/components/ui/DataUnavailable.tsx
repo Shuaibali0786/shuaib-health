@@ -24,7 +24,7 @@ export function DataUnavailable({ title = "This information is temporarily unava
         <a href={href} className={linkClass}>
           Try again
         </a>
-        {phone ? (
+        {phone && phone.tel !== "" ? (
           <a href={`tel:${phone.tel}`} className={linkClass}>
             Call the clinic
           </a>

@@ -3,9 +3,9 @@ import { aboutContent } from "@/data/aboutContent";
 import { faqGroups } from "@/data/faq";
 import { legalContent } from "@/data/legalContent";
 import { healthTips } from "@/data/healthTips";
-import { siteConfig } from "@/data/siteConfig";
 import {
   cachedClinic,
+  cachedClinicRules,
   cachedDepartments,
   cachedDoctors,
   cachedHealthPackages,
@@ -15,8 +15,9 @@ import {
 import { getClinicFallback } from "@/lib/api/config";
 import { load, type Loaded } from "@/lib/api/load";
 import type { ClinicSettings } from "@/lib/api/schemas";
+import { CREDIT, DEMO_NOTICE } from "@/lib/honesty";
 import { toIconName } from "@/components/ui/icons";
-import type { AboutContent, LegalContent, Department, FaqGroup, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
+import type { AboutContent, ClinicRule, LegalContent, Department, FaqGroup, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
 
 /**
  * The only place components read content from. Every accessor is async. The catalog (departments,
@@ -29,30 +30,64 @@ import type { AboutContent, LegalContent, Department, FaqGroup, Doctor, HealthPa
 
 export type { Loaded };
 
+/**
+ * Shown when neither the API nor a valid `CLINIC_FALLBACK_JSON` supplied clinic data. It carries no
+ * sample clinic values: no phone numbers, address or hours, so the phone UI is simply left out.
+ * The demo notice and credit are the constitution constants, as everywhere else.
+ */
+const NEUTRAL_IDENTITY: SiteConfig = {
+  name: "Clinic",
+  tagline: "",
+  fullTitle: "Clinic",
+  demoNotice: DEMO_NOTICE,
+  emergencyPhone: { display: "", tel: "" },
+  generalPhone: { display: "", tel: "" },
+  address: [],
+  timeZone: "Asia/Karachi",
+  openingHours: [],
+  labHours: [],
+  mapArea: { bbox: [0, 0, 0, 0], label: "" },
+  credit: { ...CREDIT },
+  indexable: false,
+  isSample: true,
+};
+
 function toSiteConfig(clinic: ClinicSettings): SiteConfig {
-  // The generated type has a plain number[] for the four-number bounding box.
+  // The generated type has a plain number[] for the four-number bounding box. The demo notice and
+  // credit always come from the constitution constants, whatever the data says (constitution I).
   const [west = 0, south = 0, east = 0, north = 0] = clinic.mapArea.bbox;
-  return { ...clinic, mapArea: { bbox: [west, south, east, north], label: clinic.mapArea.label } };
+  return {
+    ...clinic,
+    mapArea: { bbox: [west, south, east, north], label: clinic.mapArea.label },
+    demoNotice: DEMO_NOTICE,
+    credit: { ...CREDIT },
+  };
 }
 
 /**
  * Clinic identity, in this order (FR-022): the live or last-good API value, else the validated
- * `CLINIC_FALLBACK_JSON`, else the bundled sample. The emergency number is therefore always
- * available, whatever state the API is in. (The last step becomes a neutral identity in the
- * identity-from-data phase.)
+ * `CLINIC_FALLBACK_JSON`, else the neutral identity. The emergency number is therefore available
+ * whenever any source has it, whatever state the API is in.
  */
 export async function getSiteConfig(): Promise<SiteConfig> {
   const clinic = await clinicLoaded();
   if (clinic.ok) return toSiteConfig(clinic.data);
   const fallback = getClinicFallback();
-  return fallback ? toSiteConfig(fallback) : siteConfig;
+  return fallback ? toSiteConfig(fallback) : NEUTRAL_IDENTITY;
 }
 
 const bySortOrder = <T extends { sortOrder: number }>(a: T, b: T) => a.sortOrder - b.sortOrder;
 
+/** The "Before your visit" rules in display order. Empty when there are none or the API is unavailable. */
+export async function getClinicRules(): Promise<ClinicRule[]> {
+  const rules = await clinicRulesLoaded();
+  return rules.ok ? [...rules.data].sort(bySortOrder) : [];
+}
+
 // React's cache() shares one result per render, so a page that calls several accessors for the
 // same resource asks the data cache (and logs a failure) once.
 const clinicLoaded = cache(() => load("clinic", cachedClinic));
+const clinicRulesLoaded = cache(() => load("clinic-rules", cachedClinicRules));
 const departmentsLoaded = cache(() => load("departments", cachedDepartments));
 const doctorsLoaded = cache(() => load("doctors", cachedDoctors));
 const categoriesLoaded = cache(() => load("lab-test-categories", cachedLabTestCategories));

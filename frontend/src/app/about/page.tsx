@@ -6,23 +6,23 @@ import { Card } from "@/components/ui/Card";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { getAboutContent } from "@/lib/content";
+import { getAboutContent, getSiteConfig } from "@/lib/content";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
 
-export function generateMetadata(): Metadata {
-  return pageMetadata(getManifestEntry(ROUTES.about));
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata(getManifestEntry(ROUTES.about), await getSiteConfig());
 }
 
 export default async function AboutPage() {
-  const about = await getAboutContent();
+  const [about, site] = await Promise.all([getAboutContent(), getSiteConfig()]);
 
   return (
     <>
       <PageHeader
         trail={[{ label: "About" }]}
-        title="About Shuaib Health"
+        title={`About ${site.name}`}
         intro="An honest look at what this demo clinic is, what it aims to show, and how a visit would work."
       >
         <SampleBadge label="Portfolio demo" />

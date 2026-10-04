@@ -12,8 +12,8 @@ import { pageMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
 
-export function generateMetadata(): Metadata {
-  return pageMetadata(getManifestEntry(ROUTES.healthPackages));
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata(getManifestEntry(ROUTES.healthPackages), await getSiteConfig());
 }
 
 /** Five sample packages. Every total is worked out from the lab test catalog, never typed in. */

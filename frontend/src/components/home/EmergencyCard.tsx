@@ -31,12 +31,14 @@ export async function EmergencyCard() {
           </p>
         </div>
       </div>
-      <Button href={`tel:${emergencyPhone.tel}`} variant="danger" className="shrink-0">
-        <Phone className="size-5" aria-hidden="true" />
-        <span>
-          {emergencyPhone.display} <span className="font-medium">(sample)</span>
-        </span>
-      </Button>
+      {emergencyPhone.tel !== "" ? (
+        <Button href={`tel:${emergencyPhone.tel}`} variant="danger" className="shrink-0">
+          <Phone className="size-5" aria-hidden="true" />
+          <span>
+            {emergencyPhone.display} <span className="font-medium">(sample)</span>
+          </span>
+        </Button>
+      ) : null}
     </aside>
   );
 }

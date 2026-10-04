@@ -1,16 +1,22 @@
+import { render, screen } from "@testing-library/react";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NoticeBar } from "@/components/layout/NoticeBar";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { CREDIT, DEMO_NOTICE } from "@/lib/honesty";
+import clinicJson from "../fixtures/api/clinic.json";
+import { clinicState } from "./helpers/catalog-api-mock";
 import { aboutContent } from "@/data/aboutContent";
 import { departments } from "../fixtures/catalog/departments";
 import { doctors } from "../fixtures/catalog/doctors";
 import { faqGroups } from "@/data/faq";
 import { healthPackages } from "../fixtures/catalog/healthPackages";
 import { healthTips } from "@/data/healthTips";
-import { buildFacts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
+import { buildFacts, buildHeroFacts, quickActions, whyPoints } from "@/data/homeContent";
 import { labTestCategories, labTests } from "../fixtures/catalog/labTests";
 import { privacyContent, termsContent } from "@/data/legalContent";
-import { siteConfig } from "@/data/siteConfig";
+import { siteConfig } from "../fixtures/catalog/siteConfig";
 import { BANNED_CLAIMS, BRAND_WORDS, stringValues } from "./helpers/forbidden";
 
 /**
@@ -19,6 +25,12 @@ import { BANNED_CLAIMS, BRAND_WORDS, stringValues } from "./helpers/forbidden";
  * Scans code with comments removed (comments legitimately say "no ratings, no awards"), and uses
  * whole-word matches so "reviewing a folder" or the CSS class "leading-none" do not trip it.
  */
+
+vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
+
+beforeEach(() => {
+  clinicState.mode = "ok";
+});
 
 // npm run test always runs from frontend/.
 const SRC = join(process.cwd(), "src");
@@ -50,7 +62,7 @@ const codeFiles = filesUnder(SRC, [".ts", ".tsx"]).map((path) => ({
 
 describe("no fabricated claims", () => {
   it("none of the sample data contains a claim word", () => {
-    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, healthPackages, aboutContent, faqGroups, privacyContent, termsContent, heroFacts, quickActions, buildFacts(departments.length), buildFacts(undefined), whyPoints, siteConfig]);
+    const text = stringValues([departments, doctors, healthTips, labTests, labTestCategories, healthPackages, aboutContent, faqGroups, privacyContent, termsContent, buildHeroFacts(siteConfig.openingHours), quickActions, buildFacts(departments.length, siteConfig.openingHours), buildFacts(undefined, siteConfig.openingHours), whyPoints, siteConfig]);
     const offenders = text.filter((value) => BANNED_CLAIMS.test(value));
     expect(offenders).toEqual([]);
   });
@@ -64,7 +76,7 @@ describe("no fabricated claims", () => {
   });
 
   it("the facts band and hero cards state no numbers except the department count and opening hours", () => {
-    const numbers = [...buildFacts(departments.length), ...heroFacts].flatMap((fact) => ("value" in fact ? [fact.value, fact.label] : [fact.label]));
+    const numbers = [...buildFacts(departments.length, siteConfig.openingHours), ...buildHeroFacts(siteConfig.openingHours)].flatMap((fact) => ("value" in fact ? [fact.value, fact.label] : [fact.label]));
     const withDigits = numbers.filter((text) => /\d/.test(text));
     // "7" (departments) and the hours ("9 AM – 9 PM PKT") are the only digits allowed.
     expect(withDigits.sort()).toEqual(["7", "9 AM – 9 PM PKT", "Open Mon–Sat, 9 AM – 9 PM PKT"].sort());
@@ -143,5 +155,34 @@ describe("the About page makes no invented claims (FR-061)", () => {
 
   it("has no claim words or brand names", () => {
     expect(aboutText.filter((value) => BANNED_CLAIMS.test(value) || BRAND_WORDS.test(value))).toEqual([]);
+  });
+});
+
+describe("honesty text is fixed by the constitution, not by data (K1)", () => {
+  it("the constants equal the constitution text", () => {
+    expect(DEMO_NOTICE).toBe("Portfolio demo — not a real clinic, not medical advice.");
+    expect(CREDIT).toEqual({ text: "Designed & built by Shuaib Ali", href: "https://github.com/Shuaibali0786" });
+  });
+
+  it("the recorded clinic response and the sample clinic carry the same text (seed parity)", () => {
+    expect(clinicJson.demoNotice).toBe(DEMO_NOTICE);
+    expect(clinicJson.credit).toEqual(CREDIT);
+    expect(siteConfig.demoNotice).toBe(DEMO_NOTICE);
+    expect(siteConfig.credit).toEqual(CREDIT);
+  });
+
+  it("the footer and notice bar render the constants even when the clinic data says something else", async () => {
+    clinicState.mode = "other-honesty";
+    const { unmount } = render(await NoticeBar());
+    expect(screen.getByText(DEMO_NOTICE)).toBeInTheDocument();
+    expect(screen.queryByText("Totally real clinic.")).not.toBeInTheDocument();
+    unmount();
+
+    render(await SiteFooter());
+    expect(screen.getByText(DEMO_NOTICE)).toBeInTheDocument();
+    const credit = screen.getByRole("link", { name: CREDIT.text });
+    expect(credit).toHaveAttribute("href", CREDIT.href);
+    expect(screen.queryByText("Totally real clinic.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Someone else")).not.toBeInTheDocument();
   });
 });

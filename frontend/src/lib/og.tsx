@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { LOGO_VIEWBOX, PLUS_PATH, PULSE_PATH, PULSE_STROKE_WIDTH } from "@/components/brand/logo-paths";
-import { siteConfig } from "@/data/siteConfig";
+import { DEMO_NOTICE } from "@/lib/honesty";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -51,7 +51,7 @@ export function ogCard({ eyebrow, title, subtitle }: OgCardOptions): ImageRespon
           {eyebrow ? <div style={{ fontSize: 32, fontWeight: 700, color: "#0F766E" }}>{eyebrow}</div> : null}
           <div style={{ fontSize: title.length > 40 ? 56 : 76, fontWeight: 800, marginTop: 8, lineHeight: 1.1 }}>{title}</div>
           {subtitle ? <div style={{ fontSize: 36, marginTop: 16 }}>{subtitle}</div> : null}
-          <div style={{ fontSize: 26, marginTop: 36, color: "#0F766E" }}>{siteConfig.demoNotice}</div>
+          <div style={{ fontSize: 26, marginTop: 36, color: "#0F766E" }}>{DEMO_NOTICE}</div>
         </div>
       </div>
     ),

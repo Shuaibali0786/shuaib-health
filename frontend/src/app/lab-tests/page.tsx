@@ -12,8 +12,8 @@ import { pageMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
 
-export function generateMetadata(): Metadata {
-  return pageMetadata(getManifestEntry(ROUTES.labTests));
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata(getManifestEntry(ROUTES.labTests), await getSiteConfig());
 }
 
 /**

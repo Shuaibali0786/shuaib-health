@@ -21,9 +21,19 @@ test("catalog sections say they are unavailable", async ({ page }) => {
   await expect(page.getByText(/temporarily unavailable/i).first()).toBeVisible();
 });
 
-// Needs the neutral identity (no sample clinic values, no phone UI) from the identity-from-data
-// phase (T062, T064). Until then the bundled sample clinic still fills in the phone numbers.
-test.fixme("shows a neutral identity with no tel: links", async ({ page }) => {
+// With nothing configured the site shows a neutral identity: no sample clinic values and no phone UI.
+test("shows a neutral identity with no tel: links", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("a[href^='tel:']")).toHaveCount(0);
+  await expect(page.getByRole("banner").getByRole("link", { name: "Clinic home" })).toBeVisible();
+  await expect(page.getByText("Shuaib Health")).toHaveCount(0);
+  await expect(page.getByText("+92 21")).toHaveCount(0);
+});
+
+test("the Contact and Book Appointment pages show no phone link and no rules heading", async ({ page }) => {
+  for (const path of ["/contact", "/book-appointment"]) {
+    await page.goto(path);
+    await expect(page.locator("a[href^='tel:']"), path).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Before your visit" }), path).toHaveCount(0);
+  }
 });

@@ -1,13 +1,10 @@
 import { formatOpeningHours, formatOpeningHoursParts } from "@/lib/format";
-import type { Fact, HeroFact, ImageAsset, QuickAction, WhyPoint } from "@/types/content";
-import { siteConfig } from "./siteConfig";
+import type { Fact, HeroFact, ImageAsset, OpeningHoursRule, QuickAction, WhyPoint } from "@/types/content";
 
 /**
  * Static home-page copy (not API-shaped). Only honest, demo-true statements:
  * no counts of patients, years, awards, certifications, ratings or comparisons.
  */
-
-const hoursParts = formatOpeningHoursParts(siteConfig.openingHours);
 
 /** Hero photo (4:5), fitted from a stock photo with npm run images. */
 export const heroImage: ImageAsset = {
@@ -25,12 +22,19 @@ export const clinicImage: ImageAsset = {
   height: 900,
 };
 
-/** Exactly three floating cards in the hero (FR-011). */
-export const heroFacts: HeroFact[] = [
-  { id: "hours", label: `Open ${formatOpeningHours(siteConfig.openingHours)}`, iconName: "clock" },
-  { id: "reports", label: "Lab reports online", iconName: "file-text" },
-  { id: "home-sample", label: "Home sample collection", iconName: "house" },
-];
+/**
+ * The floating cards in the hero (FR-011): three, with the opening hours from the clinic data. If the
+ * clinic has no hours (neutral identity) the hours card is left out rather than invented.
+ */
+export function buildHeroFacts(openingHours: OpeningHoursRule[]): HeroFact[] {
+  return [
+    ...(openingHours.length > 0
+      ? [{ id: "hours", label: `Open ${formatOpeningHours(openingHours)}`, iconName: "clock" } satisfies HeroFact]
+      : []),
+    { id: "reports", label: "Lab reports online", iconName: "file-text" },
+    { id: "home-sample", label: "Home sample collection", iconName: "house" },
+  ];
+}
 
 /** "How can we help you?" actions, in the order required by FR-012. */
 export const quickActions: QuickAction[] = [
@@ -74,21 +78,19 @@ export const quickActions: QuickAction[] = [
 /**
  * The honest facts band (FR-014): exactly four facts that are true within the demo. The department
  * count comes from the catalog API; while it is unavailable a fact that needs no data stands in.
+ * The hours fact comes from the clinic data and is left out when the clinic has none.
  */
-export function buildFacts(departmentCount: number | undefined): Fact[] {
+export function buildFacts(departmentCount: number | undefined, openingHours: OpeningHoursRule[]): Fact[] {
+  const hoursParts = openingHours.length > 0 ? formatOpeningHoursParts(openingHours) : null;
   return [
     departmentCount === undefined
       ? { id: "clinic-and-lab", value: "Clinic + lab", label: "Under one roof" }
       : { id: "departments", value: String(departmentCount), label: "Departments" },
-    ...staticFacts,
+    { id: "reports", value: "Online", label: "Lab reports" },
+    ...(hoursParts ? [{ id: "hours", value: hoursParts.days, label: hoursParts.times }] : []),
+    { id: "same-day", value: "Same day", label: "Reports for common tests" },
   ];
 }
-
-const staticFacts: Fact[] = [
-  { id: "reports", value: "Online", label: "Lab reports" },
-  { id: "hours", value: hoursParts.days, label: hoursParts.times },
-  { id: "same-day", value: "Same day", label: "Reports for common tests" },
-];
 
 /** "Why choose us" points (FR-015): no superlatives, comparisons or numbers. */
 export const whyPoints: WhyPoint[] = [

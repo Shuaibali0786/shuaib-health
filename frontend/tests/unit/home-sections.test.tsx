@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CtaBand } from "@/components/home/CtaBand";
 import { DepartmentCard } from "@/components/home/DepartmentCard";
 import { DepartmentGrid } from "@/components/home/DepartmentGrid";
@@ -16,8 +16,14 @@ import { doctors } from "../fixtures/catalog/doctors";
 import { healthTips } from "@/data/healthTips";
 import { buildFacts } from "@/data/homeContent";
 import { siteConfig } from "../fixtures/catalog/siteConfig";
+import { clinicState } from "./helpers/catalog-api-mock";
 
 vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
+
+beforeEach(() => {
+  clinicState.mode = "ok";
+  vi.spyOn(console, "warn").mockImplementation(() => {});
+});
 
 const BANNED = /rating|review|testimonial|award|certified|accredited|patients served|years of experience|best |leading/i;
 
@@ -71,16 +77,16 @@ describe("DepartmentCard and DepartmentGrid", () => {
 });
 
 describe("FactsBand", () => {
-  it("shows exactly the four honest facts and no fabricated claims", () => {
-    const { container } = render(<FactsBand departmentCount={departments.length} />);
+  it("shows exactly the four honest facts and no fabricated claims", async () => {
+    const { container } = render(await FactsBand({ departmentCount: departments.length }));
     expect(screen.getAllByRole("listitem")).toHaveLength(4);
-    expect(buildFacts(departments.length).map((fact) => fact.value)).toEqual(["7", "Online", "Mon–Sat", "Same day"]);
+    expect(buildFacts(departments.length, siteConfig.openingHours).map((fact) => fact.value)).toEqual(["7", "Online", "Mon–Sat", "Same day"]);
     expect(container.textContent).not.toMatch(BANNED);
     expect(container.textContent).not.toMatch(/\d[\d,]*\+?\s*(patients|doctors|years)/i);
   });
 
-  it("states the opening hours in Karachi time", () => {
-    render(<FactsBand />);
+  it("states the opening hours in Karachi time", async () => {
+    render(await FactsBand({}));
     expect(screen.getByText("9 AM – 9 PM PKT")).toBeInTheDocument();
   });
 });
@@ -215,5 +221,21 @@ describe("phone layouts", () => {
   it("leaves room around swipe-row cards so shadows and focus outlines are not clipped", async () => {
     const { container } = render(await FeaturedDoctors());
     expect(container.querySelector("ul")).toHaveClass("max-sm:px-4", "max-sm:pt-2", "max-sm:pb-6", "max-sm:scroll-pl-4");
+  });
+});
+
+describe("neutral identity (no clinic data from the API or the fallback)", () => {
+  it("the emergency card shows its advice but no tel: link", async () => {
+    clinicState.mode = "down";
+    const { container } = render(await EmergencyCard());
+    expect(container.querySelectorAll("a[href^='tel:']")).toHaveLength(0);
+    expect(screen.getByText(/go to the nearest emergency room/i)).toBeInTheDocument();
+  });
+
+  it("the facts band leaves out the hours fact instead of inventing one", async () => {
+    clinicState.mode = "down";
+    render(await FactsBand({ departmentCount: 7 }));
+    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    expect(buildFacts(7, [])).toHaveLength(3);
   });
 });

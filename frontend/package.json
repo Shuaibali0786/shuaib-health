@@ -18,6 +18,7 @@
     "api:types": "openapi-typescript ../specs/003-catalog-api/contracts/openapi.yaml -o src/lib/api/schema.gen.ts",
     "api:record": "node scripts/record-api-fixtures.mjs",
     "mock-api": "node tests/mock-api/server.mjs",
+    "logo:svg": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/build-logo-svg.mjs",
     "images": "node scripts/images.mjs",
     "images:placeholders": "node scripts/generate-placeholder-images.mjs",
     "export:catalog": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/export-catalog.mjs"

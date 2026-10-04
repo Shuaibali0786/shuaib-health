@@ -3,7 +3,7 @@ import { OG_SIZE, ogCard } from "@/lib/og";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-export const alt = "Sample doctor profile at Shuaib Health";
+export const alt = "Sample doctor profile";
 
 export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
   return (await getDoctors()).map((doctor) => ({ slug: doctor.slug }));

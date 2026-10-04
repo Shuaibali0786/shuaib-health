@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PageProps<"/doctors/[slug]">)
   const doctor = doctors.ok ? doctors.data.find((candidate) => candidate.slug === slug) : undefined;
   // An outage or an unknown slug gets a generic title; the page itself decides between the
   // friendly message and the not-found page.
-  return doctor ? pageMetadata(doctorEntry(doctor)) : { title: "Doctor profile", alternates: { canonical: doctorPath(slug) } };
+  return doctor ? pageMetadata(doctorEntry(doctor), await getSiteConfig()) : { title: "Doctor profile", alternates: { canonical: doctorPath(slug) } };
 }
 
 export default async function DoctorProfilePage({ params }: PageProps<"/doctors/[slug]">) {

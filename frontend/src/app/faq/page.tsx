@@ -4,13 +4,13 @@ import { FaqGroupSection } from "@/components/faq/FaqGroup";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { getFaqGroups } from "@/lib/content";
+import { getFaqGroups, getSiteConfig } from "@/lib/content";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
 
-export function generateMetadata(): Metadata {
-  return pageMetadata(getManifestEntry(ROUTES.faq));
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata(getManifestEntry(ROUTES.faq), await getSiteConfig());
 }
 
 export default async function FaqPage() {

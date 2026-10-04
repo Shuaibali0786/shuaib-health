@@ -3,7 +3,7 @@ import { departments } from "../fixtures/catalog/departments";
 import { doctors } from "../fixtures/catalog/doctors";
 import { healthTips } from "@/data/healthTips";
 import { labTests } from "../fixtures/catalog/labTests";
-import { buildFacts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
+import { buildFacts, buildHeroFacts, quickActions, whyPoints } from "@/data/homeContent";
 import { footerQuickLinks, legalLinks, primaryNav } from "@/data/navigation";
 import { siteConfig } from "../fixtures/catalog/siteConfig";
 import { countWords } from "@/lib/readingTime";
@@ -200,7 +200,7 @@ describe("site config (rule 7)", () => {
 
 describe("home page copy and navigation", () => {
   it("has exactly three hero facts, five quick actions, four facts and four to five why-points", () => {
-    expect(heroFacts).toHaveLength(3);
+    expect(buildHeroFacts(siteConfig.openingHours)).toHaveLength(3);
     expect(quickActions.map((action) => action.label)).toEqual([
       "Find a Doctor",
       "Book Appointment",
@@ -208,8 +208,8 @@ describe("home page copy and navigation", () => {
       "Health Packages",
       "Home Sample Collection",
     ]);
-    expect(buildFacts(departments.length)).toHaveLength(4);
-    expect(buildFacts(undefined)).toHaveLength(4);
+    expect(buildFacts(departments.length, siteConfig.openingHours)).toHaveLength(4);
+    expect(buildFacts(undefined, siteConfig.openingHours)).toHaveLength(4);
     expect(whyPoints.length).toBeGreaterThanOrEqual(4);
     expect(whyPoints.length).toBeLessThanOrEqual(5);
   });
@@ -256,6 +256,6 @@ describe("content accessors", () => {
   });
 
   it("returns the site config", async () => {
-    expect(await getSiteConfig()).toBe(siteConfig);
+    expect(await getSiteConfig()).toMatchObject(siteConfig);
   });
 });

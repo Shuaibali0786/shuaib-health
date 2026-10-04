@@ -39,10 +39,13 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
     ["localStorage", /\blocalStorage\b/],
     ["sessionStorage", /\bsessionStorage\b/],
     ["document.cookie", /document\.cookie/],
-    ["dangerouslySetInnerHTML", /dangerouslySetInnerHTML/],
     ["raw <img", /<img[\s>]/],
   ])("has no %s in src", (_name, pattern) => {
     expect(offenders(pattern)).toEqual([]);
+  });
+
+  it("has no dangerouslySetInnerHTML in src outside the JSON-LD component", () => {
+    expect(offenders(/dangerouslySetInnerHTML/, (path) => path === "components/seo/JsonLd.tsx")).toEqual([]);
   });
 
   it("has no hex colour literal in components or pages (tokens live in globals.css)", () => {
@@ -54,7 +57,7 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
   });
 
   it("uses an external URL only for the OpenStreetMap embed and the GitHub credit", () => {
-    const allowed = /openstreetmap\.org|github\.com\/Shuaibali0786|w3\.org\/(2000\/svg|1999\/xlink)|localhost/;
+    const allowed = /openstreetmap\.org|github\.com\/Shuaibali0786|schema\.org|w3\.org\/(2000\/svg|1999\/xlink)|localhost/;
     const found = files.flatMap((file) =>
       (file.code.match(/https?:\/\/[^\s"'`)]+/g) ?? []).filter((url) => !allowed.test(url)).map((url) => `${file.path}: ${url}`),
     );

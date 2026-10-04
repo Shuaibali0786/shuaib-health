@@ -1,5 +1,4 @@
 import { healthTips } from "@/data/healthTips";
-import { siteConfig } from "@/data/siteConfig";
 import { departmentPath, doctorPath, labTestPath, ROUTES, tipPath } from "@/lib/routes";
 import type { Department, Doctor, LabTest, PageManifestEntry } from "@/types/content";
 
@@ -16,13 +15,13 @@ const NO_CATALOG: ManifestCatalog = { doctors: [], departments: [], labTests: []
  * The page manifest: every public page with its title and description. Page metadata, the
  * sitemap and the link, title and description tests all read this one list, so "every page has a
  * unique title and description" and "the sitemap is complete" are checked from one place.
- * Titles are short; the layout appends " | Shuaib Health". Descriptions are 50-160 characters.
+ * Titles are short; the layout appends the clinic name. Descriptions are 50-160 characters.
  */
 
-const STATIC_PAGES: PageManifestEntry[] = [
+const staticPages = (homeTitle: string): PageManifestEntry[] => [
   {
     path: ROUTES.home,
-    title: siteConfig.fullTitle,
+    title: homeTitle,
     description: "Find a doctor, see lab tests and health packages, and read health tips. Portfolio demo, not a real clinic.",
     kind: "static",
     inSitemap: true,
@@ -30,7 +29,7 @@ const STATIC_PAGES: PageManifestEntry[] = [
   {
     path: ROUTES.about,
     title: "About",
-    description: "The honest story of the Shuaib Health demo clinic: its mission, values and how a visit works, step by step.",
+    description: "The honest story of this demo clinic: its mission, values and how a visit works, step by step.",
     kind: "static",
     inSitemap: true,
   },
@@ -121,7 +120,7 @@ export function departmentEntry(department: Department): PageManifestEntry {
   return {
     path: departmentPath(department.slug),
     title: `${department.name} department`,
-    description: `${department.name} at Shuaib Health (sample): ${department.summary}`,
+    description: `${department.name} department (sample): ${department.summary}`,
     kind: "department",
     inSitemap: true,
   };
@@ -131,7 +130,7 @@ export function labTestEntry(test: LabTest): PageManifestEntry {
   return {
     path: labTestPath(test.slug),
     title: `${test.name} — lab test`,
-    description: `${test.name}: sample price, sample type, report time and preparation at the Shuaib Health demo lab.`,
+    description: `${test.name}: sample price, sample type, report time and preparation at the demo lab.`,
     kind: "lab-test",
     inSitemap: true,
   };
@@ -142,9 +141,9 @@ export function labTestEntry(test: LabTest): PageManifestEntry {
  * The doctor, department and lab test entries come from `catalog`; without it only the static and
  * editorial pages are listed (what is left when the catalog API is unavailable).
  */
-export function getPageManifest(catalog: ManifestCatalog = NO_CATALOG): PageManifestEntry[] {
+export function getPageManifest(catalog: ManifestCatalog = NO_CATALOG, homeTitle = "Home"): PageManifestEntry[] {
   return [
-    ...STATIC_PAGES,
+    ...staticPages(homeTitle),
     ...catalog.doctors.map(doctorEntry),
     ...catalog.departments.map(departmentEntry),
     ...catalog.labTests.map(labTestEntry),

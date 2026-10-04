@@ -7,11 +7,11 @@ import { fixtureCatalog } from "../fixtures/catalog";
 import { siteConfig } from "../fixtures/catalog/siteConfig";
 import { getManifestEntry, getPageManifest, knownPaths } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
-import { pageMetadata, siteUrl } from "@/lib/seo";
+import { organizationJsonLd, pageMetadata, siteUrl } from "@/lib/seo";
 
 vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
 
-const manifest = getPageManifest(fixtureCatalog);
+const manifest = getPageManifest(fixtureCatalog, siteConfig.fullTitle);
 
 describe("page manifest (FR-005, FR-008)", () => {
   it("has unique paths, titles and descriptions", () => {
@@ -58,7 +58,7 @@ describe("page manifest (FR-005, FR-008)", () => {
 
 describe("pageMetadata", () => {
   it("builds the title, description, canonical path and share text from an entry", () => {
-    const meta = pageMetadata(getManifestEntry("/doctors"));
+    const meta = pageMetadata(getManifestEntry("/doctors"), siteConfig);
     expect(meta.title).toBe("Doctors");
     expect(meta.alternates?.canonical).toBe("/doctors");
     expect(meta.openGraph?.title).toBe("Doctors | Shuaib Health");
@@ -85,10 +85,21 @@ describe("sitemap and robots", () => {
     for (const url of urls) expect(url.startsWith("http")).toBe(true);
   });
 
-  it("asks crawlers to stay out while the site is not indexable, and still lists the sitemap", () => {
+  it("asks crawlers to stay out while the site is not indexable, and still lists the sitemap", async () => {
     expect(siteConfig.indexable).toBe(false);
-    const result = robots();
+    const result = await robots();
     expect(result.rules).toEqual({ userAgent: "*", disallow: "/" });
     expect(result.sitemap).toBe(`${siteUrl()}/sitemap.xml`);
+  });
+});
+
+describe("organizationJsonLd", () => {
+  it("uses the clinic logo when the data has one", () => {
+    const data = organizationJsonLd({ name: siteConfig.name, logo: { src: "/images/brand/logo-mark.svg", alt: "Logo", width: 64, height: 64 } });
+    expect(data).toMatchObject({ "@type": "Organization", name: siteConfig.name, logo: `${siteUrl()}/images/brand/logo-mark.svg` });
+  });
+
+  it("leaves the logo out when the data has none", () => {
+    expect(organizationJsonLd({ name: "Clinic" })).not.toHaveProperty("logo");
   });
 });

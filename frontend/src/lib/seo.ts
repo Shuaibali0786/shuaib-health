@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { siteConfig } from "@/data/siteConfig";
-import type { PageManifestEntry } from "@/types/content";
+import type { PageManifestEntry, SiteConfig } from "@/types/content";
 
 /**
  * Base URL for canonical links, Open Graph and the sitemap. Reads the optional public variable
@@ -18,20 +17,35 @@ export function siteUrl(): string {
  * canonical path, and Open Graph / Twitter text. Robots stay as set by the root layout, and the
  * Open Graph image comes from the opengraph-image files next to the routes.
  */
-export function pageMetadata(entry: Pick<PageManifestEntry, "path" | "title" | "description">): Metadata {
-  const fullTitle = `${entry.title} | ${siteConfig.name}`;
+export function pageMetadata(entry: Pick<PageManifestEntry, "path" | "title" | "description">, site: Pick<SiteConfig, "name">): Metadata {
+  const fullTitle = `${entry.title} | ${site.name}`;
   return {
     title: entry.title,
     description: entry.description,
     alternates: { canonical: entry.path },
     openGraph: {
       type: "website",
-      siteName: siteConfig.name,
+      siteName: site.name,
       title: fullTitle,
       description: entry.description,
       url: entry.path,
       locale: "en_PK",
     },
     twitter: { card: "summary_large_image", title: fullTitle, description: entry.description },
+  };
+}
+
+/**
+ * Organisation structured data for the home page: the clinic name and site address, plus the clinic's
+ * logo when the data has one. Without a logo the logo field is simply left out.
+ */
+export function organizationJsonLd(site: Pick<SiteConfig, "name" | "logo">): Record<string, string> {
+  const base = siteUrl();
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: site.name,
+    url: base,
+    ...(site.logo ? { logo: `${base}${site.logo.src}` } : {}),
   };
 }

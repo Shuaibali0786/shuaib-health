@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { getPageManifest } from "../../src/lib/pages";
 import { fixtureCatalog } from "../fixtures/catalog";
+import { siteConfig } from "../fixtures/catalog/siteConfig";
 import { NOTICE } from "./helpers";
 
-const manifest = getPageManifest(fixtureCatalog);
+const manifest = getPageManifest(fixtureCatalog, siteConfig.fullTitle);
 
 test.describe("every manifest page", () => {
   for (const entry of manifest) {

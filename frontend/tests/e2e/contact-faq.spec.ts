@@ -140,7 +140,7 @@ test.describe("contact page", () => {
     await expect(page.getByRole("link", { name: /Open this area in OpenStreetMap/ })).toBeVisible();
 
     await page.getByRole("button", { name: "Show map" }).click();
-    const frame = page.locator("iframe[title='Map of the general Karachi area']");
+    const frame = page.locator("iframe[title='Map: General area of Karachi']");
     await expect(frame).toHaveCount(1);
     await expect(frame).toHaveAttribute("sandbox", "allow-scripts allow-same-origin");
     await expect(frame).toHaveAttribute("referrerpolicy", "no-referrer");

@@ -10,7 +10,8 @@ import { NavLinks } from "./NavLinks";
 
 interface MobileMenuProps {
   items: NavItem[];
-  emergencyPhone: PhoneNumber;
+  /** Left out when the clinic has no phone number (neutral identity). */
+  emergencyPhone?: PhoneNumber;
 }
 
 const PANEL_ID = "mobile-menu";
@@ -80,16 +81,18 @@ export function MobileMenu({ items, emergencyPhone }: MobileMenuProps) {
         <nav aria-label="Mobile" className="mx-auto w-full max-w-page px-4 py-4 md:px-6">
           <NavLinks items={items} layout="stacked" />
           <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4">
-            <a
-              href={`tel:${emergencyPhone.tel}`}
-              className="flex min-h-12 items-center gap-3 rounded-control px-4 font-semibold text-navy-900 hover:bg-surface"
-            >
-              <Phone className="size-5 text-danger-700" aria-hidden="true" />
-              <span className="flex flex-col leading-tight">
-                <span className="text-[0.8125rem] font-medium text-muted">Emergency (sample)</span>
-                <span>{emergencyPhone.display}</span>
-              </span>
-            </a>
+            {emergencyPhone ? (
+              <a
+                href={`tel:${emergencyPhone.tel}`}
+                className="flex min-h-12 items-center gap-3 rounded-control px-4 font-semibold text-navy-900 hover:bg-surface"
+              >
+                <Phone className="size-5 text-danger-700" aria-hidden="true" />
+                <span className="flex flex-col leading-tight">
+                  <span className="text-[0.8125rem] font-medium text-muted">Emergency (sample)</span>
+                  <span>{emergencyPhone.display}</span>
+                </span>
+              </a>
+            ) : null}
             <Button href={ROUTES.bookAppointment} variant="accent" fullWidth>
               Book Appointment
             </Button>
