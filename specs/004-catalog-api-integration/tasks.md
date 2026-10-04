@@ -276,10 +276,10 @@ Each server builds into its own `NEXT_DIST_DIR`, so builds never collide.
 
 **Independent test**: rename a field in a scratch copy of the contract → `npm test` fails naming it; `npm test` and `npm run test:e2e` pass with no backend running.
 
-- [ ] T070 [P] [US4] Add `tests/unit/server-only-boundary.test.ts`: every file in `src/lib/api/` except `schema.gen.ts` and `schemas.ts` starts with `import "server-only"`; no file under `src/components/` imports `@/lib/api`; no `"use client"` file imports `@/lib/content` or `@/lib/api`; `process.env.CATALOG_API_URL` / `CLINIC_FALLBACK_JSON` / `CATALOG_DATA_REVALIDATE_SECONDS` appear only in `src/lib/api/config.ts`.
-- [ ] T071 [P] [US4] Add `tests/unit/single-fetch.test.ts`: `fetch(` appears in `src/` only in `src/lib/api/http.ts` (excluding comments).
-- [ ] T072 [US4] Run the whole suite with the backend stopped (`npm test`, `npm run test:e2e`, `npm run test:e2e:stateful`, `npm run test:e2e:offline`) and record the result in `results.md` (SC-008).
-- [ ] T073 [US4] Manually prove drift detection: copy `specs/003-catalog-api/contracts/openapi.yaml` to a temp file, rename `Doctor.fullName`, point the test at it via `OPENAPI_CONTRACT_PATH` (support that variable in `tests/unit/api-contract.test.ts`, defaulting to the real path), run `npm test`, and paste the failing message into `results.md`. Revert.
+- [X] T070 [P] [US4] Add `tests/unit/server-only-boundary.test.ts`: every file in `src/lib/api/` except `schema.gen.ts` and `schemas.ts` starts with `import "server-only"`; no file under `src/components/` imports `@/lib/api`; no `"use client"` file imports `@/lib/content` or `@/lib/api`; `process.env.CATALOG_API_URL` / `CLINIC_FALLBACK_JSON` / `CATALOG_DATA_REVALIDATE_SECONDS` appear only in `src/lib/api/config.ts`.
+- [X] T071 [P] [US4] Add `tests/unit/single-fetch.test.ts`: `fetch(` appears in `src/` only in `src/lib/api/http.ts` (excluding comments).
+- [X] T072 [US4] Run the whole suite with the backend stopped (`npm test`, `npm run test:e2e`, `npm run test:e2e:stateful`, `npm run test:e2e:offline`) and record the result in `results.md` (SC-008).
+- [X] T073 [US4] Manually prove drift detection: copy `specs/003-catalog-api/contracts/openapi.yaml` to a temp file, rename `Doctor.fullName`, point the test at it via `OPENAPI_CONTRACT_PATH` (support that variable in `tests/unit/api-contract.test.ts`, defaulting to the real path), run `npm test`, and paste the failing message into `results.md`. Revert.
 
 **CHECKPOINT 6 (US4)**: all checks green; drift demo recorded.
 
@@ -287,16 +287,16 @@ Each server builds into its own `NEXT_DIST_DIR`, so builds never collide.
 
 ## Phase 7: Polish & Proof
 
-- [ ] T074 Lighthouse after the change (same method as T003) on `/`, `/doctors`, `/lab-tests`, `/health-packages` with the mock API in `ok` mode; record in `results.md` beside the baseline. Each page's performance must be ≥ baseline and ≥ 90 mobile, and LCP within +10% (SC-003). Investigate any regression before continuing. Record in `results.md` that Lighthouse is run by hand in this feature. Automated Lighthouse budgets (constitution VIII) move to the deploy feature, where CI first exists (accepted finding K6, plan "Accepted analysis findings").
+- [X] T074 Lighthouse after the change (same method as T003) on `/`, `/doctors`, `/lab-tests`, `/health-packages` with the mock API in `ok` mode; record in `results.md` beside the baseline. Each page's performance must be ≥ baseline and ≥ 90 mobile, and LCP within +10% (SC-003). Investigate any regression before continuing. Record in `results.md` that Lighthouse is run by hand in this feature. Automated Lighthouse budgets (constitution VIII) move to the deploy feature, where CI first exists (accepted finding K6, plan "Accepted analysis findings").
 - [ ] T075 [P] White-label demo against the real backend (SC-001): with the backend running and seeded, change the clinic name, one doctor name, one lab test price and one rule in the dev database (SQL in `results.md`); wait ≤ 6 min with `npm run start`; record screenshots/notes; then re-seed to restore. Also run the T050(b) recovery check: stop the backend for more than 5 min, restart it, and measure the time until fresh data appears.
-- [ ] T076 [P] Update `frontend/README.md`: data now comes from the API; env vars; `api:types`, `api:record`, `mock-api` and `test:e2e:offline` scripts; resilience behaviour in 5 lines; link to `specs/004-catalog-api-integration/quickstart.md` and ADR-0004. Update the root `README.md` feature list.
-- [ ] T077 [P] Update `backend/README.md` "Frontend parity" note: the seed source moved to `frontend/tests/fixtures/catalog/` (via `scripts/catalog-object.mjs`).
-- [ ] T078 Complete `specs/004-catalog-api-integration/results.md` with evidence for SC-001…SC-010 (test names, numbers, screenshots, route table) and FR coverage notes for any FR not covered by an automated test.
-- [ ] T079 Final gate (constitution merge gate):
+- [X] T076 [P] Update `frontend/README.md`: data now comes from the API; env vars; `api:types`, `api:record`, `mock-api` and `test:e2e:offline` scripts; resilience behaviour in 5 lines; link to `specs/004-catalog-api-integration/quickstart.md` and ADR-0004. Update the root `README.md` feature list.
+- [X] T077 [P] Update `backend/README.md` "Frontend parity" note: the seed source moved to `frontend/tests/fixtures/catalog/` (via `scripts/catalog-object.mjs`).
+- [X] T078 Complete `specs/004-catalog-api-integration/results.md` with evidence for SC-001…SC-010 (test names, numbers, screenshots, route table) and FR coverage notes for any FR not covered by an automated test.
+- [X] T079 Final gate (constitution merge gate):
   - `npm run typecheck && npm run lint && npm test && npm run test:e2e && npm run test:e2e:stateful && npm run test:e2e:offline && npm run build` all green;
   - **secret scan** (K5): from the repo root, `gitleaks detect --source . --no-banner --redact` reports no leaks (install with `winget install Gitleaks.Gitleaks` if it is missing). Paste the summary line into `results.md`;
   - `git status` clean apart from intended changes; no `.env.local` and no `.next-*` folder committed.
-- [ ] T080 Create the green-stage PHR under `history/prompts/004-catalog-api-integration/` summarising the implementation phases.
+- [X] T080 Create the green-stage PHR under `history/prompts/004-catalog-api-integration/` summarising the implementation phases.
 
 **CHECKPOINT 7**: final summary to the user (what shipped, evidence, follow-ups: migrate `unstable_cache` → `use cache` (ADR-0004), flip seed authoring to the backend, warm-up on deploy).
 

@@ -9,7 +9,7 @@ assistant.
 
 | Part | Folder | Status |
 |------|--------|--------|
-| Website (Next.js, mock data) | [`frontend/`](frontend/README.md) | Features 001-002 |
+| Website (Next.js, live catalog from the API) | [`frontend/`](frontend/README.md) | Features 001-002, 004 |
 | Catalog API (FastAPI, Neon Postgres) | [`backend/`](backend/README.md) | Feature 003 |
 
 - Project rules: [`.specify/memory/constitution.md`](.specify/memory/constitution.md)

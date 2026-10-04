@@ -84,3 +84,71 @@ Both builds log one `catalog_api_unavailable` line per failed load (53 lines) an
 - The offline `site.spec.ts` checks the menu button on phones (the nav only exists once opened).
 - **Visual baseline is now deterministic.** The "Next available" label on doctor pages is computed in the browser from the current time, so the Phase 3 snapshots only matched when run near the time they were recorded (23 failures on a later run, only on the 16 pages that show doctors, both projects). The spec now fixes the browser clock (`page.clock.setFixedTime`, Monday 11:00 Karachi) and **32 snapshots were regenerated** (those 16 pages × 2 projects). Every other snapshot is unchanged; 62/62 pass.
 - Stateful specs: an expired entry in the 3 s data cache is served once more while it refreshes, so `resilience.spec.ts` touches every route, waits, then checks. One earlier run hit `ERR_NETWORK_IO_SUSPENDED` (machine sleep), not a product failure; the clean re-run passed.
+
+## Phase 6 — US4 trust the connection (T070–T073)
+
+New guards (all in `frontend/tests/unit/`):
+- `server-only-boundary.test.ts` (T070): every `src/lib/api` file except `schema.gen.ts`/`schemas.ts` starts with `import "server-only"`; no component imports `@/lib/api`; no `"use client"` file imports `@/lib/content` or `@/lib/api`; the three server-only variables are read only in `src/lib/api/config.ts`.
+- `single-fetch.test.ts` (T071): `fetch(` appears in `src/` only in `src/lib/api/http.ts` (comments excluded).
+- `json-ld.test.tsx`: `JsonLd` escapes `<` (as backslash-u003c) so data such as `</script><script>…` can never close the tag; the text still parses back to the same data.
+- `OPENAPI_CONTRACT_PATH` was already supported by `tests/unit/helpers/api-contract.ts` (default: the real contract path).
+
+**T072 — whole suite, backend stopped** (nothing listening on port 8000; run from `frontend/`):
+
+| Command | Result |
+|---------|--------|
+| `npm run typecheck` | pass |
+| `npm run lint` | pass, 0 warnings |
+| `npm test` | **626 passed** (53 files) |
+| `npm run test:e2e` | **1023 passed**, 11 skipped (same 11 as baseline); visual baseline 62/62 |
+| `npm run test:e2e:stateful` | **11 passed** |
+| `npm run test:e2e:offline` | **252 passed** |
+
+**T073 — drift demo.** A temp copy of `specs/003-catalog-api/contracts/openapi.yaml` with `fullName` renamed to `fullname`, run with `OPENAPI_CONTRACT_PATH=<copy> npx vitest run tests/unit/api-contract.test.ts`:
+
+```text
+FAIL  tests/unit/api-contract.test.ts > API contract > (1) schema.gen.ts matches a fresh generation from the contract
+AssertionError: schema.gen.ts is out of date (line 650: committed "            fullName: string;" vs generated "            fullname: string;"). Run npm run api:types and commit it.
+Tests  1 failed | 9 passed (10)
+```
+
+The real contract was never edited, so nothing to revert.
+
+## Phase 7 — Polish and proof
+
+**T074 — Lighthouse after the change.** Same method as the baseline (`next build` + `next start`, `--preset=perf --form-factor=mobile`, 3 runs per page, median), mock API in `ok` mode, same machine. Lighthouse is run by hand in this feature; automated budgets move to the deploy feature (finding K6).
+
+| Page | Perf (3 runs) | Median perf (baseline) | Median LCP ms (baseline) | TBT ms | CLS | JS kB (baseline) |
+|------|---------------|------------------------|--------------------------|--------|-----|------------------|
+| `/` | 80 / 80 / 90 | **80** (45) | **1982** (4615) | 602 | 0.000 | 169.3 (165.3) |
+| `/doctors` | 87 / 90 / 92 | **90** (47) | **1496** (4131) | 403 | 0.000 | 176.9 (172.7) |
+| `/lab-tests` | 87 / 85 / 86 | **86** (53) | **1617** (3515) | 510 | 0.000 | 163.5 (159.7) |
+| `/health-packages` | 91 / 93 / 91 | **91** (44) | **1538** (4530) | 346 | 0.000 | 155.5 (151.9) |
+
+Every page is above its baseline score and LCP is lower. Caveat: the machine was clearly less loaded than during the baseline (scores jumped for reasons unrelated to this change), so the size of the gain is not attributable to the feature; the honest conclusion is "no regression". JS transfer is +2 to 4 kB per page. The "≥ 90 mobile" half of SC-003 is met on `/doctors` (median 90) and `/health-packages` (91) but **not** on `/` (80) or `/lab-tests` (86) on this hardware; it needs a faster machine or CI. Lighthouse exited with code 1 on 11 of 12 runs (a Windows temp-folder cleanup error after the report is written); all 12 reports were produced.
+
+**T075 — not run.** The white-label demo and the 5-minute recovery check need the real backend with a seeded dev database that is edited by SQL. That changes shared data, so it was left for the owner. Automated stand-ins that did run: `stateful/rename.spec.ts` and `rules-modes.spec.ts` (rebrand, rule changes) and `stateful/resilience.spec.ts` (recovery) against the mock API.
+
+**T079 — final gate** (from `frontend/` unless noted):
+
+| Check | Result |
+|-------|--------|
+| typecheck, lint, `npm test`, `test:e2e`, `test:e2e:stateful`, `test:e2e:offline` | all green (numbers above) |
+| `npm run build` | pass; every catalog route `○`/`●` with 5m revalidate, no `ƒ` routes |
+| `gitleaks detect --source . --no-banner --redact` (v8.30.1, repo root) | `52 commits scanned … no leaks found` |
+| `npm audit` | 5 **high** (all dev-only lint chain: `braces` → `micromatch` → `fast-glob` → `@next/eslint-plugin-next` → `eslint-config-next`). No non-breaking fix; `npm audit fix --force` would downgrade `eslint-config-next` to 14.x. Left unchanged. |
+
+## Success criteria evidence (T078)
+
+| SC | Evidence |
+|----|----------|
+| SC-001 | Automated stand-in: stateful `rename.spec.ts`, `rules-modes.spec.ts`. The manual real-backend demo (T075) is **not yet run**. |
+| SC-002 | `test:e2e:offline` 252 passed (dead and unset API); builds succeed with the API refused or unset (Phase 4, T056). |
+| SC-003 | T074 table: no regression, LCP lower; ≥ 90 mobile met on two of four pages on this machine. |
+| SC-004 | stateful `resilience.spec.ts` (`slow` mode). |
+| SC-005 | stateful `recovery` spec (automated); the 5-minute real-backend check is **not yet run**. |
+| SC-006 | `no-api-url-in-client.test.ts`, `global-setup.ts` bundle scan, `no-hardcoded-catalog.test.ts`, `server-only-boundary.test.ts`. |
+| SC-007 | `api-contract-drift.test.ts` and the T073 demo above. |
+| SC-008 | T072 table, backend stopped. |
+| SC-009 | `visual-baseline.spec.ts`, 62/62 (Phase 3 notes on the fixed browser clock). |
+| SC-010 | offline specs (`fallback.ts` uses a phone that differs from the recorded clinic). |
