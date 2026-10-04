@@ -87,7 +87,9 @@ describe("no third-party brands", () => {
   it("the sample data, components, pages and image file names contain none", () => {
     const text = stringValues([departments, doctors, healthTips, labTests, healthPackages, aboutContent, privacyContent, termsContent, siteConfig]);
     expect(text.filter((value) => BRAND_WORDS.test(value))).toEqual([]);
-    const offenders = codeFiles.filter((file) => BRAND_WORDS.test(file.code)).map((file) => file.path);
+    // The slip's "Share on WhatsApp" button is a share action the visitor asked for, not a partnership claim.
+    const SHARE_BUTTON = "/src/components/booking/ConfirmationActions.tsx";
+    const offenders = codeFiles.filter((file) => file.path !== SHARE_BUTTON && BRAND_WORDS.test(file.code)).map((file) => file.path);
     expect(offenders).toEqual([]);
     const imageNames = filesUnder(join(process.cwd(), "public", "images"), [".jpg", ".png", ".svg", ".webp"]);
     expect(imageNames.filter((name) => BRAND_WORDS.test(name))).toEqual([]);

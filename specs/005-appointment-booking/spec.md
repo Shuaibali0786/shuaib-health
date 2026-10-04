@@ -223,6 +223,16 @@ Patient details never appear in page addresses, browser history or logs. Every s
   - that no messages are sent;
   - that the contact form still sends nothing.
 
+**Confirmation slip (polish, added after Phase 4)**
+
+- **FR-057**: The confirmation page MUST be mobile-first and help the visitor keep their slip:
+  - a notice at the top: "Save this slip: tap Download or take a screenshot. Show this reference at the clinic.";
+  - a large primary button "Download your slip" (brand gradient, icon, at least 48 px tall, sticky at the bottom of the screen on mobile) that makes a PDF of the masked confirmation card (clinic logo, reference, doctor, date, time, fee, clinic address and phone; patient name and mobile stay masked). On mobile with Web Share file support the PDF is shared (save to Gallery/Files, send on WhatsApp); otherwise it downloads normally;
+  - secondary actions: Print, Share on WhatsApp (pre-filled with reference, doctor, date, time and clinic phone; never the patient name or mobile), Add to calendar (.ics in Pakistan time) and Book another appointment;
+  - desktop: two columns (card left, actions right); mobile: card, Download, then the secondary actions;
+  - the flow's step headings show a subtle focus outline only for keyboard focus (`:focus-visible`).
+  No PDF, share text or calendar file may contain the full name, full mobile, email or reason (FR-051, FR-052).
+
 **Abuse protection**
 
 - **FR-060**: Booking attempts MUST be rate limited per client IP (default 10 per fixed one-hour window) and per normalized mobile number (default 5 per fixed 24-hour window), with counters shared by all running backend instances; booking-lookup requests MUST be rate limited per IP (default 20 per minute) the same way; slot reads fall under the general per-IP API limit (default 60 per minute). Limits MUST be configurable. Exceeding a limit gives a friendly "too many attempts" message.

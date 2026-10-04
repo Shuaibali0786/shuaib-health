@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { ConfirmationActions } from "@/components/booking/ConfirmationActions";
 import { ConfirmationCard } from "@/components/booking/ConfirmationCard";
 import { BeforeYourVisit } from "@/components/contact/BeforeYourVisit";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -48,7 +49,19 @@ export default async function ConfirmedPage({ params }: { params: Promise<{ refe
       <>
         <PageHeader trail={TRAIL} title="Your appointment is booked" intro="Keep your reference. This page is private to you." />
         <Section tone="background" spacing="compact" aria-label="Booking details">
-          <ConfirmationCard view={view.data} site={site} />
+          <p className="mb-5 rounded-control border border-teal-700 bg-teal-50 px-4 py-3 text-base font-semibold text-navy-900 print:hidden">
+            Save this slip: tap Download or take a screenshot. Show this reference at the clinic.
+          </p>
+          {/* Mobile: card, Download (sticky), other actions. Desktop: card left, actions right. */}
+          <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start lg:gap-x-8">
+            <div className="lg:row-span-2">
+              <ConfirmationCard view={view.data} site={site} />
+            </div>
+            <ConfirmationActions
+              view={view.data}
+              clinic={{ name: site.name, address: site.address, phoneDisplay: site.generalPhone.display, phoneTel: site.generalPhone.tel }}
+            />
+          </div>
         </Section>
         <BeforeYourVisit rules={rules} />
       </>

@@ -437,6 +437,22 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ---
 
+## Phase 4b: Confirmation slip polish (US1 follow-up, FR-057)
+
+**Purpose**: the visitor can keep the slip: PDF, share, print, calendar. Mobile-first. Added before Phase 5 at the user's request.
+
+- [X] T107 [P] [US1] Write failing unit tests for the pure builders in `frontend/tests/unit/booking-slip.test.ts`: PDF is a valid PDF (header, xref offsets, `%%EOF`) containing the reference, doctor, date, time, fee, clinic phone and the masked name/mobile and nothing else; the `.ics` has `TZID=Asia/Karachi`, the right local start/end, escaped text, and no patient data; the WhatsApp text/link has the required facts and no patient data.
+- [X] T108 [P] [US1] Write failing component tests in `frontend/tests/unit/booking-confirmation-actions.test.tsx`: notice text, all actions, Download uses Web Share with a file on a coarse-pointer device that supports it, falls back to a download when sharing is unsupported or fails, and stays quiet when the user cancels the share.
+- [X] T109 [US1] Implement `frontend/src/lib/booking/slip.ts`: dependency-free PDF writer (Helvetica, vector logo), `.ics` builder, WhatsApp link builder.
+- [X] T110 [US1] Implement `frontend/src/components/booking/ConfirmationActions.tsx` (client component) and lay out the confirmation page in `frontend/src/app/book-appointment/confirmed/[reference]/page.tsx` (notice, two columns on desktop, sticky Download on mobile). Add print rules in `globals.css`.
+- [X] T111 [US1] Make step-heading focus subtle and `:focus-visible` only (`BookingFlow.tsx`, `globals.css`).
+- [X] T112 [US1] Add `frontend/tests/e2e/confirmation-slip.spec.ts` on Android Chrome (Pixel 7), iPhone Safari (WebKit) and desktop: layout order, Download produces a PDF, calendar file, WhatsApp link, no patient data, 48 px button, 0 serious axe violations.
+- [X] T113 [US1] Run `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:e2e` one at a time; all existing tests stay green.
+
+**CHECKPOINT 4b**: all checks green; report to the user how to test on a phone.
+
+---
+
 ## Phase 5: User Story 2 — No double-booking, ever (Priority: P1)
 
 **Goal**: simultaneous bookings for one slot give exactly one success. The loser gets a "slot just taken" message with alternatives and keeps their details (FR-030–FR-032).

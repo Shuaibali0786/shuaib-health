@@ -27,6 +27,8 @@ export default defineConfig({
   },
   projects: [
     { name: "mobile", use: { ...devices["Pixel 7"] } },
+    // iPhone Safari (WebKit). Only the confirmation slip needs it, so the rest of the suite stays on Chromium.
+    { name: "iphone", testMatch: /confirmation-slip\.spec\.ts/, use: { ...devices["iPhone 14"] } },
     {
       name: "desktop",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },

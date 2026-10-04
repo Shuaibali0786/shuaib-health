@@ -374,7 +374,7 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
         Step {stepIndex + 1} of {FLOW_STEPS.length}: {STEP_HEADING[params.step]}
       </div>
       <div ref={stepRef} className="flex flex-col gap-5">
-        <h2 ref={headingRef} tabIndex={-1} className="text-2xl font-bold text-navy-900 outline-offset-4 md:text-3xl">
+        <h2 ref={headingRef} tabIndex={-1} className="text-2xl font-bold text-navy-900 outline-offset-4 focus:outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-border-strong md:text-3xl">
           {STEP_HEADING[params.step]}
         </h2>
         {content}

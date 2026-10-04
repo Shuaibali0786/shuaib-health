@@ -60,8 +60,8 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
     expect(offenders(hex, generators)).toEqual([]);
   });
 
-  it("uses an external URL only for the OpenStreetMap embed and the GitHub credit", () => {
-    const allowed = /openstreetmap\.org|github\.com\/Shuaibali0786|schema\.org|w3\.org\/(2000\/svg|1999\/xlink)|localhost/;
+  it("uses an external URL only for the OpenStreetMap embed, the GitHub credit and the WhatsApp share link", () => {
+    const allowed = /openstreetmap\.org|github\.com\/Shuaibali0786|schema\.org|w3\.org\/(2000\/svg|1999\/xlink)|localhost|^https:\/\/wa\.me\/\?text=/;
     const found = files.flatMap((file) =>
       (file.code.match(/https?:\/\/[^\s"'`)]+/g) ?? []).filter((url) => !allowed.test(url)).map((url) => `${file.path}: ${url}`),
     );

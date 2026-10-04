@@ -173,3 +173,12 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Printing the confirmation slip: only the card, not the site chrome or the action buttons. */
+@media print {
+  header,
+  footer,
+  nav {
+    display: none !important;
+  }
+}
