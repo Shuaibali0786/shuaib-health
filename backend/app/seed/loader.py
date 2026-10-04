@@ -13,7 +13,7 @@ import uuid
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import time
+from datetime import UTC, date, datetime, time, timedelta
 from itertools import pairwise
 from pathlib import Path
 from typing import Any, Literal
@@ -21,15 +21,17 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
-from sqlalchemy import Connection, Engine, Table, delete, func, insert
+from sqlalchemy import Connection, Engine, Table, delete, func, insert, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.models import (
+    ClinicHoliday,
     ClinicRule,
     ClinicSettings,
     Department,
     DepartmentRelatedTest,
     Doctor,
+    DoctorLeave,
     DoctorWeeklySchedule,
     HealthPackage,
     HealthPackageTest,
@@ -43,6 +45,8 @@ IMAGE_PREFIX = "/images/"
 HHMM = r"^([01][0-9]|2[0-3]):[0-5][0-9]$"
 SLUG = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 ALLOWED_LANGUAGES = {"Urdu", "English", "Sindhi", "Punjabi"}
+WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+MAX_DAY_OFFSET = 13  # the default 14-day booking window
 
 Weekday = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
@@ -206,10 +210,30 @@ class ExtrasIn(_In):
     default_slot_minutes: int = Field(ge=5, le=120)
 
 
+class LeaveIn(_In):
+    """A sample day off. With ``start`` and ``end`` it is a partial day, otherwise the whole day."""
+
+    doctor_slug: str
+    day_offset: int
+    start: time | None = None
+    end: time | None = None
+
+
+class HolidayIn(_In):
+    day_offset: int
+    name: str = Field(min_length=1, max_length=80)
+
+
+class BookingSeedIn(_In):
+    leave: list[LeaveIn] = Field(default_factory=list)
+    holidays: list[HolidayIn] = Field(default_factory=list)
+
+
 @dataclass(frozen=True)
 class SeedData:
     catalog: CatalogIn
     extras: ExtrasIn
+    booking: BookingSeedIn = field(default_factory=BookingSeedIn)
 
 
 @dataclass
@@ -220,7 +244,13 @@ class SeedReport:
 def load_seed_files(data_dir: Path = DATA_DIR) -> SeedData:
     catalog = json.loads((data_dir / "catalog.json").read_text(encoding="utf-8"))
     extras = json.loads((data_dir / "extras.json").read_text(encoding="utf-8"))
-    return SeedData(CatalogIn.model_validate(catalog), ExtrasIn.model_validate(extras))
+    booking_file = data_dir / "booking.json"
+    booking = (
+        BookingSeedIn.model_validate(json.loads(booking_file.read_text(encoding="utf-8")))
+        if booking_file.exists()
+        else BookingSeedIn()
+    )
+    return SeedData(CatalogIn.model_validate(catalog), ExtrasIn.model_validate(extras), booking)
 
 
 def image_key(src: str, owner: str) -> str:
@@ -284,6 +314,23 @@ def validate_seed(data: SeedData) -> None:
                 if later.start < earlier.end:
                     raise SeedError(f"{doc.slug}: overlapping sessions on {day}")
 
+    doctor_slugs = {d.slug for d in c.doctors}
+    for index, leave in enumerate(data.booking.leave, start=1):
+        record = f"booking leave #{index} ({leave.doctor_slug})"
+        if leave.doctor_slug not in doctor_slugs:
+            raise SeedError(f"{record}: doctor {leave.doctor_slug} does not exist")
+        if not 0 <= leave.day_offset <= MAX_DAY_OFFSET:
+            raise SeedError(f"{record}: dayOffset must be 0 to {MAX_DAY_OFFSET}")
+        if (leave.start is None) != (leave.end is None):
+            raise SeedError(f"{record}: give both start and end, or neither")
+        if leave.start is not None and leave.end is not None and leave.start >= leave.end:
+            raise SeedError(f"{record}: end must be after start")
+    for index, holiday in enumerate(data.booking.holidays, start=1):
+        if not 0 <= holiday.day_offset <= MAX_DAY_OFFSET:
+            raise SeedError(
+                f"booking holiday #{index} ({holiday.name}): dayOffset must be 0-{MAX_DAY_OFFSET}"
+            )
+
     for test in c.lab_tests:
         if test.category_id not in category_ids:
             raise SeedError(f"{test.slug}: category {test.category_id} does not exist")
@@ -338,7 +385,86 @@ def _replace_children(
         conn.execute(insert(table), list(rows))
 
 
-def _write(conn: Connection, data: SeedData) -> SeedReport:
+def _local_day_to_utc(
+    day: date, start: time | None, end: time | None, tz: ZoneInfo
+) -> tuple[datetime, datetime]:
+    """UTC range of a clinic-local day (midnight to midnight) or of a time range inside it."""
+    if start is None or end is None:
+        first = datetime.combine(day, time.min, tzinfo=tz)
+        last = datetime.combine(day + timedelta(days=1), time.min, tzinfo=tz)
+    else:
+        first = datetime.combine(day, start, tzinfo=tz)
+        last = datetime.combine(day, end, tzinfo=tz)
+    return first.astimezone(UTC), last.astimezone(UTC)
+
+
+def _working_day(today: date, offset: int, working: set[int]) -> date:
+    """The offset day, moved to the doctor's next working weekday inside the window.
+
+    If none is left before the end of the window, the nearest earlier working day is used.
+    """
+    for candidate in range(offset, MAX_DAY_OFFSET + 1):
+        if (today + timedelta(days=candidate)).weekday() in working:
+            return today + timedelta(days=candidate)
+    for candidate in range(offset - 1, -1, -1):
+        if (today + timedelta(days=candidate)).weekday() in working:
+            return today + timedelta(days=candidate)
+    return today + timedelta(days=offset)
+
+
+def _write_booking(
+    conn: Connection,
+    data: SeedData,
+    doctor_ids: Mapping[str, uuid.UUID],
+    now: datetime,
+    report: SeedReport,
+) -> None:
+    """Replace the sample leave and holidays. Offsets count from the seed run's clinic-local day."""
+    tz = ZoneInfo(data.catalog.site_config.time_zone)
+    today = now.astimezone(tz).date()
+    sessions_by_doctor = {
+        d.slug: {WEEKDAYS.index(s.day) for s in d.schedule} for d in data.catalog.doctors
+    }
+
+    leave_rows = []
+    for leave in data.booking.leave:
+        day = _working_day(today, leave.day_offset, sessions_by_doctor[leave.doctor_slug])
+        starts_at, ends_at = _local_day_to_utc(day, leave.start, leave.end, tz)
+        leave_rows.append(
+            {
+                "doctor_id": doctor_ids[leave.doctor_slug],
+                "starts_at": starts_at,
+                "ends_at": ends_at,
+                "note": "Sample leave (seed)",
+                "is_sample": True,
+            }
+        )
+    holiday_rows = [
+        {
+            "holiday_date": today + timedelta(days=h.day_offset),
+            "name": h.name,
+            "is_sample": True,
+        }
+        for h in data.booking.holidays
+    ]
+
+    leave_table, holiday_table = _table(DoctorLeave), _table(ClinicHoliday)
+    conn.execute(delete(leave_table).where(leave_table.c.is_sample.is_(True)))
+    conn.execute(delete(holiday_table).where(holiday_table.c.is_sample.is_(True)))
+    if leave_rows:
+        conn.execute(insert(leave_table), leave_rows)
+    if holiday_rows:
+        # A holiday the clinic added itself on the same date wins.
+        conn.execute(pg_insert(holiday_table).values(holiday_rows).on_conflict_do_nothing())
+    report.counts["doctor_leave"] = conn.execute(
+        select(func.count()).select_from(leave_table).where(leave_table.c.is_sample.is_(True))
+    ).scalar_one()
+    report.counts["clinic_holiday"] = conn.execute(
+        select(func.count()).select_from(holiday_table).where(holiday_table.c.is_sample.is_(True))
+    ).scalar_one()
+
+
+def _write(conn: Connection, data: SeedData, now: datetime) -> SeedReport:
     c, extras = data.catalog, data.extras
     site = c.site_config
     report = SeedReport()
@@ -533,17 +659,26 @@ def _write(conn: Connection, data: SeedData) -> SeedReport:
         conn, HealthPackageTest, "package_id", package_ids.values(), package_test_rows
     )
     report.counts["health_package_test"] = len(package_test_rows)
+
+    _write_booking(conn, data, doctor_ids, now, report)
     return report
 
 
-def seed_connection(conn: Connection, data: SeedData | None = None) -> SeedReport:
-    """Seed using an existing connection; the caller owns the transaction."""
+def seed_connection(
+    conn: Connection, data: SeedData | None = None, now: datetime | None = None
+) -> SeedReport:
+    """Seed using an existing connection; the caller owns the transaction.
+
+    ``now`` is the seed run clock (aware); sample leave and holidays are placed relative to it.
+    """
     data = data or load_seed_files()
     validate_seed(data)
-    return _write(conn, data)
+    return _write(conn, data, now or datetime.now(UTC))
 
 
-def run_seed(engine: Engine, data: SeedData | None = None) -> SeedReport:
+def run_seed(
+    engine: Engine, data: SeedData | None = None, now: datetime | None = None
+) -> SeedReport:
     """Validate and load the seed data in a single transaction."""
     with engine.begin() as conn:
-        return seed_connection(conn, data)
+        return seed_connection(conn, data, now)

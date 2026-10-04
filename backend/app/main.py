@@ -55,6 +55,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         RateLimitMiddleware,
         limiter=InMemoryFixedWindowLimiter(settings.rate_limit_per_minute),
         trusted_proxy_hops=settings.trusted_proxy_hops,
+        proxy_secret=settings.booking_proxy_secret.get_secret_value(),
     )
     app.add_middleware(
         CORSMiddleware,

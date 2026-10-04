@@ -55,6 +55,13 @@ notepad .env
 | `CACHE_MAX_AGE_SECONDS` | `Cache-Control` max-age for catalog responses (default 300). |
 | `IMAGE_BASE_PATH` | Prefix joined to stored image keys (default `/images/`). |
 | `LOG_LEVEL` | `DEBUG`, `INFO`, `WARNING` or `ERROR`. |
+| `BOOKING_PROXY_SECRET` | **Required**, at least 32 characters. Shared with the website (its `BOOKING_PROXY_SECRET`); bookings are accepted only with it. The app refuses to start without it. |
+| `PRIVACY_HASH_KEY` | **Required**, at least 32 characters. Key for the one-way hashes of IPs, mobiles and idempotency keys. The app refuses to start without it. |
+| `DEMO_MODE` | `true` (default): bookings are labelled as samples. |
+| `BOOKING_PURGE_AFTER_DAYS` / `AUDIT_PURGE_AFTER_DAYS` | Retention of demo bookings (default 7, 1–90) and audit rows (default 90, 7–365). |
+| `BOOKING_LIMIT_PER_IP_PER_HOUR` / `BOOKING_LIMIT_PER_PHONE_PER_DAY` / `LOOKUP_LIMIT_PER_IP_PER_MINUTE` | Booking limits (defaults 10, 5, 20). |
+
+Generate each secret with `python -c "import secrets; print(secrets.token_urlsafe(32))"`.
 
 URL format: `postgresql+psycopg://USER:PASSWORD@HOST/DBNAME?sslmode=require`. Neon shows
 `postgresql://...`; change the start to `postgresql+psycopg://`.

@@ -2,7 +2,14 @@ from datetime import time
 
 import pytest
 
-from app.seed.loader import SeedData, SeedError, image_key, load_seed_files, validate_seed
+from app.seed.loader import (
+    BookingSeedIn,
+    SeedData,
+    SeedError,
+    image_key,
+    load_seed_files,
+    validate_seed,
+)
 
 
 @pytest.fixture
@@ -71,3 +78,41 @@ def test_image_key_strips_prefix() -> None:
     assert image_key("/images/doctors/a.jpg", "x") == "doctors/a.jpg"
     with pytest.raises(SeedError):
         image_key("https://elsewhere/a.jpg", "x")
+
+
+def with_booking(data: SeedData, booking: dict[str, object]) -> SeedData:
+    return SeedData(data.catalog, data.extras, BookingSeedIn.model_validate(booking))
+
+
+def test_committed_booking_seed_is_valid(data: SeedData) -> None:
+    assert len(data.booking.leave) == 2
+    assert len(data.booking.holidays) == 1
+
+
+def test_leave_for_an_unknown_doctor_is_rejected(data: SeedData) -> None:
+    broken = with_booking(data, {"leave": [{"doctorSlug": "dr-nobody", "dayOffset": 1}]})
+    with pytest.raises(SeedError, match=r"booking leave #1 .*dr-nobody"):
+        validate_seed(broken)
+
+
+def test_leave_with_inverted_times_is_rejected(data: SeedData) -> None:
+    slug = data.catalog.doctors[0].slug
+    leave = {"doctorSlug": slug, "dayOffset": 1, "start": "11:00", "end": "09:00"}
+    with pytest.raises(SeedError, match=rf"booking leave #1 \({slug}\): end must be after start"):
+        validate_seed(with_booking(data, {"leave": [leave]}))
+
+
+def test_leave_with_only_one_time_is_rejected(data: SeedData) -> None:
+    slug = data.catalog.doctors[0].slug
+    leave = {"doctorSlug": slug, "dayOffset": 1, "start": "09:00"}
+    with pytest.raises(SeedError, match="both start and end"):
+        validate_seed(with_booking(data, {"leave": [leave]}))
+
+
+@pytest.mark.parametrize("offset", [-1, 14])
+def test_offsets_outside_the_window_are_rejected(data: SeedData, offset: int) -> None:
+    slug = data.catalog.doctors[0].slug
+    with pytest.raises(SeedError, match="dayOffset"):
+        validate_seed(with_booking(data, {"leave": [{"doctorSlug": slug, "dayOffset": offset}]}))
+    with pytest.raises(SeedError, match=r"booking holiday #1 .*dayOffset"):
+        validate_seed(with_booking(data, {"holidays": [{"dayOffset": offset, "name": "Closed"}]}))

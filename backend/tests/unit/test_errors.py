@@ -3,13 +3,25 @@ from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
 
 from app.errors import (
+    REQUEST_REJECTED_MESSAGE,
+    BookingConflict,
     ClinicNotConfigured,
+    Forbidden,
     NotFound,
     RateLimited,
+    RequestRejected,
     UnhandledErrorMiddleware,
     register_exception_handlers,
 )
 from app.middleware.request_id import RequestIdMiddleware
+from app.schemas import AlternativeSlot
+
+ALTERNATIVE = AlternativeSlot(
+    starts_at="2026-10-06T05:15:00Z",
+    ends_at="2026-10-06T05:30:00Z",
+    local_date="2026-10-06",
+    local_time="10:15",
+)
 
 
 def make_client() -> TestClient:
@@ -27,6 +39,22 @@ def make_client() -> TestClient:
     @app.get("/limited")
     def limited() -> None:
         raise RateLimited(17)
+
+    @app.get("/taken")
+    def taken() -> None:
+        raise BookingConflict("slot_taken", "Sorry, this slot was just taken.", [ALTERNATIVE])
+
+    @app.get("/reused")
+    def reused() -> None:
+        raise BookingConflict("idempotency_key_reused", "This key was used for other details.")
+
+    @app.get("/forbidden")
+    def forbidden() -> None:
+        raise Forbidden
+
+    @app.get("/rejected")
+    def rejected() -> None:
+        raise RequestRejected
 
     @app.get("/db-down")
     def db_down() -> None:
@@ -108,3 +136,41 @@ def test_validation_error_names_field_and_hides_input() -> None:
     error = check_shape(response.json(), "validation_error")
     assert error["details"] == [{"field": "pageSize", "issue": "must be <= 100"}]
     assert "98765" not in response.text
+
+
+def test_booking_conflict_with_alternatives() -> None:
+    response = make_client().get("/taken")
+    assert response.status_code == 409
+    body = response.json()
+    error = check_shape(body, "slot_taken")
+    assert error["message"] == "Sorry, this slot was just taken."
+    assert body["alternatives"] == [
+        {
+            "startsAt": "2026-10-06T05:15:00Z",
+            "endsAt": "2026-10-06T05:30:00Z",
+            "localDate": "2026-10-06",
+            "localTime": "10:15",
+        }
+    ]
+    assert response.headers["cache-control"] == "no-store"
+
+
+def test_booking_conflict_without_alternatives_omits_the_key() -> None:
+    response = make_client().get("/reused")
+    assert response.status_code == 409
+    check_shape(response.json(), "idempotency_key_reused")
+    assert "alternatives" not in response.json()
+
+
+def test_forbidden() -> None:
+    response = make_client().get("/forbidden")
+    assert response.status_code == 403
+    check_shape(response.json(), "forbidden")
+
+
+def test_request_rejected_is_generic() -> None:
+    response = make_client().get("/rejected")
+    assert response.status_code == 400
+    error = check_shape(response.json(), "request_rejected")
+    assert error["message"] == REQUEST_REJECTED_MESSAGE
+    assert "details" not in error

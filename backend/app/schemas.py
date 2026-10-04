@@ -46,6 +46,13 @@ class ErrorResponse(CamelModel):
     error: ErrorInfo
 
 
+class AlternativeSlot(CamelModel):
+    starts_at: str
+    ends_at: str
+    local_date: str
+    local_time: str
+
+
 class HealthStatus(CamelModel):
     status: Literal["ok", "unavailable"]
 

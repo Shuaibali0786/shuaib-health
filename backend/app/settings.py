@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Annotated, Literal, Self
 from urllib.parse import parse_qs, urlsplit
 
-from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic import Field, SecretStr, ValidationInfo, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
@@ -19,6 +19,7 @@ _SSL_MODES = {"require", "verify-ca", "verify-full"}
 _SCHEME = "postgresql+psycopg"
 _ORIGIN_RE = re.compile(r"^https?://[A-Za-z0-9.-]+(:\d{1,5})?$")
 _DB_URL_FIELDS = ("database_url", "direct_database_url", "test_database_url")
+_MIN_SECRET_LENGTH = 32
 
 
 def _host(url: str) -> str:
@@ -56,6 +57,23 @@ class Settings(BaseSettings):
     cache_max_age_seconds: int = Field(300, ge=0, le=86400)
     image_base_path: str = "/images/"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    booking_proxy_secret: SecretStr
+    privacy_hash_key: SecretStr
+    demo_mode: bool = True
+    booking_purge_after_days: int = Field(7, ge=1, le=90)
+    booking_limit_per_ip_per_hour: int = Field(10, ge=1, le=1000)
+    booking_limit_per_phone_per_day: int = Field(5, ge=1, le=100)
+    lookup_limit_per_ip_per_minute: int = Field(20, ge=1, le=1000)
+    audit_purge_after_days: int = Field(90, ge=7, le=365)
+
+    @field_validator("booking_proxy_secret", "privacy_hash_key", mode="before")
+    @classmethod
+    def _secret_is_long_enough(cls, value: object, info: ValidationInfo) -> object:
+        raw = value.get_secret_value() if isinstance(value, SecretStr) else value
+        if not isinstance(raw, str) or len(raw) < _MIN_SECRET_LENGTH:
+            name = str(info.field_name).upper()
+            raise ValueError(f"{name} is required (at least {_MIN_SECRET_LENGTH} characters)")
+        return value
 
     @field_validator("test_database_url", mode="before")
     @classmethod

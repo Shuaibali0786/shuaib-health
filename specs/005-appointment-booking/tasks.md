@@ -88,7 +88,7 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### 2a. Backend settings, schema, migration
 
-- [ ] T008 Add the new settings to `backend/app/settings.py`.
+- [X] T008 Add the new settings to `backend/app/settings.py`.
 
   | Setting | Type | Default | Rule |
   |---|---|---|---|
@@ -102,10 +102,10 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
   | `audit_purge_after_days` | `int` | 90 | 7–365 |
 
   - A field validator must raise `ValueError("BOOKING_PROXY_SECRET is required (at least 32 characters)")` (and the same wording for `PRIVACY_HASH_KEY`). The value is never echoed; `hide_input_in_errors` is already on.
-- [ ] T009 [P] Update `backend/.env.example`.
+- [X] T009 [P] Update `backend/.env.example`.
   - Add `BOOKING_PROXY_SECRET=` and `PRIVACY_HASH_KEY=` with the comment "required, ≥ 32 chars, generate with python -c \"import secrets; print(secrets.token_urlsafe(32))\"; the app refuses to start without them".
   - Add `DEMO_MODE=true`, `BOOKING_PURGE_AFTER_DAYS=7`, `AUDIT_PURGE_AFTER_DAYS=90` and the three limit settings with their defaults.
-- [ ] T010 Update the test settings and add the fail-fast tests.
+- [X] T010 Update the test settings and add the fail-fast tests.
   - In `backend/tests/conftest.py`, `settings_factory` gets fake values `booking_proxy_secret="test-proxy-secret-0123456789abcdef"` and `privacy_hash_key="test-privacy-key-0123456789abcdefgh"`.
   - Add to `backend/tests/unit/test_settings.py`:
     - a missing or 31-character proxy secret raises `ValidationError` whose text names `BOOKING_PROXY_SECRET` and does not contain the value;
@@ -114,19 +114,19 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
     - `python -m app.seed` with it missing exits non-zero (subprocess, with an env without the setting).
   - In the `test_engine` fixture, replace the generic skip reason with one that names the failing settings: `pytest.skip(f"backend settings invalid: {', '.join(e['loc'][0] for e in exc.errors())}")`. That way, missing new secrets in `backend/.env` can't silently look like "TEST_DATABASE_URL not set".
   - Add both secrets to the "Prerequisites" table in `specs/005-appointment-booking/quickstart.md` (already listed) and to `backend/README.md` setup.
-- [ ] T011 Add a UTC helper and its test.
+- [X] T011 Add a UTC helper and its test.
   - In `backend/app/booking/__init__.py` (empty package marker), and `backend/app/booking/timeutil.py`: `UTC = timezone.utc`, `to_utc(dt)`, which raises `ValueError` on naive input and otherwise returns `dt.astimezone(UTC)`, and `utc_iso(dt)`, which formats as `YYYY-MM-DDTHH:MM:SSZ`.
   - Unit test in `backend/tests/unit/test_timeutil.py`.
-- [ ] T012 Add the new models and columns to `backend/app/models.py`, as specified in `data-model.md` §1 and §3–§8.
+- [X] T012 Add the new models and columns to `backend/app/models.py`, as specified in `data-model.md` §1 and §3–§8.
   - New models: `DoctorLeave`, `ClinicHoliday`, `Appointment`, `IdempotencyKey`, `RateLimitCounter`, `AuditLog`.
   - `ClinicSettings` gains `booking_window_days`, `booking_lead_minutes`, `max_active_bookings_per_phone`, with server defaults 14, 120 and 3 and CHECKs.
   - All instants use `DateTime(timezone=True)`.
   - Extend the module docstring: "the no-overlap exclusion constraint on `appointment` exists only in migration 0002 (ADR-0005)".
-- [ ] T013 Create `backend/migrations/versions/0002_booking.py` (`revision="0002_booking"`, `down_revision="0001_catalog"`).
+- [X] T013 Create `backend/migrations/versions/0002_booking.py` (`revision="0002_booking"`, `down_revision="0001_catalog"`).
   - **upgrade**: the three `clinic_settings` columns; the six tables with every CHECK, FK and index from data-model.md, including `ix_appointment_patient_phone_active` (partial) and an index on `appointment(ends_at)`.
   - Add the exclusion constraint with `op.execute("ALTER TABLE appointment ADD CONSTRAINT ex_appointment_no_overlap EXCLUDE USING gist (doctor_id WITH =, tstzrange(starts_at, ends_at, '[)') WITH &&) WHERE (status = 'confirmed')")`.
   - **downgrade**: drop everything in reverse order.
-- [ ] T014 Add migration tests to `backend/tests/migrations/test_migrations.py` (db).
+- [X] T014 Add migration tests to `backend/tests/migrations/test_migrations.py` (db).
   - `0002` upgrades and downgrades cleanly, and `alembic check` passes after upgrade.
   - `pg_constraint` contains `ex_appointment_no_overlap`.
   - Raw SQL inserts of two confirmed overlapping appointments for one doctor fail with SQLSTATE `23P01`.
@@ -136,39 +136,39 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### 2b. Backend cross-cutting helpers
 
-- [ ] T015 [P] Add the clock dependency and its test.
+- [X] T015 [P] Add the clock dependency and its test.
   - `backend/app/booking/clock.py`: a `Clock` protocol (`now() -> datetime`, aware UTC), `SystemClock`, `get_clock` FastAPI dependency, and `ClockDep`.
   - `backend/tests/conftest.py` gets a `frozen_clock` fixture plus a helper to override `get_clock` on an app.
-- [ ] T016 [P] Add the privacy hashes and their test.
+- [X] T016 [P] Add the privacy hashes and their test.
   - `backend/app/booking/privacy.py`:
     - `hmac_hex(key: SecretStr, namespace: str, value: str, length: int = 32) -> str` (HMAC-SHA256, hex, truncated);
     - `fingerprint(key, ip) -> str` (16 hex);
     - `request_hash(payload: Mapping[str, str | None]) -> str` (SHA-256 of canonical JSON, sorted keys).
   - Unit test in `backend/tests/unit/test_privacy.py`: deterministic, namespace-separated, does not contain the input.
-- [ ] T017 [P] Add the booking error types.
+- [X] T017 [P] Add the booking error types.
   - In `backend/app/errors.py`:
     - `BookingConflict(code: Literal["slot_taken","slot_unavailable","booking_limit_reached","idempotency_key_reused"], message: str, alternatives: list[AlternativeSlot] | None)` → `409`, with body `{"error": {...}, "alternatives": [...]}` (omit alternatives when None);
     - `Forbidden` → `403` `forbidden`;
     - `RequestRejected` → `400` `request_rejected` ("We couldn't process this booking. Please call the clinic.").
   - Register them in `register_exception_handlers`.
   - Unit tests in `backend/tests/unit/test_errors.py`.
-- [ ] T018 Honour `X-Client-IP` only with a valid proxy secret.
+- [X] T018 Honour `X-Client-IP` only with a valid proxy secret.
   - Change `client_ip()` in `backend/app/middleware/rate_limit.py` to `client_ip(scope, trusted_proxy_hops, proxy_secret: str | None = None)`. When the `x-proxy-secret` header matches `proxy_secret` (`hmac.compare_digest`) and `x-client-ip` parses with `ipaddress.ip_address`, return it; otherwise use the current behaviour.
   - Pass the secret to `RateLimitMiddleware` in `backend/app/main.py` (constructor argument `proxy_secret`).
   - Add a reusable `get_client_ip(request)` dependency in `backend/app/deps.py`.
   - Tests in `backend/tests/unit/test_client_ip.py`: secret valid → header IP; wrong or missing secret → socket IP; invalid IP → socket; existing hop behaviour unchanged.
-- [ ] T019 [P] Add a `require_proxy_secret` dependency (research R4; Principle VI applied per layer).
+- [X] T019 [P] Add a `require_proxy_secret` dependency (research R4; Principle VI applied per layer).
   - `backend/app/deps.py`: raises `Forbidden` when the request has an `Origin` header that is not in `settings.cors_origins`, **or** when `X-Proxy-Secret` does not match (constant time).
   - A missing `Origin` is accepted only together with a valid secret (server-to-server).
   - Unit test in `backend/tests/unit/test_deps.py`: valid secret with no Origin → ok; valid secret with a foreign Origin → 403; valid secret with an allowed Origin → ok; wrong or missing secret → 403.
 
 ### 2c. Seed (break, leave, holiday)
 
-- [ ] T020 Add the seeded break (research R11).
+- [X] T020 Add the seeded break (research R11).
   - In `frontend/tests/fixtures/catalog/doctors.ts`, split `dr-omar-sheikh` Tuesday `14:00–20:00` into `14:00–17:00` and `18:00–20:00`.
   - Run `npm run export:catalog` to regenerate `backend/app/seed/data/catalog.json`.
   - Run `npm test`; `catalog-export` and the parity tests must pass.
-- [ ] T021 Seed sample leave and holidays.
+- [X] T021 Seed sample leave and holidays.
   - Create `backend/app/seed/data/booking.json`:
     - `{"leave":[{"doctorSlug":"dr-sana-farooqui","dayOffset":2},{"doctorSlug":"dr-hassan-mirza","dayOffset":4,"start":"09:00","end":"11:00"}],"holidays":[{"dayOffset":6,"name":"Clinic closed (sample holiday)"}]}`
     - Choose offsets so each lands in the 14-day window; the loader moves an offset forward to the doctor's next working weekday when needed.
@@ -178,41 +178,41 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
     - local dates are computed from seed-run "today" in `clinic_settings.time_zone` and converted to UTC ranges;
     - report counts `doctor_leave` and `clinic_holiday`.
   - Keep the production refusal in `backend/app/seed/__main__.py`.
-- [ ] T022 Extend the seed tests: `backend/tests/api/test_seed_idempotency.py` (seed twice → same leave/holiday counts, no duplicates) and `backend/tests/unit/test_seed_validation.py` (unknown doctor slug and inverted times rejected with a message naming the record).
-- [ ] T023 Re-record the API fixtures and update the snapshots for the new break.
+- [X] T022 Extend the seed tests: `backend/tests/api/test_seed_idempotency.py` (seed twice → same leave/holiday counts, no duplicates) and `backend/tests/unit/test_seed_validation.py` (unknown doctor slug and inverted times rejected with a message naming the record).
+- [X] T023 Re-record the API fixtures and update the snapshots for the new break.
   - Start the seeded backend and run `npm run api:record`, updating `frontend/tests/fixtures/api/doctors.json`.
   - Run `npx playwright test visual-baseline -g "dr-omar-sheikh" --update-snapshots`, updating `frontend/tests/e2e/visual-baseline.spec.ts-snapshots/visual-baseline-doctors-dr-omar-sheikh-*`.
   - Review the image diff: only the Tuesday schedule row may differ. Note it in `specs/005-appointment-booking/results.md`.
-- [ ] T024 Add a `committing_engine` fixture to `backend/tests/conftest.py` (session scope, db).
+- [X] T024 Add a `committing_engine` fixture to `backend/tests/conftest.py` (session scope, db).
   - Build an engine on `TEST_DATABASE_URL` with `pool_size=25, max_overflow=5`, on the migrated and seeded database.
   - After each test that uses it, run `TRUNCATE appointment, idempotency_key, rate_limit_counter, audit_log`.
   - Add a `make_committing_client(**overrides)` helper that builds an app whose `get_session` opens a real `Session(committing_engine)` per request.
 
 ### 2d. Website foundation
 
-- [ ] T025 Add `getProxySecret()` to `frontend/src/lib/api/config.ts`. It returns the trimmed `BOOKING_PROXY_SECRET` when its length is at least 32, else `null`, and never echoes the value. Add a unit test in `frontend/tests/unit/api-config.test.ts`.
-- [ ] T026 Add the website fail-fast check in `frontend/src/instrumentation.ts`.
+- [X] T025 Add `getProxySecret()` to `frontend/src/lib/api/config.ts`. It returns the trimmed `BOOKING_PROXY_SECRET` when its length is at least 32, else `null`, and never echoes the value. Add a unit test in `frontend/tests/unit/api-config.test.ts`.
+- [X] T026 Add the website fail-fast check in `frontend/src/instrumentation.ts`.
   - `export function register()`: if `process.env.NEXT_RUNTIME === "nodejs"` and `process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD` (import from `next/constants`) and `getProxySecret() === null`:
     - when `NODE_ENV === "production"`, `throw new Error("BOOKING_PROXY_SECRET is required (at least 32 characters); refusing to start")`;
     - otherwise `console.error` the same message.
   - Tests in `frontend/tests/unit/instrumentation.test.ts`: production + missing → throws; production + short → throws; production + valid → ok; development → logs only; build phase → no throw.
-- [ ] T027 [P] Provide the secret to every test server and document it.
+- [X] T027 [P] Provide the secret to every test server and document it.
   - Use an obviously fake, low-entropy value so the secret scan doesn't flag it. If gitleaks flags it anyway (T106), add a path-scoped allowlist entry in `.gitleaks.toml` for the Playwright configs and `backend/tests/conftest.py` only, never a global rule.
   - Set `BOOKING_PROXY_SECRET=fake-e2e-proxy-secret-not-real-000000` in the `webServer.env` of `frontend/playwright.config.ts`, `frontend/playwright.stateful.config.ts` and `frontend/playwright.offline.config.ts`.
   - Pass the same value as `MOCK_PROXY_SECRET` to the mock API server.
   - Add `BOOKING_PROXY_SECRET=` to `frontend/.env.example`, with the comment "server-only; must equal backend BOOKING_PROXY_SECRET; `next start` refuses to start without it; the build does not need it".
-- [ ] T028 Create `frontend/src/lib/booking/backend.ts` (`import "server-only"`).
+- [X] T028 Create `frontend/src/lib/booking/backend.ts` (`import "server-only"`).
   - `callBooking({ method, path, body?, idempotencyKey?, clientIp, requestId, timeoutMs })` → `{ status, body: unknown, retryAfter?: string, requestId?: string }`.
   - Uses `getApiBase()` and `getProxySecret()`. Either one missing → throw `ApiError("unconfigured")`.
   - Sends the headers `X-Proxy-Secret`, `X-Client-IP`, `X-Request-ID` and, when given, `Idempotency-Key`; `cache: "no-store"`; `AbortSignal.timeout(timeoutMs)`.
   - Maps network and timeout failures to `ApiError`.
   - Never logs bodies or headers. On failure it logs only `{ path template, status, code, requestId }`.
   - Export `clientIpFrom(headers: Headers)`: the first valid entry of `x-forwarded-for`, else `x-real-ip`, else `"unknown"`.
-- [ ] T029 Add tests for `backend.ts` and update the existing guards.
+- [X] T029 Add tests for `backend.ts` and update the existing guards.
   - `frontend/tests/unit/booking-backend.test.ts` (mock `fetch`): headers forwarded, timeout → `ApiError("timeout")`, unconfigured secret → `ApiError("unconfigured")`, `console` spies see no body or phone.
   - `frontend/tests/unit/single-fetch.test.ts`: allow exactly `src/lib/api/http.ts` and `src/lib/booking/backend.ts`.
   - `frontend/tests/unit/no-api-url-in-client.test.ts`: also assert the e2e proxy secret string never appears in client bundles.
-- [ ] T030 Extend the mock API in `frontend/tests/mock-api/server.mjs` (contracts/website-booking.md §5).
+- [X] T030 Extend the mock API in `frontend/tests/mock-api/server.mjs` (contracts/website-booking.md §5).
   - `MOCK_NOW` (default `2026-10-05T04:00:00Z`) and `MOCK_PROXY_SECRET`, compared on every booking route; a mismatch returns `403`.
   - `GET /api/v1/doctors/:slug/slots` builds days from `tests/fixtures/api/doctors.json` schedules, using the same rules as data-model §9 with a 2 h lead time and a 14-day window, in Asia/Karachi.
   - `POST /api/v1/appointments` keeps an in-memory store of confirmed slots and of idempotency key → result. It returns `201` (masked view), replays repeated keys, and returns `409 slot_taken` with up to 5 alternatives when the slot is booked.
@@ -220,7 +220,7 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
   - New modes: `booking-down`, `booking-slow` (20 s), `slot-taken` (next POST loses), `rate-limited` (`429` with `Retry-After: 60`).
   - `/__log` records method, path and mode for booking routes, never bodies.
   - `POST /__reset` clears the booking store.
-- [ ] T031 [P] Extend `frontend/tests/unit/mock-api.test.ts`: slots shape validates with `DoctorSlotsSchema`; book → slot disappears; same key replays the same reference; second key on the same slot → `409` with alternatives; wrong secret → `403`; each new mode behaves; the log holds no body fields.
+- [X] T031 [P] Extend `frontend/tests/unit/mock-api.test.ts`: slots shape validates with `DoctorSlotsSchema`; book → slot disappears; same key replays the same reference; second key on the same slot → `409` with alternatives; wrong secret → `403`; each new mode behaves; the log holds no body fields.
 
 **CHECKPOINT 2**:
 - Backend: `uv run ruff check . && uv run mypy && uv run pytest` green, including the migration up/down, exclusion-violation and fail-fast tests.

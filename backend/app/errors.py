@@ -1,8 +1,9 @@
 """One JSON error format for every failure. Never returns stack traces, SQL or input values."""
 
+import json
 import logging
 from collections.abc import Mapping
-from typing import cast
+from typing import Literal, cast
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -14,7 +15,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.logging_config import request_id_var
-from app.schemas import ErrorDetail, ErrorInfo, ErrorResponse
+from app.schemas import AlternativeSlot, ErrorDetail, ErrorInfo, ErrorResponse
 
 logger = logging.getLogger("app.errors")
 
@@ -39,6 +40,35 @@ class RateLimited(Exception):
         self.retry_after = retry_after
 
 
+BookingConflictCode = Literal[
+    "slot_taken", "slot_unavailable", "booking_limit_reached", "idempotency_key_reused"
+]
+REQUEST_REJECTED_MESSAGE = "We couldn't process this booking. Please call the clinic."
+
+
+class BookingConflict(Exception):
+    """409. ``alternatives`` is only sent for slot_taken and slot_unavailable."""
+
+    def __init__(
+        self,
+        code: BookingConflictCode,
+        message: str,
+        alternatives: list[AlternativeSlot] | None = None,
+    ) -> None:
+        super().__init__(code)
+        self.code: BookingConflictCode = code
+        self.message = message
+        self.alternatives = alternatives
+
+
+class Forbidden(Exception):
+    """403. Missing or wrong proxy secret, or a browser origin that is not allowed."""
+
+
+class RequestRejected(Exception):
+    """400. Generic refusal (for example the honeypot field was filled); gives nothing away."""
+
+
 _HTTP_CODES: dict[int, tuple[str, str]] = {
     404: ("not_found", "Not found."),
     405: ("method_not_allowed", "Method not allowed."),
@@ -56,9 +86,12 @@ def error_response(
     message: str,
     details: list[ErrorDetail] | None = None,
     headers: Mapping[str, str] | None = None,
+    extra: Mapping[str, object] | None = None,
 ) -> JSONResponse:
     response = JSONResponse(status_code=status, content=None, headers=dict(headers or {}))
     response.body = error_body(code, message, details)
+    if extra:
+        response.body = json.dumps({**json.loads(response.body), **extra}).encode()
     response.headers["Content-Length"] = str(len(response.body))
     response.headers["Cache-Control"] = "no-store"
     return response
@@ -124,6 +157,26 @@ async def _rate_limited(_: Request, exc: Exception) -> JSONResponse:
     return rate_limited_response(cast(RateLimited, exc).retry_after)
 
 
+async def _booking_conflict(_: Request, exc: Exception) -> JSONResponse:
+    conflict = cast(BookingConflict, exc)
+    extra: dict[str, object] | None = None
+    if conflict.alternatives is not None:
+        extra = {
+            "alternatives": [
+                a.model_dump(by_alias=True, mode="json") for a in conflict.alternatives
+            ]
+        }
+    return error_response(409, conflict.code, conflict.message, extra=extra)
+
+
+async def _forbidden(_: Request, __: Exception) -> JSONResponse:
+    return error_response(403, "forbidden", "Forbidden.")
+
+
+async def _request_rejected(_: Request, __: Exception) -> JSONResponse:
+    return error_response(400, "request_rejected", REQUEST_REJECTED_MESSAGE)
+
+
 async def _database_unavailable(_: Request, exc: Exception) -> JSONResponse:
     logger.error("database unavailable: %s", type(exc).__name__)
     return error_response(503, "service_unavailable", "The service is temporarily unavailable.")
@@ -135,6 +188,9 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(NotFound, _not_found)
     app.add_exception_handler(ClinicNotConfigured, _not_configured)
     app.add_exception_handler(RateLimited, _rate_limited)
+    app.add_exception_handler(BookingConflict, _booking_conflict)
+    app.add_exception_handler(Forbidden, _forbidden)
+    app.add_exception_handler(RequestRejected, _request_rejected)
     for db_error in (OperationalError, InterfaceError, PoolTimeoutError):
         app.add_exception_handler(db_error, _database_unavailable)
 

@@ -25,13 +25,17 @@ const offenders = (pattern: RegExp, skip: (path: string) => boolean = () => fals
   files.filter((file) => !skip(file.path) && pattern.test(file.code)).map((file) => file.path);
 
 describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
-  // Feature 004: the catalog API layer is the one place that may call fetch and read its env names.
-  it("has no fetch( in src outside lib/api/http.ts", () => {
-    expect(offenders(/\bfetch\s*\(/, (path) => path === "lib/api/http.ts")).toEqual([]);
+  // Features 004 and 005: the catalog reader and the booking proxy are the only places that may call fetch;
+  // the API settings are read in lib/api/config.ts, and the start-up check in instrumentation.ts reads
+  // the framework's own NEXT_RUNTIME / NEXT_PHASE.
+  it("has no fetch( in src outside lib/api/http.ts and lib/booking/backend.ts", () => {
+    expect(offenders(/\bfetch\s*\(/, (path) => path === "lib/api/http.ts" || path === "lib/booking/backend.ts")).toEqual([]);
   });
 
-  it("has no backend env names in src outside lib/api/config.ts", () => {
-    expect(offenders(/process\.env\.(?!SITE_URL\b|NODE_ENV\b)[A-Z_]+/, (path) => path === "lib/api/config.ts")).toEqual([]);
+  it("has no backend env names in src outside lib/api/config.ts and instrumentation.ts", () => {
+    expect(
+      offenders(/process\.env\.(?!SITE_URL\b|NODE_ENV\b)[A-Z_]+/, (path) => path === "lib/api/config.ts" || path === "instrumentation.ts"),
+    ).toEqual([]);
   });
 
   it.each([

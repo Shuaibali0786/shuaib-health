@@ -4,6 +4,7 @@ The in-memory fixed-window store is per process; it is hidden behind the ``RateL
 protocol so a shared store (for example Redis) can replace it when more than one instance runs.
 """
 
+import hmac
 import ipaddress
 import math
 import threading
@@ -53,25 +54,45 @@ class InMemoryFixedWindowLimiter:
             del self._windows[key]
 
 
-def client_ip(scope: Scope, trusted_proxy_hops: int) -> str:
+def _header(scope: Scope, name: bytes) -> str | None:
+    for key, value in scope.get("headers", []):
+        if key == name:
+            return str(value.decode("latin-1"))
+    return None
+
+
+def client_ip(scope: Scope, trusted_proxy_hops: int, proxy_secret: str | None = None) -> str:
     """The caller's address.
 
-    ``X-Forwarded-For`` is ignored unless ``trusted_proxy_hops`` > 0, because any client can
-    send that header. With N trusted proxies the address is the Nth entry from the right.
+    A request that carries a valid ``X-Proxy-Secret`` comes from our own website server, which
+    reports the visitor's address in ``X-Client-IP``; that address is used when it parses.
+    Otherwise ``X-Forwarded-For`` is ignored unless ``trusted_proxy_hops`` > 0, because any client
+    can send that header. With N trusted proxies the address is the Nth entry from the right.
     """
     client = scope.get("client")
     socket_address = str(client[0]) if client else "unknown"
+
+    if proxy_secret:
+        presented = _header(scope, b"x-proxy-secret")
+        if presented is not None and hmac.compare_digest(presented.encode(), proxy_secret.encode()):
+            reported = _header(scope, b"x-client-ip")
+            if reported is not None:
+                try:
+                    return str(ipaddress.ip_address(reported.strip()))
+                except ValueError:
+                    pass
+
     if trusted_proxy_hops <= 0:
         return socket_address
-    for name, value in scope.get("headers", []):
-        if name == b"x-forwarded-for":
-            parts = [p.strip() for p in value.decode("latin-1").split(",") if p.strip()]
-            if len(parts) >= trusted_proxy_hops:
-                candidate = parts[-trusted_proxy_hops]
-                try:
-                    return str(ipaddress.ip_address(candidate))
-                except ValueError:
-                    return socket_address
+    forwarded_for = _header(scope, b"x-forwarded-for")
+    if forwarded_for is not None:
+        parts = [p.strip() for p in forwarded_for.split(",") if p.strip()]
+        if len(parts) >= trusted_proxy_hops:
+            candidate = parts[-trusted_proxy_hops]
+            try:
+                return str(ipaddress.ip_address(candidate))
+            except ValueError:
+                return socket_address
     return socket_address
 
 
@@ -82,12 +103,14 @@ class RateLimitMiddleware:
         *,
         limiter: RateLimiter,
         trusted_proxy_hops: int = 0,
+        proxy_secret: str | None = None,
         exempt_paths: frozenset[str] = EXEMPT_PATHS,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self.app = app
         self.limiter = limiter
         self.trusted_proxy_hops = trusted_proxy_hops
+        self.proxy_secret = proxy_secret
         self.exempt_paths = exempt_paths
         self.clock = clock
 
@@ -95,7 +118,9 @@ class RateLimitMiddleware:
         if scope["type"] != "http" or scope.get("path") in self.exempt_paths:
             await self.app(scope, receive, send)
             return
-        retry_after = self.limiter.hit(client_ip(scope, self.trusted_proxy_hops), self.clock())
+        retry_after = self.limiter.hit(
+            client_ip(scope, self.trusted_proxy_hops, self.proxy_secret), self.clock()
+        )
         if retry_after is not None:
             await rate_limited_response(retry_after)(scope, receive, send)
             return

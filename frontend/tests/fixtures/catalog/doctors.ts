@@ -171,7 +171,8 @@ export const doctors: Doctor[] = [
     languages: ["Urdu", "English", "Sindhi"],
     bio: "Dr. Omar Sheikh provides general care for adults and families, including routine checkups and follow-up visits. Afternoon and Saturday sessions make it easier to fit a visit around work.",
     schedule: [
-      { day: "tue", start: "14:00", end: "20:00" },
+      { day: "tue", start: "14:00", end: "17:00" },
+      { day: "tue", start: "18:00", end: "20:00" },
       { day: "thu", start: "14:00", end: "20:00" },
       { day: "sat", start: "10:00", end: "14:00" },
     ],

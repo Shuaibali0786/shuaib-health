@@ -17,11 +17,13 @@ from sqlmodel import Session, create_engine
 from app.settings import get_settings
 
 
-def make_engine(url: SecretStr, *, connect_timeout: int = 10) -> Engine:
+def make_engine(
+    url: SecretStr, *, connect_timeout: int = 10, pool_size: int = 5, max_overflow: int = 5
+) -> Engine:
     return create_engine(
         url.get_secret_value(),
-        pool_size=5,
-        max_overflow=5,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
         pool_pre_ping=True,
         pool_recycle=300,
         connect_args={"prepare_threshold": None, "connect_timeout": connect_timeout},

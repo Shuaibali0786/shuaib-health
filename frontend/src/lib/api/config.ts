@@ -42,3 +42,14 @@ export function getDataRevalidateSeconds(): number {
   console.warn("CATALOG_DATA_REVALIDATE_SECONDS must be an integer from 1 to 3600; using 300.");
   return 300;
 }
+
+const MIN_PROXY_SECRET_LENGTH = 32;
+
+/**
+ * The secret that proves a booking request comes from this website's server (`BOOKING_PROXY_SECRET`,
+ * server-only, same value as the backend's). Null when missing or shorter than 32 characters. The value is never logged.
+ */
+export function getProxySecret(): string | null {
+  const raw = process.env.BOOKING_PROXY_SECRET?.trim();
+  return raw && raw.length >= MIN_PROXY_SECRET_LENGTH ? raw : null;
+}

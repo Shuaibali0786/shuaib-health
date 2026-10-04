@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { defineConfig, devices } from "@playwright/test";
 
+const PROXY_SECRET = "fake-e2e-proxy-secret-not-real-000000"; // obviously fake, test servers only
+
 // Stateful config: specs that switch the mock API between modes. One worker, `next dev` with a 3 s
 // data-cache window. Production pages are ISR with a literal `revalidate = 300`, so a production page
 // never re-renders inside a test; `next dev` renders every request but still goes through
@@ -28,7 +30,7 @@ export default defineConfig({
     {
       command: "node tests/mock-api/server.mjs",
       url: `http://127.0.0.1:${WARM.mock}/`,
-      env: { MOCK_API_PORT: String(WARM.mock), MOCK_API_MODE: "ok" },
+      env: { MOCK_API_PORT: String(WARM.mock), MOCK_API_MODE: "ok", MOCK_PROXY_SECRET: PROXY_SECRET },
       reuseExistingServer: false,
     },
     {
@@ -41,6 +43,7 @@ export default defineConfig({
         CATALOG_API_URL: `http://127.0.0.1:${WARM.mock}`,
         CATALOG_DATA_REVALIDATE_SECONDS: "3",
         CLINIC_FALLBACK_JSON: clinicFallback,
+        BOOKING_PROXY_SECRET: PROXY_SECRET,
       },
     },
     // Cold pair: a mock that starts in "partial" mode and a dev server whose build folder is emptied
@@ -48,7 +51,7 @@ export default defineConfig({
     {
       command: "node tests/mock-api/server.mjs",
       url: `http://127.0.0.1:${COLD.mock}/`,
-      env: { MOCK_API_PORT: String(COLD.mock), MOCK_API_MODE: "partial" },
+      env: { MOCK_API_PORT: String(COLD.mock), MOCK_API_MODE: "partial", MOCK_PROXY_SECRET: PROXY_SECRET },
       reuseExistingServer: false,
     },
     {
@@ -61,6 +64,7 @@ export default defineConfig({
         CATALOG_API_URL: `http://127.0.0.1:${COLD.mock}`,
         CATALOG_DATA_REVALIDATE_SECONDS: "3",
         CLINIC_FALLBACK_JSON: clinicFallback,
+        BOOKING_PROXY_SECRET: PROXY_SECRET,
       },
     },
   ],

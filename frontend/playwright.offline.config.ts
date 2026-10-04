@@ -2,6 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 import { FALLBACK_CLINIC_JSON } from "./tests/e2e/offline/fallback";
 
+const PROXY_SECRET = "fake-e2e-proxy-secret-not-real-000000"; // obviously fake, test servers only
+
 // Offline config: production builds made and served while the catalog API is dead or not configured.
 // Each variant builds into its own folder so the two builds never share `.next`.
 const DEAD_PORT = 3200;
@@ -32,6 +34,7 @@ export default defineConfig({
         NEXT_DIST_DIR: ".next-offline-dead",
         CATALOG_API_URL: "http://127.0.0.1:9",
         CLINIC_FALLBACK_JSON: FALLBACK_CLINIC_JSON,
+        BOOKING_PROXY_SECRET: PROXY_SECRET,
       },
     },
     {
@@ -44,6 +47,7 @@ export default defineConfig({
         NEXT_DIST_DIR: ".next-offline-unset",
         CATALOG_API_URL: "",
         CLINIC_FALLBACK_JSON: "",
+        BOOKING_PROXY_SECRET: PROXY_SECRET,
       },
     },
   ],
