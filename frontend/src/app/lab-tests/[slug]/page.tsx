@@ -4,38 +4,58 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { LabTestFacts } from "@/components/lab-tests/LabTestFacts";
 import { Button } from "@/components/ui/Button";
+import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { labTests } from "@/data/labTests";
-import { getDepartments, getLabTestBySlug, getLabTestCategories, getPackagesIncludingTest } from "@/lib/content";
-import { getManifestEntry } from "@/lib/pages";
+import { getSiteConfig, getLabTests, loadDepartments, loadHealthPackages, loadLabTestCategories, loadLabTests } from "@/lib/content";
+import { labTestEntry } from "@/lib/pages";
 import { departmentPath, labTestPath, ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
 
-/** Only the sample catalog exists; any other slug is the not-found page. */
-export const dynamicParams = false;
+export const revalidate = 300;
 
-export function generateStaticParams(): Array<{ slug: string }> {
-  return labTests.map((test) => ({ slug: test.slug }));
+/** Tests added after the build render on first request; a slug not in the list is the not-found page. */
+export const dynamicParams = true;
+
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  return (await getLabTests()).map((test) => ({ slug: test.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/lab-tests/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  return pageMetadata(getManifestEntry(labTestPath(slug)));
+  const tests = await loadLabTests();
+  const test = tests.ok ? tests.data.find((candidate) => candidate.slug === slug) : undefined;
+  // An outage or an unknown slug gets a generic title; the page itself decides between the
+  // friendly message and the not-found page.
+  return test ? pageMetadata(labTestEntry(test), await getSiteConfig()) : { title: "Lab test", alternates: { canonical: labTestPath(slug) } };
 }
 
 export default async function LabTestPage({ params }: PageProps<"/lab-tests/[slug]">) {
+  const { emergencyPhone: phone } = await getSiteConfig();
   const { slug } = await params;
-  const test = await getLabTestBySlug(slug);
+  const [tests, categories, departments, allPackages] = await Promise.all([
+    loadLabTests(),
+    loadLabTestCategories(),
+    loadDepartments(),
+    loadHealthPackages(),
+  ]);
+  if (!tests.ok) {
+    return (
+      <>
+        <PageHeader trail={[{ label: "Lab Tests", href: ROUTES.labTests }, { label: "Lab test" }]} title="Lab test" />
+        <Section tone="background" spacing="compact" aria-label="Lab test">
+          <DataUnavailable phone={phone} href={labTestPath(slug)} />
+        </Section>
+      </>
+    );
+  }
+  const test = tests.data.find((candidate) => candidate.slug === slug);
   if (!test) notFound();
 
-  const [categories, departments, packages] = await Promise.all([
-    getLabTestCategories(),
-    getDepartments(),
-    getPackagesIncludingTest(test.slug),
-  ]);
-  const category = categories.find((candidate) => candidate.id === test.categoryId);
-  const related = departments.filter((department) => test.relatedDepartmentIds.includes(department.id));
+  // The related sections degrade on their own: when their data is missing they are simply left out.
+  const category = categories.ok ? categories.data.find((candidate) => candidate.id === test.categoryId) : undefined;
+  const related = departments.ok ? departments.data.filter((department) => test.relatedDepartmentIds.includes(department.id)) : [];
+  const packages = allPackages.ok ? allPackages.data.filter((pkg) => pkg.testSlugs.includes(test.slug)) : [];
 
   return (
     <>

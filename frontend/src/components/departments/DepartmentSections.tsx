@@ -3,18 +3,23 @@ import { DoctorList } from "@/components/doctors/DoctorList";
 import { LabTestCard } from "@/components/lab-tests/LabTestCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { IllustrativeNote } from "@/components/ui/IllustrativeNote";
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { ROUTES } from "@/lib/routes";
-import type { Department, Doctor, LabTest, LabTestCategory } from "@/types/content";
+import { departmentPath, ROUTES } from "@/lib/routes";
+import type { Department, Doctor, LabTest, LabTestCategory, PhoneNumber } from "@/types/content";
 
 interface DepartmentSectionsProps {
   department: Department;
-  doctors: Doctor[];
-  tests: LabTest[];
+  /** `null` means the doctors could not be loaded; that section shows a friendly message. */
+  doctors: Doctor[] | null;
+  /** `null` means the lab tests could not be loaded; that section shows a friendly message. */
+  tests: LabTest[] | null;
   categories: LabTestCategory[];
+  /** Shown as a "Call the clinic" link in a section whose data is unavailable. */
+  phone?: PhoneNumber;
 }
 
 function CheckList({ items }: { items: string[] }) {
@@ -35,7 +40,7 @@ function CheckList({ items }: { items: string[] }) {
  * department's doctors, related lab tests, and a booking button. Lists are general orientation
  * only: no diagnosis, no treatment claims.
  */
-export function DepartmentSections({ department, doctors, tests, categories }: DepartmentSectionsProps) {
+export function DepartmentSections({ department, doctors, tests, categories, phone }: DepartmentSectionsProps) {
   return (
     <>
       <Section tone="background" spacing="compact" labelledBy="overview-title">
@@ -81,7 +86,7 @@ export function DepartmentSections({ department, doctors, tests, categories }: D
           intro="Sample doctors. Fees and schedules are invented for the demo."
         />
         <div className="mt-8">
-          <DoctorList doctors={doctors} />
+          {doctors ? <DoctorList doctors={doctors} /> : <DataUnavailable phone={phone} href={departmentPath(department.slug)} />}
         </div>
       </Section>
 
@@ -91,13 +96,19 @@ export function DepartmentSections({ department, doctors, tests, categories }: D
           title="Related lab tests"
           intro="Tests that doctors in this department often ask for. All prices are sample prices."
         />
-        <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {tests.map((test) => (
-            <li key={test.id} className="flex">
-              <LabTestCard test={test} category={categories.find((category) => category.id === test.categoryId)} compact />
-            </li>
-          ))}
-        </ul>
+        {tests ? (
+          <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {tests.map((test) => (
+              <li key={test.id} className="flex">
+                <LabTestCard test={test} category={categories.find((category) => category.id === test.categoryId)} compact />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="mt-8">
+            <DataUnavailable phone={phone} href={departmentPath(department.slug)} />
+          </div>
+        )}
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <Button href={ROUTES.labTests} variant="outline">
             See all lab tests

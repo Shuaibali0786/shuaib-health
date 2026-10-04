@@ -1,25 +1,28 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Hero } from "@/components/home/Hero";
-import { heroFacts, heroImage } from "@/data/homeContent";
+import { buildHeroFacts, heroImage } from "@/data/homeContent";
+import { siteConfig } from "../fixtures/catalog/siteConfig";
+
+vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
 
 const BANNED = /rating|review|testimonial|award|certified|accredited|patients served|years of experience|best |leading/i;
 
 describe("Hero", () => {
-  it("has one h1 and names the section after it", () => {
-    const { container } = render(<Hero />);
+  it("has one h1 and names the section after it", async () => {
+    const { container } = render(await Hero());
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(container.querySelector("section")).toHaveAttribute("aria-labelledby", "hero-title");
   });
 
-  it("offers Book Appointment and Find a Doctor", () => {
-    render(<Hero />);
+  it("offers Book Appointment and Find a Doctor", async () => {
+    render(await Hero());
     expect(screen.getByRole("link", { name: "Book Appointment" })).toHaveAttribute("href", "/book-appointment");
     expect(screen.getByRole("link", { name: "Find a Doctor" })).toHaveAttribute("href", "/doctors");
   });
 
-  it("shows exactly three fact cards with demo-true facts only", () => {
-    render(<Hero />);
+  it("shows exactly three fact cards with demo-true facts only", async () => {
+    render(await Hero());
     const cards = within(screen.getByRole("list")).getAllByRole("listitem");
     expect(cards).toHaveLength(3);
     expect(cards.map((card) => card.textContent)).toEqual([
@@ -27,16 +30,17 @@ describe("Hero", () => {
       "Lab reports online",
       "Home sample collection",
     ]);
-    expect(heroFacts).toHaveLength(3);
+    expect(buildHeroFacts(siteConfig.openingHours)).toHaveLength(3);
+    expect(buildHeroFacts([])).toHaveLength(2);
   });
 
-  it("uses no fabricated claims anywhere in the hero", () => {
-    const { container } = render(<Hero />);
+  it("uses no fabricated claims anywhere in the hero", async () => {
+    const { container } = render(await Hero());
     expect(container.textContent).not.toMatch(BANNED);
   });
 
-  it("shows the hero photo with alt text", () => {
-    render(<Hero />);
+  it("shows the hero photo with alt text", async () => {
+    render(await Hero());
     const photo = screen.getByRole("img", { name: heroImage.alt });
     expect(photo).toHaveAttribute("width", "1200");
     expect(photo).toHaveAttribute("height", "1500");

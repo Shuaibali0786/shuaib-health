@@ -1,8 +1,9 @@
+import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { departments } from "../../src/data/departments";
-import { doctors } from "../../src/data/doctors";
+import { departments } from "../fixtures/catalog/departments";
+import { doctors } from "../fixtures/catalog/doctors";
 import { healthTips } from "../../src/data/healthTips";
-import { labTests } from "../../src/data/labTests";
+import { labTests } from "../fixtures/catalog/labTests";
 
 /** Exact strings from the spec, repeated here on purpose: if the product text changes, a test must fail. */
 export const NOTICE = "Portfolio demo — not a real clinic, not medical advice.";
@@ -63,4 +64,12 @@ export async function scrollThrough(page: Page): Promise<void> {
   }
   await page.waitForTimeout(900);
   await page.evaluate(() => window.scrollTo(0, 0));
+}
+
+/** The id a department has in the API (random per database), looked up by slug in the recorded fixtures the mock API serves. */
+export function departmentIdBySlug(slug: string): string {
+  const { items } = JSON.parse(readFileSync("tests/fixtures/api/departments.json", "utf8")) as { items: Array<{ id: string; slug: string }> };
+  const department = items.find((candidate) => candidate.slug === slug);
+  if (!department) throw new Error(`No department "${slug}" in tests/fixtures/api/departments.json`);
+  return department.id;
 }

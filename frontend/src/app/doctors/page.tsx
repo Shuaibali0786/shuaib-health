@@ -2,15 +2,18 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DoctorBrowser, DoctorBrowserFallback } from "@/components/doctors/DoctorBrowser";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { Section } from "@/components/ui/Section";
 import { SampleBadge } from "@/components/ui/SampleBadge";
-import { getDepartments, getDoctors } from "@/lib/content";
+import { getSiteConfig, loadDepartments, loadDoctors } from "@/lib/content";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
 
-export function generateMetadata(): Metadata {
-  return pageMetadata(getManifestEntry(ROUTES.doctors));
+export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata(getManifestEntry(ROUTES.doctors), await getSiteConfig());
 }
 
 /**
@@ -18,8 +21,9 @@ export function generateMetadata(): Metadata {
  * over in the browser. The Suspense fallback is the same list, so it also works without JavaScript.
  */
 export default async function DoctorsPage() {
-  const [doctors, departments] = await Promise.all([getDoctors(), getDepartments()]);
-  const departmentOptions = departments.map(({ id, slug, name }) => ({ id, slug, name }));
+  const { emergencyPhone: phone } = await getSiteConfig();
+  const [doctors, departments] = await Promise.all([loadDoctors(), loadDepartments()]);
+  const departmentOptions = (departments.ok ? departments.data : []).map(({ id, slug, name }) => ({ id, slug, name }));
 
   return (
     <>
@@ -34,9 +38,13 @@ export default async function DoctorsPage() {
         </p>
       </PageHeader>
       <Section tone="background" spacing="compact" aria-label="Doctors">
-        <Suspense fallback={<DoctorBrowserFallback doctors={doctors} departments={departmentOptions} />}>
-          <DoctorBrowser doctors={doctors} departments={departmentOptions} />
-        </Suspense>
+        {doctors.ok ? (
+          <Suspense fallback={<DoctorBrowserFallback doctors={doctors.data} departments={departmentOptions} />}>
+            <DoctorBrowser doctors={doctors.data} departments={departmentOptions} />
+          </Suspense>
+        ) : (
+          <DataUnavailable phone={phone} href={ROUTES.doctors} />
+        )}
       </Section>
     </>
   );

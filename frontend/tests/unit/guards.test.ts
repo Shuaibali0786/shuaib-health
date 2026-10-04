@@ -25,17 +25,27 @@ const offenders = (pattern: RegExp, skip: (path: string) => boolean = () => fals
   files.filter((file) => !skip(file.path) && pattern.test(file.code)).map((file) => file.path);
 
 describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
+  // Feature 004: the catalog API layer is the one place that may call fetch and read its env names.
+  it("has no fetch( in src outside lib/api/http.ts", () => {
+    expect(offenders(/\bfetch\s*\(/, (path) => path === "lib/api/http.ts")).toEqual([]);
+  });
+
+  it("has no backend env names in src outside lib/api/config.ts", () => {
+    expect(offenders(/process\.env\.(?!SITE_URL\b|NODE_ENV\b)[A-Z_]+/, (path) => path === "lib/api/config.ts")).toEqual([]);
+  });
+
   it.each([
-    ["fetch(", /\bfetch\s*\(/],
     ["XMLHttpRequest", /\bXMLHttpRequest\b/],
     ["localStorage", /\blocalStorage\b/],
     ["sessionStorage", /\bsessionStorage\b/],
     ["document.cookie", /document\.cookie/],
-    ["dangerouslySetInnerHTML", /dangerouslySetInnerHTML/],
     ["raw <img", /<img[\s>]/],
-    ["backend env names", /process\.env\.(?!SITE_URL\b|NODE_ENV\b)[A-Z_]+/],
   ])("has no %s in src", (_name, pattern) => {
     expect(offenders(pattern)).toEqual([]);
+  });
+
+  it("has no dangerouslySetInnerHTML in src outside the JSON-LD component", () => {
+    expect(offenders(/dangerouslySetInnerHTML/, (path) => path === "components/seo/JsonLd.tsx")).toEqual([]);
   });
 
   it("has no hex colour literal in components or pages (tokens live in globals.css)", () => {
@@ -47,7 +57,7 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
   });
 
   it("uses an external URL only for the OpenStreetMap embed and the GitHub credit", () => {
-    const allowed = /openstreetmap\.org|github\.com\/Shuaibali0786|w3\.org\/(2000\/svg|1999\/xlink)|localhost/;
+    const allowed = /openstreetmap\.org|github\.com\/Shuaibali0786|schema\.org|w3\.org\/(2000\/svg|1999\/xlink)|localhost/;
     const found = files.flatMap((file) =>
       (file.code.match(/https?:\/\/[^\s"'`)]+/g) ?? []).filter((url) => !allowed.test(url)).map((url) => `${file.path}: ${url}`),
     );

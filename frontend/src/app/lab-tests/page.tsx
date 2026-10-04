@@ -2,15 +2,18 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { LabTestBrowser, LabTestBrowserFallback } from "@/components/lab-tests/LabTestBrowser";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { getLabTestCategories, getLabTests } from "@/lib/content";
+import { getSiteConfig, loadLabTestCategories, loadLabTests } from "@/lib/content";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
 
-export function generateMetadata(): Metadata {
-  return pageMetadata(getManifestEntry(ROUTES.labTests));
+export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata(getManifestEntry(ROUTES.labTests), await getSiteConfig());
 }
 
 /**
@@ -18,7 +21,8 @@ export function generateMetadata(): Metadata {
  * in the browser. The Suspense fallback is the same list, so it also works without JavaScript.
  */
 export default async function LabTestsPage() {
-  const [tests, categories] = await Promise.all([getLabTests(), getLabTestCategories()]);
+  const { emergencyPhone: phone } = await getSiteConfig();
+  const [tests, categories] = await Promise.all([loadLabTests(), loadLabTestCategories()]);
 
   return (
     <>
@@ -33,9 +37,13 @@ export default async function LabTestsPage() {
         </p>
       </PageHeader>
       <Section tone="background" spacing="compact" aria-label="Lab tests">
-        <Suspense fallback={<LabTestBrowserFallback tests={tests} categories={categories} />}>
-          <LabTestBrowser tests={tests} categories={categories} />
-        </Suspense>
+        {tests.ok && categories.ok ? (
+          <Suspense fallback={<LabTestBrowserFallback tests={tests.data} categories={categories.data} />}>
+            <LabTestBrowser tests={tests.data} categories={categories.data} />
+          </Suspense>
+        ) : (
+          <DataUnavailable phone={phone} href={ROUTES.labTests} />
+        )}
       </Section>
     </>
   );

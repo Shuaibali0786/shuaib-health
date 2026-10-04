@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "id": "874d05c8-ae9f-48af-ab13-565b19c947f4",
+      "sortOrder": 1,
+      "text": "Please arrive 15 minutes before your appointment time.",
+      "isSample": true
+    },
+    {
+      "id": "b1f76bc3-b1ca-44f9-b8a3-bc1147cf7756",
+      "sortOrder": 2,
+      "text": "Cancel or reschedule at least 2 hours before your appointment.",
+      "isSample": true
+    },
+    {
+      "id": "0cc560db-bac5-466c-8978-06615c2001a0",
+      "sortOrder": 3,
+      "text": "After 3 missed appointments without notice, online booking may be paused for your account.",
+      "isSample": true
+    },
+    {
+      "id": "13d9ddf8-9689-43d9-b654-5b28fbb14624",
+      "sortOrder": 4,
+      "text": "Follow the preparation instructions for lab tests, such as fasting, so results can be processed.",
+      "isSample": true
+    },
+    {
+      "id": "d180f7fc-ddf0-4e8a-a169-9884bd1e1937",
+      "sortOrder": 5,
+      "text": "For emergencies, call the emergency number. Do not use online booking.",
+      "isSample": true
+    }
+  ],
+  "total": 5,
+  "page": 1,
+  "pageSize": 100
+}

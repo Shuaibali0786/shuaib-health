@@ -2,25 +2,30 @@
 
 import { MapPin } from "lucide-react";
 import { useState } from "react";
-import { siteConfig } from "@/data/siteConfig";
+import type { SiteConfig } from "@/types/content";
 
-const [WEST, SOUTH, EAST, NORTH] = siteConfig.mapArea.bbox;
-const BBOX = `${WEST},${SOUTH},${EAST},${NORTH}`;
-/** OpenStreetMap's embed address: no account, no key, and no marker, so no real business is pinned. */
-const EMBED_SRC = `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(BBOX)}&layer=mapnik`;
-const OPEN_HREF = `https://www.openstreetmap.org/?bbox=${encodeURIComponent(BBOX)}&layers=M`;
+interface MapEmbedProps {
+  mapArea: SiteConfig["mapArea"];
+  address: string[];
+}
 
 /**
- * The general Karachi area on a map, shown only when the visitor asks for it. Until then the page
- * makes no request to any outside site, and the text address is always visible (FR-072).
+ * The general area on a map, shown only when the visitor asks for it. Until then the page makes no
+ * request to any outside site, and the text address is always visible (FR-072). The area and the
+ * address come from the clinic data.
  */
-export function MapEmbed() {
+export function MapEmbed({ mapArea, address }: MapEmbedProps) {
   const [shown, setShown] = useState(false);
+  const [west, south, east, north] = mapArea.bbox;
+  const bbox = `${west},${south},${east},${north}`;
+  /** OpenStreetMap's embed address: no account, no key, and no marker, so no real business is pinned. */
+  const embedSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik`;
+  const openHref = `https://www.openstreetmap.org/?bbox=${encodeURIComponent(bbox)}&layers=M`;
 
   return (
     <div className="flex flex-col gap-3">
       <address className="not-italic text-base text-ink">
-        {siteConfig.address.map((line) => (
+        {address.map((line) => (
           <span key={line} className="block">
             {line}
           </span>
@@ -30,8 +35,8 @@ export function MapEmbed() {
 
       {shown ? (
         <iframe
-          title="Map of the general Karachi area"
-          src={EMBED_SRC}
+          title={`Map: ${mapArea.label}`}
+          src={embedSrc}
           loading="lazy"
           referrerPolicy="no-referrer"
           sandbox="allow-scripts allow-same-origin"
@@ -51,7 +56,7 @@ export function MapEmbed() {
         </div>
       )}
 
-      <a href={OPEN_HREF} target="_blank" rel="noopener noreferrer" className="self-start text-base font-semibold text-teal-700 underline underline-offset-2">
+      <a href={openHref} target="_blank" rel="noopener noreferrer" className="self-start text-base font-semibold text-teal-700 underline underline-offset-2">
         Open this area in OpenStreetMap
         <span className="sr-only"> (opens in a new tab)</span>
       </a>

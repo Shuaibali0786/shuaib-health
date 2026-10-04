@@ -4,7 +4,7 @@ import { NoticeBar } from "@/components/layout/NoticeBar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SkipLink } from "@/components/layout/SkipLink";
-import { siteConfig } from "@/data/siteConfig";
+import { getSiteConfig } from "@/lib/content";
 import { siteUrl } from "@/lib/seo";
 import { THEME_COLOR } from "./theme-color";
 import "./globals.css";
@@ -21,18 +21,23 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  // Base for canonical and Open Graph URLs; SITE_URL is optional (see .env.example).
-  metadataBase: new URL(siteUrl()),
-  title: {
-    default: siteConfig.fullTitle,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: "Find a doctor, book an appointment and see lab tests. Portfolio demo — not a real clinic, not medical advice.",
-  applicationName: siteConfig.name,
-  // While the site is a demo, keep search engines from presenting it as a real provider.
-  robots: siteConfig.indexable ? { index: true, follow: true } : { index: false, follow: false },
-};
+export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getSiteConfig();
+  return {
+    // Base for canonical and Open Graph URLs; SITE_URL is optional (see .env.example).
+    metadataBase: new URL(siteUrl()),
+    title: {
+      default: site.fullTitle,
+      template: `%s | ${site.name}`,
+    },
+    description: "Find a doctor, book an appointment and see lab tests. Portfolio demo — not a real clinic, not medical advice.",
+    applicationName: site.name,
+    // While the site is a demo, keep search engines from presenting it as a real provider.
+    robots: site.indexable ? { index: true, follow: true } : { index: false, follow: false },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: THEME_COLOR,

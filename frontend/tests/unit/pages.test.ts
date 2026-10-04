@@ -1,14 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
 import { healthTips } from "@/data/healthTips";
-import { labTests } from "@/data/labTests";
-import { siteConfig } from "@/data/siteConfig";
+import { labTests } from "../fixtures/catalog/labTests";
+import { fixtureCatalog } from "../fixtures/catalog";
+import { siteConfig } from "../fixtures/catalog/siteConfig";
 import { getManifestEntry, getPageManifest, knownPaths } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
-import { pageMetadata, siteUrl } from "@/lib/seo";
+import { organizationJsonLd, pageMetadata, siteUrl } from "@/lib/seo";
 
-const manifest = getPageManifest();
+vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
+
+const manifest = getPageManifest(fixtureCatalog, siteConfig.fullTitle);
 
 describe("page manifest (FR-005, FR-008)", () => {
   it("has unique paths, titles and descriptions", () => {
@@ -36,7 +39,7 @@ describe("page manifest (FR-005, FR-008)", () => {
   it("covers every static route and every real page that exists", () => {
     const paths = manifest.map((entry) => entry.path);
     for (const path of Object.values(ROUTES)) expect(paths, path).toContain(path);
-    for (const path of knownPaths()) expect(paths, path).toContain(path);
+    for (const path of knownPaths(fixtureCatalog)) expect(paths, path).toContain(path);
   });
 
   it("has every route family: 9 doctors, 7 departments, all lab tests and all tips", () => {
@@ -48,14 +51,14 @@ describe("page manifest (FR-005, FR-008)", () => {
   });
 
   it("throws for a path with no entry, so a missing entry fails loudly", () => {
-    expect(() => getManifestEntry("/nope")).toThrow();
+    expect(() => getManifestEntry("/nope", fixtureCatalog)).toThrow();
     expect(getManifestEntry("/doctors").title).toBe("Doctors");
   });
 });
 
 describe("pageMetadata", () => {
   it("builds the title, description, canonical path and share text from an entry", () => {
-    const meta = pageMetadata(getManifestEntry("/doctors"));
+    const meta = pageMetadata(getManifestEntry("/doctors"), siteConfig);
     expect(meta.title).toBe("Doctors");
     expect(meta.alternates?.canonical).toBe("/doctors");
     expect(meta.openGraph?.title).toBe("Doctors | Shuaib Health");
@@ -74,18 +77,29 @@ describe("pageMetadata", () => {
 });
 
 describe("sitemap and robots", () => {
-  it("lists exactly the manifest pages marked for the sitemap, as absolute URLs", () => {
-    const urls = sitemap().map((entry) => entry.url);
+  it("lists exactly the manifest pages marked for the sitemap, as absolute URLs", async () => {
+    const urls = (await sitemap()).map((entry) => entry.url);
     const expected = manifest.filter((entry) => entry.inSitemap).map((entry) => (entry.path === "/" ? siteUrl() : `${siteUrl()}${entry.path}`));
     expect(urls).toEqual(expected);
     expect(urls).not.toContain(`${siteUrl()}/book-appointment`);
     for (const url of urls) expect(url.startsWith("http")).toBe(true);
   });
 
-  it("asks crawlers to stay out while the site is not indexable, and still lists the sitemap", () => {
+  it("asks crawlers to stay out while the site is not indexable, and still lists the sitemap", async () => {
     expect(siteConfig.indexable).toBe(false);
-    const result = robots();
+    const result = await robots();
     expect(result.rules).toEqual({ userAgent: "*", disallow: "/" });
     expect(result.sitemap).toBe(`${siteUrl()}/sitemap.xml`);
+  });
+});
+
+describe("organizationJsonLd", () => {
+  it("uses the clinic logo when the data has one", () => {
+    const data = organizationJsonLd({ name: siteConfig.name, logo: { src: "/images/brand/logo-mark.svg", alt: "Logo", width: 64, height: 64 } });
+    expect(data).toMatchObject({ "@type": "Organization", name: siteConfig.name, logo: `${siteUrl()}/images/brand/logo-mark.svg` });
+  });
+
+  it("leaves the logo out when the data has none", () => {
+    expect(organizationJsonLd({ name: "Clinic" })).not.toHaveProperty("logo");
   });
 });

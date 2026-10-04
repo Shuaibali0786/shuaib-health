@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
+import { departments } from "../fixtures/catalog/departments";
+import { doctors } from "../fixtures/catalog/doctors";
 import { healthTips } from "@/data/healthTips";
-import { labTestCategories, labTests } from "@/data/labTests";
+import { labTestCategories, labTests } from "../fixtures/catalog/labTests";
 import {
   doctorFiltersToQuery,
   filterDoctors,

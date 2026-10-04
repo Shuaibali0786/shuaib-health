@@ -1,12 +1,16 @@
 import { Section } from "@/components/ui/Section";
-import { facts } from "@/data/homeContent";
+import { buildFacts } from "@/data/homeContent";
+import { getSiteConfig } from "@/lib/content";
 
 /**
  * Honest facts band (FR-014): four statements that are true within the demo. There are
  * no patient counts, years, awards, certifications or ratings, on purpose.
- * Values are teal-300 on navy (10.4:1), labels white (15.4:1).
+ * Values are teal-300 on navy (10.4:1), labels white (15.4:1). `departmentCount` comes from the
+ * catalog API; without it a fact that needs no data takes its place.
  */
-export function FactsBand() {
+export async function FactsBand({ departmentCount }: { departmentCount?: number }) {
+  const { openingHours } = await getSiteConfig();
+  const facts = buildFacts(departmentCount, openingHours);
   return (
     <Section
       labelledBy="facts-title"

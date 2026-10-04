@@ -1,42 +1,154 @@
+import { cache } from "react";
 import { aboutContent } from "@/data/aboutContent";
-import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
 import { faqGroups } from "@/data/faq";
 import { legalContent } from "@/data/legalContent";
-import { healthPackages } from "@/data/healthPackages";
 import { healthTips } from "@/data/healthTips";
-import { labTestCategories, labTests } from "@/data/labTests";
-import { siteConfig } from "@/data/siteConfig";
-import type { AboutContent, LegalContent, Department, FaqGroup, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
+import {
+  cachedClinic,
+  cachedClinicRules,
+  cachedDepartments,
+  cachedDoctors,
+  cachedHealthPackages,
+  cachedLabTestCategories,
+  cachedLabTests,
+} from "@/lib/api/cached";
+import { getClinicFallback } from "@/lib/api/config";
+import { load, type Loaded } from "@/lib/api/load";
+import type { ClinicSettings } from "@/lib/api/schemas";
+import { CREDIT, DEMO_NOTICE } from "@/lib/honesty";
+import { toIconName } from "@/components/ui/icons";
+import type { AboutContent, ClinicRule, LegalContent, Department, FaqGroup, Doctor, HealthPackage, HealthTip, LabTest, LabTestCategory, SiteConfig } from "@/types/content";
 
 /**
- * The only place components read content from. Every accessor is async so a
- * future backend can replace the sample data without touching components.
- * Phase 2 will fetch from the API here and fall back to the sample data when
- * the backend is unreachable, so the build never fails (constitution V).
+ * The only place components read content from. Every accessor is async. The catalog (departments,
+ * doctors, lab tests, packages) comes from the catalog API through the cached loaders in
+ * `@/lib/api/cached` (ADR-0004). Each `load*` function returns `Loaded<T>` so a page can show a
+ * friendly message for one section when the data never loaded; the `get*` helpers return empty or
+ * `undefined` in that case, for code that only needs data-or-nothing (sitemap, static params).
+ * Editorial content (tips, about, FAQ, legal) still lives in `src/data`.
  */
 
+export type { Loaded };
+
+/**
+ * Shown when neither the API nor a valid `CLINIC_FALLBACK_JSON` supplied clinic data. It carries no
+ * sample clinic values: no phone numbers, address or hours, so the phone UI is simply left out.
+ * The demo notice and credit are the constitution constants, as everywhere else.
+ */
+const NEUTRAL_IDENTITY: SiteConfig = {
+  name: "Clinic",
+  tagline: "",
+  fullTitle: "Clinic",
+  demoNotice: DEMO_NOTICE,
+  emergencyPhone: { display: "", tel: "" },
+  generalPhone: { display: "", tel: "" },
+  address: [],
+  timeZone: "Asia/Karachi",
+  openingHours: [],
+  labHours: [],
+  mapArea: { bbox: [0, 0, 0, 0], label: "" },
+  credit: { ...CREDIT },
+  indexable: false,
+  isSample: true,
+};
+
+function toSiteConfig(clinic: ClinicSettings): SiteConfig {
+  // The generated type has a plain number[] for the four-number bounding box. The demo notice and
+  // credit always come from the constitution constants, whatever the data says (constitution I).
+  const [west = 0, south = 0, east = 0, north = 0] = clinic.mapArea.bbox;
+  return {
+    ...clinic,
+    mapArea: { bbox: [west, south, east, north], label: clinic.mapArea.label },
+    demoNotice: DEMO_NOTICE,
+    credit: { ...CREDIT },
+  };
+}
+
+/**
+ * Clinic identity, in this order (FR-022): the live or last-good API value, else the validated
+ * `CLINIC_FALLBACK_JSON`, else the neutral identity. The emergency number is therefore available
+ * whenever any source has it, whatever state the API is in.
+ */
 export async function getSiteConfig(): Promise<SiteConfig> {
-  return siteConfig;
+  const clinic = await clinicLoaded();
+  if (clinic.ok) return toSiteConfig(clinic.data);
+  const fallback = getClinicFallback();
+  return fallback ? toSiteConfig(fallback) : NEUTRAL_IDENTITY;
+}
+
+const bySortOrder = <T extends { sortOrder: number }>(a: T, b: T) => a.sortOrder - b.sortOrder;
+
+/** The "Before your visit" rules in display order. Empty when there are none or the API is unavailable. */
+export async function getClinicRules(): Promise<ClinicRule[]> {
+  const rules = await clinicRulesLoaded();
+  return rules.ok ? [...rules.data].sort(bySortOrder) : [];
+}
+
+// React's cache() shares one result per render, so a page that calls several accessors for the
+// same resource asks the data cache (and logs a failure) once.
+const clinicLoaded = cache(() => load("clinic", cachedClinic));
+const clinicRulesLoaded = cache(() => load("clinic-rules", cachedClinicRules));
+const departmentsLoaded = cache(() => load("departments", cachedDepartments));
+const doctorsLoaded = cache(() => load("doctors", cachedDoctors));
+const categoriesLoaded = cache(() => load("lab-test-categories", cachedLabTestCategories));
+const labTestsLoaded = cache(() => load("lab-tests", cachedLabTests));
+const packagesLoaded = cache(() => load("health-packages", cachedHealthPackages));
+
+function mapLoaded<T, U>(result: Loaded<T>, map: (data: T) => U): Loaded<U> {
+  return result.ok ? { ok: true, data: map(result.data) } : result;
 }
 
 /** Departments in display order. */
+export async function loadDepartments(): Promise<Loaded<Department[]>> {
+  return mapLoaded(await departmentsLoaded(), (list) => [...list].sort(bySortOrder));
+}
+
+/** All doctors, in API order. */
+export async function loadDoctors(): Promise<Loaded<Doctor[]>> {
+  return mapLoaded(await doctorsLoaded(), (list) => [...list]);
+}
+
+/** The lab test categories, in API order. */
+export async function loadLabTestCategories(): Promise<Loaded<LabTestCategory[]>> {
+  // The API sends the icon as a plain string; an unknown one falls back to a generic icon.
+  return mapLoaded(await categoriesLoaded(), (list) =>
+    list.map((category) => ({ ...category, iconName: toIconName(category.iconName, "test-tube") })),
+  );
+}
+
+/** All lab tests, in API order. */
+export async function loadLabTests(): Promise<Loaded<LabTest[]>> {
+  return mapLoaded(await labTestsLoaded(), (list) => [...list]);
+}
+
+/** The health packages, in API order. */
+export async function loadHealthPackages(): Promise<Loaded<HealthPackage[]>> {
+  return mapLoaded(await packagesLoaded(), (list) => list.map((pkg) => ({ ...pkg, iconName: toIconName(pkg.iconName, "package") })));
+}
+
+const orEmpty = <T>(result: Loaded<T[]>): T[] => (result.ok ? result.data : []);
+
+/** Departments in display order. Empty when the catalog is unavailable. */
 export async function getDepartments(): Promise<Department[]> {
-  return [...departments].sort((a, b) => a.sortOrder - b.sortOrder);
+  return orEmpty(await loadDepartments());
 }
 
 export async function getDepartmentBySlug(slug: string): Promise<Department | undefined> {
-  return departments.find((department) => department.slug === slug);
+  return (await getDepartments()).find((department) => department.slug === slug);
 }
 
 /** Featured doctors only, in data order. The limit is clamped to 3–4 (FR-016). */
-export async function getFeaturedDoctors(limit = 4): Promise<Doctor[]> {
+export async function loadFeaturedDoctors(limit = 4): Promise<Loaded<Doctor[]>> {
   const clamped = Math.min(4, Math.max(3, Math.trunc(limit)));
-  return doctors.filter((doctor) => doctor.isFeatured).slice(0, clamped);
+  return mapLoaded(await loadDoctors(), (list) => list.filter((doctor) => doctor.isFeatured).slice(0, clamped));
+}
+
+export async function getFeaturedDoctors(limit = 4): Promise<Doctor[]> {
+  return orEmpty(await loadFeaturedDoctors(limit));
 }
 
 export async function getDoctorBySlug(slug: string): Promise<Doctor | undefined> {
-  return doctors.find((doctor) => doctor.slug === slug);
+  return (await getDoctors()).find((doctor) => doctor.slug === slug);
 }
 
 /** Newest first by `publishedAt`; ties break by id. */
@@ -50,42 +162,43 @@ export async function getHealthTipBySlug(slug: string): Promise<HealthTip | unde
   return healthTips.find((tip) => tip.slug === slug);
 }
 
-/** All doctors, in data order. */
+/** All doctors, in API order. Empty when the catalog is unavailable. */
 export async function getDoctors(): Promise<Doctor[]> {
-  return [...doctors];
+  return orEmpty(await loadDoctors());
 }
 
 export async function getDoctorsByDepartment(departmentId: string): Promise<Doctor[]> {
-  return doctors.filter((doctor) => doctor.departmentId === departmentId);
+  return (await getDoctors()).filter((doctor) => doctor.departmentId === departmentId);
 }
 
-/** The nine catalog categories, in display order. */
+/** The lab test categories, in API order. */
 export async function getLabTestCategories(): Promise<LabTestCategory[]> {
-  return [...labTestCategories];
+  return orEmpty(await loadLabTestCategories());
 }
 
-/** All lab tests, in catalog order. */
+/** All lab tests, in API order. */
 export async function getLabTests(): Promise<LabTest[]> {
-  return [...labTests];
+  return orEmpty(await loadLabTests());
 }
 
 export async function getLabTestBySlug(slug: string): Promise<LabTest | undefined> {
-  return labTests.find((test) => test.slug === slug);
+  return (await getLabTests()).find((test) => test.slug === slug);
 }
 
 /** The tests for the given slugs, in the order given. Unknown slugs are skipped. */
 export async function getLabTestsBySlugs(slugs: string[]): Promise<LabTest[]> {
-  return slugs.flatMap((slug) => labTests.filter((test) => test.slug === slug));
+  const tests = await getLabTests();
+  return slugs.flatMap((slug) => tests.filter((test) => test.slug === slug));
 }
 
-/** The five health packages, in display order. */
+/** The health packages, in API order. */
 export async function getHealthPackages(): Promise<HealthPackage[]> {
-  return [...healthPackages];
+  return orEmpty(await loadHealthPackages());
 }
 
 /** Packages that include the given lab test, in display order. Empty when none does. */
 export async function getPackagesIncludingTest(slug: string): Promise<HealthPackage[]> {
-  return healthPackages.filter((pkg) => pkg.testSlugs.includes(slug));
+  return (await getHealthPackages()).filter((pkg) => pkg.testSlugs.includes(slug));
 }
 
 /** All health tips, newest first; ties break by id. */

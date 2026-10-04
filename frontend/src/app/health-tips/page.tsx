@@ -4,13 +4,13 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { TipBrowser, TipBrowserFallback } from "@/components/tips/TipBrowser";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { getHealthTipCategories, getHealthTips } from "@/lib/content";
+import { getHealthTipCategories, getHealthTips, getSiteConfig } from "@/lib/content";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
 
-export function generateMetadata(): Metadata {
-  return pageMetadata(getManifestEntry(ROUTES.healthTips));
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata(getManifestEntry(ROUTES.healthTips), await getSiteConfig());
 }
 
 /**

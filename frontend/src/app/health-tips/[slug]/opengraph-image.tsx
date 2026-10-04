@@ -4,7 +4,7 @@ import { OG_SIZE, ogCard } from "@/lib/og";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-export const alt = "Sample health tip at Shuaib Health";
+export const alt = "Sample health tip";
 
 export function generateStaticParams(): Array<{ slug: string }> {
   return healthTips.map((tip) => ({ slug: tip.slug }));

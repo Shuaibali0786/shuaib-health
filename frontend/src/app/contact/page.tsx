@@ -1,23 +1,26 @@
 import { Phone, Siren } from "lucide-react";
 import type { Metadata } from "next";
 import { ContactForm } from "@/components/contact/ContactForm";
+import { BeforeYourVisit } from "@/components/contact/BeforeYourVisit";
 import { MapEmbed } from "@/components/contact/MapEmbed";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
-import { getSiteConfig } from "@/lib/content";
+import { getClinicRules, getSiteConfig } from "@/lib/content";
 import { formatOpeningHours } from "@/lib/format";
 import { getManifestEntry } from "@/lib/pages";
 import { ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
 
-export function generateMetadata(): Metadata {
-  return pageMetadata(getManifestEntry(ROUTES.contact));
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata(getManifestEntry(ROUTES.contact), await getSiteConfig());
 }
 
 export default async function ContactPage() {
-  const site = await getSiteConfig();
+  const [site, rules] = await Promise.all([getSiteConfig(), getClinicRules()]);
+  const hasPhones = site.generalPhone.tel !== "" || site.emergencyPhone.tel !== "";
+  const hasMap = site.mapArea.bbox[2] > site.mapArea.bbox[0] && site.mapArea.bbox[3] > site.mapArea.bbox[1];
 
   return (
     <>
@@ -39,30 +42,36 @@ export default async function ContactPage() {
               Phone numbers and hours
             </h2>
             <div className="mt-6 flex flex-col gap-6">
-              <Card className="flex flex-col gap-5 p-6">
-                <div className="flex items-start gap-3">
-                  <Phone className="mt-1 size-5 shrink-0 text-teal-700" aria-hidden="true" />
-                  <div>
-                    <p className="text-sm text-muted">General enquiries (sample number)</p>
-                    <a href={`tel:${site.generalPhone.tel}`} className="text-lg font-bold text-navy-900 underline underline-offset-2">
-                      {site.generalPhone.display}
-                    </a>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Siren className="mt-1 size-5 shrink-0 text-danger-700" aria-hidden="true" />
-                  <div>
-                    <p className="text-sm text-muted">Emergency (sample number)</p>
-                    <a href={`tel:${site.emergencyPhone.tel}`} className="text-lg font-bold text-danger-700 underline underline-offset-2">
-                      {site.emergencyPhone.display}
-                    </a>
-                  </div>
-                </div>
-                <p className="text-sm text-muted">
-                  These demo numbers do not connect to anyone. If you or someone else has a real emergency, contact your local emergency
-                  services right away.
-                </p>
-              </Card>
+              {hasPhones ? (
+                <Card className="flex flex-col gap-5 p-6">
+                  {site.generalPhone.tel !== "" ? (
+                    <div className="flex items-start gap-3">
+                      <Phone className="mt-1 size-5 shrink-0 text-teal-700" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm text-muted">General enquiries (sample number)</p>
+                        <a href={`tel:${site.generalPhone.tel}`} className="text-lg font-bold text-navy-900 underline underline-offset-2">
+                          {site.generalPhone.display}
+                        </a>
+                      </div>
+                    </div>
+                  ) : null}
+                  {site.emergencyPhone.tel !== "" ? (
+                    <div className="flex items-start gap-3">
+                      <Siren className="mt-1 size-5 shrink-0 text-danger-700" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm text-muted">Emergency (sample number)</p>
+                        <a href={`tel:${site.emergencyPhone.tel}`} className="text-lg font-bold text-danger-700 underline underline-offset-2">
+                          {site.emergencyPhone.display}
+                        </a>
+                      </div>
+                    </div>
+                  ) : null}
+                  <p className="text-sm text-muted">
+                    These demo numbers do not connect to anyone. If you or someone else has a real emergency, contact your local emergency
+                    services right away.
+                  </p>
+                </Card>
+              ) : null}
 
               <div className="overflow-hidden rounded-card border border-border">
                 <table className="w-full text-left text-base">
@@ -111,14 +120,18 @@ export default async function ContactPage() {
         </div>
       </Section>
 
-      <Section tone="surface" spacing="compact" labelledBy="contact-map-title">
-        <h2 id="contact-map-title" className="text-2xl font-bold">
-          Find us (sample address)
-        </h2>
-        <div className="mt-6 max-w-3xl">
-          <MapEmbed />
-        </div>
-      </Section>
+      {hasMap ? (
+        <Section tone="surface" spacing="compact" labelledBy="contact-map-title">
+          <h2 id="contact-map-title" className="text-2xl font-bold">
+            Find us (sample address)
+          </h2>
+          <div className="mt-6 max-w-3xl">
+            <MapEmbed mapArea={site.mapArea} address={site.address} />
+          </div>
+        </Section>
+      ) : null}
+
+      <BeforeYourVisit rules={rules} />
     </>
   );
 }

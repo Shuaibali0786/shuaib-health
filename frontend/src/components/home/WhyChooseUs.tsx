@@ -4,6 +4,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { clinicImage, whyPoints } from "@/data/homeContent";
+import { getSiteConfig } from "@/lib/content";
 import { REVEAL_STAGGER } from "@/lib/motion";
 import { EmergencyCard } from "./EmergencyCard";
 
@@ -12,7 +13,8 @@ import { EmergencyCard } from "./EmergencyCard";
  * On phones the photo comes first, then the points, then the card; from lg the points sit
  * on the left and the photo on the right, with the card spanning the width below.
  */
-export function WhyChooseUs() {
+export async function WhyChooseUs() {
+  const { name } = await getSiteConfig();
   return (
     <Section labelledBy="why-title">
       <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
@@ -23,7 +25,7 @@ export function WhyChooseUs() {
         </Reveal>
         <div>
           <Reveal>
-            <SectionHeading id="why-title" eyebrow="Why us" title="Why choose Shuaib Health" />
+            <SectionHeading id="why-title" eyebrow="Why us" title={`Why choose ${name}`} />
           </Reveal>
           <ul className="mt-8 space-y-5">
             {whyPoints.map((point, index) => (

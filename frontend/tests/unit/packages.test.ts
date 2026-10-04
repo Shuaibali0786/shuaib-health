@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { healthPackages } from "@/data/healthPackages";
-import { labTests } from "@/data/labTests";
+import { describe, expect, it, vi } from "vitest";
+import { healthPackages } from "../fixtures/catalog/healthPackages";
+import { labTests } from "../fixtures/catalog/labTests";
 import { getHealthPackages, getPackagesIncludingTest } from "@/lib/content";
 import { summarizePackage } from "@/lib/packages";
 import { BANNED_CLAIMS, BRAND_WORDS, stringValues } from "./helpers/forbidden";
+
+vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
 
 const price = (slug: string) => labTests.find((test) => test.slug === slug)!.pricePkr;
 

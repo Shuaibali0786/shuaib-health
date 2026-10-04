@@ -1,13 +1,12 @@
-import { departments } from "@/data/departments";
-import { getDepartmentBySlug } from "@/lib/content";
+import { getDepartmentBySlug, getDepartments } from "@/lib/content";
 import { OG_SIZE, ogCard } from "@/lib/og";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-export const alt = "Sample department at Shuaib Health";
+export const alt = "Sample department";
 
-export function generateStaticParams(): Array<{ slug: string }> {
-  return departments.map((department) => ({ slug: department.slug }));
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  return (await getDepartments()).map((department) => ({ slug: department.slug }));
 }
 
 /** Social card for a sample department: its name and one-line summary on the brand card. */

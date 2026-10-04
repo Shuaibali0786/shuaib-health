@@ -4,6 +4,7 @@ import { Container } from "@/components/layout/Container";
 import { footerQuickLinks, legalLinks } from "@/data/navigation";
 import { getDepartments, getSiteConfig } from "@/lib/content";
 import { formatOpeningHours } from "@/lib/format";
+import { CREDIT, DEMO_NOTICE } from "@/lib/honesty";
 import { departmentPath } from "@/lib/routes";
 
 /** Fixed at build time (not new Date()) so server and client markup never differ. */
@@ -25,7 +26,7 @@ export async function SiteFooter() {
       <Container className="py-14">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Link href="/" aria-label="Shuaib Health home" className="inline-block rounded-control">
+            <Link href="/" aria-label={`${site.name} home`} className="inline-block rounded-control">
               <Logo size="md" onDark />
             </Link>
             <p className="mt-4 max-w-xs text-base">
@@ -65,25 +66,31 @@ export async function SiteFooter() {
             <p className="mb-3 inline-flex rounded-pill border border-teal-300 px-2.5 py-0.5 text-sm font-semibold text-teal-300">
               Sample details
             </p>
-            <address className="not-italic">
-              {site.address.map((line) => (
-                <span key={line} className="block">
-                  {line}
-                </span>
-              ))}
-            </address>
+            {site.address.length > 0 ? (
+              <address className="not-italic">
+                {site.address.map((line) => (
+                  <span key={line} className="block">
+                    {line}
+                  </span>
+                ))}
+              </address>
+            ) : null}
             <ul className="mt-3 space-y-1">
-              <li>
-                <a href={`tel:${site.generalPhone.tel}`} className={FOOTER_LINK}>
-                  {site.generalPhone.display}
-                </a>
-              </li>
-              <li>
-                <span className="block text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-teal-300">
-                  Hours
-                </span>
-                {formatOpeningHours(site.openingHours)}
-              </li>
+              {site.generalPhone.tel !== "" ? (
+                <li>
+                  <a href={`tel:${site.generalPhone.tel}`} className={FOOTER_LINK}>
+                    {site.generalPhone.display}
+                  </a>
+                </li>
+              ) : null}
+              {site.openingHours.length > 0 ? (
+                <li>
+                  <span className="block text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-teal-300">
+                    Hours
+                  </span>
+                  {formatOpeningHours(site.openingHours)}
+                </li>
+              ) : null}
             </ul>
           </div>
         </div>
@@ -101,14 +108,14 @@ export async function SiteFooter() {
               </li>
             ))}
           </ul>
-          <p>{site.demoNotice}</p>
+          <p>{DEMO_NOTICE}</p>
           <p>
             <a
-              href={site.credit.href}
+              href={CREDIT.href}
               rel="noopener noreferrer"
               className="inline-block py-1 underline underline-offset-4 hover:text-teal-300"
             >
-              {site.credit.text}
+              {CREDIT.text}
             </a>
           </p>
         </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { siteConfig } from "@/data/siteConfig";
+import { siteConfig } from "../fixtures/catalog/siteConfig";
 import {
   formatDayLong,
   formatDayShort,

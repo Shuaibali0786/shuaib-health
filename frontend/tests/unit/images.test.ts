@@ -2,8 +2,8 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
-import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
+import { departments } from "../fixtures/catalog/departments";
+import { doctors } from "../fixtures/catalog/doctors";
 import { healthTips } from "@/data/healthTips";
 import { clinicImage, heroImage } from "@/data/homeContent";
 import type { ImageAsset } from "@/types/content";
@@ -50,7 +50,8 @@ describe("images referenced by the data files", () => {
   it("has no image file that nothing references", () => {
     const used = new Set(referenced.map((entry) => entry.image.src).map((src) => join(PUBLIC, src)));
     const unused = filesUnder(IMAGES)
-      .filter((file) => !used.has(file))
+      // public/images/brand/ holds the clinic logo, which the API's clinic settings point to.
+      .filter((file) => !used.has(file) && !file.includes(`${join("images", "brand")}`))
       .map((file) => file.replace(PUBLIC, ""));
     expect(unused).toEqual([]);
   });

@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/Button";
+import { DataUnavailable } from "@/components/ui/DataUnavailable";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section } from "@/components/ui/Section";
 import { SWIPE_ITEM, SWIPE_ROW } from "@/components/ui/swipe-row";
 import { SwipeList } from "@/components/ui/SwipeList";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { getFeaturedDoctors } from "@/lib/content";
+import { getSiteConfig, loadFeaturedDoctors } from "@/lib/content";
 import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/routes";
 import { DoctorCard } from "./DoctorCard";
@@ -14,7 +15,7 @@ import { DoctorCard } from "./DoctorCard";
  * two columns from sm, four from xl, with a link to all doctors.
  */
 export async function FeaturedDoctors() {
-  const doctors = await getFeaturedDoctors();
+  const [doctors, { emergencyPhone }] = await Promise.all([loadFeaturedDoctors(), getSiteConfig()]);
 
   return (
     <Section tone="surface" labelledBy="doctors-title">
@@ -30,13 +31,17 @@ export async function FeaturedDoctors() {
         </Button>
       </Reveal>
       <Reveal className="mt-10">
-        <SwipeList className={cn("grid gap-5 sm:grid-cols-2 xl:grid-cols-4", SWIPE_ROW)}>
-          {doctors.map((doctor) => (
-            <li key={doctor.id} className={cn("flex", SWIPE_ITEM)}>
-              <DoctorCard doctor={doctor} />
-            </li>
-          ))}
-        </SwipeList>
+        {doctors.ok ? (
+          <SwipeList className={cn("grid gap-5 sm:grid-cols-2 xl:grid-cols-4", SWIPE_ROW)}>
+            {doctors.data.map((doctor) => (
+              <li key={doctor.id} className={cn("flex", SWIPE_ITEM)}>
+                <DoctorCard doctor={doctor} />
+              </li>
+            ))}
+          </SwipeList>
+        ) : (
+          <DataUnavailable phone={emergencyPhone} href="/" />
+        )}
       </Reveal>
     </Section>
   );

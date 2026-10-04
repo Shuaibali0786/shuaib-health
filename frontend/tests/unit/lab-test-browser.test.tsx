@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LabTestBrowser, LabTestBrowserFallback } from "@/components/lab-tests/LabTestBrowser";
-import { labTestCategories, labTests } from "@/data/labTests";
+import { labTestCategories, labTests } from "../fixtures/catalog/labTests";
 
 let search = "";
 vi.mock("next/navigation", () => ({

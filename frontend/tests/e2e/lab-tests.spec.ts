@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { labTestCategories, labTests } from "../../src/data/labTests";
+import { labTestCategories, labTests } from "../fixtures/catalog/labTests";
 import { NOTICE } from "./helpers";
 
 const cards = (page: Page) => page.getByRole("article");

@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
+import { describe, expect, it, vi } from "vitest";
+import { departments } from "../fixtures/catalog/departments";
+import { doctors } from "../fixtures/catalog/doctors";
 import { healthTips } from "@/data/healthTips";
-import { labTests } from "@/data/labTests";
-import { facts, heroFacts, quickActions, whyPoints } from "@/data/homeContent";
+import { labTests } from "../fixtures/catalog/labTests";
+import { buildFacts, buildHeroFacts, quickActions, whyPoints } from "@/data/homeContent";
 import { footerQuickLinks, legalLinks, primaryNav } from "@/data/navigation";
-import { siteConfig } from "@/data/siteConfig";
+import { siteConfig } from "../fixtures/catalog/siteConfig";
 import { countWords } from "@/lib/readingTime";
 import { BANNED_CLAIMS, BRAND_WORDS, stringValues } from "./helpers/forbidden";
 import {
@@ -17,6 +17,8 @@ import {
   getLatestHealthTips,
   getSiteConfig,
 } from "@/lib/content";
+
+vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const unique = (values: unknown[]) => new Set(values).size === values.length;
@@ -198,7 +200,7 @@ describe("site config (rule 7)", () => {
 
 describe("home page copy and navigation", () => {
   it("has exactly three hero facts, five quick actions, four facts and four to five why-points", () => {
-    expect(heroFacts).toHaveLength(3);
+    expect(buildHeroFacts(siteConfig.openingHours)).toHaveLength(3);
     expect(quickActions.map((action) => action.label)).toEqual([
       "Find a Doctor",
       "Book Appointment",
@@ -206,7 +208,8 @@ describe("home page copy and navigation", () => {
       "Health Packages",
       "Home Sample Collection",
     ]);
-    expect(facts).toHaveLength(4);
+    expect(buildFacts(departments.length, siteConfig.openingHours)).toHaveLength(4);
+    expect(buildFacts(undefined, siteConfig.openingHours)).toHaveLength(4);
     expect(whyPoints.length).toBeGreaterThanOrEqual(4);
     expect(whyPoints.length).toBeLessThanOrEqual(5);
   });
@@ -253,6 +256,6 @@ describe("content accessors", () => {
   });
 
   it("returns the site config", async () => {
-    expect(await getSiteConfig()).toBe(siteConfig);
+    expect(await getSiteConfig()).toMatchObject(siteConfig);
   });
 });

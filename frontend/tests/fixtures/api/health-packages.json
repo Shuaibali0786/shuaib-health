@@ -1,0 +1,106 @@
+{
+  "items": [
+    {
+      "id": "5a47c953-bdd6-450f-a66c-b204a2b37965",
+      "slug": "basic-health-check",
+      "name": "Basic Health Check",
+      "iconName": "clipboard-check",
+      "whoFor": "Adults who want a general look at blood, sugar, cholesterol, liver, kidney and urine tests in one visit.",
+      "testSlugs": [
+        "complete-blood-count",
+        "fasting-blood-sugar",
+        "lipid-profile",
+        "liver-function-tests",
+        "serum-creatinine",
+        "urine-routine-examination"
+      ],
+      "packagePricePkr": 4500,
+      "preparation": "10–12 hours fasting; plain water is allowed. Bring a first-morning urine sample if you can.",
+      "homeCollection": true,
+      "isSample": true
+    },
+    {
+      "id": "6dce2167-0142-45da-985b-44f9d35ca6c3",
+      "slug": "diabetes-care",
+      "name": "Diabetes Care",
+      "iconName": "candy",
+      "whoFor": "People who live with diabetes or are keeping an eye on their blood sugar, and want the usual tests together.",
+      "testSlugs": [
+        "fasting-blood-sugar",
+        "hba1c",
+        "random-blood-sugar",
+        "lipid-profile",
+        "serum-creatinine",
+        "urine-routine-examination"
+      ],
+      "packagePricePkr": 4200,
+      "preparation": "10–12 hours fasting; plain water is allowed. Ask your doctor before changing any medicine on the day.",
+      "homeCollection": true,
+      "isSample": true
+    },
+    {
+      "id": "5e263261-6080-45f7-9df3-535b173ef65b",
+      "slug": "heart-check",
+      "name": "Heart Check",
+      "iconName": "heart-pulse",
+      "whoFor": "Adults who want heart-related blood tests along with sugar, kidney and blood count tests.",
+      "testSlugs": [
+        "lipid-profile",
+        "hs-crp",
+        "fasting-blood-sugar",
+        "serum-creatinine",
+        "uric-acid",
+        "complete-blood-count"
+      ],
+      "packagePricePkr": 5000,
+      "preparation": "10–12 hours fasting; plain water is allowed",
+      "homeCollection": true,
+      "isSample": true
+    },
+    {
+      "id": "6e15495d-4462-4c45-9f36-bda0627a71c7",
+      "slug": "womens-health",
+      "name": "Women's Health",
+      "iconName": "flower",
+      "whoFor": "Women who want a general check covering blood count, thyroid, vitamins and hormones.",
+      "testSlugs": [
+        "complete-blood-count",
+        "tsh",
+        "vitamin-d",
+        "vitamin-b12",
+        "prolactin",
+        "urine-routine-examination"
+      ],
+      "packagePricePkr": 9500,
+      "preparation": "No fasting needed. A morning sample is preferred; ask the lab about timing for the hormone test.",
+      "homeCollection": true,
+      "isSample": true
+    },
+    {
+      "id": "fec75b9c-44ba-45e2-a8bf-714d69fba6b1",
+      "slug": "senior-citizen",
+      "name": "Senior Citizen",
+      "iconName": "hourglass",
+      "whoFor": "Older adults who want a wide set of routine tests together, so fewer visits are needed.",
+      "testSlugs": [
+        "complete-blood-count",
+        "fasting-blood-sugar",
+        "hba1c",
+        "lipid-profile",
+        "liver-function-tests",
+        "serum-creatinine",
+        "uric-acid",
+        "tsh",
+        "vitamin-d",
+        "urine-routine-examination"
+      ],
+      "packagePricePkr": 10500,
+      "preparation": "10–12 hours fasting; plain water is allowed. Home collection can be arranged for those who find travelling hard.",
+      "homeCollection": true,
+      "isSample": true
+    }
+  ],
+  "total": 5,
+  "page": 1,
+  "pageSize": 100
+}

@@ -1,13 +1,12 @@
-import { doctors } from "@/data/doctors";
-import { getDoctorBySlug } from "@/lib/content";
+import { getDoctorBySlug, getDoctors } from "@/lib/content";
 import { OG_SIZE, ogCard } from "@/lib/og";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-export const alt = "Sample doctor profile at Shuaib Health";
+export const alt = "Sample doctor profile";
 
-export function generateStaticParams(): Array<{ slug: string }> {
-  return doctors.map((doctor) => ({ slug: doctor.slug }));
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  return (await getDoctors()).map((doctor) => ({ slug: doctor.slug }));
 }
 
 /** Social card for a sample doctor: name and specialty on the brand card. */

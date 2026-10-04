@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img">
+  <title>Logo mark</title>
+  <defs>
+    <linearGradient id="logo-gradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14B8A6"/>
+      <stop offset="1" stop-color="#0B2545"/>
+    </linearGradient>
+  </defs>
+  <path d="M29 4H35A8 8 0 0 1 43 12V21H52A8 8 0 0 1 60 29V35A8 8 0 0 1 52 43H43V52A8 8 0 0 1 35 60H29A8 8 0 0 1 21 52V43H12A8 8 0 0 1 4 35V29A8 8 0 0 1 12 21H21V12A8 8 0 0 1 29 4Z" fill="url(#logo-gradient)"/>
+  <path d="M6 32H16C21 32 22 24 31 24C38 24 39 29.5 32 32C25 34.5 26 40 33 40C42 40 43 32 48 32H58" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

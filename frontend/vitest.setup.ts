@@ -8,7 +8,8 @@ afterEach(() => {
 
 // jsdom does not implement matchMedia; components that read
 // prefers-reduced-motion need a stub. Default: no media query matches.
-Object.defineProperty(window, "matchMedia", {
+// Skipped in the node environment used by server-only tests (`// @vitest-environment node`).
+if (typeof window !== "undefined") Object.defineProperty(window, "matchMedia", {
   writable: true,
   configurable: true,
   value: vi.fn().mockImplementation((query: string) => ({

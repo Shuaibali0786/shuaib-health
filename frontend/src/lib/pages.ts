@@ -1,22 +1,27 @@
-import { departments } from "@/data/departments";
-import { doctors } from "@/data/doctors";
 import { healthTips } from "@/data/healthTips";
-import { labTests } from "@/data/labTests";
-import { siteConfig } from "@/data/siteConfig";
 import { departmentPath, doctorPath, labTestPath, ROUTES, tipPath } from "@/lib/routes";
-import type { PageManifestEntry } from "@/types/content";
+import type { Department, Doctor, LabTest, PageManifestEntry } from "@/types/content";
+
+/** The catalog records that have their own page. Passed in because the records come from the API. */
+export interface ManifestCatalog {
+  doctors: readonly Doctor[];
+  departments: readonly Department[];
+  labTests: readonly LabTest[];
+}
+
+const NO_CATALOG: ManifestCatalog = { doctors: [], departments: [], labTests: [] };
 
 /**
  * The page manifest: every public page with its title and description. Page metadata, the
  * sitemap and the link, title and description tests all read this one list, so "every page has a
  * unique title and description" and "the sitemap is complete" are checked from one place.
- * Titles are short; the layout appends " | Shuaib Health". Descriptions are 50-160 characters.
+ * Titles are short; the layout appends the clinic name. Descriptions are 50-160 characters.
  */
 
-const STATIC_PAGES: PageManifestEntry[] = [
+const staticPages = (homeTitle: string): PageManifestEntry[] => [
   {
     path: ROUTES.home,
-    title: siteConfig.fullTitle,
+    title: homeTitle,
     description: "Find a doctor, see lab tests and health packages, and read health tips. Portfolio demo, not a real clinic.",
     kind: "static",
     inSitemap: true,
@@ -24,7 +29,7 @@ const STATIC_PAGES: PageManifestEntry[] = [
   {
     path: ROUTES.about,
     title: "About",
-    description: "The honest story of the Shuaib Health demo clinic: its mission, values and how a visit works, step by step.",
+    description: "The honest story of this demo clinic: its mission, values and how a visit works, step by step.",
     kind: "static",
     inSitemap: true,
   },
@@ -101,31 +106,47 @@ const STATIC_PAGES: PageManifestEntry[] = [
   },
 ];
 
-/** Every public page, in a stable order: static pages, then doctors, departments, lab tests and tips. */
-export function getPageManifest(): PageManifestEntry[] {
+export function doctorEntry(doctor: Doctor): PageManifestEntry {
+  return {
+    path: doctorPath(doctor.slug),
+    title: `${doctor.fullName} — ${doctor.specialty}`,
+    description: `${doctor.fullName}, ${doctor.specialty}: qualifications, languages, fee and weekly schedule (sample profile).`,
+    kind: "doctor",
+    inSitemap: true,
+  };
+}
+
+export function departmentEntry(department: Department): PageManifestEntry {
+  return {
+    path: departmentPath(department.slug),
+    title: `${department.name} department`,
+    description: `${department.name} department (sample): ${department.summary}`,
+    kind: "department",
+    inSitemap: true,
+  };
+}
+
+export function labTestEntry(test: LabTest): PageManifestEntry {
+  return {
+    path: labTestPath(test.slug),
+    title: `${test.name} — lab test`,
+    description: `${test.name}: sample price, sample type, report time and preparation at the demo lab.`,
+    kind: "lab-test",
+    inSitemap: true,
+  };
+}
+
+/**
+ * Every public page, in a stable order: static pages, then doctors, departments, lab tests and tips.
+ * The doctor, department and lab test entries come from `catalog`; without it only the static and
+ * editorial pages are listed (what is left when the catalog API is unavailable).
+ */
+export function getPageManifest(catalog: ManifestCatalog = NO_CATALOG, homeTitle = "Home"): PageManifestEntry[] {
   return [
-    ...STATIC_PAGES,
-    ...doctors.map((doctor): PageManifestEntry => ({
-      path: doctorPath(doctor.slug),
-      title: `${doctor.fullName} — ${doctor.specialty}`,
-      description: `${doctor.fullName}, ${doctor.specialty}: qualifications, languages, fee and weekly schedule (sample profile).`,
-      kind: "doctor",
-      inSitemap: true,
-    })),
-    ...departments.map((department): PageManifestEntry => ({
-      path: departmentPath(department.slug),
-      title: `${department.name} department`,
-      description: `${department.name} at Shuaib Health (sample): ${department.summary}`,
-      kind: "department",
-      inSitemap: true,
-    })),
-    ...labTests.map((test): PageManifestEntry => ({
-      path: labTestPath(test.slug),
-      title: `${test.name} — lab test`,
-      description: `${test.name}: sample price, sample type, report time and preparation at the Shuaib Health demo lab.`,
-      kind: "lab-test",
-      inSitemap: true,
-    })),
+    ...staticPages(homeTitle),
+    ...catalog.doctors.map(doctorEntry),
+    ...catalog.departments.map(departmentEntry),
+    ...catalog.labTests.map(labTestEntry),
     ...healthTips.map((tip): PageManifestEntry => ({
       path: tipPath(tip.slug),
       title: tip.title,
@@ -137,20 +158,20 @@ export function getPageManifest(): PageManifestEntry[] {
 }
 
 /** Every public path, from the manifest. */
-export function knownPaths(): string[] {
-  return getPageManifest().map((entry) => entry.path);
+export function knownPaths(catalog?: ManifestCatalog): string[] {
+  return getPageManifest(catalog).map((entry) => entry.path);
 }
 
 /** True for every path that has a real page. Ignores a #fragment, ?query and trailing slash. */
-export function isKnownPath(path: string): boolean {
+export function isKnownPath(path: string, catalog?: ManifestCatalog): boolean {
   const bare = path.split("#")[0]?.split("?")[0] ?? path;
   const target = bare.length > 1 ? bare.replace(/\/+$/, "") : bare;
-  return knownPaths().includes(target);
+  return knownPaths(catalog).includes(target);
 }
 
 /** The manifest entry for a path. Throws for an unknown path so a missing entry fails the build. */
-export function getManifestEntry(path: string): PageManifestEntry {
-  const entry = getPageManifest().find((candidate) => candidate.path === path);
+export function getManifestEntry(path: string, catalog?: ManifestCatalog): PageManifestEntry {
+  const entry = getPageManifest(catalog).find((candidate) => candidate.path === path);
   if (!entry) throw new Error(`No page manifest entry for ${path}`);
   return entry;
 }

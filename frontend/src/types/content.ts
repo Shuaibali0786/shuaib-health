@@ -35,11 +35,13 @@ export interface Department {
 export type Language = "Urdu" | "English" | "Sindhi" | "Punjabi";
 
 export interface ScheduleSession {
-  /** Never "sun": the sample clinic is closed on Sundays. */
-  day: Exclude<Weekday, "sun">;
+  /** The sample clinic is closed on Sundays, but the API allows any weekday for another clinic. */
+  day: Weekday;
   /** 24-hour "HH:MM" in Asia/Karachi, within 09:00-21:00. */
   start: string;
   end: string;
+  /** Appointment slot length in minutes. Not displayed. */
+  slotMinutes?: number;
 }
 
 export interface Doctor {
@@ -106,13 +108,23 @@ export interface SiteConfig {
   emergencyPhone: PhoneNumber;
   generalPhone: PhoneNumber;
   address: string[];
-  timeZone: "Asia/Karachi";
+  timeZone: string;
   openingHours: OpeningHoursRule[];
   labHours: OpeningHoursRule[];
   mapArea: { bbox: [west: number, south: number, east: number, north: number]; label: string };
   credit: { text: string; href: string };
+  logo?: ImageAsset;
+  brandColors?: { primary: string; accent: string };
   /** When false, every page is sent with noindex. */
   indexable: boolean;
+  isSample: boolean;
+}
+
+/** One rule shown under "Before your visit". */
+export interface ClinicRule {
+  id: string;
+  sortOrder: number;
+  text: string;
   isSample: boolean;
 }
 

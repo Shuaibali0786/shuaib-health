@@ -26,6 +26,11 @@ import {
 } from "lucide-react";
 import type { IconName } from "@/types/content";
 
+/** The icon name when it is one we have an icon for, else `fallback`. API data carries plain strings. */
+export function toIconName(name: string, fallback: IconName): IconName {
+  return Object.hasOwn(ICONS, name) ? (name as IconName) : fallback;
+}
+
 /** Data files store icon names as strings; this maps them to lucide-react components. */
 export const ICONS: Record<IconName, LucideIcon> = {
   activity: Activity,

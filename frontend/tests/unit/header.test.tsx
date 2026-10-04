@@ -5,14 +5,18 @@ import { MobileMenu } from "@/components/layout/MobileMenu";
 import { NavLinks } from "@/components/layout/NavLinks";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { primaryNav } from "@/data/navigation";
-import { siteConfig } from "@/data/siteConfig";
+import { siteConfig } from "../fixtures/catalog/siteConfig";
+import { clinicState } from "./helpers/catalog-api-mock";
 import { isActivePath } from "@/lib/routes";
 
 const router = vi.hoisted(() => ({ pathname: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => router.pathname }));
+vi.mock("@/lib/api/cached", async () => (await import("./helpers/catalog-api-mock")).catalogApiMock);
 
 beforeEach(() => {
   router.pathname = "/";
+  clinicState.mode = "ok";
+  vi.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 describe("isActivePath", () => {
@@ -160,5 +164,20 @@ describe("SiteHeader", () => {
     const row = container.querySelector("header > div");
     expect(row).toHaveClass("flex-wrap", "min-h-16");
     expect(row).not.toHaveClass("h-16");
+  });
+});
+
+describe("neutral identity (no clinic data from the API or the fallback)", () => {
+  it("shows no phone link in the header and no crash", async () => {
+    clinicState.mode = "down";
+    const { container } = render(await SiteHeader());
+    expect(container.querySelectorAll("a[href^='tel:']")).toHaveLength(0);
+    expect(screen.getByRole("link", { name: "Clinic home" })).toHaveAttribute("href", "/");
+    expect(screen.getAllByRole("link", { name: "Book Appointment", hidden: true }).length).toBeGreaterThan(0);
+  });
+
+  it("shows no phone link in the mobile menu when there is no phone", () => {
+    const { container } = render(<MobileMenu items={primaryNav} />);
+    expect(container.querySelectorAll("a[href^='tel:']")).toHaveLength(0);
   });
 });

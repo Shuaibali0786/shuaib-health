@@ -133,8 +133,10 @@ uv run pytest -m perf -s
 
 ## 7. Regenerate the seed data (only when the frontend mock data changes)
 
-The seed file `app/seed/data/catalog.json` is exported from the frontend mock data. A frontend
-test fails when the two differ.
+The seed file `app/seed/data/catalog.json` is exported from the frontend catalog fixtures in
+`frontend/tests/fixtures/catalog/` (built by `frontend/scripts/catalog-object.mjs`). The website
+no longer reads those files at runtime; it reads this API. A frontend test fails when the
+fixtures and the seed file differ.
 
 ```bat
 cd ..\frontend

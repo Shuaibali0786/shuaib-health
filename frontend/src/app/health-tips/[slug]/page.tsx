@@ -10,7 +10,7 @@ import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { Section } from "@/components/ui/Section";
 import { healthTips } from "@/data/healthTips";
-import { getHealthTipBySlug, getRelatedTips } from "@/lib/content";
+import { getHealthTipBySlug, getRelatedTips, getSiteConfig } from "@/lib/content";
 import { formatKarachiDate } from "@/lib/format";
 import { getManifestEntry } from "@/lib/pages";
 import { readingMinutes } from "@/lib/readingTime";
@@ -26,7 +26,7 @@ export function generateStaticParams(): Array<{ slug: string }> {
 
 export async function generateMetadata({ params }: PageProps<"/health-tips/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  return pageMetadata(getManifestEntry(tipPath(slug)));
+  return pageMetadata(getManifestEntry(tipPath(slug)), await getSiteConfig());
 }
 
 export default async function HealthTipPage({ params }: PageProps<"/health-tips/[slug]">) {
