@@ -129,7 +129,7 @@ export default async function DoctorProfilePage({ params }: PageProps<"/doctors/
                 </Button>
               ) : null}
             </div>
-            <p className="text-sm text-muted">Booking is not available in this demo yet. This is a sample profile; nothing here is real.</p>
+            <p className="text-sm text-muted">Demo booking with a sample doctor. This is a sample profile; nothing here is real.</p>
           </div>
         </div>
       </Section>

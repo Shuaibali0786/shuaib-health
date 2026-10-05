@@ -56,3 +56,47 @@ test.describe("honesty (constitution I)", () => {
     expect(foreign).toEqual([]);
   });
 });
+
+// The demo notice and the "Sample" labels stay visible through the whole booking flow (FR-051, FR-052).
+// Picks the LAST free day and time, so it never takes the slot the other booking specs pick first.
+const BOOKING_DOCTOR = { mobile: { department: "Gynecology", name: "Dr. Ayesha Rahman" }, desktop: { department: "Pathology Lab", name: "Dr. Zainab Memon" } } as const;
+const DETAILS_NOTICE = "Demo site: please don't enter real medical details";
+
+test("every booking step and the confirmation page show the demo notice and label the doctors Sample", async ({ page }, testInfo) => {
+  const { department, name } = BOOKING_DOCTOR[testInfo.project.name as "mobile" | "desktop"];
+  const noticeShown = async () => expect(page.getByText(NOTICE)).toHaveCount(2);
+
+  await page.goto("/book-appointment");
+  await noticeShown();
+  await page.getByRole("button", { name: new RegExp(department) }).click();
+  await expect(page.getByRole("heading", { level: 2, name: "Choose a doctor" })).toBeVisible();
+  await noticeShown();
+  await expect(page.getByText("Sample", { exact: true }).first()).toBeVisible();
+
+  await page.getByRole("button", { name: `Select ${name}` }).click();
+  await expect(page.getByRole("heading", { level: 2, name: "Choose a date" })).toBeVisible();
+  await noticeShown();
+  // Focus then Space, as in booking.spec: a click can miss a day scrolled out of the strip.
+  await page.locator('input[name="date"]:not([disabled])').last().focus();
+  await page.keyboard.press("Space");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByRole("heading", { level: 2, name: "Choose a time" })).toBeVisible();
+  await noticeShown();
+  await page.locator('input[name="time"]').last().focus();
+  await page.keyboard.press("Space");
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(page.getByRole("heading", { level: 2, name: "Your details" })).toBeVisible();
+  await noticeShown();
+  await expect(page.getByText(DETAILS_NOTICE, { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Your appointment" }).getByText("Sample", { exact: true })).toBeVisible();
+
+  await page.getByLabel("Full name").fill("Honest Visitor");
+  await page.getByLabel("Mobile number").fill("0312 9876543");
+  await page.getByRole("checkbox", { name: /I accept the clinic rules/ }).check();
+  await page.getByRole("button", { name: "Confirm booking" }).click();
+
+  await expect(page).toHaveURL(/\/book-appointment\/confirmed\/[0-9A-Z]{5}-[0-9A-Z]{5}$/);
+  await noticeShown();
+  await expect(page.getByRole("article").getByText("Sample", { exact: true })).toBeVisible();
+});

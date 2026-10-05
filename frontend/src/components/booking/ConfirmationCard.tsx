@@ -1,4 +1,5 @@
 import { LogoMark } from "@/components/brand/LogoMark";
+import { SampleBadge } from "@/components/ui/SampleBadge";
 import { arriveByTime, formatLocalDateWithYear, timeZoneLabel } from "@/lib/booking/labels";
 import { qrModules, qrPath } from "@/lib/booking/qr";
 import type { AppointmentView } from "@/lib/booking/schemas";
@@ -85,6 +86,7 @@ export function ConfirmationCard({ view, site }: { view: AppointmentView; site: 
             <dt className="text-muted">Doctor</dt>
             <dd>
               <span className="font-semibold">{view.doctor.fullName}</span>
+              {view.isSample ? <SampleBadge className="ml-2" /> : null}
               <span className="block text-sm text-muted">{view.doctor.specialty}</span>
             </dd>
             <dt className="text-muted">Department</dt>

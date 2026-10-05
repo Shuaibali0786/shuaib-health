@@ -77,7 +77,7 @@ describe("FAQ data", () => {
   it("never claims a live service and contains no claim words or brand names", () => {
     const text = stringValues(faqGroups);
     expect(text.filter((value) => BANNED_CLAIMS.test(value) || BRAND_WORDS.test(value))).toEqual([]);
-    expect(faqGroups[0]!.items[0]!.answer).toMatch(/not available in this demo yet/i);
+    expect(faqGroups[0]!.items[0]!.answer).toMatch(/try online booking with the sample doctors/i);
     expect(faqGroups[2]!.items[1]!.answer).toMatch(/not available/i);
     expect(faqGroups[1]!.items[3]!.answer).toMatch(/planned/i);
   });

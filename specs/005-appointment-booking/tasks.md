@@ -602,11 +602,11 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### Tests for User Story 7 ⚠️
 
-- [ ] T084 [P] [US7] Extend `backend/tests/api/test_log_safety.py` (db).
+- [X] T084 [P] [US7] Extend `backend/tests/api/test_log_safety.py` (db).
   - Run with `caplog` at DEBUG and capture stdout: a successful booking, a slot-taken, a `422`, a `429`, a trap, and a lookup.
   - Assert that none of the name, raw mobile, E.164 mobile, email or reason appears in any log record or in the error bodies, except the masked forms.
   - Assert that the `audit_log`, `idempotency_key` and `rate_limit_counter` rows contain none of them.
-- [ ] T085 [P] [US7] Write `backend/tests/api/test_retention.py` (db, `committing_engine`, frozen clock). Cover:
+- [X] T085 [P] [US7] Write `backend/tests/api/test_retention.py` (db, `committing_engine`, frozen clock). Cover:
   - **Purge rule**: bookings ending 8 days ago are deleted; ones that ended 6 days ago, and future ones, are kept.
   - **Side effects**: their `idempotency_key` rows cascade; recent `audit_log` rows remain; the lookup of a purged reference returns `404`.
   - **Audit purge**: audit rows older than 90 days are deleted and newer ones kept; `audit_purge_after_days` is honoured.
@@ -614,30 +614,30 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
   - **Startup purge**: runs on app startup, through the lifespan within `TestClient` context.
   - **Post-booking purge**: runs after a booking commit, removing at most 200 rows per run.
   - **Database down**: with an unreachable database (settings pointing at a closed port), the app still starts, `/health` returns `200`, and a `purge_failed` warning is logged without data.
-- [ ] T086 [P] [US7] Write `frontend/tests/e2e/booking-privacy.spec.ts` (main).
+- [X] T086 [P] [US7] Write `frontend/tests/e2e/booking-privacy.spec.ts` (main).
   - Collect every request URL via `page.on("request")` and every `page.url()` during a full booking with distinctive values (name "Zubair Testcase", mobile 03123456789, email and reason). Assert that none of them appears.
   - Fetch `/__log` from the mock and assert the same.
   - Assert that the confirmation page sends `referrer: no-referrer` and `robots: noindex`.
-- [ ] T087 [P] [US7] Extend `frontend/tests/e2e/honesty.spec.ts`: on every booking step and on the confirmation page, the demo notice "Portfolio demo — not a real clinic, not medical advice." is visible, doctors show "Sample", and the details step shows exactly "Demo site: please don't enter real medical details".
-- [ ] T088 [P] [US7] Write copy tests for FR-056 / SC-013. All must fail until T093.
+- [X] T087 [P] [US7] Extend `frontend/tests/e2e/honesty.spec.ts`: on every booking step and on the confirmation page, the demo notice "Portfolio demo — not a real clinic, not medical advice." is visible, doctors show "Sample", and the details step shows exactly "Demo site: please don't enter real medical details".
+- [X] T088 [P] [US7] Write copy tests for FR-056 / SC-013. All must fail until T093.
   - New `frontend/tests/unit/booking-copy.test.ts`: grep `frontend/src/**/*.{ts,tsx}` (outside `tests/`) for `/not available in this demo|coming soon|holding page|collects no personal data|no booking forms/i` and expect 0 hits.
   - In `frontend/tests/unit/legal.test.ts`, the privacy content mentions: name, mobile, optional email and reason; "7 days"; "90 days"; that no messages are sent; that the contact form still sends nothing.
   - Update the expectations in `frontend/tests/unit/faq-group.test.tsx` (line about 80, currently `/not available in this demo yet/i`) and `frontend/tests/unit/about-content.test.tsx` to the new wording.
 
 ### Implementation for User Story 7
 
-- [ ] T089 [US7] Implement `backend/app/booking/retention.py`: `purge_demo_bookings(conn, *, now, after_days, audit_after_days, limit: int | None = 200) -> int`.
+- [X] T089 [US7] Implement `backend/app/booking/retention.py`: `purge_demo_bookings(conn, *, now, after_days, audit_after_days, limit: int | None = 200) -> int`.
   - It deletes from `appointment` where `ends_at < now - after_days`, then from `audit_log` where `occurred_at < now - audit_after_days`, each in batches via a `ctid` subquery.
   - With `limit=None` it loops until a batch deletes fewer rows than the batch size.
   - It logs `{"event": "purge", "deleted": n}` only.
-- [ ] T090 [US7] Create the CLI `backend/app/booking/purge.py`, run with `python -m app.booking.purge`.
+- [X] T090 [US7] Create the CLI `backend/app/booking/purge.py`, run with `python -m app.booking.purge`.
   - It loads settings (fail fast) and refuses when `demo_mode` is false (exit 2, message on stderr).
   - It runs `purge_demo_bookings(limit=None)` in one transaction, prints `purged: <n>` and exits 0. A database error prints "purge failed: <ExceptionType>" and exits 1.
-- [ ] T091 [US7] Purge on startup and after each booking.
+- [X] T091 [US7] Purge on startup and after each booking.
   - In `backend/app/main.py`, add a `lifespan` context manager: when `settings.demo_mode`, schedule `asyncio.to_thread(_startup_purge)` as a background task (not awaited before serving). `_startup_purge` catches every exception and logs the warning `purge_failed` with the exception type only.
   - In `backend/app/booking/service.py`, after a successful commit and when demo mode is on, call `purge_demo_bookings(limit=200)` in a separate short transaction, inside `try/except` that logs `purge_failed`.
-- [ ] T092 [US7] Check that `DetailsForm.tsx` (T063) and `ConfirmationCard.tsx` (T067) carry the exact demo copy. Add the "Sample" badge to the doctor summary on the confirm step and on `ConfirmationCard.tsx`, reusing the existing badge component.
-- [ ] T093 [US7] Make the site's wording truthful (FR-056).
+- [X] T092 [US7] Check that `DetailsForm.tsx` (T063) and `ConfirmationCard.tsx` (T067) carry the exact demo copy. Add the "Sample" badge to the doctor summary on the confirm step and on `ConfirmationCard.tsx`, reusing the existing badge component.
+- [X] T093 [US7] Make the site's wording truthful (FR-056).
   - **Privacy page**, `frontend/src/data/legalContent.ts`, "What this demo collects" (about line 25). Replace "This demo collects no personal data…" with paragraphs saying:
     - the booking form collects name, mobile and, if given, email and reason, only to show the demo booking;
     - bookings are deleted automatically 7 days after the appointment time;

@@ -15,6 +15,7 @@ import { MAX_COOLDOWN_SECONDS, RateLimitNotice } from "@/components/booking/Rate
 import { SlotGrid } from "@/components/booking/SlotGrid";
 import { SlotTakenNotice } from "@/components/booking/SlotTakenNotice";
 import { StepIndicator } from "@/components/booking/StepIndicator";
+import { SampleBadge } from "@/components/ui/SampleBadge";
 import { DetailsFormSchema, type DetailsFormInput, type DetailsFormValues } from "@/lib/booking/form";
 import { FLOW_STEPS, parseFlowParams, serializeFlowParams, type FlowParams, type FlowStep } from "@/lib/booking/flowUrl";
 import { DOCTOR_GONE_MESSAGE, NO_SLOTS_MESSAGE, STEP_HEADING, formatLocalDate, timeZoneLabel } from "@/lib/booking/labels";
@@ -408,7 +409,10 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
                 </h3>
                 <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-base">
                   <dt className="text-muted">Doctor</dt>
-                  <dd className="font-semibold">{doctor.fullName}</dd>
+                  <dd>
+                    <span className="font-semibold">{doctor.fullName}</span>
+                    {doctor.isSample ? <SampleBadge className="ml-2" /> : null}
+                  </dd>
                   <dt className="text-muted">Department</dt>
                   <dd>{department?.name}</dd>
                   <dt className="text-muted">Date</dt>

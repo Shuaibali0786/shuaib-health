@@ -37,7 +37,7 @@ export const aboutContent: AboutContent = {
     {
       id: "value-privacy",
       title: "Respect for privacy",
-      text: "This demo stores nothing about its visitors and sets no tracking cookies.",
+      text: "This demo keeps booking details only until 7 days after the appointment time, and sets no tracking cookies.",
     },
   ],
   facilityPhotos: [
@@ -65,7 +65,7 @@ export const aboutContent: AboutContent = {
     {
       id: "step-book",
       title: "Book",
-      text: "Online booking is coming soon. In this demo the Book appointment buttons lead to a holding page.",
+      text: "Online booking works as a demo with sample doctors; bookings are not real.",
       iconName: "calendar-check",
     },
     {

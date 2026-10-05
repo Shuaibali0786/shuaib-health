@@ -15,7 +15,7 @@ export const faqGroups: FaqGroup[] = [
         id: "faq-appointments-book",
         question: "How do I book an appointment?",
         answer:
-          "Online booking is planned but not available in this demo yet. The Book appointment buttons lead to a holding page. You can already browse the sample doctors and their weekly schedules.",
+          "You can try online booking with the sample doctors. It is a demo: bookings are not real, no one will contact you, and they are deleted 7 days after the appointment time.",
       },
       {
         id: "faq-appointments-schedule",

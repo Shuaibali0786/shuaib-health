@@ -54,7 +54,7 @@ export function DepartmentSections({ department, doctors, tests, categories, pho
               <Button href={ROUTES.bookAppointment} variant="accent">
                 Book appointment
               </Button>
-              <p className="mt-2 text-sm text-muted">Booking is not available in this demo yet.</p>
+              <p className="mt-2 text-sm text-muted">Demo booking with sample doctors; not a real appointment.</p>
             </div>
           </div>
           <div>

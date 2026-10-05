@@ -43,9 +43,11 @@ for (const [path, content] of [
   });
 }
 
-test("Privacy states that the demo collects no personal data and sets no tracking cookies", async ({ page }) => {
+test("Privacy states what the booking form collects, the 7 and 90 day retention, and that no tracking cookies are set", async ({ page }) => {
   await page.goto("/privacy");
-  await expect(page.getByText(/collects no personal data/)).toBeVisible();
+  await expect(page.getByText(/booking form collects/)).toBeVisible();
+  await expect(page.getByText(/7 days after the appointment time/)).toBeVisible();
+  await expect(page.getByText(/90 days/)).toBeVisible();
   await expect(page.getByText(/sets no tracking cookies/).first()).toBeVisible();
   await expect(page.getByText("a patient sees only their own data", { exact: false })).toBeVisible();
 });

@@ -33,7 +33,7 @@ describe("about content (data-model)", () => {
       "Receive reports online",
       "Follow up",
     ]);
-    expect(aboutContent.visitSteps[1]?.text).toMatch(/coming soon/i);
+    expect(aboutContent.visitSteps[1]?.text).toMatch(/works as a demo with sample doctors/i);
     expect(aboutContent.visitSteps[3]?.text).toMatch(/planned/i);
   });
 });

@@ -22,6 +22,7 @@ from app.booking.clock import Clock
 from app.booking.masking import mask_mobile, mask_name
 from app.booking.privacy import fingerprint, request_hash
 from app.booking.reference import display, new_reference
+from app.booking.retention import purge_demo_bookings
 from app.booking.timeutil import utc_iso
 from app.errors import (
     BookingConflict,
@@ -47,6 +48,7 @@ OVERLAP_CONSTRAINT = "ex_appointment_no_overlap"
 EXCLUSION_VIOLATION = "23P01"
 SLOT_TAKEN_MESSAGE = "Sorry, this slot was just taken."
 MAX_REFERENCE_ATTEMPTS = 2
+PURGE_BATCH_LIMIT = 200
 TRANSIENT_ATTEMPTS = 2  # one try and one retry
 TRANSIENT_BACKOFF_SECONDS = 0.25
 LIMIT_REACHED_MESSAGE = (
@@ -305,7 +307,25 @@ def _create_once(
         target_id=require_id(row.id),
     )
     session.commit()
-    return view_of(row, doctor, clinic.time_zone)
+    view = view_of(row, doctor, clinic.time_zone)
+    if settings.demo_mode:
+        _purge_after_booking(engine, now, settings)
+    return view
+
+
+def _purge_after_booking(engine: Engine, now: datetime, settings: Settings) -> None:
+    """Drop a little expired demo data in its own short transaction; never fail the booking."""
+    try:
+        with engine.begin() as conn:
+            purge_demo_bookings(
+                conn,
+                now=now,
+                after_days=settings.booking_purge_after_days,
+                audit_after_days=settings.audit_purge_after_days,
+                limit=PURGE_BATCH_LIMIT,
+            )
+    except Exception as error:
+        logger.warning("purge_failed: %s", type(error).__name__)
 
 
 def _refuse(

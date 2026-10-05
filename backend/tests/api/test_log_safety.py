@@ -1,11 +1,16 @@
 import json
+import logging
+import uuid
+from collections.abc import Callable
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import text
+from sqlmodel import Session
 
 from app.main import create_app
-from tests.conftest import SettingsFactory
+from tests.conftest import FrozenClock, SettingsFactory, override_clock
 
 SECRET_URL = "postgresql+psycopg://appuser:SECRETPW@ep-x.example.neon.tech/db?sslmode=require"
 
@@ -56,3 +61,99 @@ def test_every_log_line_is_valid_json(
     assert out
     for line in out:
         assert isinstance(json.loads(line), dict)
+
+
+# ---- Booking flow (FR-051, FR-053): no personal data in logs, errors or stored audit rows ----
+
+BOOKING_SECRET = "test-proxy-secret-0123456789abcdef"
+PERSONAL = {
+    "name": "Zubair Testcase",
+    "mobile_raw": "03123456789",
+    "mobile_e164": "+923123456789",
+    "email": "zubair.testcase@example.com",
+    "reason": "private-reason-text",
+}
+
+
+def booking_body(**over: Any) -> dict[str, Any]:
+    values: dict[str, Any] = {
+        "doctorSlug": "dr-omar-sheikh",
+        "startsAt": "2026-10-06T09:00:00Z",
+        "fullName": PERSONAL["name"],
+        "mobile": PERSONAL["mobile_raw"],
+        "email": PERSONAL["email"],
+        "reason": PERSONAL["reason"],
+        "acceptRules": True,
+    }
+    values.update(over)
+    return values
+
+
+def booking_headers() -> dict[str, str]:
+    return {"X-Proxy-Secret": BOOKING_SECRET, "Idempotency-Key": str(uuid.uuid4())}
+
+
+@pytest.mark.db
+def test_booking_traffic_leaves_no_personal_data_in_logs_errors_or_rows(
+    make_client: Callable[..., TestClient],
+    frozen_clock: FrozenClock,
+    db_session: Session,
+    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    client = make_client(booking_limit_per_ip_per_hour=3)
+    override_clock(client.app, frozen_clock)  # type: ignore[arg-type]
+    url = "/api/v1/appointments"
+    bodies: list[str] = []
+
+    with caplog.at_level(logging.DEBUG):
+        created = client.post(url, json=booking_body(), headers=booking_headers())
+        assert created.status_code == 201
+        reference = created.json()["reference"]
+        bodies.append(created.text)
+        # Same slot, another person: slot-taken.
+        taken = client.post(
+            url,
+            json=booking_body(mobile="03123456780", fullName="Zubair Second"),
+            headers=booking_headers(),
+        )
+        assert taken.status_code == 409
+        bodies.append(taken.text)
+        invalid = client.post(url, json=booking_body(mobile="12345"), headers=booking_headers())
+        assert invalid.status_code == 422
+        bodies.append(invalid.text)
+        trapped = client.post(url, json=booking_body(trap="x"), headers=booking_headers())
+        assert trapped.status_code == 400
+        bodies.append(trapped.text)
+        limited = client.post(url, json=booking_body(), headers=booking_headers())
+        assert limited.status_code == 429
+        bodies.append(limited.text)
+        found = client.get(f"{url}/{reference}")
+        assert found.status_code == 200
+        bodies.append(found.text)
+
+    logged = json.dumps(log_records(capsys)) + "\n".join(r.getMessage() for r in caplog.records)
+    # Error bodies may only carry masked forms (the confirmation view masks name and mobile).
+    errors = "\n".join(bodies[1:5])
+    for label, value in PERSONAL.items():
+        assert value not in logged, f"{label} found in logs"
+        assert value not in errors, f"{label} found in an error body"
+
+    stored = (
+        db_session.connection()
+        .execute(
+            text(
+                "SELECT (SELECT coalesce(string_agg(a::text, ' '), '') FROM audit_log a) || "
+                "(SELECT coalesce(string_agg(i::text, ' '), '') FROM idempotency_key i)"
+            )
+        )
+        .scalar_one()
+    )
+    counters = (
+        db_session.connection()
+        .execute(text("SELECT coalesce(string_agg(r::text, ' '), '') FROM rate_limit_counter r"))
+        .scalar_one()
+    )
+    for label, value in PERSONAL.items():
+        assert value not in stored, f"{label} found in audit/idempotency rows"
+        assert value not in counters, f"{label} found in rate-limit rows"

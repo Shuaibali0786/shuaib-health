@@ -22,9 +22,17 @@ export const privacyContent: LegalContent = {
       heading: "What this demo collects",
       blocks: [
         paragraph(
-          "This demo collects no personal data. The contact form checks what you type in your browser and then stops: nothing is sent, saved or stored. There are no accounts, no booking forms and no payment forms.",
+          "The booking form collects your name, your mobile number and, if you give them, an email address and a reason for the visit. They are used only to show you the demo booking.",
         ),
-        paragraph("The demo sets no tracking cookies and uses no analytics. It stores nothing about you on its own."),
+        paragraph("Demo bookings are deleted automatically 7 days after the appointment time."),
+        paragraph(
+          "To stop abuse, a non-reversible network fingerprint (not your IP address) is kept in audit records for 90 days.",
+        ),
+        paragraph("No SMS or email is ever sent. Nobody will contact you."),
+        paragraph(
+          "The contact form still sends nothing: it checks what you type in your browser and then stops. There are no accounts and no payment forms.",
+        ),
+        paragraph("The demo sets no tracking cookies and uses no analytics."),
       ],
     },
     {
@@ -137,7 +145,7 @@ export const termsContent: LegalContent = {
       blocks: [
         paragraph("You are welcome to browse the demo. Please:"),
         list(
-          "Do not enter real personal or health information into the contact form. It is not sent, but there is no reason to type it.",
+          "Do not enter real personal or health information into the contact or booking forms.",
           "Do not try to disrupt the site or use it to harm others.",
           "Do not present the sample content as real.",
         ),
@@ -148,7 +156,7 @@ export const termsContent: LegalContent = {
       heading: "Bookings and payments are not live",
       blocks: [
         paragraph(
-          "You cannot book an appointment, pay for a test or receive a report through this demo. Buttons that mention booking lead to a holding page. Online booking, payment and reports are planned for a later version.",
+          "You can make a demo booking with a sample doctor. It is not a real appointment and no one will contact you. You cannot pay for a test or receive a report through this demo.",
         ),
       ],
     },
