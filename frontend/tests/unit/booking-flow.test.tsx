@@ -305,6 +305,65 @@ describe("BookingFlow: the details step", () => {
   });
 });
 
+describe("BookingFlow: a slot that was just taken", () => {
+  const takenBody = {
+    error: { code: "slot_taken", message: "Sorry, this slot was just taken.", requestId: "r" },
+    alternatives: [
+      { startsAt: "2026-10-06T13:00:00Z", endsAt: "2026-10-06T13:15:00Z", localDate: "2026-10-06", localTime: "18:00" },
+      { startsAt: "2026-10-13T05:00:00Z", endsAt: "2026-10-13T05:15:00Z", localDate: "2026-10-13", localTime: "10:00" },
+    ],
+  };
+
+  it("keeps the details, focuses the alert, and a chosen alternative is booked with a new key", async () => {
+    let calls = 0;
+    onPost = () => (++calls === 1 ? json(takenBody, 409) : json(view, 201));
+    const user = userEvent.setup();
+    mount(DETAILS_URL);
+    await user.type(await screen.findByLabelText(/Full name/), "Ali Khan");
+    await user.type(screen.getByLabelText(/Mobile number/), "0300 1234567");
+    await user.type(screen.getByLabelText(/Email/), "ali@example.com");
+    await user.type(screen.getByLabelText(/Reason/), "Chest pain");
+    await user.click(screen.getByRole("checkbox", { name: /I accept the clinic rules/ }));
+    await user.click(screen.getByRole("button", { name: "Confirm booking" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Sorry, this slot was just taken.");
+    await waitFor(() => expect(alert).toHaveFocus());
+    expect(within(alert).getByRole("button", { name: "Tue 6 Oct, 18:00" })).toBeInTheDocument();
+    expect(within(alert).getByRole("button", { name: "Tue 13 Oct, 10:00" })).toBeInTheDocument();
+    expect(within(alert).getByRole("button", { name: "See all times" })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Full name/)).toHaveValue("Ali Khan");
+    expect(screen.getByLabelText(/Mobile number/)).toHaveValue("0300 1234567");
+    expect(screen.getByLabelText(/Email/)).toHaveValue("ali@example.com");
+    expect(screen.getByLabelText(/Reason/)).toHaveValue("Chest pain");
+
+    await user.click(within(alert).getByRole("button", { name: "Tue 6 Oct, 18:00" }));
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+    expect(screen.getByText("Time", { selector: "dt" }).nextElementSibling).toHaveTextContent("18:00");
+    expect(screen.getByLabelText(/Full name/)).toHaveValue("Ali Khan");
+
+    await user.click(screen.getByRole("button", { name: "Confirm booking" }));
+    await waitFor(() => expect(navigationCalls.at(-1)).toEqual({ method: "replace", url: "/book-appointment/confirmed/ABCDE-FGHJK" }));
+    expect(posts()).toHaveLength(2);
+    const [first, second] = posts().map(([, init]) => init as RequestInit);
+    expect(JSON.parse(second?.body as string).startsAt).toBe("2026-10-06T13:00:00Z");
+    const key = (init?: RequestInit) => (init?.headers as Record<string, string>)["Idempotency-Key"];
+    expect(key(second)).toMatch(/^[0-9a-f-]{36}$/);
+    expect(key(second)).not.toBe(key(first));
+  });
+
+  it("\"See all times\" returns to the time step", async () => {
+    onPost = () => json(takenBody, 409);
+    const user = userEvent.setup();
+    mount(DETAILS_URL);
+    await fillDetails(user);
+    await user.click(screen.getByRole("checkbox", { name: /I accept the clinic rules/ }));
+    await user.click(screen.getByRole("button", { name: "Confirm booking" }));
+    await user.click(await screen.findByRole("button", { name: "See all times" }));
+    await heading("Choose a time");
+  });
+});
+
 describe("BookingFlow: edge cases", () => {
   it("offers the clinic phone when a doctor has no available day in the window", async () => {
     slotsBody = (slug) =>

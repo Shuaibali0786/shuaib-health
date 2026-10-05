@@ -477,12 +477,12 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T069 [P] [US2] Write `backend/tests/api/test_booking_concurrency.py` (db, `committing_engine`).
+- [X] T069 [P] [US2] Write `backend/tests/api/test_booking_concurrency.py` (db, `committing_engine`).
   - A `threading.Barrier(20)` and a `ThreadPoolExecutor(20)`. Each thread calls the HTTP API through its own `TestClient` from `make_committing_client`, with a distinct mobile and idempotency key for the same slot.
   - Assert: statuses `Counter` equals `{201: 1, 409: 19}`; every `409` body has `error.code == "slot_taken"` and 1–5 alternatives; `SELECT count(*)` of confirmed rows for that doctor and start is 1.
   - A second test books 10:00–10:15 and then attempts a 10:00–10:30 overlap (by changing the session's `slot_minutes` to 30 in-test) → `409 slot_taken`.
-- [ ] T070 [P] [US2] Add `backend/tests/perf/test_booking_concurrency_repeat.py` (`@pytest.mark.perf`): repeat the 20-thread race 100 times on fresh slots and assert 0 double-bookings. Record the run in `results.md` (SC-002).
-- [ ] T071 [P] [US2] Write the stateful e2e `frontend/tests/e2e/stateful/booking-race.spec.ts`.
+- [X] T070 [P] [US2] Add `backend/tests/perf/test_booking_concurrency_repeat.py` (`@pytest.mark.perf`): repeat the 20-thread race 100 times on fresh slots and assert 0 double-bookings. Record the run in `results.md` (SC-002).
+- [X] T071 [P] [US2] Write the stateful e2e `frontend/tests/e2e/stateful/booking-race.spec.ts`.
   - Two browser contexts pick the same slot. Context A confirms first. Context B confirms (mock `slot-taken` mode, or the real store conflict).
   - B sees "Sorry, this slot was just taken.", up to 5 alternatives, and its name, mobile, email and reason still filled.
   - B picks an alternative, confirms, and reaches a confirmation page.
@@ -490,16 +490,16 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### Implementation for User Story 2
 
-- [ ] T072 [US2] Map a lost race to `slot_taken` in `backend/app/booking/service.py`.
+- [X] T072 [US2] Map a lost race to `slot_taken` in `backend/app/booking/service.py`.
   - Wrap the insert: catch `sqlalchemy.exc.IntegrityError` whose `orig.sqlstate == "23P01"` and `orig.diag.constraint_name == "ex_appointment_no_overlap"`.
   - Roll back, then compute `next_free(after=requested start, limit=5)` in a fresh read-only transaction.
   - Raise `BookingConflict("slot_taken", "Sorry, this slot was just taken.", alternatives)`.
   - Write `write_audit(... "appointment.rejected", "slot_taken")` in that second transaction.
   - Re-raise any other `IntegrityError`.
-- [ ] T073 [US2] Show the slot-taken notice in the flow.
+- [X] T073 [US2] Show the slot-taken notice in the flow.
   - Create `frontend/src/components/booking/SlotTakenNotice.tsx`: a `role="alert"` heading, then an alternatives list as buttons ("Tue 6 Oct, 10:30"), plus "See all times".
   - In `BookingFlow.tsx`, on `409 slot_taken`/`slot_unavailable`, keep the RHF values, render `SlotTakenNotice`, and on choice set date and time, regenerate the idempotency key, and return to the confirm step.
-- [ ] T074 [US2] Add a component test to `frontend/tests/unit/booking-flow.test.tsx`: a `409` with alternatives keeps all field values, focuses the alert, and choosing an alternative updates the summary and resubmits with a new key.
+- [X] T074 [US2] Add a component test to `frontend/tests/unit/booking-flow.test.tsx`: a `409` with alternatives keeps all field values, focuses the alert, and choosing an alternative updates the summary and resubmits with a new key.
 
 **CHECKPOINT 5**: `uv run pytest -k concurrency` green (run it 3 times); `npm run test:e2e:stateful -- booking-race` green. Report the concurrency results to the user.
 

@@ -5,7 +5,7 @@ Later features hook in at the marked points: idempotency (US3), limits and the p
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal, NoReturn
 from zoneinfo import ZoneInfo
 
 from sqlalchemy.exc import IntegrityError
@@ -33,6 +33,9 @@ from app.schemas import (
 from app.settings import Settings
 
 REFERENCE_CONSTRAINT = "uq_appointment_reference"
+OVERLAP_CONSTRAINT = "ex_appointment_no_overlap"
+EXCLUSION_VIOLATION = "23P01"
+SLOT_TAKEN_MESSAGE = "Sorry, this slot was just taken."
 MAX_REFERENCE_ATTEMPTS = 2
 
 
@@ -72,6 +75,14 @@ def view_of(
 def _is_reference_collision(error: IntegrityError) -> bool:
     diag = getattr(error.orig, "diag", None)
     return getattr(diag, "constraint_name", None) == REFERENCE_CONSTRAINT
+
+
+def _is_overlap(error: IntegrityError) -> bool:
+    diag = getattr(error.orig, "diag", None)
+    return (
+        getattr(error.orig, "sqlstate", None) == EXCLUSION_VIOLATION
+        and getattr(diag, "constraint_name", None) == OVERLAP_CONSTRAINT
+    )
 
 
 def _insert(session: Session, **fields: Any) -> m.Appointment:
@@ -120,41 +131,87 @@ def create_appointment(
         "holidays": availability.holidays,
         "bookings": availability.bookings,
     }
+    fingerprint_value = fingerprint(settings.privacy_hash_key, client_ip)
     slot = slots.is_available(starts_at=data.starts_at, **engine_input)
     if slot is None:
-        raise BookingConflict(
-            "slot_unavailable",
-            "This time is no longer available.",
-            _alternatives(data.starts_at, now, clinic.time_zone, engine_input),
+        # Free apart from someone else's booking: that is a lost race, not an unavailable time.
+        was_taken = (
+            slots.is_available(starts_at=data.starts_at, **{**engine_input, "bookings": []})
+            is not None
+        )
+        _reject(
+            session,
+            code="slot_taken" if was_taken else "slot_unavailable",
+            message=SLOT_TAKEN_MESSAGE if was_taken else "This time is no longer available.",
+            alternatives=_alternatives(data.starts_at, now, clinic.time_zone, engine_input),
+            fingerprint_value=fingerprint_value,
+            request_id=request_id,
         )
 
-    row = _insert(
-        session,
-        doctor_id=doctor.id,
-        department_id=doctor.department_id,
-        starts_at=slot.starts_at,
-        ends_at=slot.ends_at,
-        fee_pkr=doctor.fee_pkr,  # decided by the server, never read from the request
-        patient_name=data.full_name,
-        patient_phone=data.mobile,
-        patient_email=data.email,
-        reason=data.reason,
-        rules_accepted_at=now,
-        rules_version=appointments_repo.active_rules_version(session),
-    )
-    # US2: a lost race surfaces at the flush as the exclusion violation (23P01) -> slot_taken.
-    # US3: link the idempotency key to ``row``. US7: purge expired demo bookings after commit.
-    session.flush()
+    try:
+        row = _insert(
+            session,
+            doctor_id=doctor.id,
+            department_id=doctor.department_id,
+            starts_at=slot.starts_at,
+            ends_at=slot.ends_at,
+            fee_pkr=doctor.fee_pkr,  # decided by the server, never read from the request
+            patient_name=data.full_name,
+            patient_phone=data.mobile,
+            patient_email=data.email,
+            reason=data.reason,
+            rules_accepted_at=now,
+            rules_version=appointments_repo.active_rules_version(session),
+        )
+        # US3: link the idempotency key to ``row``. US7: purge expired demo bookings after commit.
+        session.flush()
+    except IntegrityError as error:
+        if not _is_overlap(error):
+            raise
+        # Lost the race: the winner committed first. Start over in a fresh read-only transaction.
+        session.rollback()
+        fresh = repo.load_availability(session, doctor.id, clinic, now)
+        _reject(
+            session,
+            code="slot_taken",
+            message=SLOT_TAKEN_MESSAGE,
+            alternatives=_alternatives(
+                data.starts_at, now, clinic.time_zone, {**engine_input, "bookings": fresh.bookings}
+            ),
+            fingerprint_value=fingerprint_value,
+            request_id=request_id,
+        )
     write_audit(
         session,
         action="appointment.created",
         outcome="ok",
-        fingerprint=fingerprint(settings.privacy_hash_key, client_ip),
+        fingerprint=fingerprint_value,
         request_id=request_id,
         target_id=require_id(row.id),
     )
     session.commit()
     return view_of(row, doctor, clinic.time_zone)
+
+
+def _reject(
+    session: Session,
+    *,
+    code: Literal["slot_taken", "slot_unavailable"],
+    message: str,
+    alternatives: list[AlternativeSlot],
+    fingerprint_value: str,
+    request_id: str,
+) -> NoReturn:
+    """Record the refusal (no personal data) and answer 409 with the next free times."""
+    write_audit(
+        session,
+        action="appointment.rejected",
+        outcome=code,
+        fingerprint=fingerprint_value,
+        request_id=request_id,
+    )
+    session.commit()
+    raise BookingConflict(code, message, alternatives)
 
 
 def _alternatives(

@@ -123,3 +123,31 @@ Notes:
 - **Deferred.** `count_active_for_phone` (T054) is added in Phase 7 with its first user. A lost race (23P01) and the `Idempotency-Key` requirement on the backend land in Phases 5 and 6; until then the website route already requires a UUID v4 key and the backend ignores it.
 - **Alternatives for `slot_unavailable`** are the next free times after the requested one, or from now when nothing follows it (for example outside the window).
 - **Lighthouse** not re-run in this phase.
+
+## Phase 5 — no double-booking (T069–T074)
+
+Checkpoint 5, run on branch `005-appointment-booking`.
+
+| Command | Result |
+|---------|--------|
+| `uv run ruff check .` | pass |
+| `uv run mypy app` | 1 error, **pre-existing** (`service.py` `utc_iso(row.created_at)`, from the slip commit); nothing new |
+| `uv run pytest -k concurrency` ×3 | **4 passed** each time (20-thread race, loser rebooks, 30-minute overlap, stale read caught by the constraint) |
+| `uv run pytest` | **393 passed**, 1 skipped (`tzset`), 3 deselected (perf) |
+| `npm run typecheck` / `npm run lint` | pass |
+| `npm test` (Vitest) | **839 passed** |
+| `npm run test:e2e` | **1032 passed**, 11 skipped (same 11 as baseline) |
+| `npm run test:e2e:stateful -- booking-race` | 1 passed (two browser contexts; B keeps its details, picks an alternative, third POST carries a new `Idempotency-Key`) |
+
+### SC-002: 100 races of 20 simultaneous bookings (`pytest -m perf`)
+
+Six full runs of `tests/perf/test_booking_concurrency_repeat.py` (600 races, 12,000 requests):
+
+- **Double bookings: 0.** Every race ended with exactly one confirmed row and exactly one `201`.
+- **Clean runs (1 × `201` + 19 × `409 slot_taken` in all 100 races): 3 of 6.**
+- **Other 3 runs:** in 3 races of one run (races 84, 97, 98) the 19 losers got `503 service_unavailable` instead of `409`. The server logged `database unavailable: OperationalError` once per loser, about one second apart, so the remote test database refused or dropped connections for a moment. The winner still committed. The error text is not logged (by design), and it did not reproduce in the cold-pool test (4 races after `engine.dispose()`) or in the last two full runs, so the cause is not confirmed. The other failed runs did not record per-race detail.
+
+Notes:
+- **Race path.** Losers who read before the winner committed hit `ex_appointment_no_overlap` (SQLSTATE 23P01) at the flush; losers who read after it are caught by the pre-check. Both give `slot_taken` with up to 5 next free times. A pre-check refusal is `slot_taken` when the time would be free apart from someone else's booking, otherwise `slot_unavailable`. `test_a_stale_read_still_ends_as_slot_taken_through_the_database_constraint` forces the constraint path.
+- **Audit.** Both refusals write `appointment.rejected` with outcome `slot_taken` / `slot_unavailable` and no personal data.
+- **Website.** The notice appears under the form, so every field stays. The grid is refreshed when the visitor picks an alternative or "See all times", not at the conflict (refreshing then removed the taken time and unmounted the form). The notice is tied to the refused time, so it clears once the URL shows another choice.

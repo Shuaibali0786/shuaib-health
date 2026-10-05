@@ -12,12 +12,13 @@ import { DepartmentStep } from "@/components/booking/DepartmentStep";
 import { DetailsForm } from "@/components/booking/DetailsForm";
 import { DoctorStep } from "@/components/booking/DoctorStep";
 import { SlotGrid } from "@/components/booking/SlotGrid";
+import { SlotTakenNotice } from "@/components/booking/SlotTakenNotice";
 import { StepIndicator } from "@/components/booking/StepIndicator";
 import { DetailsFormSchema, type DetailsFormInput, type DetailsFormValues } from "@/lib/booking/form";
 import { FLOW_STEPS, parseFlowParams, serializeFlowParams, type FlowParams, type FlowStep } from "@/lib/booking/flowUrl";
 import { DOCTOR_GONE_MESSAGE, NO_SLOTS_MESSAGE, STEP_HEADING, formatLocalDate, timeZoneLabel } from "@/lib/booking/labels";
 import { fetchSlots, postBooking } from "@/lib/booking/client";
-import { AppointmentViewSchema, ErrorResponseSchema, type DoctorSlots } from "@/lib/booking/schemas";
+import { AppointmentViewSchema, BookingConflictSchema, ErrorResponseSchema, type AlternativeSlot, type DoctorSlots } from "@/lib/booking/schemas";
 import { formatPkr } from "@/lib/format";
 import { EASE_SOFT, STEP_DURATION, STEP_OFFSET_Y } from "@/lib/motion";
 import { ROUTES } from "@/lib/routes";
@@ -52,7 +53,11 @@ function slotsReducer(state: SlotsState, action: SlotsAction): SlotsState {
   }
 }
 
-type SubmitState = { status: "idle" } | { status: "submitting" } | { status: "failed"; reason: "generic" | "slot" };
+type SubmitState =
+  | { status: "idle" }
+  | { status: "submitting" }
+  | { status: "failed"; reason: "generic" | "slot" }
+  | { status: "taken"; key: string; message: string; alternatives: AlternativeSlot[] };
 
 const FIELD_MESSAGES = {
   fullName: "Please enter your full name, using letters only (2 to 80 characters).",
@@ -143,6 +148,7 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
     router[mode](`${ROUTES.bookAppointment}${serializeFlowParams(next)}`);
   };
   const stepIndex = FLOW_STEPS.indexOf(params.step);
+  const flowKey = `${params.date ?? ""}|${params.time ?? ""}|${params.step}`;
   const goBack = () => {
     const previous: FlowStep = FLOW_STEPS[Math.max(0, stepIndex - 1)] ?? "department";
     go({ ...params, step: previous });
@@ -203,6 +209,13 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
       const parsed = ErrorResponseSchema.safeParse(body);
       if (parsed.success && showServerProblems(parsed.data.error.details ?? [])) return;
     } else if (status === 409) {
+      const conflict = BookingConflictSchema.safeParse(body);
+      const code = conflict.success ? conflict.data.error.code : null;
+      if (conflict.success && (code === "slot_taken" || code === "slot_unavailable")) {
+        // Keep every field and the form on screen; the grid is refreshed once the visitor chooses.
+        setSubmit({ status: "taken", key: flowKey, message: conflict.data.error.message, alternatives: conflict.data.alternatives ?? [] });
+        return;
+      }
       setSubmit({ status: "failed", reason: "slot" });
       return;
     }
@@ -226,8 +239,21 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
     return true;
   }
 
+  // The notice belongs to the time that was refused: it goes away once the URL shows another choice.
+  const chooseAlternative = (alternative: AlternativeSlot) => {
+    setAttempt((count) => count + 1);
+    go({ ...params, date: alternative.localDate, time: alternative.localTime, step: "details" }, "replace");
+  };
+  const seeAllTimes = () => {
+    setAttempt((count) => count + 1);
+    go({ ...params, step: "time" });
+  };
+
+  const taken = submit.status === "taken" && submit.key === flowKey ? submit : null;
   const failure: ReactNode =
-    submit.status === "failed" ? (
+    taken ? (
+      <SlotTakenNotice message={taken.message} alternatives={taken.alternatives} onChoose={chooseAlternative} onSeeAll={seeAllTimes} />
+    ) : submit.status === "failed" ? (
       <div role="alert" className="rounded-card border-2 border-danger-700 bg-danger-50 p-4 text-base">
         {submit.reason === "slot" ? (
           <p>That time is no longer available. Please go back and choose another time.</p>
