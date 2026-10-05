@@ -151,7 +151,7 @@ test.describe("doctor profile", () => {
   test("Book appointment leads to the booking page", async ({ page }) => {
     await page.goto("/doctors/dr-imran-qureshi");
     await page.getByRole("main").getByRole("link", { name: "Book appointment", exact: true }).click();
-    await expect(page).toHaveURL(/\/book-appointment$/);
+    await expect(page).toHaveURL(/\/book-appointment\?doctor=dr-imran-qureshi/);
     await expect(page.getByRole("heading", { level: 1, name: "Book an appointment" })).toBeVisible();
     await expect(page.getByText(NOTICE)).toHaveCount(2);
   });

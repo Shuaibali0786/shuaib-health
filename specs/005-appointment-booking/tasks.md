@@ -663,26 +663,26 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T094 [P] [US5] Write `frontend/tests/e2e/booking-entry.spec.ts` (main).
+- [X] T094 [P] [US5] Write `frontend/tests/e2e/booking-entry.spec.ts` (main).
   - The Book button on a doctor profile goes to `?doctor=<slug>` at the date step, with the doctor and department shown.
   - Going back lets the visitor change the doctor.
   - A department page's Book button goes to `?department=<slug>` at the doctor step.
   - `?doctor=unknown-slug` starts at the department step with the polite note "That doctor isn't available for online booking. Please choose a department."
   - Timing (SC-001): from opening `/doctors/dr-ayesha-rahman` to the confirmation page, keyboard only, takes under 45 s (recorded as a test annotation).
-- [ ] T095 [P] [US5] Extend `frontend/tests/unit/routes.test.ts` for `bookingPath({ doctor })` and `bookingPath({ department })`, which build URL-encoded query strings.
+- [X] T095 [P] [US5] Extend `frontend/tests/unit/routes.test.ts` for `bookingPath({ doctor })` and `bookingPath({ department })`, which build URL-encoded query strings.
 
 ### Implementation for User Story 5
 
-- [ ] T096 [US5] Add `bookingPath(params?: { doctor?: string; department?: string })` to `frontend/src/lib/routes.ts`, returning `ROUTES.bookAppointment` with the query string.
-- [ ] T097 [US5] Update `frontend/src/app/doctors/[slug]/page.tsx`.
+- [X] T096 [US5] Add `bookingPath(params?: { doctor?: string; department?: string })` to `frontend/src/lib/routes.ts`, returning `ROUTES.bookAppointment` with the query string.
+- [X] T097 [US5] Update `frontend/src/app/doctors/[slug]/page.tsx`.
   - The Book button `href` becomes `bookingPath({ doctor: doctor.slug })`.
   - Replace the sentence "Booking is not available in this demo yet. This is a sample profile; nothing here is real." with "Online booking is a portfolio demo. This is a sample profile; nothing here is real."
-- [ ] T098 [P] [US5] Update both Book buttons in `frontend/src/components/departments/DepartmentSections.tsx` to `bookingPath({ department: department.slug })`, using the department slug from props. Replace the note "Booking is not available in this demo yet." (about line 57) with "Online booking is a portfolio demo with sample doctors." (FR-056).
-- [ ] T099 [US5] Implement the pre-select handling in `frontend/src/components/booking/BookingFlow.tsx` and `frontend/src/lib/booking/flowUrl.ts`.
+- [X] T098 [P] [US5] Update both Book buttons in `frontend/src/components/departments/DepartmentSections.tsx` to `bookingPath({ department: department.slug })`, using the department slug from props. Replace the note "Booking is not available in this demo yet." (about line 57) with "Online booking is a portfolio demo with sample doctors." (FR-056).
+- [X] T099 [US5] Implement the pre-select handling in `frontend/src/components/booking/BookingFlow.tsx` and `frontend/src/lib/booking/flowUrl.ts`.
   - `doctor` given → set the department from the doctor and start at the date step.
   - Unknown or inactive doctor → the note above plus the department step.
   - `department` given → start at the doctor step.
-- [ ] T100 [US5] Update the visual baselines for all doctor and department pages (`npx playwright test visual-baseline -g "doctors-|departments-" --update-snapshots`). Review the diffs: only the changed sentence may differ. Note it in `results.md`.
+- [X] T100 [US5] Update the visual baselines for all doctor and department pages (`npx playwright test visual-baseline -g "doctors-|departments-" --update-snapshots`). Review the diffs: only the changed sentence may differ. Note it in `results.md`.
 
 **CHECKPOINT 9**: `npm test`, `npm run test:e2e` green; visual diffs reviewed. Report to the user.
 

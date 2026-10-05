@@ -151,3 +151,21 @@ Notes:
 - **Race path.** Losers who read before the winner committed hit `ex_appointment_no_overlap` (SQLSTATE 23P01) at the flush; losers who read after it are caught by the pre-check. Both give `slot_taken` with up to 5 next free times. A pre-check refusal is `slot_taken` when the time would be free apart from someone else's booking, otherwise `slot_unavailable`. `test_a_stale_read_still_ends_as_slot_taken_through_the_database_constraint` forces the constraint path.
 - **Audit.** Both refusals write `appointment.rejected` with outcome `slot_taken` / `slot_unavailable` and no personal data.
 - **Website.** The notice appears under the form, so every field stays. The grid is refreshed when the visitor picks an alternative or "See all times", not at the conflict (refreshing then removed the taken time and unmounted the form). The notice is tied to the refused time, so it clears once the URL shows another choice.
+
+## Phase 8 review and Phase 9 — Book buttons pre-select (T094–T100)
+
+Checkpoint 9, run on branch `005-appointment-booking`.
+
+| Command | Result |
+|---------|--------|
+| `npm run typecheck` / `npm run lint` | pass |
+| `npm test` (Vitest) | **861 passed** (68 files) |
+| `npm run test:e2e` | **1044 passed**, 11 skipped (same 11), 0 failed. 1047 tests are listed: the 1043 at Phase 5, 4 added in Phase 8, 8 added here (4 specs x 2 projects); the Phase 8 count of 997 came from an incomplete run, not from removed tests |
+| `npm run test:e2e:stateful` | 15 passed |
+
+- **e2e count 1032 → 997.** No test was deleted or skipped. `git diff 130b895 HEAD -- frontend/tests/e2e` only adds specs and edits one assertion (legal). `npx playwright test --list` shows 1047 tests; a clean full run gives 1036 passed + 11 skipped, with no failures.
+- **38 visual baselines (Phase 8).** Each old and new image was compared pixel by pixel. Doctor pages (9 × 2): one 14 px text line. Department pages: one sentence, which wraps to two lines on a phone (the page is 20 px taller, the rest is the same content shifted down). About: the privacy card text and the story paragraph. Privacy and Terms: the rewritten copy. Footer rows below the changed text differ by anti-aliasing only. Nothing is broken.
+- **Flaky iPhone slip test: real cause.** In `BookingFlow`, the step-change effect moved focus to the step heading. On WebKit it ran 6 ms after the visitor's first keystroke target (`#fullName`) got focus, so the text was typed into nothing: "1 problem with your details", full name empty (5 of 30 runs). The heading focus is now skipped when focus is already in a form field of the step. Afterwards: 0 failures in 40 runs of the same probe.
+- **Entry points (US5).** `bookingPath()` builds `?doctor=` / `?department=`; doctor and department Book buttons use it; the date step names the department; an unknown doctor gives the polite note at the department step. SC-001 (doctor page to confirmation, keyboard only) is recorded as a test annotation (`booking-entry.spec.ts`).
+- **Baselines for Phase 9.** Only link targets changed (no visible text), so none needed regenerating; the full run is green.
+- **Wording.** Phase 8 already replaced the "not available" sentences with "Demo booking with a sample doctor…" / "Demo booking with sample doctors; not a real appointment." These are kept, rather than the slightly different strings in T097/T098.

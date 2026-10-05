@@ -14,7 +14,7 @@ import { Section } from "@/components/ui/Section";
 import { getSiteConfig, getDoctors, loadDepartments, loadDoctors } from "@/lib/content";
 import { formatPkr } from "@/lib/format";
 import { doctorEntry } from "@/lib/pages";
-import { departmentPath, doctorPath, ROUTES } from "@/lib/routes";
+import { bookingPath, departmentPath, doctorPath, ROUTES } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
@@ -120,7 +120,7 @@ export default async function DoctorProfilePage({ params }: PageProps<"/doctors/
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <Button href={ROUTES.bookAppointment} variant="accent">
+              <Button href={bookingPath({ doctor: doctor.slug })} variant="accent">
                 Book appointment
               </Button>
               {department ? (

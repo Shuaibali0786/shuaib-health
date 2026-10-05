@@ -107,6 +107,8 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
 
   const doctor = doctors.find((candidate) => candidate.slug === params.doctor);
   const department = departments.find((candidate) => candidate.slug === params.department);
+  // A link to a doctor we do not know (or who is not bookable online) starts at the department step, with a note.
+  const unknownDoctor = !doctor && Boolean(searchParams.get("doctor"));
   const departmentDoctors = useMemo(
     () => (department ? doctors.filter((candidate) => candidate.departmentId === department.id) : []),
     [department, doctors],
@@ -173,8 +175,11 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
       firstRender.current = false;
       return;
     }
-    headingRef.current?.focus();
     const element = stepRef.current;
+    // If the visitor has already started on a field of the new step, do not pull focus away from it.
+    const active = document.activeElement;
+    const inField = active instanceof HTMLElement && Boolean(element?.contains(active)) && active.matches("input, textarea, select");
+    if (!inField) headingRef.current?.focus();
     if (!element || typeof element.animate !== "function") return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const reset = () => {
@@ -327,7 +332,16 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
   let content: ReactNode;
   switch (params.step) {
     case "department":
-      content = <DepartmentStep departments={departments} onSelect={(slug) => go({ department: slug, step: "doctor" })} />;
+      content = (
+        <>
+          {unknownDoctor ? (
+            <p role="status" className="rounded-control border border-border bg-surface px-4 py-3 text-base text-ink">
+              That doctor isn&apos;t available for online booking. Please choose a department.
+            </p>
+          ) : null}
+          <DepartmentStep departments={departments} onSelect={(slug) => go({ department: slug, step: "doctor" })} />
+        </>
+      );
       break;
     case "doctor":
       content = (
@@ -354,7 +368,12 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
     case "date":
       content = (
         <>
-          {doctor ? <p className="text-base text-muted">With {doctor.fullName}</p> : null}
+          {doctor ? (
+            <p className="text-base text-muted">
+              With {doctor.fullName}
+              {department ? `, ${department.name}` : ""}
+            </p>
+          ) : null}
           {slotsFailed ? (
             unavailable
           ) : slotsLoading ? (

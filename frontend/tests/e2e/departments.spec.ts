@@ -78,7 +78,7 @@ test.describe("department pages", () => {
     const buttons = page.getByRole("main").getByRole("link", { name: "Book appointment", exact: true });
     expect(await buttons.count()).toBeGreaterThanOrEqual(1);
     await buttons.first().click();
-    await expect(page).toHaveURL(/\/book-appointment$/);
+    await expect(page).toHaveURL(/\/book-appointment\?department=dental/);
     await expect(page.getByRole("heading", { level: 1, name: "Book an appointment" })).toBeVisible();
   });
 
