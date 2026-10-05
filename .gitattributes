@@ -1,0 +1,3 @@
+# Generated files are compared byte for byte with a fresh generation (tests/unit/api-contract*.test.ts).
+# The generators write LF, so these files must stay LF on checkout, even with core.autocrlf=true on Windows.
+*.gen.ts text eol=lf
