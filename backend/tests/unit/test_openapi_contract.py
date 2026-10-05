@@ -104,6 +104,13 @@ def test_response_schemas_have_the_same_properties(
         "PhoneNumber",
         "OpeningHoursRule",
         "ImageAsset",
+        "Slot",
+        "SlotDay",
+        "DoctorSlots",
+        "AppointmentCreate",
+        "AppointmentView",
+        "BookingConflict",
+        "ErrorInfo",
     ):
         assert expected in shared, f"{expected} missing from the generated schema"
     for name in shared:

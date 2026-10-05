@@ -15,6 +15,9 @@ export const FORBIDDEN = [
   "CATALOG_API_URL",
   "CATALOG_DATA_REVALIDATE_SECONDS",
   "CLINIC_FALLBACK_JSON",
+  "BOOKING_PROXY_SECRET",
+  // The fake secret the e2e servers use (playwright*.config.ts).
+  "fake-e2e-proxy-secret-not-real-000000",
 ];
 
 function filesUnder(dir: string): string[] {

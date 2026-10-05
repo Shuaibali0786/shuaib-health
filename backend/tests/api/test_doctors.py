@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
@@ -105,7 +107,7 @@ def test_combined_filters(client: TestClient) -> None:
     ],
 )
 def test_invalid_params_are_422_naming_the_field(
-    client: TestClient, params: dict[str, object], field: str
+    client: TestClient, params: dict[str, Any], field: str
 ) -> None:
     response = client.get("/api/v1/doctors", params=params)
     assert response.status_code == 422

@@ -9,7 +9,7 @@ import { labTests } from "../fixtures/catalog/labTests";
 import { quickActions } from "@/data/homeContent";
 import { footerQuickLinks, legalLinks, primaryNav } from "@/data/navigation";
 import { isKnownPath, knownPaths } from "@/lib/pages";
-import { departmentPath, doctorPath, labTestPath, ROUTES, tipPath } from "@/lib/routes";
+import { bookingPath, departmentPath, doctorPath, labTestPath, linkPrefetch, ROUTES, tipPath } from "@/lib/routes";
 
 const APP = join(process.cwd(), "src", "app");
 
@@ -71,5 +71,36 @@ describe("no dead links (FR-024)", () => {
 
   it.each(hrefs)("%s resolves", (_name, href) => {
     expect(isKnownPath(href, fixtureCatalog)).toBe(true);
+  });
+});
+
+describe("bookingPath", () => {
+  it("is the plain booking page with nothing chosen", () => {
+    expect(bookingPath()).toBe(ROUTES.bookAppointment);
+    expect(bookingPath({})).toBe(ROUTES.bookAppointment);
+  });
+
+  it("pre-selects a doctor or a department with a URL-encoded query string", () => {
+    expect(bookingPath({ doctor: "dr-ayesha-rahman" })).toBe("/book-appointment?doctor=dr-ayesha-rahman");
+    expect(bookingPath({ department: "general-medicine" })).toBe("/book-appointment?department=general-medicine");
+    expect(bookingPath({ doctor: "a b&c=d" })).toBe("/book-appointment?doctor=a%20b%26c%3Dd");
+  });
+
+  it("builds a path that is a known page", () => {
+    expect(isKnownPath(bookingPath({ doctor: "dr-ayesha-rahman" }).split("?")[0]!, fixtureCatalog)).toBe(true);
+  });
+});
+
+describe("linkPrefetch", () => {
+  it("never prefetches the booking flow, with or without a pre-selection", () => {
+    expect(linkPrefetch(ROUTES.bookAppointment)).toBe(false);
+    expect(linkPrefetch(bookingPath({ doctor: "dr-ayesha-rahman" }))).toBe(false);
+    expect(linkPrefetch(bookingPath({ department: "cardiology" }))).toBe(false);
+  });
+
+  it("keeps the default for every other page, including the confirmation page", () => {
+    expect(linkPrefetch(ROUTES.doctors)).toBeUndefined();
+    expect(linkPrefetch(ROUTES.home)).toBeUndefined();
+    expect(linkPrefetch(`${ROUTES.bookAppointment}/confirmed/ABCDE-FGHJK`)).toBeUndefined();
   });
 });

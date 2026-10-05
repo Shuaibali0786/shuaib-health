@@ -4,21 +4,73 @@ Run with ``uv run uvicorn app.main:app --port 8000 --no-access-log``. ``app`` is
 first access, so importing this module never reads configuration.
 """
 
+import asyncio
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from functools import lru_cache
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.booking.clock import SystemClock
+from app.booking.retention import purge_demo_bookings
+from app.db import get_engine, make_engine
 from app.errors import UnhandledErrorMiddleware, register_exception_handlers
 from app.logging_config import configure_logging
 from app.middleware.access_log import AccessLogMiddleware
 from app.middleware.rate_limit import InMemoryFixedWindowLimiter, RateLimitMiddleware
 from app.middleware.request_id import RequestIdMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
-from app.routers import clinic, departments, doctors, health, lab_tests, packages
+from app.routers import (
+    appointments,
+    clinic,
+    departments,
+    doctors,
+    health,
+    lab_tests,
+    packages,
+    slots,
+)
 from app.settings import Settings, get_settings
 
 API_PREFIX = "/api/v1"
+
+logger = logging.getLogger("app.booking")
+
+
+def _startup_purge(app: FastAPI, settings: Settings) -> None:
+    """Remove expired demo data once at startup. Any failure is logged by type only."""
+    try:
+        override = app.dependency_overrides.get(get_engine)
+        # The app's own settings decide which database this is, not the process-wide cache.
+        engine = override() if override else make_engine(settings.database_url, pool_size=1)
+        try:
+            with engine.begin() as conn:
+                purge_demo_bookings(
+                    conn,
+                    now=SystemClock().now(),
+                    after_days=settings.booking_purge_after_days,
+                    audit_after_days=settings.audit_purge_after_days,
+                    limit=None,
+                )
+        finally:
+            if not override:
+                engine.dispose()
+    except Exception as error:
+        logger.warning("purge_failed: %s", type(error).__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    task = None
+    settings: Settings = app.state.settings
+    if settings.demo_mode:
+        # Not awaited before serving: a slow or unreachable database must not delay startup.
+        task = asyncio.create_task(asyncio.to_thread(_startup_purge, app, settings))
+    yield
+    if task is not None:
+        await task
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -30,6 +82,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         title="Clinic Catalog API",
         version="1.0.0",
         debug=False,
+        lifespan=lifespan,
         docs_url="/docs" if docs_enabled else None,
         redoc_url="/redoc" if docs_enabled else None,
         openapi_url="/openapi.json",
@@ -44,6 +97,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(doctors.router)
     api.include_router(lab_tests.router)
     api.include_router(packages.router)
+    api.include_router(slots.router)
+    api.include_router(appointments.router)
     app.include_router(api)
 
     # add_middleware wraps the current stack, so the LAST one added is the OUTERMOST.
@@ -55,6 +110,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         RateLimitMiddleware,
         limiter=InMemoryFixedWindowLimiter(settings.rate_limit_per_minute),
         trusted_proxy_hops=settings.trusted_proxy_hops,
+        proxy_secret=settings.booking_proxy_secret.get_secret_value(),
     )
     app.add_middleware(
         CORSMiddleware,

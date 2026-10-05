@@ -6,7 +6,7 @@ import { siteUrl } from "@/lib/seo";
 export const revalidate = 300;
 
 /**
- * One entry per public page in the manifest, except holding pages (inSitemap: false). When the
+ * One entry per public page in the manifest, except pages marked inSitemap: false. When the
  * catalog API is unavailable the doctor, department and lab test pages are left out, so the
  * sitemap still lists the static and editorial pages and never throws.
  */

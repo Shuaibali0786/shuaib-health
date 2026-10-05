@@ -14,3 +14,7 @@ export const REVEAL_MAX_DELAY = 0.3;
 
 /** Same curve as the --ease-soft token in globals.css. */
 export const EASE_SOFT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+/** Booking step change: a short fade and 8 px rise, skipped under reduced motion. */
+export const STEP_DURATION = 0.25;
+export const STEP_OFFSET_Y = 8;

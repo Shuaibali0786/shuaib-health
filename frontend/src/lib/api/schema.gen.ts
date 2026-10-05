@@ -548,6 +548,169 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/doctors/{slug}/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Available slots for one doctor, per clinic day, within the booking window */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description First clinic-local date (default today; earlier dates are clamped to today) */
+                    from?: string;
+                    /** @description Number of days (default and maximum = clinic booking window) */
+                    days?: number;
+                };
+                header?: never;
+                path: {
+                    slug: components["parameters"]["slug"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK (Cache-Control no-store) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DoctorSlots"];
+                    };
+                };
+                404: components["responses"]["NotFound"];
+                422: components["responses"]["ValidationError"];
+                429: components["responses"]["RateLimited"];
+                503: components["responses"]["Unavailable"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Book one slot (idempotent) */
+        post: {
+            parameters: {
+                query?: never;
+                header: {
+                    "Idempotency-Key": string;
+                    "X-Proxy-Secret": string;
+                    "X-Client-IP"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AppointmentCreate"];
+                };
+            };
+            responses: {
+                /** @description Booked */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AppointmentView"];
+                    };
+                };
+                /** @description request_rejected (generic; trap field filled) */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description forbidden (missing or wrong proxy secret) */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description slot_taken (lost the race or overlapping booking) | slot_unavailable (past, inside lead time, leave, holiday, outside window, off-grid) | booking_limit_reached (max active bookings for this mobile) | idempotency_key_reused (same key, different details). alternatives is present for slot_taken and slot_unavailable. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BookingConflict"];
+                    };
+                };
+                422: components["responses"]["ValidationError"];
+                429: components["responses"]["RateLimited"];
+                503: components["responses"]["Unavailable"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/appointments/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Masked confirmation view by booking reference (rate limited per IP) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description 10 Crockford base32 characters; case-insensitive; one dash allowed */
+                    reference: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK (Cache-Control no-store) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AppointmentView"];
+                    };
+                };
+                404: components["responses"]["NotFound"];
+                429: components["responses"]["RateLimited"];
+                503: components["responses"]["Unavailable"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -727,6 +890,107 @@ export interface components {
         };
         HealthPackagePage: components["schemas"]["PageMeta"] & {
             items: components["schemas"]["HealthPackage"][];
+        };
+        ErrorInfo: {
+            /** @enum {string} */
+            code: "not_found" | "method_not_allowed" | "validation_error" | "rate_limited" | "internal_error" | "service_unavailable" | "not_configured" | "forbidden" | "request_rejected" | "slot_taken" | "slot_unavailable" | "booking_limit_reached" | "idempotency_key_reused";
+            message: string;
+            requestId: string;
+            details?: {
+                field: string;
+                issue: string;
+            }[];
+        };
+        Slot: {
+            /**
+             * Format: date-time
+             * @description UTC instant
+             */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            localTime: string;
+        };
+        AlternativeSlot: {
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: date */
+            localDate: string;
+            localTime: string;
+        };
+        SlotDay: {
+            /** Format: date */
+            date: string;
+            /** @enum {string} */
+            weekday: "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+            /** @enum {string} */
+            status: "available" | "fully_booked" | "doctor_unavailable" | "clinic_closed" | "not_working" | "no_longer_available";
+            /** @description Only when status is clinic_closed */
+            holidayName?: string;
+            /** @description Available slots only */
+            slots: components["schemas"]["Slot"][];
+        };
+        DoctorSlots: {
+            doctorSlug: string;
+            timeZone: string;
+            windowDays: number;
+            /** Format: date-time */
+            generatedAt: string;
+            days: components["schemas"]["SlotDay"][];
+        };
+        AppointmentCreate: {
+            doctorSlug: string;
+            /** Format: date-time */
+            startsAt: string;
+            fullName: string;
+            /** @description Pakistani mobile; normalized to +923XXXXXXXXX */
+            mobile: string;
+            email?: string | null;
+            reason?: string | null;
+            /** @constant */
+            acceptRules: true;
+            /** @description Honeypot; must be empty */
+            trap?: string | null;
+        };
+        AppointmentView: {
+            /** @description Display form XXXXX-XXXXX */
+            reference: string;
+            /** @enum {string} */
+            status: "confirmed" | "cancelled" | "completed";
+            doctor: {
+                slug: string;
+                fullName: string;
+                specialty: string;
+            };
+            department: {
+                slug: string;
+                name: string;
+            };
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: date */
+            localDate: string;
+            localTime: string;
+            timeZone: string;
+            feePkr: number;
+            /** @example A**** K**** */
+            patientNameMasked: string;
+            /** @example 0300****567 */
+            mobileMasked: string;
+            /**
+             * Format: date-time
+             * @description When the booking was made
+             */
+            bookedAt: string;
+            isSample: boolean;
+        };
+        BookingConflict: {
+            error: components["schemas"]["ErrorInfo"];
+            alternatives?: components["schemas"]["AlternativeSlot"][];
         };
     };
     responses: {

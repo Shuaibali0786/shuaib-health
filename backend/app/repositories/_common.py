@@ -52,3 +52,9 @@ def require_id(value: uuid.UUID | None) -> uuid.UUID:
     if value is None:
         raise RuntimeError("row has no id")
     return value
+
+
+def require_value[T](value: T | None) -> T:
+    if value is None:
+        raise RuntimeError("row is missing a stored value")
+    return value

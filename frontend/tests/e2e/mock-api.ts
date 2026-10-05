@@ -11,7 +11,11 @@ export type MockMode =
   | "extra"
   | "rename"
   | "rules-empty"
-  | "rebrand";
+  | "rebrand"
+  | "booking-down"
+  | "booking-slow"
+  | "slot-taken"
+  | "rate-limited";
 
 export async function setMode(apiBase: string, mode: MockMode, resources?: string[]): Promise<void> {
   const res = await fetch(`${apiBase}/__mode`, { method: "POST", body: JSON.stringify({ mode, resources }) });

@@ -3,13 +3,15 @@
 Routes return these models, never the SQLModel tables.
 """
 
+from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
-from app.params import Weekday
+from app.booking.validation import clean_email, clean_name, clean_reason, normalize_pk_mobile
+from app.params import SLUG_PATTERN, Weekday
 
 
 class CamelModel(BaseModel):
@@ -44,6 +46,13 @@ class ErrorInfo(CamelModel):
 
 class ErrorResponse(CamelModel):
     error: ErrorInfo
+
+
+class AlternativeSlot(CamelModel):
+    starts_at: str
+    ends_at: str
+    local_date: str
+    local_time: str
 
 
 class HealthStatus(CamelModel):
@@ -199,3 +208,110 @@ class ClinicRule(CamelModel):
     sort_order: int
     text: str
     is_sample: bool
+
+
+class Slot(CamelModel):
+    starts_at: str
+    ends_at: str
+    local_time: str
+
+
+class SlotDay(CamelModel):
+    date: str
+    weekday: Weekday
+    status: Literal[
+        "available",
+        "fully_booked",
+        "doctor_unavailable",
+        "clinic_closed",
+        "not_working",
+        "no_longer_available",
+    ]
+    holiday_name: str | None = Field(default=None)
+    slots: list[Slot]
+
+
+class DoctorSlots(CamelModel):
+    doctor_slug: str
+    time_zone: str
+    window_days: int
+    generated_at: str
+    days: list[SlotDay]
+
+
+class AppointmentCreate(CamelModel):
+    """The booking request. Anything the server decides (fee, end time, status) is not accepted."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    doctor_slug: str = Field(min_length=1, max_length=80, pattern=SLUG_PATTERN)
+    starts_at: AwareDatetime
+    full_name: str = Field(min_length=2, max_length=80)
+    mobile: str = Field(min_length=1, max_length=20)
+    email: str | None = Field(default=None, max_length=254)
+    reason: str | None = Field(default=None, max_length=300)
+    accept_rules: Literal[True]
+    trap: str | None = Field(default=None, max_length=200)
+
+    @field_validator("starts_at")
+    @classmethod
+    def _utc(cls, value: datetime) -> datetime:
+        return value.astimezone(UTC)
+
+    @field_validator("full_name")
+    @classmethod
+    def _name(cls, value: str) -> str:
+        return clean_name(value)
+
+    @field_validator("mobile")
+    @classmethod
+    def _mobile(cls, value: str) -> str:
+        normalized = normalize_pk_mobile(value)
+        if normalized is None:
+            raise ValueError("mobile must be a Pakistani mobile number")
+        return normalized
+
+    @field_validator("email")
+    @classmethod
+    def _email(cls, value: str | None) -> str | None:
+        return clean_email(value)
+
+    @field_validator("reason")
+    @classmethod
+    def _reason(cls, value: str | None) -> str | None:
+        return clean_reason(value)
+
+
+class AppointmentDoctor(CamelModel):
+    slug: str
+    full_name: str
+    specialty: str
+
+
+class AppointmentDepartment(CamelModel):
+    slug: str
+    name: str
+
+
+class AppointmentView(CamelModel):
+    """What leaves the server after a booking: masked personal data only."""
+
+    reference: str
+    status: Literal["confirmed", "cancelled", "completed"]
+    doctor: AppointmentDoctor
+    department: AppointmentDepartment
+    starts_at: str
+    ends_at: str
+    local_date: str
+    local_time: str
+    time_zone: str
+    fee_pkr: int
+    patient_name_masked: str
+    mobile_masked: str
+    booked_at: str
+    is_sample: bool
+
+
+class BookingConflict(CamelModel):
+    error: ErrorInfo
+    alternatives: list[AlternativeSlot] | None = Field(default=None, max_length=5)

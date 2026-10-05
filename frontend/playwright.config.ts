@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { defineConfig, devices } from "@playwright/test";
 
+const PROXY_SECRET = "fake-e2e-proxy-secret-not-real-000000"; // obviously fake, test servers only
+
 const PORT = 3100;
 const MOCK_PORT = 4010;
 
@@ -25,6 +27,8 @@ export default defineConfig({
   },
   projects: [
     { name: "mobile", use: { ...devices["Pixel 7"] } },
+    // iPhone Safari (WebKit). Only the confirmation slip needs it, so the rest of the suite stays on Chromium.
+    { name: "iphone", testMatch: /confirmation-slip\.spec\.ts/, use: { ...devices["iPhone 14"] } },
     {
       name: "desktop",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
@@ -34,7 +38,7 @@ export default defineConfig({
     {
       command: "node tests/mock-api/server.mjs",
       url: `http://127.0.0.1:${MOCK_PORT}/`,
-      env: { MOCK_API_PORT: String(MOCK_PORT), MOCK_API_MODE: "ok" },
+      env: { MOCK_API_PORT: String(MOCK_PORT), MOCK_API_MODE: "ok", MOCK_PROXY_SECRET: PROXY_SECRET },
       reuseExistingServer: !process.env.CI,
     },
     // Tests run against the production build, which is what ships.
@@ -46,6 +50,7 @@ export default defineConfig({
       env: {
         CATALOG_API_URL: `http://127.0.0.1:${MOCK_PORT}`,
         CLINIC_FALLBACK_JSON: clinicFallback,
+        BOOKING_PROXY_SECRET: PROXY_SECRET,
       },
     },
   ],

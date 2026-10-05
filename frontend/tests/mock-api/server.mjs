@@ -1,10 +1,13 @@
-// Mock catalog API for end-to-end tests (contract: specs/004-catalog-api-integration/contracts/mock-api.md).
+// Mock catalog API for end-to-end tests (contracts: specs/004-catalog-api-integration/contracts/mock-api.md and
+// specs/005-appointment-booking/contracts/website-booking.md §5 for the booking routes, see booking.mjs).
 // Node built-ins only. Playwright cannot intercept fetches made by the Next server, so the e2e
 // servers point CATALOG_API_URL here. Never used in production.
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
+
+import { BOOKING_MODES, BOOKING_SLOW_MS, createBooking } from "./booking.mjs";
 
 const FIXTURES = fileURLToPath(new URL("../fixtures/api/", import.meta.url));
 
@@ -19,6 +22,7 @@ export const MODES = [
   "rename",
   "rules-empty",
   "rebrand",
+  ...BOOKING_MODES,
 ];
 
 // URL path (after /api/v1) -> fixture / resource name.
@@ -111,9 +115,11 @@ function readBody(req) {
  * Create (but do not start) a mock server. `startMode` defaults to MOCK_API_MODE, then "ok".
  * Returns the http.Server; `server.state` exposes the mode and request log for tests.
  */
-export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok" } = {}) {
+export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok", now, proxySecret } = {}) {
   const state = { mode: startMode, resources: null, log: {} };
   const slowTimers = new Set();
+  const booking = createBooking({ now, proxySecret });
+  if (startMode === "slot-taken") booking.armSlotTaken();
 
   const appliesTo = (resource) => !state.resources || state.resources.includes(resource);
 
@@ -129,7 +135,8 @@ export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok"
 
   function catalog(req, res, url, resource) {
     state.log[resource] = (state.log[resource] ?? 0) + 1;
-    const mode = appliesTo(resource) ? state.mode : "ok";
+    // The booking modes only affect the booking routes; the catalog behaves as in "ok".
+    const mode = appliesTo(resource) && !BOOKING_MODES.includes(state.mode) ? state.mode : "ok";
 
     if (mode === "down") {
       req.socket.destroy();
@@ -180,6 +187,7 @@ export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok"
       }
       state.mode = body.mode;
       state.resources = resources ?? null;
+      if (body.mode === "slot-taken") booking.armSlotTaken();
       res.writeHead(204).end();
       return;
     }
@@ -191,6 +199,7 @@ export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok"
       state.mode = "ok";
       state.resources = null;
       state.log = {};
+      booking.reset();
       res.writeHead(204).end();
       return;
     }
@@ -201,6 +210,40 @@ export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok"
     if (path === "/" && req.method === "GET") {
       send(res, 200, { status: "ok", mode: state.mode });
       return;
+    }
+
+    if (path.startsWith("/api/v1/")) {
+      const bodyText = req.method === "POST" ? await readBody(req) : "";
+      const mode = BOOKING_MODES.includes(state.mode) ? state.mode : "ok";
+      const call = booking.handle({ method: req.method ?? "GET", path, headers: req.headers, bodyText, mode });
+      if (call) {
+        // The log records method, path template, mode and the idempotency key; never a body.
+        (state.log.booking ??= []).push(call.entry);
+        if (mode === "booking-down") {
+          req.socket.destroy();
+          return;
+        }
+        const respond = () => {
+          const result = call.run();
+          if (result.resetMode) state.mode = "ok";
+          send(res, result.status, result.body, result.headers);
+        };
+        if (mode === "booking-slow") {
+          const timer = setTimeout(() => {
+            slowTimers.delete(timer);
+            if (!res.destroyed) respond();
+          }, BOOKING_SLOW_MS);
+          slowTimers.add(timer);
+          // A client that gave up creates no booking.
+          res.on("close", () => {
+            clearTimeout(timer);
+            slowTimers.delete(timer);
+          });
+          return;
+        }
+        respond();
+        return;
+      }
     }
 
     if (req.method === "GET" && path.startsWith("/api/v1/")) {

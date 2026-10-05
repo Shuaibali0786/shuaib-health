@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Clinic Catalog API
-  version: 1.0.0
+  version: 1.1.0
   description: >
     Public, read-only catalog API (Feature 003). Single-tenant: every clinic value comes from the
     database. Field names and types match frontend/src/types/content.ts; fields marked
@@ -11,6 +11,11 @@ info:
     Every response carries X-Request-ID and security headers. Catalog 200 responses carry
     ETag and Cache-Control: public, max-age=300; a matching If-None-Match returns 304.
     Every /api/v1 endpoint is rate limited per IP (default 60/min) and may return 429.
+
+    Availability and booking (Feature 005). Instants are UTC ISO 8601 ("Z"); every instant is
+    accompanied by localDate / localTime in the clinic timeZone. Slot and booking responses are
+    never cached (Cache-Control: no-store). POST /appointments is a server-to-server call: it
+    requires X-Proxy-Secret, and X-Client-IP is honoured only with a valid secret.
 servers:
   - url: http://localhost:8000
 paths:
@@ -141,6 +146,77 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
         "429": { $ref: "#/components/responses/RateLimited" }
+
+  /api/v1/doctors/{slug}/slots:
+    get:
+      summary: Available slots for one doctor, per clinic day, within the booking window
+      parameters:
+        - $ref: "#/components/parameters/slug"
+        - name: from
+          in: query
+          required: false
+          description: First clinic-local date (default today; earlier dates are clamped to today)
+          schema: { type: string, format: date }
+        - name: days
+          in: query
+          required: false
+          description: Number of days (default and maximum = clinic booking window)
+          schema: { type: integer, minimum: 1, maximum: 60 }
+      responses:
+        "200": { description: OK (Cache-Control no-store), content: { application/json: { schema: { $ref: "#/components/schemas/DoctorSlots" } } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+
+  /api/v1/appointments:
+    post:
+      summary: Book one slot (idempotent)
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, format: uuid }
+        - name: X-Proxy-Secret
+          in: header
+          required: true
+          schema: { type: string }
+        - name: X-Client-IP
+          in: header
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AppointmentCreate" } } }
+      responses:
+        "201": { description: Booked, or replay of the original result for the same key, content: { application/json: { schema: { $ref: "#/components/schemas/AppointmentView" } } } }
+        "400": { description: "request_rejected (generic; trap field filled)", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "403": { description: "forbidden (missing or wrong proxy secret)", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "409":
+          description: >
+            slot_taken (lost the race or overlapping booking) | slot_unavailable (past, inside lead
+            time, leave, holiday, outside window, off-grid) | booking_limit_reached (max active
+            bookings for this mobile) | idempotency_key_reused (same key, different details).
+            alternatives is present for slot_taken and slot_unavailable.
+          content: { application/json: { schema: { $ref: "#/components/schemas/BookingConflict" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+
+  /api/v1/appointments/{reference}:
+    get:
+      summary: Masked confirmation view by booking reference (rate limited per IP)
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          description: 10 Crockford base32 characters; case-insensitive; one dash allowed
+          schema: { type: string, pattern: "^[0-9A-Za-z]{5}-?[0-9A-Za-z]{5}$" }
+      responses:
+        "200": { description: OK (Cache-Control no-store), content: { application/json: { schema: { $ref: "#/components/schemas/AppointmentView" } } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/Unavailable" }
 
 components:
   parameters:
@@ -323,3 +399,89 @@ components:
     DoctorPage: { allOf: [ { $ref: "#/components/schemas/PageMeta" }, { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/Doctor" } } } } ] }
     LabTestPage: { allOf: [ { $ref: "#/components/schemas/PageMeta" }, { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/LabTest" } } } } ] }
     HealthPackagePage: { allOf: [ { $ref: "#/components/schemas/PageMeta" }, { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/HealthPackage" } } } } ] }
+    ErrorInfo:
+      type: object
+      required: [code, message, requestId]
+      properties:
+        code: { type: string, enum: [not_found, method_not_allowed, validation_error, rate_limited, internal_error, service_unavailable, not_configured, forbidden, request_rejected, slot_taken, slot_unavailable, booking_limit_reached, idempotency_key_reused] }
+        message: { type: string }
+        requestId: { type: string }
+        details:
+          type: array
+          items: { type: object, required: [field, issue], properties: { field: { type: string }, issue: { type: string } } }
+    Slot:
+      type: object
+      required: [startsAt, endsAt, localTime]
+      properties:
+        startsAt: { type: string, format: date-time, description: UTC instant }
+        endsAt: { type: string, format: date-time }
+        localTime: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+    AlternativeSlot:
+      type: object
+      required: [startsAt, endsAt, localDate, localTime]
+      properties:
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        localDate: { type: string, format: date }
+        localTime: { type: string }
+    SlotDay:
+      type: object
+      required: [date, weekday, status, slots]
+      properties:
+        date: { type: string, format: date }
+        weekday: { type: string, enum: [mon, tue, wed, thu, fri, sat, sun] }
+        status: { type: string, enum: [available, fully_booked, doctor_unavailable, clinic_closed, not_working, no_longer_available] }
+        holidayName: { type: string, description: Only when status is clinic_closed }
+        slots: { type: array, items: { $ref: "#/components/schemas/Slot" }, description: Available slots only, ascending }
+    DoctorSlots:
+      type: object
+      required: [doctorSlug, timeZone, windowDays, generatedAt, days]
+      properties:
+        doctorSlug: { type: string }
+        timeZone: { type: string }
+        windowDays: { type: integer }
+        generatedAt: { type: string, format: date-time }
+        days: { type: array, items: { $ref: "#/components/schemas/SlotDay" } }
+    AppointmentCreate:
+      type: object
+      additionalProperties: false
+      required: [doctorSlug, startsAt, fullName, mobile, acceptRules]
+      properties:
+        doctorSlug: { type: string, maxLength: 80 }
+        startsAt: { type: string, format: date-time }
+        fullName: { type: string, minLength: 2, maxLength: 80 }
+        mobile: { type: string, maxLength: 20, description: Pakistani mobile; normalized to +923XXXXXXXXX }
+        email: { type: [string, "null"], maxLength: 254 }
+        reason: { type: [string, "null"], maxLength: 300 }
+        acceptRules: { type: boolean, const: true }
+        trap: { type: [string, "null"], maxLength: 200, description: Honeypot; must be empty }
+    AppointmentView:
+      type: object
+      required: [reference, status, doctor, department, startsAt, endsAt, localDate, localTime, timeZone, feePkr, patientNameMasked, mobileMasked, bookedAt, isSample]
+      properties:
+        reference: { type: string, description: "Display form XXXXX-XXXXX" }
+        status: { type: string, enum: [confirmed, cancelled, completed] }
+        doctor:
+          type: object
+          required: [slug, fullName, specialty]
+          properties: { slug: { type: string }, fullName: { type: string }, specialty: { type: string } }
+        department:
+          type: object
+          required: [slug, name]
+          properties: { slug: { type: string }, name: { type: string } }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        localDate: { type: string, format: date }
+        localTime: { type: string }
+        timeZone: { type: string }
+        feePkr: { type: integer }
+        patientNameMasked: { type: string, examples: ["A**** K****"] }
+        mobileMasked: { type: string, examples: ["0300****567"] }
+        bookedAt: { type: string, format: date-time, description: When the booking was made }
+        isSample: { type: boolean }
+    BookingConflict:
+      type: object
+      required: [error]
+      properties:
+        error: { $ref: "#/components/schemas/ErrorInfo" }
+        alternatives: { type: array, maxItems: 5, items: { $ref: "#/components/schemas/AlternativeSlot" } }

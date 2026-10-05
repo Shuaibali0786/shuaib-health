@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { scanClientBundles } from "./helpers/client-bundle-scan";
 
-// SC-006: the API address and the server-only settings never appear in browser bundles.
+// SC-006: the API address, the server-only settings and the booking proxy secret never appear in browser bundles.
 describe("client bundles", () => {
   const { scanned, hits } = scanClientBundles();
 

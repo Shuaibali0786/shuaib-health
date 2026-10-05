@@ -61,3 +61,22 @@ for (const path of ["/", "/doctors"]) {
     expect(blocking.map((violation) => `${violation.id}: ${violation.help}`)).toEqual([]);
   });
 }
+
+// Booking with the API dead (Principle V): the page renders a friendly "call the clinic" state, never a crash.
+test("/book-appointment shows the unavailable state with a phone link and the demo notice", async ({ page }) => {
+  const response = await page.goto("/book-appointment");
+  expect(response?.status()).toBe(200);
+  const main = page.getByRole("main");
+  await expect(main.getByText("Online booking is temporarily unavailable. Please call the clinic.")).toBeVisible();
+  await expect(main.getByRole("link", { name: /^Call / })).toHaveAttribute("href", /^tel:\+?\d+$/);
+  await expect(main.getByRole("link", { name: "Retry" })).toBeVisible();
+  await expect(page.getByText(NOTICE).first()).toBeVisible();
+});
+
+test("a confirmation link shows the friendly page, with the reference and the clinic phone", async ({ page }) => {
+  const response = await page.goto("/book-appointment/confirmed/ABCDE-FGHJK");
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { level: 1, name: "We can't show your booking right now" })).toBeVisible();
+  await expect(page.getByText("ABCDE-FGHJK").first()).toBeVisible();
+  await expect(page.getByRole("main").getByText(/call the clinic on/i)).toBeVisible();
+});

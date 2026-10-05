@@ -87,7 +87,9 @@ describe("no third-party brands", () => {
   it("the sample data, components, pages and image file names contain none", () => {
     const text = stringValues([departments, doctors, healthTips, labTests, healthPackages, aboutContent, privacyContent, termsContent, siteConfig]);
     expect(text.filter((value) => BRAND_WORDS.test(value))).toEqual([]);
-    const offenders = codeFiles.filter((file) => BRAND_WORDS.test(file.code)).map((file) => file.path);
+    // The slip's "Share on WhatsApp" button is a share action the visitor asked for, not a partnership claim.
+    const SHARE_BUTTON = "/src/components/booking/ConfirmationActions.tsx";
+    const offenders = codeFiles.filter((file) => file.path !== SHARE_BUTTON && BRAND_WORDS.test(file.code)).map((file) => file.path);
     expect(offenders).toEqual([]);
     const imageNames = filesUnder(join(process.cwd(), "public", "images"), [".jpg", ".png", ".svg", ".webp"]);
     expect(imageNames.filter((name) => BRAND_WORDS.test(name))).toEqual([]);
@@ -95,17 +97,17 @@ describe("no third-party brands", () => {
 });
 
 describe("no backend dependency (constitution V)", () => {
-  it("src contains no fetch() call except the catalog API client", () => {
+  it("src contains no fetch() call except the catalog API client, the booking proxy and the booking flow's browser client", () => {
     const offenders = codeFiles
-      .filter((file) => file.path !== "/src/lib/api/http.ts")
+      .filter((file) => !["/src/lib/api/http.ts", "/src/lib/booking/backend.ts", "/src/lib/booking/client.ts"].includes(file.path))
       .filter((file) => /\bfetch\s*\(/.test(file.code))
       .map((file) => file.path);
     expect(offenders).toEqual([]);
   });
 
-  it("src reads no environment variables except SITE_URL in lib/seo.ts and the catalog API settings in lib/api/config.ts", () => {
+  it("src reads no environment variables except SITE_URL in lib/seo.ts, the API settings in lib/api/config.ts and the start-up check in instrumentation.ts", () => {
     const offenders = codeFiles
-      .filter((file) => file.path !== "/src/lib/seo.ts" && file.path !== "/src/lib/api/config.ts")
+      .filter((file) => !["/src/lib/seo.ts", "/src/lib/api/config.ts", "/src/instrumentation.ts"].includes(file.path))
       .filter((file) => /\bprocess\.env\b/.test(file.code))
       .map((file) => file.path);
     expect(offenders).toEqual([]);

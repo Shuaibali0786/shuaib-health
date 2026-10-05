@@ -1,4 +1,5 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
+import { parse } from "yaml";
 import type { z } from "zod";
 
 import type { components } from "@/lib/api/schema.gen";
@@ -16,6 +17,15 @@ import {
   ScheduleSessionSchema,
   pageSchema,
 } from "@/lib/api/schemas";
+import {
+  AlternativeSlotSchema,
+  AppointmentViewSchema,
+  BookingConflictSchema,
+  DoctorSlotsSchema,
+  ErrorInfoSchema,
+  SlotDaySchema,
+  SlotSchema,
+} from "@/lib/booking/schemas";
 import type {
   ClinicRule,
   Department,
@@ -63,6 +73,14 @@ describe("API contract", () => {
     expectTypeOf<z.infer<typeof LabTestSchema>>().toEqualTypeOf<Schemas["LabTest"]>();
     expectTypeOf<z.infer<typeof HealthPackageSchema>>().toEqualTypeOf<Schemas["HealthPackage"]>();
 
+    expectTypeOf<z.infer<typeof SlotSchema>>().toEqualTypeOf<Schemas["Slot"]>();
+    expectTypeOf<z.infer<typeof AlternativeSlotSchema>>().toEqualTypeOf<Schemas["AlternativeSlot"]>();
+    expectTypeOf<z.infer<typeof SlotDaySchema>>().toEqualTypeOf<Schemas["SlotDay"]>();
+    expectTypeOf<z.infer<typeof DoctorSlotsSchema>>().toEqualTypeOf<Schemas["DoctorSlots"]>();
+    expectTypeOf<z.infer<typeof AppointmentViewSchema>>().toEqualTypeOf<Schemas["AppointmentView"]>();
+    expectTypeOf<z.infer<typeof ErrorInfoSchema>>().toEqualTypeOf<Schemas["ErrorInfo"]>();
+    expectTypeOf<z.infer<typeof BookingConflictSchema>>().toEqualTypeOf<Schemas["BookingConflict"]>();
+
     type DoctorPage = z.infer<ReturnType<typeof pageSchema<typeof DoctorSchema>>>;
     expectTypeOf<DoctorPage>().toMatchTypeOf<Schemas["DoctorPage"]>();
     expectTypeOf<Schemas["DoctorPage"]>().toMatchTypeOf<DoctorPage>();
@@ -99,4 +117,23 @@ describe("API contract", () => {
   it.each(Object.keys(parsers) as FixtureName[])("(4) recorded fixture %s parses with its schema", (name) => {
     expect(parsers[name](readApiFixture(name)).success).toBe(true);
   });
+
+  // Every contract property of the booking shapes exists in its zod schema, and the schema adds none.
+  const bookingShapes = {
+    Slot: SlotSchema,
+    SlotDay: SlotDaySchema,
+    DoctorSlots: DoctorSlotsSchema,
+    AppointmentView: AppointmentViewSchema,
+    BookingConflict: BookingConflictSchema,
+  } as const;
+
+  it.each(Object.keys(bookingShapes) as (keyof typeof bookingShapes)[])(
+    "(5) %s has the same properties in the contract and in its zod schema",
+    (name) => {
+      const contract = parse(readContract()) as { components: { schemas: Record<string, { properties: object }> } };
+      expect(Object.keys(bookingShapes[name].shape).sort()).toEqual(
+        Object.keys(contract.components.schemas[name]?.properties ?? {}).sort(),
+      );
+    },
+  );
 });

@@ -98,10 +98,10 @@ const staticPages = (homeTitle: string): PageManifestEntry[] => [
   },
   {
     path: ROUTES.bookAppointment,
-    title: "Booking coming soon",
-    description: "Online appointment booking is not available in this demo yet. Browse the sample doctors and their schedules instead.",
+    title: "Book an appointment",
+    description: "Book an appointment with a sample doctor (portfolio demo).",
     kind: "static",
-    // A holding page, not content worth indexing.
+    // A task flow, not a search landing page; kept out of the sitemap on purpose.
     inSitemap: false,
   },
 ];

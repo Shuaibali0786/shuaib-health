@@ -1,0 +1,23 @@
+{
+  "description": "Pakistani mobile validation cases shared by backend (pytest) and frontend (Vitest). normalized=null means rejected.",
+  "cases": [
+    { "input": "03001234567", "normalized": "+923001234567" },
+    { "input": "0300-1234567", "normalized": "+923001234567" },
+    { "input": "0300 123 4567", "normalized": "+923001234567" },
+    { "input": "+923001234567", "normalized": "+923001234567" },
+    { "input": "+92 300 1234567", "normalized": "+923001234567" },
+    { "input": "923001234567", "normalized": "+923001234567" },
+    { "input": "00923001234567", "normalized": "+923001234567" },
+    { "input": "(0345) 123-4567", "normalized": "+923451234567" },
+    { "input": "0355.1234567", "normalized": "+923551234567" },
+    { "input": "02134567890", "normalized": null },
+    { "input": "0300123456", "normalized": null },
+    { "input": "030012345678", "normalized": null },
+    { "input": "+14155550123", "normalized": null },
+    { "input": "+9230012345678", "normalized": null },
+    { "input": "3001234567", "normalized": null },
+    { "input": "0300123456a", "normalized": null },
+    { "input": "", "normalized": null },
+    { "input": "０３００１２３４５６７", "normalized": null }
+  ]
+}

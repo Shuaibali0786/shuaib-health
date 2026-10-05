@@ -8,7 +8,7 @@ import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { IllustrativeNote } from "@/components/ui/IllustrativeNote";
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { departmentPath, ROUTES } from "@/lib/routes";
+import { bookingPath, departmentPath, ROUTES } from "@/lib/routes";
 import type { Department, Doctor, LabTest, LabTestCategory, PhoneNumber } from "@/types/content";
 
 interface DepartmentSectionsProps {
@@ -51,10 +51,10 @@ export function DepartmentSections({ department, doctors, tests, categories, pho
             </h2>
             <p className="mt-3 max-w-2xl text-base text-ink md:text-lg">{department.overview}</p>
             <div className="mt-6">
-              <Button href={ROUTES.bookAppointment} variant="accent">
+              <Button href={bookingPath({ department: department.slug })} variant="accent">
                 Book appointment
               </Button>
-              <p className="mt-2 text-sm text-muted">Booking is not available in this demo yet.</p>
+              <p className="mt-2 text-sm text-muted">Demo booking with sample doctors; not a real appointment.</p>
             </div>
           </div>
           <div>
@@ -113,7 +113,7 @@ export function DepartmentSections({ department, doctors, tests, categories, pho
           <Button href={ROUTES.labTests} variant="outline">
             See all lab tests
           </Button>
-          <Button href={ROUTES.bookAppointment} variant="accent">
+          <Button href={bookingPath({ department: department.slug })} variant="accent">
             Book appointment
           </Button>
         </div>

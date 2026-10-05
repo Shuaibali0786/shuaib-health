@@ -66,9 +66,16 @@ describe("Privacy (FR-077)", () => {
     expect(text).toMatch(/never be reachable through a public link/);
   });
 
-  it("states the demo collects no personal data and sets no tracking cookies", () => {
+  it("says what the booking form collects, how long it is kept, and that nothing is sent", () => {
     const text = allText(privacyContent);
-    expect(text).toMatch(/collects no personal data/);
+    expect(text).toMatch(/name/i);
+    expect(text).toMatch(/mobile/i);
+    expect(text).toMatch(/email/i);
+    expect(text).toMatch(/reason/i);
+    expect(text).toMatch(/7 days/);
+    expect(text).toMatch(/90 days/);
+    expect(text).toMatch(/No SMS or email is ever sent/);
+    expect(text).toMatch(/contact form still sends nothing/);
     expect(text).toMatch(/sets no tracking cookies/);
   });
 
@@ -95,7 +102,9 @@ describe("Terms (FR-078)", () => {
     expect(termsContent.intro).toMatch(/not legal advice/i);
     const text = allText(termsContent);
     expect(text).toMatch(/nothing on this site is medical advice/i);
-    expect(text).toMatch(/cannot book an appointment, pay for a test or receive a report/);
+    expect(text).toMatch(/You can make a demo booking with a sample doctor/);
+    expect(text).toMatch(/cannot pay for a test or receive a report/);
+    expect(text).toMatch(/Do not enter real personal or health information into the contact or booking forms/);
   });
 });
 

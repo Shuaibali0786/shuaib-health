@@ -11,8 +11,8 @@ booking flow, staff app and AI agent, through one versioned API.
 Nothing about the clinic is hard-coded: name, logo, colours, phones, hours, the demo notice and
 the clinic rules all come from the database. One database serves one clinic.
 
-This feature has **no write endpoints, no login and no booking**. See
-[`specs/003-catalog-api/`](../specs/003-catalog-api/) for the spec, plan, data model and the
+The catalog endpoints are read-only. Feature 005 adds online appointment booking (slots, create, lookup), described below.
+See [`specs/003-catalog-api/`](../specs/003-catalog-api/) and [`specs/005-appointment-booking/`](../specs/005-appointment-booking/) for the specs, plans, data models and the
 OpenAPI contract, and [`history/adr/`](../history/adr/) for the architecture decisions.
 
 All commands below are for **Windows CMD**, run from the `backend` folder.
@@ -55,6 +55,13 @@ notepad .env
 | `CACHE_MAX_AGE_SECONDS` | `Cache-Control` max-age for catalog responses (default 300). |
 | `IMAGE_BASE_PATH` | Prefix joined to stored image keys (default `/images/`). |
 | `LOG_LEVEL` | `DEBUG`, `INFO`, `WARNING` or `ERROR`. |
+| `BOOKING_PROXY_SECRET` | **Required**, at least 32 characters. Shared with the website (its `BOOKING_PROXY_SECRET`); bookings are accepted only with it. The app refuses to start without it. |
+| `PRIVACY_HASH_KEY` | **Required**, at least 32 characters. Key for the one-way hashes of IPs, mobiles and idempotency keys. The app refuses to start without it. |
+| `DEMO_MODE` | `true` (default): bookings are labelled as samples. |
+| `BOOKING_PURGE_AFTER_DAYS` / `AUDIT_PURGE_AFTER_DAYS` | Retention of demo bookings (default 7, 1–90) and audit rows (default 90, 7–365). |
+| `BOOKING_LIMIT_PER_IP_PER_HOUR` / `BOOKING_LIMIT_PER_PHONE_PER_DAY` / `LOOKUP_LIMIT_PER_IP_PER_MINUTE` | Booking limits (defaults 10, 5, 20). |
+
+Generate each secret with `python -c "import secrets; print(secrets.token_urlsafe(32))"`.
 
 URL format: `postgresql+psycopg://USER:PASSWORD@HOST/DBNAME?sslmode=require`. Neon shows
 `postgresql://...`; change the start to `postgresql+psycopg://`.
@@ -114,12 +121,25 @@ Lists return `{ "items": [...], "total": n, "page": 1, "pageSize": 20 }` (`page`
 `internal_error` (500), `service_unavailable` and `not_configured` (503). Catalog responses
 carry `ETag` and `Cache-Control`; send `If-None-Match` to get `304`.
 
+### Booking endpoints (Feature 005)
+
+| Path | Notes |
+|------|-------|
+| `GET /doctors/{slug}/slots` | Query `from` (date) and `days` (1-60). Slots in clinic time with leave, holidays and bookings applied. `Cache-Control: no-store` |
+| `POST /appointments` | Needs `X-Proxy-Secret` (the website sends it) and an `Idempotency-Key` (UUID v4). `201` with a masked view; `409` `slot_taken`, `slot_unavailable`, `booking_limit_reached` or `idempotency_key_reused`; `400` `request_rejected` (honeypot); `403`; `422`; `429` with `Retry-After` |
+| `GET /appointments/{reference}` | Masked view (no email, no reason). An unknown reference is always the same `404` |
+
+- **Fail fast.** The app (and `python -m app.seed`) refuses to start without `BOOKING_PROXY_SECRET` and `PRIVACY_HASH_KEY`, each at least 32 characters. Generate one with `python -c "import secrets; print(secrets.token_urlsafe(32))"`. The value is never printed.
+- **No double booking.** A Postgres exclusion constraint (`ex_appointment_no_overlap`, ADR-0005) is the final guard; the loser of a race gets `409 slot_taken` with up to 5 alternatives.
+- **Retention (demo).** Bookings are deleted 7 days after the appointment ended and audit rows after 90 days, at startup and on the next booking. Run it by hand with `uv run python -m app.booking.purge` (refuses when `DEMO_MODE` is false).
+- **Concurrency proof.** `uv run pytest -k concurrency` runs the 20-thread race. `uv run pytest -m perf tests/perf/test_booking_concurrency_repeat.py -s` repeats it 100 times (SC-002); it needs `TEST_DATABASE_URL` and took about 13 minutes against the remote test database.
+
 ## 6. Quality checks
 
 ```bat
 uv run ruff check .
 uv run ruff format --check .
-uv run mypy app
+uv run mypy
 uv run pytest
 uv run pytest -m perf -s
 ```

@@ -1,0 +1,9 @@
+{
+  "leave": [
+    { "doctorSlug": "dr-sana-farooqui", "dayOffset": 2 },
+    { "doctorSlug": "dr-hassan-mirza", "dayOffset": 4, "start": "09:00", "end": "11:00" }
+  ],
+  "holidays": [
+    { "dayOffset": 6, "name": "Clinic closed (sample holiday)" }
+  ]
+}

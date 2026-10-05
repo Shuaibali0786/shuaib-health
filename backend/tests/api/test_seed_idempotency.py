@@ -1,8 +1,11 @@
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlmodel import Session
 
+from app.seed.loader import DATA_DIR as SEED_DIR
 from app.seed.loader import seed_connection
 from tests.api.parity import load_catalog
 
@@ -20,11 +23,14 @@ TABLES = (
     "department_related_test",
     "lab_test_related_department",
     "health_package_test",
+    "doctor_leave",
+    "clinic_holiday",
 )
 
 
 def expected_counts() -> dict[str, int]:
     catalog = load_catalog()
+    booking = json.loads((SEED_DIR / "booking.json").read_text(encoding="utf-8"))
     return {
         "clinic_settings": 1,
         "clinic_rule": 5,
@@ -39,6 +45,8 @@ def expected_counts() -> dict[str, int]:
             len(t["relatedDepartmentIds"]) for t in catalog["labTests"]
         ),
         "health_package_test": sum(len(p["testSlugs"]) for p in catalog["healthPackages"]),
+        "doctor_leave": len(booking["leave"]),
+        "clinic_holiday": len(booking["holidays"]),
     }
 
 
@@ -128,3 +136,37 @@ def test_api_etag_is_stable_across_runs(client: TestClient, db_session: Session)
         run_seed_again(db_session)
         etags.append(client.get("/api/v1/doctors").headers["etag"])
     assert len(set(etags)) == 1
+
+
+def test_sample_leave_and_holiday_are_placed_inside_the_window(db_session: Session) -> None:
+    run_seed_again(db_session)
+    leave = db_session.execute(
+        text(
+            "SELECT count(*) FROM doctor_leave WHERE is_sample "
+            "AND starts_at >= now() - interval '1 day' AND ends_at <= now() + interval '16 days'"
+        )
+    ).scalar_one()
+    holidays = db_session.execute(
+        text(
+            "SELECT count(*) FROM clinic_holiday WHERE is_sample "
+            "AND holiday_date BETWEEN current_date - 1 AND current_date + 15"
+        )
+    ).scalar_one()
+    assert leave == expected_counts()["doctor_leave"]
+    assert holidays == expected_counts()["clinic_holiday"]
+
+
+def test_leave_added_by_the_clinic_survives_a_reseed(db_session: Session) -> None:
+    doctor_id = db_session.execute(text("SELECT id FROM doctor LIMIT 1")).scalar_one()
+    db_session.execute(
+        text(
+            "INSERT INTO doctor_leave (doctor_id, starts_at, ends_at, is_sample) "
+            "VALUES (:d, now(), now() + interval '1 hour', false)"
+        ),
+        {"d": doctor_id},
+    )
+    run_seed_again(db_session)
+    manual = db_session.execute(
+        text("SELECT count(*) FROM doctor_leave WHERE NOT is_sample")
+    ).scalar_one()
+    assert manual == 1
