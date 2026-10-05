@@ -4,25 +4,28 @@ Later features hook in at the marked points: idempotency (US3), limits and the p
 (US6), and the demo purge (US7).
 """
 
+import logging
+import time
+import uuid
 from datetime import datetime
 from typing import Any, Literal, NoReturn
 from zoneinfo import ZoneInfo
 
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, InterfaceError, OperationalError
 from sqlmodel import Session
 
 from app import models as m
-from app.booking import slots
+from app.booking import idempotency, slots
 from app.booking.audit import write_audit
 from app.booking.clock import Clock
 from app.booking.masking import mask_mobile, mask_name
-from app.booking.privacy import fingerprint
+from app.booking.privacy import fingerprint, request_hash
 from app.booking.reference import display, new_reference
 from app.booking.timeutil import utc_iso
 from app.errors import BookingConflict, ClinicNotConfigured, RequestInvalid
 from app.repositories import appointments as appointments_repo
 from app.repositories import availability as repo
-from app.repositories._common import require_id
+from app.repositories._common import require_id, require_value
 from app.schemas import (
     AlternativeSlot,
     AppointmentCreate,
@@ -37,6 +40,10 @@ OVERLAP_CONSTRAINT = "ex_appointment_no_overlap"
 EXCLUSION_VIOLATION = "23P01"
 SLOT_TAKEN_MESSAGE = "Sorry, this slot was just taken."
 MAX_REFERENCE_ATTEMPTS = 2
+TRANSIENT_ATTEMPTS = 2  # one try and one retry
+TRANSIENT_BACKOFF_SECONDS = 0.25
+
+logger = logging.getLogger("app.booking")
 
 
 def to_alternative(slot: slots.SlotOut, tz: ZoneInfo) -> AlternativeSlot:
@@ -51,6 +58,7 @@ def to_alternative(slot: slots.SlotOut, tz: ZoneInfo) -> AlternativeSlot:
 def view_of(
     row: m.Appointment, doctor: repo.BookableDoctor, time_zone: ZoneInfo
 ) -> AppointmentView:
+    created_at = require_value(row.created_at)
     local = row.starts_at.astimezone(time_zone)
     return AppointmentView(
         reference=display(row.reference),
@@ -67,7 +75,7 @@ def view_of(
         fee_pkr=row.fee_pkr,
         patient_name_masked=mask_name(row.patient_name),
         mobile_masked=mask_mobile(row.patient_phone),
-        booked_at=utc_iso(row.created_at),
+        booked_at=utc_iso(created_at),
         is_sample=row.is_sample,
     )
 
@@ -100,17 +108,88 @@ def _insert(session: Session, **fields: Any) -> m.Appointment:
     raise AssertionError("unreachable")  # pragma: no cover
 
 
+def _request_hash(data: AppointmentCreate) -> str:
+    return request_hash(
+        {
+            "doctorSlug": data.doctor_slug,
+            "startsAt": utc_iso(data.starts_at),
+            "fullName": data.full_name,
+            "mobile": data.mobile,
+            "email": data.email,
+            "reason": data.reason,
+        }
+    )
+
+
+def _replay(session: Session, appointment_id: uuid.UUID) -> AppointmentView:
+    """The booking an earlier request with the same key made."""
+    session.rollback()  # nothing to keep from this attempt
+    stored = appointments_repo.get_by_id(session, appointment_id)
+    if stored is None:
+        raise RuntimeError("idempotency key points at a missing booking")
+    return view_of(stored.appointment, stored.doctor, stored.time_zone)
+
+
 def create_appointment(
     session: Session,
     *,
     data: AppointmentCreate,
+    idempotency_key: uuid.UUID,
     client_ip: str,
     request_id: str,
     clock: Clock,
     settings: Settings,
 ) -> AppointmentView:
-    # US3 idempotency: pre-check the key here, claim it inside the transaction.
+    """Book the slot; a transient database error is retried once.
+
+    The retry is safe only because of the idempotency key: if the first attempt had committed
+    before the connection dropped, the retry finds the key and replays that booking. Anything
+    else (a taken slot, a constraint violation, a rejected key) is never retried.
+    """
+    for attempt in range(1, TRANSIENT_ATTEMPTS + 1):
+        try:
+            return _create_once(
+                session,
+                data=data,
+                idempotency_key=idempotency_key,
+                client_ip=client_ip,
+                request_id=request_id,
+                clock=clock,
+                settings=settings,
+            )
+        except (OperationalError, InterfaceError) as error:
+            if attempt == TRANSIENT_ATTEMPTS:
+                raise
+            logger.warning("transient database error, retrying once: %s", type(error).__name__)
+            _discard(session)
+            time.sleep(TRANSIENT_BACKOFF_SECONDS)
+    raise AssertionError("unreachable")  # pragma: no cover
+
+
+def _discard(session: Session) -> None:
+    """Drop whatever the failed attempt left in the session, even on a dead connection."""
+    try:
+        session.rollback()
+    except Exception:  # the connection is gone; closing releases it
+        session.close()
+
+
+def _create_once(
+    session: Session,
+    *,
+    data: AppointmentCreate,
+    idempotency_key: uuid.UUID,
+    client_ip: str,
+    request_id: str,
+    clock: Clock,
+    settings: Settings,
+) -> AppointmentView:
     # US6 limits/lock: trap field, IP and phone limits, then the per-phone advisory lock.
+    now = clock.now()
+    req_hash = _request_hash(data)
+    existing = idempotency.precheck(session, idempotency_key, req_hash, now)
+    if existing is not None:
+        return _replay(session, existing)
     context = repo.load_booking_context(session, data.doctor_slug)
     if context is None:
         raise ClinicNotConfigured
@@ -119,7 +198,10 @@ def create_appointment(
         raise RequestInvalid("doctorSlug", "is not available for online booking")
     clinic = context.settings
 
-    now = clock.now()
+    # A concurrent duplicate waits here until the first request ends, then replays its booking.
+    claimed = idempotency.claim(session, idempotency_key, req_hash, now)
+    if claimed is not None:
+        return _replay(session, claimed)
     availability = repo.load_availability(session, doctor.id, clinic, now)
     engine_input: dict[str, Any] = {
         "now": now,
@@ -163,8 +245,9 @@ def create_appointment(
             rules_accepted_at=now,
             rules_version=appointments_repo.active_rules_version(session),
         )
-        # US3: link the idempotency key to ``row``. US7: purge expired demo bookings after commit.
         session.flush()
+        idempotency.link(session, idempotency_key, require_id(row.id))
+        idempotency.cleanup(session, now)  # US7: purge expired demo bookings after commit.
     except IntegrityError as error:
         if not _is_overlap(error):
             raise
@@ -202,7 +285,11 @@ def _reject(
     fingerprint_value: str,
     request_id: str,
 ) -> NoReturn:
-    """Record the refusal (no personal data) and answer 409 with the next free times."""
+    """Record the refusal (no personal data) and answer 409 with the next free times.
+
+    The idempotency key claimed for this attempt is rolled back first: a failed attempt keeps none.
+    """
+    session.rollback()
     write_audit(
         session,
         action="appointment.rejected",

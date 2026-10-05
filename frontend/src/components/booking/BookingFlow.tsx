@@ -18,6 +18,7 @@ import { DetailsFormSchema, type DetailsFormInput, type DetailsFormValues } from
 import { FLOW_STEPS, parseFlowParams, serializeFlowParams, type FlowParams, type FlowStep } from "@/lib/booking/flowUrl";
 import { DOCTOR_GONE_MESSAGE, NO_SLOTS_MESSAGE, STEP_HEADING, formatLocalDate, timeZoneLabel } from "@/lib/booking/labels";
 import { fetchSlots, postBooking } from "@/lib/booking/client";
+import { attemptFingerprint, useAttemptKey } from "@/lib/booking/idempotency";
 import { AppointmentViewSchema, BookingConflictSchema, ErrorResponseSchema, type AlternativeSlot, type DoctorSlots } from "@/lib/booking/schemas";
 import { formatPkr } from "@/lib/format";
 import { EASE_SOFT, STEP_DURATION, STEP_OFFSET_Y } from "@/lib/motion";
@@ -56,7 +57,7 @@ function slotsReducer(state: SlotsState, action: SlotsAction): SlotsState {
 type SubmitState =
   | { status: "idle" }
   | { status: "submitting" }
-  | { status: "failed"; reason: "generic" | "slot" }
+  | { status: "failed"; reason: "generic" | "slot" | "unconfirmed" }
   | { status: "taken"; key: string; message: string; alternatives: AlternativeSlot[] };
 
 const FIELD_MESSAGES = {
@@ -67,6 +68,9 @@ const FIELD_MESSAGES = {
   acceptRules: "Please accept the clinic rules to continue.",
 } as const;
 type FormField = keyof typeof FIELD_MESSAGES;
+
+/** The server did not answer in time or at all: the booking may or may not exist, so a retry must reuse the key. */
+const isUnconfirmed = (status: number) => status === 502 || status === 503 || status === 504;
 
 const isFormField = (field: string): field is FormField => field in FIELD_MESSAGES;
 
@@ -143,6 +147,8 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
   });
   const [submit, setSubmit] = useState<SubmitState>({ status: "idle" });
   const [notice, setNotice] = useState<string | null>(null);
+  const attemptKey = useAttemptKey();
+  const inFlight = useRef(false); // set synchronously, so a double click cannot start two requests
 
   const go = (next: FlowParams, mode: "push" | "replace" = "push") => {
     router[mode](`${ROUTES.bookAppointment}${serializeFlowParams(next)}`);
@@ -176,32 +182,41 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
   }, [params.step]);
 
   async function onSubmit(values: DetailsFormValues) {
-    if (!slot || !params.doctor || submit.status === "submitting") return;
+    if (!slot || !params.doctor || inFlight.current) return;
+    inFlight.current = true;
     setSubmit({ status: "submitting" });
+    try {
+      await submitBooking(values, slot.startsAt, params.doctor);
+    } finally {
+      inFlight.current = false;
+    }
+  }
+
+  async function submitBooking(values: DetailsFormValues, startsAt: string, doctorSlug: string) {
+    const email = values.email === "" ? null : values.email;
+    const reason = values.reason.trim() === "" ? null : values.reason.trim();
+    // Same slot and details: the same key, so a retry can never book twice.
+    const key = attemptKey.keyFor(attemptFingerprint([doctorSlug, startsAt, values.fullName, values.mobile, email, reason]));
     let answer;
     try {
       answer = await postBooking(
-        {
-          doctorSlug: params.doctor,
-          startsAt: slot.startsAt,
-          fullName: values.fullName,
-          mobile: values.mobile,
-          email: values.email === "" ? null : values.email,
-          reason: values.reason.trim() === "" ? null : values.reason.trim(),
-          acceptRules: true,
-          trap: values.trap ? values.trap : null,
-        },
-        crypto.randomUUID(),
+        { doctorSlug, startsAt, fullName: values.fullName, mobile: values.mobile, email, reason, acceptRules: true, trap: values.trap ? values.trap : null },
+        key,
       );
     } catch {
-      setSubmit({ status: "failed", reason: "generic" });
+      setSubmit({ status: "failed", reason: "unconfirmed" });
       return;
     }
     const { status, body } = answer;
 
+    if (isUnconfirmed(status)) {
+      setSubmit({ status: "failed", reason: "unconfirmed" });
+      return;
+    }
     if (status === 201) {
       const view = AppointmentViewSchema.safeParse(body);
       if (view.success) {
+        attemptKey.reset();
         router.replace(`${ROUTES.bookAppointment}/confirmed/${view.data.reference}`);
         return;
       }
@@ -257,6 +272,13 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
       <div role="alert" className="rounded-card border-2 border-danger-700 bg-danger-50 p-4 text-base">
         {submit.reason === "slot" ? (
           <p>That time is no longer available. Please go back and choose another time.</p>
+        ) : submit.reason === "unconfirmed" ? (
+          <>
+            <p>We couldn&apos;t confirm your booking yet. It&apos;s safe to try again; you won&apos;t be booked twice.</p>
+            <button type="button" onClick={() => void form.handleSubmit(onSubmit)()} className={`${BUTTON_PRIMARY} mt-3`}>
+              Try again
+            </button>
+          </>
         ) : (
           <p>
             We couldn&apos;t complete your booking. Please try again, or call the clinic

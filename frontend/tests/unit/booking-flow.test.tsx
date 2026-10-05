@@ -291,7 +291,7 @@ describe("BookingFlow: the details step", () => {
   });
 
   it("shows a friendly error, not a code, when the booking fails", async () => {
-    onPost = () => json({ error: { code: "internal_error", message: "boom", requestId: "r" } }, 502);
+    onPost = () => json({ error: { code: "internal_error", message: "boom", requestId: "r" } }, 500);
     const user = userEvent.setup();
     mount(DETAILS_URL);
     await fillDetails(user);
@@ -300,8 +300,84 @@ describe("BookingFlow: the details step", () => {
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent(/couldn't complete your booking/i);
-    expect(alert).not.toHaveTextContent(/internal_error|boom|502/);
+    expect(alert).not.toHaveTextContent(/internal_error|boom|500/);
     expect(navigationCalls.some((c) => c.method === "replace")).toBe(false);
+  });
+});
+
+describe("BookingFlow: safe retries", () => {
+  const key = (init?: RequestInit) => (init?.headers as Record<string, string>)["Idempotency-Key"];
+  async function fillAndConfirm(user: ReturnType<typeof userEvent.setup>) {
+    await fillDetails(user);
+    await user.click(screen.getByRole("checkbox", { name: /I accept the clinic rules/ }));
+    await user.click(screen.getByRole("button", { name: "Confirm booking" }));
+  }
+
+  it("sends one request for a double click or a repeated Enter, and disables Confirm while it is in flight", async () => {
+    let release: (response: Response) => void = () => {};
+    onPost = () => new Promise<Response>((resolve) => (release = resolve));
+    const user = userEvent.setup();
+    mount(DETAILS_URL);
+    await fillDetails(user);
+    await user.click(screen.getByRole("checkbox", { name: /I accept the clinic rules/ }));
+    const confirm = screen.getByRole("button", { name: "Confirm booking" });
+    await user.dblClick(confirm);
+    await user.type(screen.getByLabelText(/Full name/), "{Enter}{Enter}");
+
+    expect(await screen.findByRole("button", { name: /Booking/ })).toBeDisabled();
+    expect(posts()).toHaveLength(1);
+    release(json(view, 201));
+    await waitFor(() => expect(navigationCalls.at(-1)).toEqual({ method: "replace", url: "/book-appointment/confirmed/ABCDE-FGHJK" }));
+    expect(posts()).toHaveLength(1);
+  });
+
+  it.each([502, 503, 504])("on a %i it says it is safe to try again, and Try again reuses the same key", async (status) => {
+    let calls = 0;
+    onPost = () => (++calls === 1 ? json({ error: { code: "service_unavailable", message: "m", requestId: "r" } }, status) : json(view, 201));
+    const user = userEvent.setup();
+    mount(DETAILS_URL);
+    await fillAndConfirm(user);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("We couldn't confirm your booking yet. It's safe to try again; you won't be booked twice.");
+    expect(screen.getByLabelText(/Full name/)).toHaveValue("Ali Khan");
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+
+    await waitFor(() => expect(navigationCalls.at(-1)).toEqual({ method: "replace", url: "/book-appointment/confirmed/ABCDE-FGHJK" }));
+    const [first, second] = posts().map(([, init]) => init as RequestInit);
+    expect(key(first)).toMatch(/^[0-9a-f-]{36}$/);
+    expect(key(second)).toBe(key(first));
+  });
+
+  it("treats a network failure the same way", async () => {
+    let calls = 0;
+    onPost = () => {
+      if (++calls === 1) throw new TypeError("Failed to fetch");
+      return json(view, 201);
+    };
+    const user = userEvent.setup();
+    mount(DETAILS_URL);
+    await fillAndConfirm(user);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/safe to try again/);
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(navigationCalls.some((c) => c.method === "replace")).toBe(true));
+    expect(key(posts()[1]?.[1])).toBe(key(posts()[0]?.[1]));
+  });
+
+  it("uses a new key when a detail changes between attempts", async () => {
+    let calls = 0;
+    onPost = () => (++calls === 1 ? json({ error: { code: "service_unavailable", message: "m", requestId: "r" } }, 504) : json(view, 201));
+    const user = userEvent.setup();
+    mount(DETAILS_URL);
+    await fillAndConfirm(user);
+    await screen.findByRole("alert");
+
+    await user.type(screen.getByLabelText(/Reason/), "Cough");
+    await user.click(screen.getByRole("button", { name: "Confirm booking" }));
+    await waitFor(() => expect(navigationCalls.some((c) => c.method === "replace")).toBe(true));
+    expect(key(posts()[1]?.[1])).not.toBe(key(posts()[0]?.[1]));
   });
 });
 

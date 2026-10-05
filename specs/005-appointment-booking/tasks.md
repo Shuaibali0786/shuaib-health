@@ -513,7 +513,7 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T075 [P] [US3] Write `backend/tests/api/test_idempotency.py` (db, `committing_engine`).
+- [X] T075 [P] [US3] Write `backend/tests/api/test_idempotency.py` (db, `committing_engine`).
   - **Replay**: a sequential replay returns `201` with the same reference, and there is one row.
   - **Concurrency**: 5 concurrent identical requests (barrier) → one row and five identical references.
   - **Conflict**: the same key with a different reason → `409 idempotency_key_reused`, and nothing created.
@@ -521,24 +521,24 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
   - **Failed attempt**: after a `409 slot_taken`, a retry with the same key gets `slot_taken` again (no key row stored).
   - **Expiry**: with the clock frozen at +25 h, the expired row is cleaned up and the key is treated as new.
   - **Privacy**: the `idempotency_key` table holds only a hash (assert that no column contains the name or mobile).
-- [ ] T076 [P] [US3] Write the stateful e2e `frontend/tests/e2e/stateful/booking-retry.spec.ts`.
+- [X] T076 [P] [US3] Write the stateful e2e `frontend/tests/e2e/stateful/booking-retry.spec.ts`.
   - A double click on Confirm → one POST in `/__log` and one confirmation.
   - In `booking-slow` mode the client times out: the visitor sees "We couldn't confirm your booking yet. It's safe to try again; you won't be booked twice." Then switch the mode to `ok`, press Try again, and assert that `/__log` shows the same `Idempotency-Key` and that there is one booking.
 
 ### Implementation for User Story 3
 
-- [ ] T077 [US3] Implement `backend/app/booking/idempotency.py`.
+- [X] T077 [US3] Implement `backend/app/booking/idempotency.py`.
   - `precheck(session, key, req_hash, now) -> UUID | None` (`None` when absent or expired; raise `BookingConflict("idempotency_key_reused")` on a hash mismatch).
   - `claim(session, key, req_hash, now) -> UUID | None`: `INSERT … ON CONFLICT (key) DO NOTHING RETURNING key`; when nothing is returned, re-select and return the existing `appointment_id`, or raise on a hash mismatch.
   - `link(session, key, appointment_id)`.
   - `cleanup(session, now, limit=200)`: deletes expired rows via `ctid IN (SELECT … LIMIT 200)`.
-- [ ] T078 [US3] Wire idempotency into `backend/app/booking/service.py` and `backend/app/routers/appointments.py`.
+- [X] T078 [US3] Wire idempotency into `backend/app/booking/service.py` and `backend/app/routers/appointments.py`.
   - The router takes the `Idempotency-Key` header (`UUID`; reject non-v4 with `422`).
   - The service computes `request_hash` from the normalized doctor slug, `startsAt` (UTC ISO), name, mobile, email and reason.
   - It runs `precheck` before everything else; a hit returns the stored appointment's view.
   - Inside the transaction it runs `claim` right after the transaction begins; a replay returns that view without inserting.
   - It calls `link` after the insert, and `cleanup` before committing.
-- [ ] T079 [US3] Handle the idempotency key in the browser.
+- [X] T079 [US3] Handle the idempotency key in the browser.
   - Create `frontend/src/lib/booking/idempotency.ts`: `createAttemptKey()` (`crypto.randomUUID()`) and a `useAttemptKey(deps)` hook that keeps one key per (slot + details hash) and resets it when either changes or after success.
   - In `BookingFlow.tsx`:
     - use the hook;

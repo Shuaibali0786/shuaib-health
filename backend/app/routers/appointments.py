@@ -1,6 +1,9 @@
 """Book a slot and look a booking up (Feature 005)."""
 
-from fastapi import APIRouter, Response
+from typing import Annotated
+
+from fastapi import APIRouter, Header, Response
+from pydantic import UUID4
 
 from app import schemas
 from app.booking import service
@@ -36,6 +39,7 @@ GET_ERRORS: dict[int | str, dict[str, object]] = {404: ERROR, 429: ERROR, 503: E
 )
 def create_appointment(
     data: schemas.AppointmentCreate,
+    idempotency_key: Annotated[UUID4, Header(alias="Idempotency-Key")],
     session: SessionDep,
     settings: SettingsDep,
     clock: ClockDep,
@@ -46,6 +50,7 @@ def create_appointment(
     return service.create_appointment(
         session,
         data=data,
+        idempotency_key=idempotency_key,
         client_ip=client_ip,
         request_id=request_id_var.get(),
         clock=clock,

@@ -173,7 +173,17 @@ export function DetailsForm({ form, onSubmit, submitting, failure }: DetailsForm
           disabled={submitting}
           className="inline-flex min-h-11 items-center justify-center rounded-control bg-navy-900 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-navy-800 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {submitting ? "Booking…" : "Confirm booking"}
+          {submitting ? (
+            <>
+              <span
+                aria-hidden="true"
+                className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white motion-reduce:animate-none"
+              />
+              Booking…
+            </>
+          ) : (
+            "Confirm booking"
+          )}
         </button>
       </form>
     </div>
