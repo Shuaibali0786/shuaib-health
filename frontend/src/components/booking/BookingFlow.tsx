@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { animate } from "framer-motion/dom/mini";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { BookingUnavailable } from "@/components/booking/BookingUnavailable";
 import { CallClinicNote } from "@/components/booking/CallClinicNote";
@@ -11,6 +11,7 @@ import { DateStrip } from "@/components/booking/DateStrip";
 import { DepartmentStep } from "@/components/booking/DepartmentStep";
 import { DetailsForm } from "@/components/booking/DetailsForm";
 import { DoctorStep } from "@/components/booking/DoctorStep";
+import { MAX_COOLDOWN_SECONDS, RateLimitNotice } from "@/components/booking/RateLimitNotice";
 import { SlotGrid } from "@/components/booking/SlotGrid";
 import { SlotTakenNotice } from "@/components/booking/SlotTakenNotice";
 import { StepIndicator } from "@/components/booking/StepIndicator";
@@ -57,7 +58,8 @@ function slotsReducer(state: SlotsState, action: SlotsAction): SlotsState {
 type SubmitState =
   | { status: "idle" }
   | { status: "submitting" }
-  | { status: "failed"; reason: "generic" | "slot" | "unconfirmed" }
+  | { status: "failed"; reason: "generic" | "slot" | "unconfirmed" | "limit" | "rejected" }
+  | { status: "limited"; seconds: number }
   | { status: "taken"; key: string; message: string; alternatives: AlternativeSlot[] };
 
 const FIELD_MESSAGES = {
@@ -220,6 +222,15 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
         router.replace(`${ROUTES.bookAppointment}/confirmed/${view.data.reference}`);
         return;
       }
+    } else if (status === 429) {
+      setSubmit({ status: "limited", seconds: answer.retryAfter ?? MAX_COOLDOWN_SECONDS });
+      return;
+    } else if (status === 400) {
+      const parsed = ErrorResponseSchema.safeParse(body);
+      if (parsed.success && parsed.data.error.code === "request_rejected") {
+        setSubmit({ status: "failed", reason: "rejected" });
+        return;
+      }
     } else if (status === 422) {
       const parsed = ErrorResponseSchema.safeParse(body);
       if (parsed.success && showServerProblems(parsed.data.error.details ?? [])) return;
@@ -231,7 +242,7 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
         setSubmit({ status: "taken", key: flowKey, message: conflict.data.error.message, alternatives: conflict.data.alternatives ?? [] });
         return;
       }
-      setSubmit({ status: "failed", reason: "slot" });
+      setSubmit({ status: "failed", reason: code === "booking_limit_reached" ? "limit" : "slot" });
       return;
     }
     setSubmit({ status: "failed", reason: "generic" });
@@ -264,13 +275,31 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
     go({ ...params, step: "time" });
   };
 
+  const phoneNote =
+    clinicPhone.tel !== "" ? (
+      <>
+        {" "}
+        on{" "}
+        <a href={`tel:${clinicPhone.tel}`} className="font-semibold text-navy-900 underline underline-offset-2">
+          {clinicPhone.display}
+        </a>
+      </>
+    ) : null;
+  const endCooldown = useCallback(() => setSubmit((state) => (state.status === "limited" ? { status: "idle" } : state)), []);
+
   const taken = submit.status === "taken" && submit.key === flowKey ? submit : null;
   const failure: ReactNode =
     taken ? (
       <SlotTakenNotice message={taken.message} alternatives={taken.alternatives} onChoose={chooseAlternative} onSeeAll={seeAllTimes} />
+    ) : submit.status === "limited" ? (
+      <RateLimitNotice seconds={submit.seconds} phone={phoneNote} onElapsed={endCooldown} />
     ) : submit.status === "failed" ? (
       <div role="alert" className="rounded-card border-2 border-danger-700 bg-danger-50 p-4 text-base">
-        {submit.reason === "slot" ? (
+        {submit.reason === "limit" ? (
+          <p>This mobile number already has the maximum upcoming bookings. Please call the clinic{phoneNote}.</p>
+        ) : submit.reason === "rejected" ? (
+          <p>We couldn&apos;t process this booking. Please call the clinic{phoneNote}.</p>
+        ) : submit.reason === "slot" ? (
           <p>That time is no longer available. Please go back and choose another time.</p>
         ) : submit.reason === "unconfirmed" ? (
           <>
@@ -280,19 +309,7 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
             </button>
           </>
         ) : (
-          <p>
-            We couldn&apos;t complete your booking. Please try again, or call the clinic
-            {clinicPhone.tel !== "" ? (
-              <>
-                {" "}
-                on{" "}
-                <a href={`tel:${clinicPhone.tel}`} className="font-semibold text-navy-900 underline underline-offset-2">
-                  {clinicPhone.display}
-                </a>
-              </>
-            ) : null}
-            .
-          </p>
+          <p>We couldn&apos;t complete your booking. Please try again, or call the clinic{phoneNote}.</p>
         )}
       </div>
     ) : null;
@@ -404,7 +421,7 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
                   <dd>{formatPkr(doctor.feePkr)} (sample)</dd>
                 </dl>
               </section>
-              <DetailsForm form={form} onSubmit={onSubmit} submitting={submit.status === "submitting"} failure={failure} />
+              <DetailsForm form={form} onSubmit={onSubmit} submitting={submit.status === "submitting"} blocked={submit.status === "limited"} failure={failure} />
             </>
           ) : null}
         </>

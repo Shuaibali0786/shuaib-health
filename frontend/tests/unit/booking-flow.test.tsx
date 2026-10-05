@@ -482,3 +482,69 @@ describe("BookingFlow: edge cases", () => {
     expect(await heading("Choose a department")).toBeInTheDocument();
   });
 });
+
+describe("BookingFlow: abuse protection", () => {
+  async function fillAndConfirm(user: ReturnType<typeof userEvent.setup>) {
+    await fillDetails(user);
+    await user.click(screen.getByRole("checkbox", { name: /I accept the clinic rules/ }));
+    await user.click(screen.getByRole("button", { name: "Confirm booking" }));
+  }
+  const rateLimited = (seconds: string) =>
+    json({ error: { code: "rate_limited", message: "Too many requests.", requestId: "r" } }, 429, { "Retry-After": seconds });
+
+  it("on a 429 shows the friendly message with the clinic phone, a countdown, and a disabled Confirm", async () => {
+    onPost = () => rateLimited("60");
+    const user = userEvent.setup();
+    mount(DETAILS_URL);
+    await fillAndConfirm(user);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Too many attempts. Please try again later or call the clinic on +92 21 111 000 111.");
+    expect(alert).not.toHaveTextContent(/rate_limited|429/);
+    expect(screen.getByTestId("booking-cooldown")).toHaveTextContent(/You can try again in (60|59) seconds\./);
+    expect(screen.getByRole("button", { name: "Confirm booking" })).toBeDisabled();
+    expect(screen.getByLabelText(/Full name/)).toHaveValue("Ali Khan");
+    expect(posts()).toHaveLength(1);
+  });
+
+  it("never waits longer than two minutes, whatever the server asks", async () => {
+    onPost = () => rateLimited("3600");
+    const user = userEvent.setup();
+    mount(DETAILS_URL);
+    await fillAndConfirm(user);
+
+    expect(await screen.findByTestId("booking-cooldown")).toHaveTextContent(/You can try again in (120|119) seconds\./);
+  });
+
+  it("enables Confirm again once the wait is over", async () => {
+    onPost = () => rateLimited("1");
+    const user = userEvent.setup();
+    mount(DETAILS_URL);
+    await fillAndConfirm(user);
+
+    expect(screen.getByRole("button", { name: "Confirm booking" })).toBeDisabled();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Confirm booking" })).toBeEnabled(), { timeout: 4000 });
+    expect(screen.queryByTestId("booking-cooldown")).not.toBeInTheDocument();
+  });
+
+  it("on booking_limit_reached shows the message and the clinic phone", async () => {
+    onPost = () =>
+      json({ error: { code: "booking_limit_reached", message: "m", requestId: "r" } }, 409);
+    const user = userEvent.setup();
+    mount(DETAILS_URL);
+    await fillAndConfirm(user);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("This mobile number already has the maximum upcoming bookings. Please call the clinic on +92 21 111 000 111.");
+    expect(within(alert).getByRole("link", { name: "+92 21 111 000 111" })).toHaveAttribute("href", "tel:+9221111000111");
+  });
+
+  it("on request_rejected shows the generic message and the clinic phone", async () => {
+    onPost = () => json({ error: { code: "request_rejected", message: "m", requestId: "r" } }, 400);
+    const user = userEvent.setup();
+    mount(DETAILS_URL);
+    await fillAndConfirm(user);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't process this booking. Please call the clinic on +92 21 111 000 111.");
+  });
+});

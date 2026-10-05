@@ -53,6 +53,8 @@ interface DetailsFormProps {
   form: DetailsFormApi;
   onSubmit: (values: DetailsFormValues) => void;
   submitting: boolean;
+  /** Confirm stays off for another reason (a rate-limit wait) without showing the spinner. */
+  blocked?: boolean;
   /** Anything that went wrong with the booking itself (not a field), shown above the button. */
   failure?: ReactNode;
 }
@@ -62,7 +64,7 @@ interface DetailsFormProps {
  * storage: the values live in the form state only. The demo notice sits above the fields and is
  * referenced by the form, so a screen reader hears it first.
  */
-export function DetailsForm({ form, onSubmit, submitting, failure }: DetailsFormProps) {
+export function DetailsForm({ form, onSubmit, submitting, blocked = false, failure }: DetailsFormProps) {
   const {
     register,
     handleSubmit,
@@ -170,7 +172,7 @@ export function DetailsForm({ form, onSubmit, submitting, failure }: DetailsForm
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || blocked}
           className="inline-flex min-h-11 items-center justify-center rounded-control bg-navy-900 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-navy-800 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {submitting ? (

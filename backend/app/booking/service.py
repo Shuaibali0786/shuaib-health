@@ -1,7 +1,7 @@
 """The booking transaction (data-model section 5 and research R2).
 
-Later features hook in at the marked points: idempotency (US3), limits and the per-phone lock
-(US6), and the demo purge (US7).
+Order of checks (research R2, R3): idempotency precheck, trap field, IP limit, phone limit, then
+inside the transaction the per-phone lock, the idempotency claim and the active-bookings cap.
 """
 
 import logging
@@ -11,18 +11,25 @@ from datetime import datetime
 from typing import Any, Literal, NoReturn
 from zoneinfo import ZoneInfo
 
+from sqlalchemy import Engine, text
 from sqlalchemy.exc import IntegrityError, InterfaceError, OperationalError
 from sqlmodel import Session
 
 from app import models as m
-from app.booking import idempotency, slots
-from app.booking.audit import write_audit
+from app.booking import idempotency, limits, slots
+from app.booking.audit import AuditOutcome, write_audit
 from app.booking.clock import Clock
 from app.booking.masking import mask_mobile, mask_name
 from app.booking.privacy import fingerprint, request_hash
 from app.booking.reference import display, new_reference
 from app.booking.timeutil import utc_iso
-from app.errors import BookingConflict, ClinicNotConfigured, RequestInvalid
+from app.errors import (
+    BookingConflict,
+    ClinicNotConfigured,
+    RateLimited,
+    RequestInvalid,
+    RequestRejected,
+)
 from app.repositories import appointments as appointments_repo
 from app.repositories import availability as repo
 from app.repositories._common import require_id, require_value
@@ -42,6 +49,10 @@ SLOT_TAKEN_MESSAGE = "Sorry, this slot was just taken."
 MAX_REFERENCE_ATTEMPTS = 2
 TRANSIENT_ATTEMPTS = 2  # one try and one retry
 TRANSIENT_BACKOFF_SECONDS = 0.25
+LIMIT_REACHED_MESSAGE = (
+    "This mobile number already has the maximum upcoming bookings. Please call the clinic."
+)
+PHONE_LOCK = text("SELECT pg_advisory_xact_lock(hashtextextended(:bucket, 0))")
 
 logger = logging.getLogger("app.booking")
 
@@ -136,6 +147,7 @@ def create_appointment(
     data: AppointmentCreate,
     idempotency_key: uuid.UUID,
     client_ip: str,
+    engine: Engine,
     request_id: str,
     clock: Clock,
     settings: Settings,
@@ -153,6 +165,7 @@ def create_appointment(
                 data=data,
                 idempotency_key=idempotency_key,
                 client_ip=client_ip,
+                engine=engine,
                 request_id=request_id,
                 clock=clock,
                 settings=settings,
@@ -180,16 +193,29 @@ def _create_once(
     data: AppointmentCreate,
     idempotency_key: uuid.UUID,
     client_ip: str,
+    engine: Engine,
     request_id: str,
     clock: Clock,
     settings: Settings,
 ) -> AppointmentView:
-    # US6 limits/lock: trap field, IP and phone limits, then the per-phone advisory lock.
     now = clock.now()
     req_hash = _request_hash(data)
     existing = idempotency.precheck(session, idempotency_key, req_hash, now)
     if existing is not None:
-        return _replay(session, existing)
+        return _replay(session, existing)  # a retry uses up no limit
+    fingerprint_value = fingerprint(settings.privacy_hash_key, client_ip)
+    phone_bucket = limits.booking_phone_bucket(settings.privacy_hash_key, data.mobile)
+    _check_limits(
+        session,
+        data=data,
+        client_ip=client_ip,
+        phone_bucket=phone_bucket,
+        engine=engine,
+        fingerprint_value=fingerprint_value,
+        request_id=request_id,
+        now=now,
+        settings=settings,
+    )
     context = repo.load_booking_context(session, data.doctor_slug)
     if context is None:
         raise ClinicNotConfigured
@@ -198,10 +224,16 @@ def _create_once(
         raise RequestInvalid("doctorSlug", "is not available for online booking")
     clinic = context.settings
 
+    # One booking at a time per phone, so the active-bookings count below cannot be raced.
+    session.connection().execute(PHONE_LOCK, {"bucket": phone_bucket})
     # A concurrent duplicate waits here until the first request ends, then replays its booking.
     claimed = idempotency.claim(session, idempotency_key, req_hash, now)
     if claimed is not None:
         return _replay(session, claimed)
+    active = appointments_repo.count_active_for_phone(session, data.mobile, now)
+    if active >= clinic.max_active_per_phone:
+        _refuse(session, "limit_reached", fingerprint_value, request_id)
+        raise BookingConflict("booking_limit_reached", LIMIT_REACHED_MESSAGE)
     availability = repo.load_availability(session, doctor.id, clinic, now)
     engine_input: dict[str, Any] = {
         "now": now,
@@ -213,7 +245,6 @@ def _create_once(
         "holidays": availability.holidays,
         "bookings": availability.bookings,
     }
-    fingerprint_value = fingerprint(settings.privacy_hash_key, client_ip)
     slot = slots.is_available(starts_at=data.starts_at, **engine_input)
     if slot is None:
         # Free apart from someone else's booking: that is a lost race, not an unavailable time.
@@ -247,7 +278,8 @@ def _create_once(
         )
         session.flush()
         idempotency.link(session, idempotency_key, require_id(row.id))
-        idempotency.cleanup(session, now)  # US7: purge expired demo bookings after commit.
+        idempotency.cleanup(session, now)
+        limits.cleanup_counters(session.connection(), now)
     except IntegrityError as error:
         if not _is_overlap(error):
             raise
@@ -274,6 +306,63 @@ def _create_once(
     )
     session.commit()
     return view_of(row, doctor, clinic.time_zone)
+
+
+def _refuse(
+    session: Session,
+    outcome: AuditOutcome,
+    fingerprint_value: str,
+    request_id: str,
+) -> None:
+    """Undo the attempt (its lock and idempotency claim), then record the refusal."""
+    session.rollback()
+    write_audit(
+        session,
+        action="appointment.rejected",
+        outcome=outcome,
+        fingerprint=fingerprint_value,
+        request_id=request_id,
+    )
+    session.commit()
+
+
+def _check_limits(
+    session: Session,
+    *,
+    data: AppointmentCreate,
+    client_ip: str,
+    phone_bucket: str,
+    engine: Engine,
+    fingerprint_value: str,
+    request_id: str,
+    now: datetime,
+    settings: Settings,
+) -> None:
+    """The trap field, then the per-IP and per-phone limits; each refusal is audited."""
+    key = settings.privacy_hash_key
+    ip_retry = limits.hit(
+        engine,
+        limits.booking_ip_bucket(key, client_ip),
+        limits.BOOKING_IP_WINDOW,
+        settings.booking_limit_per_ip_per_hour,
+        now,
+    )
+    if data.trap:  # a bot filled the hidden field; it still costs the sender an IP attempt
+        _refuse(session, "trap", fingerprint_value, request_id)
+        raise RequestRejected
+    if ip_retry is not None:
+        _refuse(session, "rate_limited_ip", fingerprint_value, request_id)
+        raise RateLimited(ip_retry)
+    phone_retry = limits.hit(
+        engine,
+        phone_bucket,
+        limits.BOOKING_PHONE_WINDOW,
+        settings.booking_limit_per_phone_per_day,
+        now,
+    )
+    if phone_retry is not None:
+        _refuse(session, "rate_limited_phone", fingerprint_value, request_id)
+        raise RateLimited(phone_retry)
 
 
 def _reject(

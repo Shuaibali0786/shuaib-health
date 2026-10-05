@@ -142,8 +142,11 @@ def db_session(seeded_engine: Engine) -> Iterator[Session]:
 @pytest.fixture
 def make_client(
     settings_factory: SettingsFactory, db_session: Session, seeded_engine: Engine
-) -> Callable[..., TestClient]:
-    """Build a client on the seeded test database, with optional settings overrides."""
+) -> Iterator[Callable[..., TestClient]]:
+    """Build a client on the seeded test database, with optional settings overrides.
+
+    Rate-limit counters commit on their own connection, so they are emptied after each test.
+    """
 
     def build(**overrides: Any) -> TestClient:
         app = create_app(settings_factory(**overrides))
@@ -151,7 +154,9 @@ def make_client(
         app.dependency_overrides[get_engine] = lambda: seeded_engine
         return TestClient(app, raise_server_exceptions=False)
 
-    return build
+    yield build
+    with seeded_engine.begin() as conn:
+        conn.execute(text("DELETE FROM rate_limit_counter"))
 
 
 @pytest.fixture

@@ -10,7 +10,8 @@ export async function fetchSlots(doctorSlug: string, signal: AbortSignal): Promi
   return DoctorSlotsSchema.parse(await res.json());
 }
 
-export type BookingAnswer = { status: number; body: unknown };
+/** `retryAfter` is the `Retry-After` header in whole seconds, when the server sent a usable one. */
+export type BookingAnswer = { status: number; body: unknown; retryAfter: number | null };
 
 /** Sends one booking attempt. Throws only when the network fails; every HTTP answer is returned as it is. */
 export async function postBooking(payload: unknown, idempotencyKey: string): Promise<BookingAnswer> {
@@ -26,5 +27,6 @@ export async function postBooking(payload: unknown, idempotencyKey: string): Pro
   } catch {
     // An empty or non-JSON body stays null; the caller treats a 2xx without a valid body as a failure.
   }
-  return { status: res.status, body };
+  const header = Number(res.headers.get("retry-after"));
+  return { status: res.status, body, retryAfter: Number.isFinite(header) && header > 0 ? header : null };
 }

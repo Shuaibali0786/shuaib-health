@@ -3,9 +3,10 @@
 import hashlib
 import uuid
 from dataclasses import dataclass
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import ColumnElement, true
+from sqlalchemy import ColumnElement, func, true
 from sqlmodel import Session, col, select
 
 from app import models as m
@@ -50,3 +51,18 @@ def active_rules_version(session: Session) -> str:
         .order_by(col(m.ClinicRule.sort_order))
     ).all()
     return hashlib.sha256("\n".join(texts).encode()).hexdigest()[:16]
+
+
+def count_active_for_phone(session: Session, phone: str, now: datetime) -> int:
+    """Confirmed bookings for this mobile number that have not ended yet."""
+    return int(
+        session.exec(
+            select(func.count())
+            .select_from(m.Appointment)
+            .where(
+                col(m.Appointment.patient_phone) == phone,
+                col(m.Appointment.status) == "confirmed",
+                col(m.Appointment.ends_at) > now,
+            )
+        ).one()
+    )

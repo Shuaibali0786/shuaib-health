@@ -558,7 +558,7 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T080 [P] [US6] Write `backend/tests/api/test_booking_limits.py` (db, `committing_engine`, limits lowered through `make_committing_client(booking_limit_per_ip_per_hour=3, booking_limit_per_phone_per_day=2, lookup_limit_per_ip_per_minute=3)`). Cover:
+- [X] T080 [P] [US6] Write `backend/tests/api/test_booking_limits.py` (db, `committing_engine`, limits lowered through `make_committing_client(booking_limit_per_ip_per_hour=3, booking_limit_per_phone_per_day=2, lookup_limit_per_ip_per_minute=3)`). Cover:
   - **IP limit**: the 4th attempt from one `X-Client-IP` → `429` with `Retry-After`, standard error body, and an audit row `rate_limited_ip`.
   - **Phone limit**: the 3rd attempt with one mobile from different IPs → `429`, audit `rate_limited_phone`. Mobile written in two formats counts as the same number.
   - **Max active**: with max active = 3, the 4th booking → `409 booking_limit_reached`, also when 5 different-slot requests for one phone run concurrently (exactly 3 succeed).
@@ -570,12 +570,12 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 ### Implementation for User Story 6
 
-- [ ] T081 [US6] Implement `backend/app/booking/limits.py`.
+- [X] T081 [US6] Implement `backend/app/booking/limits.py`.
   - `hit(engine_or_conn, bucket, window: timedelta, limit, now) -> int | None` (`None` when allowed, else seconds to retry).
   - It runs a single upsert in its own autocommitted connection (`engine.begin()`), with `window_start = floor(now, window)`.
   - `cleanup_counters(conn, now, limit=200)`.
   - Bucket builders `booking_ip_bucket(ip)`, `booking_phone_bucket(phone)` and `lookup_ip_bucket(ip)` use `privacy.hmac_hex`.
-- [ ] T082 [US6] Wire the abuse checks into `backend/app/booking/service.py` and `backend/app/routers/appointments.py`, in this order:
+- [X] T082 [US6] Wire the abuse checks into `backend/app/booking/service.py` and `backend/app/routers/appointments.py`, in this order:
   1. idempotency precheck;
   2. trap → IP hit, audit `trap`, `RequestRejected`;
   3. IP limit → `RateLimited`, plus audit;
@@ -584,7 +584,7 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
   - `GET /appointments/{reference}` first hits `lookup_ip_bucket`.
   - The service gets the engine via the `get_engine` dependency, so tests can override it.
-- [ ] T083 [US6] Map the abuse responses in `frontend/src/components/booking/BookingFlow.tsx` (contracts/website-booking.md §2).
+- [X] T083 [US6] Map the abuse responses in `frontend/src/components/booking/BookingFlow.tsx` (contracts/website-booking.md §2).
   - `429`: show the "Too many attempts…" message with the clinic phone, and disable Confirm for `Retry-After` seconds (max 120) with a visible countdown.
   - `409 booking_limit_reached` and `400 request_rejected`: their messages plus the phone.
   - Unit tests in `frontend/tests/unit/booking-flow.test.tsx`.

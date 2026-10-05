@@ -51,7 +51,7 @@ def payload(index: int, starts_at: datetime = SLOT) -> dict[str, Any]:
 def race(
     make_client: Callable[..., TestClient], clock: FrozenClock, starts_at: datetime = SLOT
 ) -> list[Any]:
-    clients = [make_client(clock=clock) for _ in range(RACERS)]
+    clients = [make_client(clock=clock, booking_limit_per_ip_per_hour=1000) for _ in range(RACERS)]
     barrier = threading.Barrier(RACERS)
 
     def attempt(index: int) -> Any:
