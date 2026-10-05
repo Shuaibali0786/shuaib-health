@@ -1,7 +1,9 @@
 // Runtime validation for the booking API (contract: specs/003-catalog-api/contracts/openapi.yaml, v1.1.0).
 // One schema per component schema; z.infer must equal the generated type (tests/unit/api-contract.test.ts).
 // Unknown keys are stripped, so additive API changes are safe; a missing or mistyped field fails the response.
-import { z } from "zod";
+// A namespace import, not `import { z }`: the `z` object re-exports every locale and the JSON Schema
+// converters, which then all ship to the browser (about 50 kB gzip on the booking page).
+import * as z from "zod";
 
 const Instant = z.iso.datetime();
 const LocalDate = z.iso.date();

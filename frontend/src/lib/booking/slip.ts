@@ -2,9 +2,13 @@
 // All three are built from the masked AppointmentView only (FR-051, FR-057): the full name, full
 // mobile number, email and reason are never available here, so they can never leak into a file.
 import { formatPkr } from "@/lib/format";
-import { arriveByTime, formatLocalDate, formatLocalDateWithYear } from "./labels";
+import { arriveByTime, formatLocalDateWithYear, zoneLabel } from "./labels";
 import { qrModules } from "./qr";
 import type { AppointmentView } from "./schemas";
+
+export { zoneLabel } from "./labels";
+
+const KARACHI = "Asia/Karachi";
 
 export interface SlipClinic {
   name: string;
@@ -13,13 +17,6 @@ export interface SlipClinic {
   phoneTel: string;
   /** The clinic's emergency line from the site settings; left out of the slip when empty. */
   emergencyDisplay?: string;
-}
-
-const KARACHI = "Asia/Karachi";
-
-/** "PKT" for the clinic's own zone, otherwise the zone id. */
-export function zoneLabel(timeZone: string): string {
-  return timeZone === KARACHI ? "PKT" : timeZone;
 }
 
 /** "4 Oct 2026, 14:05 PKT": when the booking was made, in the appointment's own zone. */
@@ -42,26 +39,6 @@ export const SLIP_DEMO_FOOTER = "Demo booking, no one will contact you";
 
 export function slipFileName(view: Pick<AppointmentView, "reference">): string {
   return `appointment-slip-${view.reference}.pdf`;
-}
-
-// ---------------------------------------------------------------------------------------------
-// WhatsApp
-// ---------------------------------------------------------------------------------------------
-
-export function whatsappText(view: AppointmentView, clinic: SlipClinic): string {
-  const lines = [
-    `Appointment booked${clinic.name ? ` at ${clinic.name}` : ""}`,
-    `Reference: ${view.reference}`,
-    `Doctor: ${view.doctor.fullName}`,
-    `Date: ${formatLocalDate(view.localDate)}`,
-    `Time: ${view.localTime} (${zoneLabel(view.timeZone)})`,
-  ];
-  if (clinic.phoneDisplay !== "") lines.push(`Clinic phone: ${clinic.phoneDisplay}`);
-  return lines.join("\n");
-}
-
-export function whatsappLink(view: AppointmentView, clinic: SlipClinic): string {
-  return `https://wa.me/?text=${encodeURIComponent(whatsappText(view, clinic))}`;
 }
 
 // ---------------------------------------------------------------------------------------------

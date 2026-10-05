@@ -27,7 +27,16 @@ export function bookingPath(params: { doctor?: string; department?: string } = {
   return query.length > 0 ? `${ROUTES.bookAppointment}?${query.join("&")}` : ROUTES.bookAppointment;
 }
 
-export const doctorPath = (slug: string): string => `${ROUTES.doctors}/${slug}`;
+/**
+ * The `prefetch` value for a <Link> to `href`. Links to the booking flow are not prefetched: a
+ * prefetch downloads the route's JavaScript (the form and its validation), and "Book appointment"
+ * links are on almost every page, so every visitor would pay for the flow. Other links keep the default.
+ */
+export function linkPrefetch(href: string): false | undefined {
+  return href === ROUTES.bookAppointment || href.startsWith(`${ROUTES.bookAppointment}?`) ? false : undefined;
+}
+
+export const doctorPath =(slug: string): string => `${ROUTES.doctors}/${slug}`;
 export const departmentPath = (slug: string): string => `${ROUTES.departments}/${slug}`;
 export const labTestPath = (slug: string): string => `${ROUTES.labTests}/${slug}`;
 export const tipPath = (slug: string): string => `${ROUTES.healthTips}/${slug}`;

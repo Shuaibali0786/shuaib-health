@@ -49,6 +49,11 @@ export function arriveByTime(localTime: string): string {
 }
 
 /** The long zone name, for example "Pakistan Standard Time". */
+/** "PKT" for the clinic's own zone, otherwise the zone id. */
+export function zoneLabel(timeZone: string): string {
+  return timeZone === "Asia/Karachi" ? "PKT" : timeZone;
+}
+
 export function timeZoneLabel(timeZone: string, at: Date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "long" }).formatToParts(at);
   return parts.find((p) => p.type === "timeZoneName")?.value ?? timeZone;

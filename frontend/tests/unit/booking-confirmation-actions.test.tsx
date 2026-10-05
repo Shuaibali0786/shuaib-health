@@ -116,7 +116,8 @@ describe("confirmation actions", () => {
   it("saves a calendar file", async () => {
     render(<ConfirmationActions view={view} clinic={clinic} />);
     await userEvent.click(screen.getByRole("button", { name: "Add to calendar" }));
-    expect(clicked).toEqual([{ download: "appointment-ABCDE-FGHJK.ics", href: "blob:slip" }]);
+    // The calendar builder is loaded on demand, so the file is saved a moment after the click.
+    await waitFor(() => expect(clicked).toEqual([{ download: "appointment-ABCDE-FGHJK.ics", href: "blob:slip" }]));
   });
 
   it("prints", async () => {

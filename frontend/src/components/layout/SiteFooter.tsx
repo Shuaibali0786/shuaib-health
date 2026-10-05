@@ -5,7 +5,7 @@ import { footerQuickLinks, legalLinks } from "@/data/navigation";
 import { getDepartments, getSiteConfig } from "@/lib/content";
 import { formatOpeningHours } from "@/lib/format";
 import { CREDIT, DEMO_NOTICE } from "@/lib/honesty";
-import { departmentPath } from "@/lib/routes";
+import { departmentPath, linkPrefetch } from "@/lib/routes";
 
 /** Fixed at build time (not new Date()) so server and client markup never differ. */
 const COPYRIGHT_YEAR = 2026;
@@ -40,7 +40,7 @@ export async function SiteFooter() {
             <ul>
               {footerQuickLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className={FOOTER_LINK}>
+                  <Link href={link.href} prefetch={linkPrefetch(link.href)} className={FOOTER_LINK}>
                     {link.label}
                   </Link>
                 </li>

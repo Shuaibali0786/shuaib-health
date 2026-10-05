@@ -4,8 +4,12 @@ import { CalendarPlus, Download, MessageCircle, Plus, Printer } from "lucide-rea
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import type { AppointmentView } from "@/lib/booking/schemas";
-import { buildCalendarIcs, buildSlipPdf, slipFileName, whatsappLink, type SlipClinic } from "@/lib/booking/slip";
+import type { SlipClinic } from "@/lib/booking/slip";
+import { whatsappLink } from "@/lib/booking/whatsapp";
 import { ROUTES } from "@/lib/routes";
+
+// The PDF, QR and calendar builders are only needed after a click, so they load on demand.
+const loadSlip = () => import("@/lib/booking/slip");
 
 const SECONDARY =
   "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-control border-2 border-navy-900 bg-white px-4 py-2.5 text-base font-semibold text-navy-900 transition-colors duration-150 hover:bg-surface";
@@ -78,6 +82,7 @@ export function ConfirmationActions({ view, clinic }: { view: AppointmentView; c
     setBusy(true);
     setStatus("");
     try {
+      const { buildSlipPdf, slipFileName } = await loadSlip();
       const outcome = await deliverPdf(buildSlipPdf(view, clinic), slipFileName(view), `Appointment ${view.reference}`);
       if (outcome === "downloaded") setStatus("Your slip was downloaded. Look in your Downloads or Files app.");
       else if (outcome === "shared") setStatus("Your slip is ready to save or send.");
@@ -88,9 +93,14 @@ export function ConfirmationActions({ view, clinic }: { view: AppointmentView; c
     }
   }
 
-  function addToCalendar() {
-    saveBlob(new Blob([buildCalendarIcs(view, clinic)], { type: "text/calendar;charset=utf-8" }), `appointment-${view.reference}.ics`);
-    setCalendarNote("Calendar file saved. Open it to add the appointment to your calendar.");
+  async function addToCalendar() {
+    try {
+      const { buildCalendarIcs } = await loadSlip();
+      saveBlob(new Blob([buildCalendarIcs(view, clinic)], { type: "text/calendar;charset=utf-8" }), `appointment-${view.reference}.ics`);
+      setCalendarNote("Calendar file saved. Open it to add the appointment to your calendar.");
+    } catch {
+      setCalendarNote("We couldn't make the calendar file. Please add the appointment by hand.");
+    }
   }
 
   return (

@@ -217,7 +217,7 @@ Method as in T003: `npm run build && npm run start` on port 3150 against the moc
 
 - **Against the baseline:** the booking page went from 67 (holding page) to 87, and the doctor page from 46 to 93. The laptop was less loaded than at baseline, so the absolute numbers are not one-to-one comparable.
 - **The ≥ 90 target (SC-008) is not met on `/book-appointment`** (87), nor on home (86) or doctors (88) on this machine. The gap is main-thread blocking time (TBT about 500 ms), which all pages share. LCP and CLS are good.
-- **The "added client JS ≤ 60 KB gzip" budget is not proven.** Every script the booking page loads is also loaded by the home or doctor page, so no chunk is booking-only, and the booking page loads less JS than home or doctors. But total JS per page is higher than at the Phase 1 baseline (booking 169 → 271 kB, doctor page 177 → 292 kB). I did not find which shared change caused this.
+- **The "added client JS ≤ 60 KB gzip" budget is not proven.** Every script the booking page loads is also loaded by the home or doctor page, so no chunk is booking-only, and the booking page loads less JS than home or doctors. But total JS per page is higher than at the Phase 1 baseline (booking 169 → 271 kB, doctor page 177 → 292 kB). I did not find which shared change caused this. **Resolved before the PR: see "JS bundle growth: cause and fix" below.**
 
 ### Success-criteria evidence (T105)
 
@@ -236,3 +236,46 @@ Method as in T003: `npm run build && npm run start` on port 3150 against the moc
 | SC-011 7-day purge | `test_retention.py` (old rows purged, recent and future kept, audit rows 90 days, startup and after-booking purge, CLI) | met |
 | SC-012 fail fast on the secret | `test_settings.py` (backend and seed CLI); `instrumentation.test.ts` (website); fail-fast proof in Phase 2 | met |
 | SC-013 truthful wording | `booking-copy.test.ts` (copy tests for FR-056); `honesty.spec.ts`; the privacy page lists what booking collects | met |
+
+## JS bundle growth: cause and fix (pre-PR)
+
+Phase 10 left the growth unexplained (booking 169 → 271 kB, doctor page 177 → 292 kB). Found with `next experimental-analyze --output` (Turbopack module graph, per-module gzip sizes) and a network trace of each page.
+
+### Cause
+
+1. **`import { z } from "zod"`** in `src/lib/booking/schemas.ts` and `form.ts`. The `z` object re-exports every zod locale (about 50 files of 1.3 kB) and the JSON Schema converters (`toJSONSchema`, `fromJSONSchema`), so none of it can be tree-shaken. zod was **131 kB** (sum of per-module gzip) of the booking route's own modules; react-hook-form 10.6 kB; the booking components about 12 kB.
+2. **Prefetch of `/book-appointment` from every page.** The header's "Book appointment" button (and the hero, CTA band, package cards, doctor and department pages, footer, home quick action) is a `<Link>`. `/book-appointment` is a static route, so Next prefetches it in full **including its JavaScript** as soon as the link is on screen. Home, `/doctors`, every doctor page and `/departments` downloaded three booking chunks (100.1 + 18.5 + 13.1 kB) after load. That is why "no chunk is booking-only": every page was fetching them.
+3. **Not the cause:** the PDF, QR and calendar code (`slip.ts`, `qr.ts`, hand-written, no library) is only on `/book-appointment/confirmed/[reference]` (about 9 kB). The root layout and shared components import nothing booking-specific.
+
+### Fix
+
+- `import * as z from "zod"` in the two booking schema files: zod on the booking route 131 → 43 kB (per-module).
+- `linkPrefetch(href)` in `src/lib/routes.ts` returns `false` for `/book-appointment` (with or without `?doctor=`/`?department=`). Used by `Button`, the footer quick links and the home quick actions. Clicking "Book appointment" now loads the flow on demand.
+- The PDF and calendar builders load with `import()` on click (`ConfirmationActions`). The WhatsApp link moved to `src/lib/booking/whatsapp.ts` so rendering it does not pull in `slip.ts`. The builders are now a separate 6.4 kB chunk; a network trace shows it is not fetched when the confirmation page loads, only after "Add to calendar" / "Download".
+
+### Before / after: JS per page (production build, mock API `ok`)
+
+Pixel 7 emulation, Playwright, gzip bytes of every script response after network idle + 3 s. "Initial" = scripts named in the HTML; "later" = fetched afterwards (prefetch).
+
+| Page | Before initial | Before later | **Before total** | After initial | After later | **After total** | Change |
+|------|---------------:|-------------:|-----------------:|--------------:|------------:|----------------:|-------:|
+| `/` | 149.0 | 131.7 | **280.6** | 149.0 | 13.1 | **162.1** | −118.5 |
+| `/doctors` | 151.1 | 136.6 | **287.7** | 151.1 | 18.0 | **169.2** | −118.5 |
+| `/doctors/dr-ayesha-rahman` | 145.1 | 142.6 | **287.7** | 145.1 | 24.0 | **169.2** | −118.5 |
+| `/departments` | 143.9 | 136.6 | **280.5** | 143.9 | 18.0 | **161.9** | −118.6 |
+| `/book-appointment` | 256.6 | 10.9 | **267.5** | 207.3 | 10.9 | **218.2** | −49.3 |
+
+The "later" scripts that remain are prefetches of `/doctors` and doctor pages (doctor browser, `NextAvailable`), the same chunks as before; none is booking code.
+
+### Lighthouse, mobile (same method as T003/T103, 3 runs, median; before and after built side by side and run alternately)
+
+| Page | Build | Performance (3 runs) | Median | LCP (ms) | TBT (ms) | CLS | JS transferred (kB) |
+|------|-------|----------------------|--------|----------|----------|-----|---------------------|
+| `/` | before | 81 / 85 / 86 | 85 | 2201 | 443 | 0 | 284.7 |
+| `/` | after | 84 / 86 / 85 | 85 | 2014 | 486 | 0 | **165.4** |
+| `/book-appointment` | before | 84 / 83 / 81 | 83 | 1430 | 649 | 0 | 271.2 |
+| `/book-appointment` | after | 86 / 85 / 84 | 85 | 1436 | 535 | 0 | **221.9** |
+
+- The "before" JS figures match Phase 10 exactly (284.7 and 271.2 kB), so the method is the same.
+- Booking page against the Phase 1 holding page: 221.9 − 169.3 = **52.6 kB added, within the 60 kB budget**.
+- The score target of 90 is still not met on this machine. TBT (about 500 ms) is shared by all pages, and on home the removed JS was prefetched after load, so it hardly moved the score.

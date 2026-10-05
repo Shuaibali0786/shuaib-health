@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "@/lib/cn";
+import { linkPrefetch } from "@/lib/routes";
 
 export type ButtonVariant = "primary" | "accent" | "outline" | "danger" | "onDark";
 
@@ -63,7 +64,7 @@ export function Button({
   }
 
   return (
-    <Link href={href} className={classes} {...props}>
+    <Link href={href} prefetch={linkPrefetch(href)} className={classes} {...props}>
       {children}
     </Link>
   );

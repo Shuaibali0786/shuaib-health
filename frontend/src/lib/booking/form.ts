@@ -1,4 +1,5 @@
-import { z } from "zod";
+// Namespace import keeps zod tree-shakable in the browser bundle (see schemas.ts).
+import * as z from "zod";
 
 import { normalizePkMobile } from "./phone";
 

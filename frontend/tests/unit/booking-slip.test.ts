@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { arriveByTime } from "@/lib/booking/labels";
-import { formatBookedOn, buildCalendarIcs, buildSlipPdf, slipFileName, whatsappLink, whatsappText, type SlipClinic } from "@/lib/booking/slip";
+import { formatBookedOn, buildCalendarIcs, buildSlipPdf, slipFileName, type SlipClinic } from "@/lib/booking/slip";
+import { whatsappLink, whatsappText } from "@/lib/booking/whatsapp";
 import type { AppointmentView } from "@/lib/booking/schemas";
 
 const view: AppointmentView = {
