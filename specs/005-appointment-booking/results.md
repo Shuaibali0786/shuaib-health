@@ -279,3 +279,12 @@ The "later" scripts that remain are prefetches of `/doctors` and doctor pages (d
 - The "before" JS figures match Phase 10 exactly (284.7 and 271.2 kB), so the method is the same.
 - Booking page against the Phase 1 holding page: 221.9 − 169.3 = **52.6 kB added, within the 60 kB budget**.
 - The score target of 90 is still not met on this machine. TBT (about 500 ms) is shared by all pages, and on home the removed JS was prefetched after load, so it hardly moved the score.
+
+**Re-run on fresh clones** (before = `1ceefa0`, after = the PR head), same method: per-page JS identical to the table above. Lighthouse: `/book-appointment` 81 / 85 / 77 → 86 / 83 / 86 (median **81 → 86**, TBT 748 → 538 ms, JS 271.2 → 221.9 kB); `/` 83 / 85 / 86 → 83 / 85 / 85 (median **85 → 85**, TBT 511 → 493 ms, JS 284.7 → 165.4 kB).
+
+### Quickstart on a clean checkout
+
+Fresh clone of the branch with `backend/.env` and `frontend/.env.local` copied in (the quickstart prerequisites). Migrate, seed, API and `npm run dev` start; the "Try it" steps pass (pre-selected doctor, masked name and `XXXXX-XXXXX` reference, "just taken" with 5 alternatives in a second tab, no Tuesday 17:00 slots); `ruff`, `mypy`, typecheck and lint pass.
+
+- **Fixed:** the two contract tests (`api-contract`, `api-contract-drift`) failed on a fresh Windows clone because `core.autocrlf=true` checked `schema.gen.ts` out with CRLF, while the generator writes LF. `.gitattributes` now has `*.gen.ts text eol=lf`. On a new clone the file is LF and the full Vitest run passes (862 passed, 1 skipped: `no-api-url-in-client` skips when there is no build output yet).
+- **The `409`s while trying it out** were `booking_limit_reached` ("This mobile number already has the maximum upcoming bookings"), from reusing one test mobile number; `max_active_bookings_per_phone` is 3 in the dev database. With fresh numbers the steps pass.
