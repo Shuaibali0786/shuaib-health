@@ -1,18 +1,20 @@
 <!--
 Sync Impact Report
-- Version change: (unfilled template) → 1.0.0
-- Modified principles: none renamed (initial ratification; all 10 principles newly defined)
-- Added sections: Core Principles I–X; Technology Stack & Deployment Constraints;
-  Development Workflow & Quality Gates; Governance
-- Removed sections: none (template placeholders replaced)
+- Version change: 1.0.0 → 1.0.1 (PATCH: wording clarification, no principle added or removed)
+- Modified principles: VI. Security (title unchanged) — session bullet now allows "a JWT or an
+  opaque server-side session token"; opaque tokens must be high-entropy and stored only as a hash.
+  Rationale: Feature 006 needs immediate revocation (sign-out, reset, deactivation, session cap,
+  idle timeout), which a JWT could only provide with a server-side table anyway.
+- Added sections: none
+- Removed sections: none
 - Templates requiring updates:
-  - ✅ .specify/templates/plan-template.md (Constitution Check gates listed)
-  - ✅ .specify/templates/tasks-template.md (tests are mandatory per Principle IX, not optional)
+  - ✅ .specify/templates/plan-template.md (VI gate wording updated)
   - ✅ .specify/templates/spec-template.md (reviewed; no change needed)
+  - ✅ .specify/templates/tasks-template.md (reviewed; no change needed)
   - ✅ .specify/templates/phr-template.prompt.md (reviewed; no change needed)
-  - ⚠ .specify/templates/commands/*.md (directory does not exist; nothing to update)
+  - ✅ .claude/commands/*.md (reviewed; JWT mentions are generic examples, not principle refs)
   - ⚠ README.md (does not exist yet; add link to this constitution when created)
-- Follow-up TODOs: none deferred
+- Follow-up TODOs: specs/006 plan.md Complexity Tracking deviation row can be marked resolved.
 -->
 # Shuaib Health Constitution
 
@@ -93,8 +95,9 @@ a Playwright test with the API blocked asserts friendly fallbacks and no crash.
 
 ### VI. Security
 - Passwords are hashed with Argon2. Plaintext or reversible storage is forbidden.
-- Sessions use a JWT stored in an `httpOnly`, `Secure`, `SameSite` cookie; tokens MUST NOT be
-  readable from JavaScript or stored in localStorage.
+- Sessions use a JWT or an opaque server-side session token stored in an `httpOnly`, `Secure`,
+  `SameSite` cookie; tokens MUST NOT be readable from JavaScript or stored in localStorage. An
+  opaque token MUST be high-entropy and only its hash is stored server-side.
 - State-changing requests MUST pass Origin/CSRF checks.
 - The frontend on Vercel reaches the backend through a same-origin proxy (rewrites/route
   handlers), so the browser never calls the backend origin directly. Backend CORS is strict: an
@@ -183,4 +186,4 @@ reviewed at each plan (Constitution Check) and each merge; reviewers MUST reject
 violate a principle unless an approved amendment or documented exception exists. Runtime agent
 guidance lives in `CLAUDE.md`.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-09-30
+**Version**: 1.0.1 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-05

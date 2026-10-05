@@ -1,0 +1,513 @@
+openapi: 3.1.0
+info:
+  title: Clinic Command Centre API (delta)
+  version: 1.2.0
+  description: >
+    Feature 006 delta. Merged into specs/003-catalog-api/contracts/openapi.yaml (1.1.0 → 1.2.0) under
+    the tag `command-centre`, exactly as the 005 delta was. Every path here is called ONLY by the website
+    server (BFF): every operation requires `X-Proxy-Secret` (005 `require_proxy_secret`), and all except
+    sign-in and demo start also require `X-Session-Token`. State-changing operations and `POST
+    /admin/bookings/search` also require `X-CSRF-Token`. The access policy of each operation is given in
+    `x-policy` and enforced by `require_viewer(policy)` (research R6); see auth-matrix.md.
+    Every response carries `Cache-Control: no-store` and `X-Robots-Tag: noindex`.
+    All instants are UTC ISO-8601; `localDate`/`localTime` are Asia/Karachi (clinic time).
+servers:
+  - url: /api/v1
+tags:
+  - name: command-centre
+
+components:
+  securitySchemes:
+    proxySecret: { type: apiKey, in: header, name: X-Proxy-Secret }
+    sessionToken: { type: apiKey, in: header, name: X-Session-Token }
+    csrfToken: { type: apiKey, in: header, name: X-CSRF-Token }
+
+  parameters:
+    Reference:
+      name: reference
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{10}$" }
+      description: Booking reference without dash (Crockford base32).
+
+  responses:
+    Unauthenticated: { description: "401 not_signed_in / session_expired", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+    Forbidden: { description: "403 forbidden / demo_read_only / password_change_required / csrf_failed", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+    Conflict: { description: "409 (see code)", content: { application/json: { schema: { $ref: "#/components/schemas/BookingChanged" } } } }
+    Validation: { description: "422 validation_error / weak_password", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+    RateLimited: { description: "429 rate_limited / account_locked (Retry-After header)", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties: { error: { $ref: "#/components/schemas/ErrorInfo" } }
+    ErrorInfo:
+      description: >
+        The 003/005 ErrorInfo. Feature 006 ADDS these codes to the `code` enum: not_signed_in,
+        session_expired, sign_in_failed, account_locked, csrf_failed, demo_read_only,
+        password_change_required, weak_password, email_taken, last_admin, transition_not_allowed,
+        booking_changed, undo_unavailable.
+      type: object
+      required: [code, message, requestId]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        requestId: { type: string }
+        retryAfterSeconds: { type: integer }
+        details: { type: array, items: { type: object, required: [field, issue], properties: { field: { type: string }, issue: { type: string } } } }
+
+    Role: { type: string, enum: [admin, receptionist] }
+    BookingStatus: { type: string, enum: [confirmed, arrived, completed, no_show, cancelled] }
+
+    Viewer:
+      type: object
+      required: [kind, csrfToken, clinicToday, timezone]
+      properties:
+        kind: { type: string, enum: [staff, demo] }
+        role: { $ref: "#/components/schemas/Role", description: "staff only" }
+        displayName: { type: string }
+        mustChangePassword: { type: boolean }
+        csrfToken: { type: string }
+        clinicToday: { type: string, format: date, description: "staff: today in clinic time; demo: the session's demo date" }
+        timezone: { type: string, example: Asia/Karachi }
+        sessionExpiresAt: { type: string, format: date-time, description: "earlier of idle and absolute expiry" }
+    SignInRequest:
+      type: object
+      required: [email, password]
+      properties: { email: { type: string, maxLength: 254 }, password: { type: string, maxLength: 128 } }
+    SessionIssued:
+      description: Returned to the website server only. The BFF moves `token` into the cookie and strips it from the browser response.
+      type: object
+      required: [token, viewer]
+      properties: { token: { type: string }, viewer: { $ref: "#/components/schemas/Viewer" } }
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties: { currentPassword: { type: string, maxLength: 128 }, newPassword: { type: string, minLength: 12, maxLength: 128 } }
+
+    Trend:
+      type: object
+      required: [value, previous, delta, comparedTo]
+      properties:
+        value: { type: [integer, "null"] }
+        previous: { type: [integer, "null"] }
+        delta: { type: [integer, "null"] }
+        comparedTo: { type: string, format: date }
+    Overview:
+      type: object
+      required: [localDate, now, kpis, agenda, nextUp, isSample]
+      properties:
+        localDate: { type: string, format: date }
+        now: { type: string, format: date-time }
+        clinicClosed: { type: [string, "null"], description: holiday name when closed }
+        kpis:
+          type: object
+          required: [appointments, arrived, completed, noShows, cancellations, utilisationPct]
+          properties:
+            appointments: { $ref: "#/components/schemas/Trend" }
+            arrived: { $ref: "#/components/schemas/Trend" }
+            completed: { $ref: "#/components/schemas/Trend" }
+            noShows: { $ref: "#/components/schemas/Trend" }
+            cancellations: { $ref: "#/components/schemas/Trend" }
+            utilisationPct: { $ref: "#/components/schemas/Trend" }
+        agenda:
+          type: array
+          items:
+            type: object
+            required: [doctor, items]
+            properties:
+              doctor: { $ref: "#/components/schemas/DoctorRef" }
+              items: { type: array, items: { $ref: "#/components/schemas/BookingSummary" } }
+        nextUp: { type: array, maxItems: 5, items: { $ref: "#/components/schemas/BookingSummary" } }
+        isSample: { type: boolean }
+    DoctorRef:
+      type: object
+      required: [id, name, departmentName]
+      properties: { id: { type: string, format: uuid }, name: { type: string }, departmentName: { type: string }, isActive: { type: boolean } }
+    BookingSummary:
+      type: object
+      required: [reference, startsAt, endsAt, localDate, localTime, status, version, patientNameMasked, doctor, allowedNext]
+      properties:
+        reference: { type: string }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        localDate: { type: string, format: date }
+        localTime: { type: string }
+        status: { $ref: "#/components/schemas/BookingStatus" }
+        version: { type: integer }
+        patientNameMasked: { type: string, example: "Ayesha K." }
+        doctor: { $ref: "#/components/schemas/DoctorRef" }
+        allowedNext: { type: array, items: { $ref: "#/components/schemas/BookingStatus" }, description: "server-computed with the clock (FR-023/024)" }
+        isSample: { type: boolean }
+    BookingDetail:
+      allOf:
+        - $ref: "#/components/schemas/BookingSummary"
+        - type: object
+          required: [patientName, phoneMasked, feePkr, bookedAt, history]
+          properties:
+            patientName: { type: string }
+            phoneMasked: { type: string, example: "0300****567" }
+            emailMasked: { type: [string, "null"] }
+            reason: { type: [string, "null"] }
+            feePkr: { type: integer }
+            bookedAt: { type: string, format: date-time }
+            history:
+              type: array
+              items:
+                type: object
+                required: [at, toStatus, actor, isUndo]
+                properties:
+                  at: { type: string, format: date-time }
+                  fromStatus: { oneOf: [ { $ref: "#/components/schemas/BookingStatus" }, { type: "null" } ] }
+                  toStatus: { $ref: "#/components/schemas/BookingStatus" }
+                  actor: { type: string, description: "staff display name or 'Online booking'" }
+                  isUndo: { type: boolean }
+    BookingSearchRequest:
+      type: object
+      properties:
+        q: { type: string, maxLength: 80, description: reference or patient name; never logged }
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        doctorId: { type: string, format: uuid }
+        departmentId: { type: string, format: uuid }
+        statuses: { type: array, items: { $ref: "#/components/schemas/BookingStatus" } }
+        page: { type: integer, minimum: 1, default: 1 }
+    BookingPage:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BookingSummary" } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer, const: 20 }
+    StatusChangeRequest:
+      type: object
+      required: [to, expectedVersion]
+      properties: { to: { $ref: "#/components/schemas/BookingStatus" }, expectedVersion: { type: integer } }
+    StatusChangeResult:
+      type: object
+      required: [booking, changeId, undoExpiresAt]
+      properties:
+        booking: { $ref: "#/components/schemas/BookingDetail" }
+        changeId: { type: string, format: uuid }
+        undoExpiresAt: { type: string, format: date-time }
+    UndoRequest:
+      type: object
+      required: [changeId]
+      properties: { changeId: { type: string, format: uuid } }
+    BookingChanged:
+      type: object
+      required: [error]
+      properties:
+        error: { $ref: "#/components/schemas/ErrorInfo" }
+        latest: { $ref: "#/components/schemas/BookingDetail" }
+    PhoneReveal:
+      type: object
+      required: [phone, telHref, maskAfterSeconds]
+      properties: { phone: { type: string, example: "0300 1234567" }, telHref: { type: string }, maskAfterSeconds: { type: integer, const: 60 } }
+
+    Insights:
+      type: object
+      required: [rangeDays, from, to, perDay, byDepartment, byStatus, byHour, total, isSample]
+      properties:
+        rangeDays: { type: integer, enum: [7, 30, 90] }
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        total: { type: integer }
+        perDay: { type: array, items: { type: object, required: [date, count], properties: { date: { type: string, format: date }, count: { type: integer } } } }
+        byDepartment: { type: array, items: { type: object, required: [departmentName, count, cancelled], properties: { departmentName: { type: string }, count: { type: integer }, cancelled: { type: integer } } } }
+        byStatus: { type: array, items: { type: object, required: [status, count], properties: { status: { $ref: "#/components/schemas/BookingStatus" }, count: { type: integer } } } }
+        byHour: { type: array, items: { type: object, required: [hour, count], properties: { hour: { type: integer, minimum: 0, maximum: 23 }, count: { type: integer } } } }
+        isSample: { type: boolean }
+    DoctorsToday:
+      type: object
+      required: [localDate, working, onLeave, notIn]
+      properties:
+        localDate: { type: string, format: date }
+        clinicClosed: { type: [string, "null"] }
+        working:
+          type: array
+          items:
+            type: object
+            required: [doctor, sessions, scheduled, booked, free, utilisationPct]
+            properties:
+              doctor: { $ref: "#/components/schemas/DoctorRef" }
+              sessions: { type: array, items: { type: object, properties: { start: { type: string }, end: { type: string } } } }
+              scheduled: { type: integer }
+              booked: { type: integer }
+              free: { type: integer }
+              freePassed: { type: integer }
+              utilisationPct: { type: integer }
+              nextFree: { type: [string, "null"], description: local HH:MM }
+        onLeave: { type: array, items: { $ref: "#/components/schemas/DoctorRef" } }
+        notIn: { type: array, items: { $ref: "#/components/schemas/DoctorRef" } }
+    ActivityEvent:
+      type: object
+      required: [id, at, action, outcome]
+      properties:
+        id: { type: string, format: uuid }
+        at: { type: string, format: date-time }
+        action: { type: string }
+        outcome: { type: string }
+        actorName: { type: [string, "null"] }
+        actorRole: { type: [string, "null"] }
+        bookingReference: { type: [string, "null"] }
+        fromStatus: { type: [string, "null"] }
+        toStatus: { type: [string, "null"] }
+        networkTag: { type: string, description: first 6 chars of the keyed IP fingerprint }
+        isSample: { type: boolean }
+    ActivityPage:
+      type: object
+      required: [items, total, page, pageSize]
+      properties: { items: { type: array, items: { $ref: "#/components/schemas/ActivityEvent" } }, total: { type: integer }, page: { type: integer }, pageSize: { type: integer } }
+    Staff:
+      type: object
+      required: [id, email, displayName, role, isActive]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string }
+        displayName: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        isActive: { type: boolean }
+        mustChangePassword: { type: boolean }
+        lastSignInAt: { type: [string, "null"], format: date-time }
+        isSample: { type: boolean }
+    StaffCreate:
+      type: object
+      required: [email, displayName, role, temporaryPassword]
+      properties: { email: { type: string }, displayName: { type: string }, role: { $ref: "#/components/schemas/Role" }, temporaryPassword: { type: string, minLength: 12, maxLength: 128 } }
+    Lookups:
+      type: object
+      required: [doctors, departments]
+      properties:
+        doctors: { type: array, items: { $ref: "#/components/schemas/DoctorRef" } }
+        departments: { type: array, items: { type: object, required: [id, name], properties: { id: { type: string, format: uuid }, name: { type: string }, isActive: { type: boolean } } } }
+
+security:
+  - proxySecret: []
+    sessionToken: []
+
+paths:
+  /admin/auth/sign-in:
+    post:
+      tags: [command-centre]
+      operationId: adminSignIn
+      x-policy: PUBLIC_PROXY
+      security: [ { proxySecret: [] } ]
+      description: Ends any presented session first (fixation). Limits per IP (429 rate_limited) and per typed email (429 account_locked).
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/SignInRequest" } } } }
+      responses:
+        "200": { description: signed in, content: { application/json: { schema: { $ref: "#/components/schemas/SessionIssued" } } } }
+        "401": { description: "sign_in_failed (generic)", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /admin/demo/start:
+    post:
+      tags: [command-centre]
+      operationId: adminDemoStart
+      x-policy: PUBLIC_PROXY
+      security: [ { proxySecret: [] } ]
+      description: Creates a 2-hour read-only demo session for today's Karachi date. Ends any presented session first.
+      responses:
+        "200": { description: demo session, content: { application/json: { schema: { $ref: "#/components/schemas/SessionIssued" } } } }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /admin/auth/me:
+    get:
+      tags: [command-centre]
+      operationId: adminMe
+      x-policy: SELF
+      responses:
+        "200": { description: current viewer, content: { application/json: { schema: { $ref: "#/components/schemas/Viewer" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+  /admin/auth/sign-out:
+    post:
+      tags: [command-centre]
+      operationId: adminSignOut
+      x-policy: SELF
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      responses:
+        "204": { description: session ended }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/auth/change-password:
+    post:
+      tags: [command-centre]
+      operationId: adminChangePassword
+      x-policy: SELF_STAFF
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      description: Ends all of the staff member's sessions and issues a fresh one.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/ChangePasswordRequest" } } } }
+      responses:
+        "200": { description: new session, content: { application/json: { schema: { $ref: "#/components/schemas/SessionIssued" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /admin/lookups:
+    get:
+      tags: [command-centre]
+      operationId: adminLookups
+      x-policy: READ
+      responses:
+        "200": { description: filter options incl. inactive records, content: { application/json: { schema: { $ref: "#/components/schemas/Lookups" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/overview:
+    get:
+      tags: [command-centre]
+      operationId: adminOverview
+      x-policy: READ
+      responses:
+        "200": { description: today at a glance, content: { application/json: { schema: { $ref: "#/components/schemas/Overview" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/bookings/search:
+    post:
+      tags: [command-centre]
+      operationId: adminBookingSearch
+      x-policy: READ
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      description: A read sent as POST so personal search terms never appear in a URL (FR-021). Default = today, all doctors, all statuses.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/BookingSearchRequest" } } } }
+      responses:
+        "200": { description: page of bookings, content: { application/json: { schema: { $ref: "#/components/schemas/BookingPage" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /admin/bookings/{reference}:
+    get:
+      tags: [command-centre]
+      operationId: adminBookingDetail
+      x-policy: READ
+      parameters: [ { $ref: "#/components/parameters/Reference" } ]
+      responses:
+        "200": { description: detail (phone and email masked), content: { application/json: { schema: { $ref: "#/components/schemas/BookingDetail" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: not_found }
+  /admin/bookings/{reference}/status:
+    post:
+      tags: [command-centre]
+      operationId: adminBookingChangeStatus
+      x-policy: WRITE
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      parameters: [ { $ref: "#/components/parameters/Reference" } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/StatusChangeRequest" } } } }
+      responses:
+        "200": { description: changed (booking + status history + audit in one transaction), content: { application/json: { schema: { $ref: "#/components/schemas/StatusChangeResult" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: not_found }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /admin/bookings/{reference}/status/undo:
+    post:
+      tags: [command-centre]
+      operationId: adminBookingUndoStatus
+      x-policy: WRITE
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      parameters: [ { $ref: "#/components/parameters/Reference" } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UndoRequest" } } } }
+      responses:
+        "200": { description: restored, content: { application/json: { schema: { $ref: "#/components/schemas/BookingDetail" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: "undo_unavailable / slot_taken", content: { application/json: { schema: { $ref: "#/components/schemas/BookingChanged" } } } }
+  /admin/bookings/{reference}/reveal-phone:
+    post:
+      tags: [command-centre]
+      operationId: adminBookingRevealPhone
+      x-policy: READ
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      description: Staff → audit row booking.phone_revealed (reference only). Demo → synthetic number, nothing stored.
+      parameters: [ { $ref: "#/components/parameters/Reference" } ]
+      responses:
+        "200": { description: full phone, content: { application/json: { schema: { $ref: "#/components/schemas/PhoneReveal" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: not_found }
+  /admin/insights:
+    get:
+      tags: [command-centre]
+      operationId: adminInsights
+      x-policy: READ
+      parameters: [ { name: range, in: query, required: true, schema: { type: integer, enum: [7, 30, 90] } } ]
+      responses:
+        "200": { description: charts data, content: { application/json: { schema: { $ref: "#/components/schemas/Insights" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /admin/doctors-today:
+    get:
+      tags: [command-centre]
+      operationId: adminDoctorsToday
+      x-policy: READ
+      responses:
+        "200": { description: who is in today, content: { application/json: { schema: { $ref: "#/components/schemas/DoctorsToday" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/activity:
+    get:
+      tags: [command-centre]
+      operationId: adminActivity
+      x-policy: READ_ADMIN
+      parameters:
+        - { name: action, in: query, schema: { type: string } }
+        - { name: staffId, in: query, schema: { type: string, format: uuid } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+      responses:
+        "200": { description: newest first (demo → synthetic feed), content: { application/json: { schema: { $ref: "#/components/schemas/ActivityPage" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/staff:
+    get:
+      tags: [command-centre]
+      operationId: adminStaffList
+      x-policy: READ_ADMIN
+      responses:
+        "200": { description: staff accounts (demo → synthetic), content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Staff" } } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [command-centre]
+      operationId: adminStaffCreate
+      x-policy: WRITE_ADMIN
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/StaffCreate" } } } }
+      responses:
+        "201": { description: created (must change password at first sign-in), content: { application/json: { schema: { $ref: "#/components/schemas/Staff" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: email_taken }
+        "422": { $ref: "#/components/responses/Validation" }
+  /admin/staff/{staffId}/reset-password:
+    post:
+      tags: [command-centre]
+      operationId: adminStaffResetPassword
+      x-policy: WRITE_ADMIN
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      parameters: [ { name: staffId, in: path, required: true, schema: { type: string, format: uuid } } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [temporaryPassword], properties: { temporaryPassword: { type: string, minLength: 12, maxLength: 128 } } } } } }
+      responses:
+        "204": { description: reset; all of that person's sessions ended }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: not_found }
+        "422": { $ref: "#/components/responses/Validation" }
+  /admin/staff/{staffId}:
+    patch:
+      tags: [command-centre]
+      operationId: adminStaffUpdate
+      x-policy: WRITE_ADMIN
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      description: Change role and/or active flag. Deactivation ends all sessions. Refuses to leave zero active admins (409 last_admin).
+      parameters: [ { name: staffId, in: path, required: true, schema: { type: string, format: uuid } } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, minProperties: 1, properties: { role: { $ref: "#/components/schemas/Role" }, isActive: { type: boolean } } } } } }
+      responses:
+        "200": { description: updated, content: { application/json: { schema: { $ref: "#/components/schemas/Staff" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: not_found }
+        "409": { description: last_admin }
