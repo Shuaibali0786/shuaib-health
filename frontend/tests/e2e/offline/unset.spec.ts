@@ -37,3 +37,14 @@ test("the Contact and Book Appointment pages show no phone link and no rules hea
     await expect(page.getByRole("heading", { name: "Before your visit" }), path).toHaveCount(0);
   }
 });
+
+test("booking pages render a friendly state, without a phone link, when nothing is configured", async ({ page }) => {
+  await page.goto("/book-appointment");
+  await expect(page.getByRole("main").getByText("Online booking is temporarily unavailable. Please call the clinic.")).toBeVisible();
+  await expect(page.getByText(NOTICE).first()).toBeVisible();
+
+  const response = await page.goto("/book-appointment/confirmed/ABCDE-FGHJK");
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { level: 1, name: "We can't show your booking right now" })).toBeVisible();
+  await expect(page.getByText("ABCDE-FGHJK").first()).toBeVisible();
+});

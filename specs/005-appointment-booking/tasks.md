@@ -692,19 +692,19 @@ description: "Task list for Feature 005 — Doctor schedules, available time slo
 
 **Purpose**: Principle V for booking, performance, documentation and the final gate.
 
-- [ ] T101 [P] Extend `frontend/tests/e2e/offline/site.spec.ts`. With the API dead and with it unset, the build passes and `/book-appointment` renders `BookingUnavailable` with the clinic phone (fallback settings), the demo notice and no crash. `/book-appointment/confirmed/ABCDE-FGHJK` renders the friendly "can't show your booking right now" page.
-- [ ] T102 [P] Write the stateful e2e `frontend/tests/e2e/stateful/booking-down.spec.ts` (`booking-down` mode).
+- [X] T101 [P] Extend `frontend/tests/e2e/offline/site.spec.ts`. With the API dead and with it unset, the build passes and `/book-appointment` renders `BookingUnavailable` with the clinic phone (fallback settings), the demo notice and no crash. `/book-appointment/confirmed/ABCDE-FGHJK` renders the friendly "can't show your booking right now" page.
+- [X] T102 [P] Write the stateful e2e `frontend/tests/e2e/stateful/booking-down.spec.ts` (`booking-down` mode).
   - The slots fetch fails → `BookingUnavailable` with Retry.
   - Switching back to `ok` and pressing Retry loads the times.
   - A POST during `booking-down` → the safe-retry message.
   - `/__log` proves the calls were made after each mode switch.
-- [ ] T103 Run Lighthouse (same method as T003) on `/book-appointment` and `/doctors/dr-ayesha-rahman`. Record the results in `results.md`: performance ≥ 90 mobile and not lower than baseline; added client JS for the booking route ≤ 60 KB gzip (from `next build` output).
-- [ ] T104 [P] Update the docs.
+- [X] T103 Run Lighthouse (same method as T003) on `/book-appointment` and `/doctors/dr-ayesha-rahman`. Record the results in `results.md`: performance ≥ 90 mobile and not lower than baseline; added client JS for the booking route ≤ 60 KB gzip (from `next build` output).
+- [X] T104 [P] Update the docs.
   - `backend/README.md`: booking endpoints, the new env settings with fail-fast behaviour, the purge CLI, how to run the concurrency test.
   - `frontend/README.md`: booking proxy routes, `BOOKING_PROXY_SECRET`, `instrumentation.ts` behaviour, the new mock modes.
   - Re-check `specs/005-appointment-booking/quickstart.md` by following it on a clean checkout.
-- [ ] T105 Write the success-criteria evidence in `specs/005-appointment-booking/results.md`: SC-001…SC-013, each with the test name or measurement (SC-001 from T049 and T094, SC-002 from T070, SC-008 from T039 and T103, SC-011 from T085, SC-012 from T010 and T026, SC-013 from T088).
-- [ ] T106 Run the final gate and record the results in `results.md`.
+- [X] T105 Write the success-criteria evidence in `specs/005-appointment-booking/results.md`: SC-001…SC-013, each with the test name or measurement (SC-001 from T049 and T094, SC-002 from T070, SC-008 from T039 and T103, SC-011 from T085, SC-012 from T010 and T026, SC-013 from T088).
+- [X] T106 Run the final gate and record the results in `results.md`.
   - Backend: `uv run ruff check .`, `uv run mypy`, `uv run pytest`, `uv run pytest -m perf`.
   - Frontend: `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:e2e`, `npm run test:e2e:stateful`, `npm run test:e2e:offline`, `npm run build` with `CATALOG_API_URL` and `BOOKING_PROXY_SECRET` unset.
   - `gitleaks detect --no-banner` from the repo root. If it flags the fake test secrets, apply the path-scoped allowlist described in T027, and never a global rule.

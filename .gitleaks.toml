@@ -1,0 +1,16 @@
+# Extends the default ruleset. The only exceptions are path-scoped: obviously fake test values
+# (UUID idempotency keys and "test-…-0123456789…" secrets) in test files and the task list that quotes them.
+# Never add a global allowlist here.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Fake values in test files and the Feature 005 task list"
+condition = "OR"
+paths = [
+  '''frontend/tests/unit/booking-appointments-route\.test\.ts''',
+  '''frontend/tests/unit/booking-backend\.test\.ts''',
+  '''frontend/tests/unit/mock-api\.test\.ts''',
+  '''backend/tests/conftest\.py''',
+  '''specs/005-appointment-booking/tasks\.md''',
+]

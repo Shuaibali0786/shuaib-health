@@ -169,3 +169,70 @@ Checkpoint 9, run on branch `005-appointment-booking`.
 - **Entry points (US5).** `bookingPath()` builds `?doctor=` / `?department=`; doctor and department Book buttons use it; the date step names the department; an unknown doctor gives the polite note at the department step. SC-001 (doctor page to confirmation, keyboard only) is recorded as a test annotation (`booking-entry.spec.ts`).
 - **Baselines for Phase 9.** Only link targets changed (no visible text), so none needed regenerating; the full run is green.
 - **Wording.** Phase 8 already replaced the "not available" sentences with "Demo booking with a sample doctor…" / "Demo booking with sample doctors; not a real appointment." These are kept, rather than the slightly different strings in T097/T098.
+
+## Phase 10 — resilience, polish and proof (T101–T106)
+
+Final gate, run on branch `005-appointment-booking`, one check at a time.
+
+### Final gate (T106)
+
+| Command | Result |
+|---------|--------|
+| `uv run ruff check .` / `ruff format --check .` | pass |
+| `uv run mypy` | pass, **100 source files**. `files` is now `["app", "tests"]`, so the test files are checked too |
+| `uv run pytest` | **430 passed**, 1 skipped (`tzset`, Windows only), 3 deselected (perf), 7 min 55 s |
+| `uv run pytest -m perf tests/perf/test_booking_concurrency_repeat.py` | **passed**, 13 min 0 s (see SC-002 below) |
+| `npm run typecheck` / `npm run lint` | pass |
+| `npm test` (Vitest) | **861 passed** (68 files) |
+| `npm run build` with `CATALOG_API_URL`, `BOOKING_PROXY_SECRET`, `CLINIC_FALLBACK_JSON` unset | pass |
+| `npm run test:e2e` | **1044 passed**, 11 skipped (same 11 as baseline), 0 failed, 6.0 min |
+| `npm run test:e2e:stateful` | **17 passed** (15 before, plus 2 in `booking-down.spec.ts`) |
+| `npm run test:e2e:offline` | **258 passed** (252 before, plus 2 booking tests in `site.spec.ts` and 1 in `unset.spec.ts`, each on desktop and mobile) |
+| After the last page change: `booking`, `booking-entry`, `confirmation-slip`, `links` and the book-appointment visual baselines | 21 passed |
+| `gitleaks detect --no-banner` | First run: 5 hits, all fake test values (UUID idempotency keys and `test-…-0123456789…` strings in 4 test files, and the task list that quotes them). Fixed with a **path-scoped** allowlist in `.gitleaks.toml` (those 5 files only, no global rule). Second run: **no leaks found**, 66 commits scanned |
+| `npm audit --omit=dev` | **0 vulnerabilities** (what ships) |
+| `npm audit` (with dev tools) | 5 high, all one chain: `braces` → `micromatch` → `fast-glob` → `@next/eslint-plugin-next` → `eslint-config-next`. Lint tooling only, never in the build output. The only fix offered is `--force`, which installs `eslint-config-next@14` (a breaking downgrade), so it was **not** applied. Needs your decision |
+| `pip-audit` (`uv run --with pip-audit`, the backend environment) | **No known vulnerabilities found** |
+
+### SC-002: 100 races of 20 simultaneous bookings (final run)
+
+`tests/perf/test_booking_concurrency_repeat.py`, run once against the remote test database: **100 races, 2,000 requests, 0 double bookings, every race 1 × `201` + 19 × `409 slot_taken`.** 13 min 0 s, under the 15-minute limit. This is a clean run. The earlier intermittent `503` (database connections dropped; 3 of 6 earlier runs) did not occur this time; its cause is still unconfirmed (see Phase 5).
+
+### Polish list
+
+- **Slip.** The CONFIRMED seal is larger (112 px; "CONFIRMED" 16 px bold, date 12 px, other lines 10 px; before, 8.8 to 12.8 px). The logo watermark is 4 % opacity (was 5 %) and sits in the bottom-right corner, clipped by the card, so it is never behind the visit details. On desktop the gap between slip and buttons is 20 px (was 32 px), the button column is 20 rem and the row gap 12 px. On mobile the layout has 7 rem of bottom padding so the sticky Download button never covers the last rows. The PDF is unchanged: its watermark is already a very pale tint (RGB 244/250/249).
+- **mypy.** The 24 errors in test files are fixed with typing changes only (`Any` for JSON bodies and query params, `cast` for `__table__`, unused ignores removed, a mypy override for `yaml` stubs). No test logic changed. `mypy` now checks `tests` by default, so they cannot come back.
+- **CLS found by Lighthouse.** `/book-appointment` first scored 66 with a layout shift of 0.475: "Before your visit" jumped down when the flow replaced its Suspense fallback. The fallback now reserves the height of the first step. CLS is **0** and the score is 87.
+
+### Lighthouse, mobile, production build (T103)
+
+Method as in T003: `npm run build && npm run start` on port 3150 against the mock API (`ok`), `npx lighthouse --preset=perf --form-factor=mobile`, 3 runs, median.
+
+| Page | Performance (3 runs) | Median | LCP (ms) | TBT (ms) | CLS | JS transferred (kB) |
+|------|----------------------|--------|----------|----------|-----|---------------------|
+| `/` | 85 / 86 / 89 | **86** | 1903 | 478 | 0 | 284.7 |
+| `/doctors` | 88 / 87 / 89 | **88** | 1502 | 456 | 0 | 292.1 |
+| `/book-appointment` | 87 / 87 / 86 | **87** | 1311 | 515 | 0 | 271.2 |
+| `/doctors/dr-ayesha-rahman` (baseline page) | 91 / 94 / 93 | **93** | 1585 | 286 | 0 | 292.1 |
+
+- **Against the baseline:** the booking page went from 67 (holding page) to 87, and the doctor page from 46 to 93. The laptop was less loaded than at baseline, so the absolute numbers are not one-to-one comparable.
+- **The ≥ 90 target (SC-008) is not met on `/book-appointment`** (87), nor on home (86) or doctors (88) on this machine. The gap is main-thread blocking time (TBT about 500 ms), which all pages share. LCP and CLS are good.
+- **The "added client JS ≤ 60 KB gzip" budget is not proven.** Every script the booking page loads is also loaded by the home or doctor page, so no chunk is booking-only, and the booking page loads less JS than home or doctors. But total JS per page is higher than at the Phase 1 baseline (booking 169 → 271 kB, doctor page 177 → 292 kB). I did not find which shared change caused this.
+
+### Success-criteria evidence (T105)
+
+| SC | Evidence | Status |
+|----|----------|--------|
+| SC-001 under 60 s, under 45 s from a doctor page | `booking.spec.ts` (keyboard-only booking, mobile and desktop, time in the test annotation); `booking-entry.spec.ts` "from the doctor's page to the confirmation takes under 45 seconds, keyboard only (SC-001)". Both pass in the final e2e run. A manual timed check on a real phone is still open | automated: met |
+| SC-002 100 races, 0 double bookings | `tests/perf/test_booking_concurrency_repeat.py`: 100 races, 0 double bookings (above); `test_booking_concurrency.py` (20 threads → 1 × 201 + 19 × 409) | met |
+| SC-003 same key → 1 booking | `test_idempotency.py` (sequential replay, 5 concurrent identical requests, drop after commit); `booking-retry.spec.ts` (double click, retry after timeout) | met |
+| SC-004 slot reference cases | `tests/unit/test_slots.py` (breaks, leave, holiday, lead time, bookings, day boundary, DST zone); `test_slots_api.py`. The process-time-zone case (`TZ=America/New_York`) is skipped on Windows because `time.tzset` does not exist; the engine takes the zone as an argument and never reads the process zone | met, with that one skip |
+| SC-005 no personal data in URLs or logs | `test_log_safety.py`; `booking-privacy.spec.ts`; `test_idempotency.py::test_the_key_table_holds_no_patient_data`; `test_booking_limits.py::test_counters_never_hold_an_ip_or_a_phone_number` | met |
+| SC-006 abuse limits | `test_booking_limits.py` (IP, mobile in any format, max active incl. concurrent, trap, lookup, window reset, replays); `booking-limits.spec.ts` | met |
+| SC-007 axe and keyboard | `booking.spec.ts` (axe on every step, error state and confirmation; keyboard only); `confirmation-slip.spec.ts` (axe) | met |
+| SC-008 times ≤ 1 s, Lighthouse ≥ 90 | Slots p95 **184 ms** against the 300 ms budget (`pytest -m perf -k slots`, Phase 3). Lighthouse **87**, not 90 (above) | **times met; Lighthouse not met on this machine** |
+| SC-009 rebook without retyping | `booking-race.spec.ts` (B keeps every field and rebooks with an alternative); `booking-flow.test.tsx` | met |
+| SC-010 backend down → friendly page | `offline/site.spec.ts` (new: booking page and confirmation link with the API dead); `offline/unset.spec.ts` (new: nothing configured); `stateful/booking-down.spec.ts` (new: slots down, Retry, POST while down) | met |
+| SC-011 7-day purge | `test_retention.py` (old rows purged, recent and future kept, audit rows 90 days, startup and after-booking purge, CLI) | met |
+| SC-012 fail fast on the secret | `test_settings.py` (backend and seed CLI); `instrumentation.test.ts` (website); fail-fast proof in Phase 2 | met |
+| SC-013 truthful wording | `booking-copy.test.ts` (copy tests for FR-056); `honesty.spec.ts`; the privacy page lists what booking collects | met |

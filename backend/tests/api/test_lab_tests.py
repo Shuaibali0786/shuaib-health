@@ -131,7 +131,7 @@ def test_unknown_slug_is_404(client: TestClient) -> None:
         ({"pageSize": 101}, "pageSize"),
     ],
 )
-def test_invalid_params_are_422(client: TestClient, params: dict[str, object], field: str) -> None:
+def test_invalid_params_are_422(client: TestClient, params: dict[str, Any], field: str) -> None:
     response = client.get("/api/v1/lab-tests", params=params)
     assert response.status_code == 422
     assert response.json()["error"]["details"][0]["field"] == field

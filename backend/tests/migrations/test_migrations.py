@@ -1,11 +1,12 @@
 import uuid
 from datetime import UTC, datetime, time, timedelta
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from alembic import command
 from sqlalchemy import Connection, Engine, inspect, select, text
 from sqlalchemy.exc import IntegrityError
+from sqlmodel import col
 
 from app.booking.timeutil import to_utc
 from app.models import Doctor, DoctorWeeklySchedule
@@ -67,8 +68,8 @@ def test_models_match_migrations(migrated_engine: Engine) -> None:
 
 def test_overlapping_sessions_are_rejected(seeded_engine: Engine) -> None:
     with seeded_engine.connect() as conn, conn.begin() as trans:
-        doctor_id: uuid.UUID = conn.execute(select(Doctor.__table__.c.id).limit(1)).scalar_one()
-        table = DoctorWeeklySchedule.__table__
+        doctor_id: uuid.UUID = conn.execute(select(col(Doctor.id)).limit(1)).scalar_one()  # type: ignore[assignment]
+        table = cast(Any, DoctorWeeklySchedule).__table__
         conn.execute(
             text("DELETE FROM doctor_weekly_schedule WHERE doctor_id = :id"), {"id": doctor_id}
         )

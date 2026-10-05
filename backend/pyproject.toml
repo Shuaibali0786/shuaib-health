@@ -40,10 +40,10 @@ select = ["E", "F", "I", "B", "UP", "S", "SIM", "RUF", "ASYNC"]
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]
-files = ["app"]
+files = ["app", "tests"]
 
 [[tool.mypy.overrides]]
-module = ["alembic.*"]
+module = ["alembic.*", "yaml"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

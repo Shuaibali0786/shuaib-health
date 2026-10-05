@@ -1,6 +1,7 @@
 """The slot engine is pure, so these tests need no database (data-model section 9)."""
 
 import time as time_module
+from collections.abc import Callable
 from datetime import UTC, date, datetime, time, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -226,12 +227,13 @@ def test_karachi_day_boundary_is_local_not_utc() -> None:
 def test_process_time_zone_does_not_change_the_result(monkeypatch: pytest.MonkeyPatch) -> None:
     baseline = build_days(**args())
     monkeypatch.setenv("TZ", "America/New_York")
-    time_module.tzset()
+    tzset: Callable[[], None] = vars(time_module)["tzset"]
+    tzset()
     try:
         assert build_days(**args()) == baseline
     finally:
         monkeypatch.undo()
-        time_module.tzset()
+        tzset()
 
 
 def test_dst_gap_skips_nonexistent_local_times() -> None:

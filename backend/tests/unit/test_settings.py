@@ -28,7 +28,7 @@ def make(**overrides: Any) -> Settings:
         "privacy_hash_key": HASH_KEY,
     }
     values.update(overrides)
-    return Settings(_env_file=None, **values)  # type: ignore[call-arg]
+    return Settings(_env_file=None, **values)
 
 
 def assert_rejected(field: str, **overrides: Any) -> None:
@@ -92,7 +92,7 @@ def test_unknown_app_env_is_rejected() -> None:
 
 def test_missing_required_setting_is_rejected() -> None:
     with pytest.raises(ValidationError) as info:
-        Settings(_env_file=None, app_env="test", direct_database_url=DIRECT)  # type: ignore[call-arg]
+        Settings(_env_file=None, app_env="test", direct_database_url=DIRECT)
     assert "database_url" in str(info.value)
 
 
@@ -125,7 +125,7 @@ def test_missing_booking_secret_is_rejected(field: str, monkeypatch: pytest.Monk
     }
     del values[field]
     with pytest.raises(ValidationError) as info:
-        Settings(_env_file=None, **values)  # type: ignore[call-arg]
+        Settings(_env_file=None, **values)
     assert field in str(info.value)
 
 

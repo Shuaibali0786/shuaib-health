@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -25,10 +26,10 @@ def slots_client(make_client: Callable[..., TestClient], frozen_clock: FrozenClo
     return test_client
 
 
-def get_days(client: TestClient, slug: str, **params: object) -> dict[str, object]:
-    response = client.get(SLOTS.format(slug=slug), params=params)  # type: ignore[arg-type]
+def get_days(client: TestClient, slug: str, **params: Any) -> dict[str, Any]:
+    response = client.get(SLOTS.format(slug=slug), params=params)
     assert response.status_code == 200, response.text
-    body: dict[str, object] = response.json()
+    body: dict[str, Any] = response.json()
     return body
 
 
@@ -59,7 +60,7 @@ def test_seeded_break_leaves_no_slot_between_17_and_18_on_tuesday(
     slots_client: TestClient,
 ) -> None:
     body = get_days(slots_client, "dr-omar-sheikh")
-    tuesdays = [d for d in body["days"] if d["weekday"] == "tue" and d["status"] == "available"]  # type: ignore[index, union-attr]
+    tuesdays = [d for d in body["days"] if d["weekday"] == "tue" and d["status"] == "available"]
     assert tuesdays, "expected at least one working Tuesday in the window"
     for day in tuesdays:
         local_times = [s["localTime"] for s in day["slots"]]
@@ -79,14 +80,14 @@ def test_seeded_leave_day_is_doctor_unavailable(
     assert leave, "seed should include sample leave for dr-sana-farooqui"
     leave_date = leave[0].starts_at.astimezone(KARACHI).date().isoformat()
     body = get_days(slots_client, "dr-sana-farooqui")
-    day = next(d for d in body["days"] if d["date"] == leave_date)  # type: ignore[index, union-attr]
+    day = next(d for d in body["days"] if d["date"] == leave_date)
     assert day["status"] == "doctor_unavailable"
     assert day["slots"] == []
 
 
 def test_seeded_holiday_is_clinic_closed_with_its_name(slots_client: TestClient) -> None:
     body = get_days(slots_client, "dr-omar-sheikh")
-    closed = [d for d in body["days"] if d["status"] == "clinic_closed"]  # type: ignore[index, union-attr]
+    closed = [d for d in body["days"] if d["status"] == "clinic_closed"]
     assert len(closed) == 1
     assert closed[0]["holidayName"] == "Clinic closed (sample holiday)"
     assert closed[0]["slots"] == []
@@ -97,9 +98,7 @@ def test_a_confirmed_booking_removes_its_slot(
 ) -> None:
     doctor = db_session.exec(select(m.Doctor).where(col(m.Doctor.slug) == "dr-omar-sheikh")).one()
     first = next(
-        d
-        for d in get_days(slots_client, "dr-omar-sheikh")["days"]  # type: ignore[union-attr]
-        if d["status"] == "available"
+        d for d in get_days(slots_client, "dr-omar-sheikh")["days"] if d["status"] == "available"
     )
     slot = first["slots"][0]
     starts = datetime.fromisoformat(slot["startsAt"].replace("Z", "+00:00"))
@@ -120,7 +119,7 @@ def test_a_confirmed_booking_removes_its_slot(
     )
     db_session.flush()
     again = get_days(slots_client, "dr-omar-sheikh")["days"]
-    same_day = next(d for d in again if d["date"] == first["date"])  # type: ignore[union-attr]
+    same_day = next(d for d in again if d["date"] == first["date"])
     assert slot["startsAt"] not in [s["startsAt"] for s in same_day["slots"]]
     assert len(same_day["slots"]) == len(first["slots"]) - 1
 
@@ -128,8 +127,8 @@ def test_a_confirmed_booking_removes_its_slot(
 def test_from_and_days_parameters(slots_client: TestClient) -> None:
     from_day = (FROZEN_NOW.astimezone(KARACHI).date() + timedelta(days=3)).isoformat()
     body = get_days(slots_client, "dr-omar-sheikh", **{"from": from_day, "days": 2})
-    assert body["days"][0]["date"] == from_day  # type: ignore[index]
-    assert len(body["days"]) == 2  # type: ignore[arg-type]
+    assert body["days"][0]["date"] == from_day
+    assert len(body["days"]) == 2
 
 
 def test_unknown_slug_is_404(slots_client: TestClient) -> None:
@@ -162,8 +161,8 @@ def test_doctor_in_an_inactive_department_is_404(
     "params",
     [{"days": 0}, {"days": 61}, {"days": "x"}, {"from": "not-a-date"}, {"from": "2026-13-45"}],
 )
-def test_bad_parameters_are_422(slots_client: TestClient, params: dict[str, object]) -> None:
-    response = slots_client.get(SLOTS.format(slug="dr-omar-sheikh"), params=params)  # type: ignore[arg-type]
+def test_bad_parameters_are_422(slots_client: TestClient, params: dict[str, Any]) -> None:
+    response = slots_client.get(SLOTS.format(slug="dr-omar-sheikh"), params=params)
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "validation_error"
 
@@ -194,4 +193,4 @@ def test_dates_follow_the_clinic_day_not_utc(make_client: Callable[..., TestClie
     clock = FrozenClock(datetime(2026, 10, 4, 20, 0, tzinfo=UTC))
     override_clock(test_client.app, clock)  # type: ignore[arg-type]
     body = get_days(test_client, "dr-omar-sheikh")
-    assert body["days"][0]["date"] == date(2026, 10, 5).isoformat()  # type: ignore[index]
+    assert body["days"][0]["date"] == date(2026, 10, 5).isoformat()

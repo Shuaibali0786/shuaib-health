@@ -48,7 +48,7 @@ def settings_factory() -> SettingsFactory:
             "privacy_hash_key": "test-privacy-key-0123456789abcdefgh",
         }
         values.update(overrides)
-        return Settings(_env_file=None, **values)  # type: ignore[call-arg]
+        return Settings(_env_file=None, **values)
 
     return build
 

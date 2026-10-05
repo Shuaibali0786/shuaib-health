@@ -1,4 +1,5 @@
 from datetime import time
+from typing import Any
 
 import pytest
 
@@ -20,7 +21,7 @@ def data() -> SeedData:
 def mutate(data: SeedData, path: str, value: object) -> SeedData:
     """Return a copy with one nested field replaced; path like 'doctors.0.department_id'."""
     raw = data.catalog.model_dump()
-    target = raw
+    target: Any = raw
     *parents, last = path.split(".")
     for part in parents:
         target = target[int(part)] if part.isdigit() else target[part]

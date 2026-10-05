@@ -219,7 +219,7 @@ def test_a_leave_time_is_slot_unavailable(api: TestClient, db_session: Session) 
 
 def test_a_holiday_is_slot_unavailable(api: TestClient, db_session: Session) -> None:
     holiday = FIRST_SLOT.astimezone(ZoneInfo("Asia/Karachi")).date()
-    db_session.exec(delete(m.ClinicHoliday).where(col(m.ClinicHoliday.holiday_date) == holiday))  # type: ignore[call-overload]
+    db_session.exec(delete(m.ClinicHoliday).where(col(m.ClinicHoliday.holiday_date) == holiday))
     db_session.add(m.ClinicHoliday(holiday_date=holiday, name="Test holiday"))
     db_session.flush()
     assert_unavailable_with_alternatives(book(api))

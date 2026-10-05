@@ -32,7 +32,14 @@ export default async function BookAppointmentPage() {
       />
       <Section tone="background" spacing="compact" aria-label="Booking">
         {departments.ok && doctors.ok ? (
-          <Suspense fallback={<p role="status">Loading the booking steps…</p>}>
+          <Suspense
+            fallback={
+              // Reserves about the height of the first step, so the rules below don't jump when the flow appears (CLS).
+              <p role="status" className="min-h-[59rem] lg:min-h-[31.5rem]">
+                Loading the booking steps…
+              </p>
+            }
+          >
             <BookingFlow departments={departments.data} doctors={doctors.data} clinicPhone={site.generalPhone} timeZone={site.timeZone} />
           </Suspense>
         ) : (

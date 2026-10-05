@@ -38,7 +38,8 @@ export function ConfirmationCard({ view, site }: { view: AppointmentView; site: 
       aria-labelledby="confirmation-reference-label"
       className="relative mx-auto w-full max-w-md overflow-hidden rounded-card border border-gold-500 bg-white shadow-soft print:shadow-none lg:mx-0"
     >
-      <LogoMark size={280} className="pointer-events-none absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 opacity-[0.05]" />
+      {/* Watermark: faint, and anchored in the bottom corner so it never sits behind the visit details. */}
+      <LogoMark size={200} className="pointer-events-none absolute -bottom-16 -right-12 opacity-[0.04]" />
 
       <header className="relative flex items-center gap-4 border-b-2 border-gold-500 bg-navy-900 px-6 py-5">
         <LogoMark size={44} />
@@ -60,14 +61,14 @@ export function ConfirmationCard({ view, site }: { view: AppointmentView; site: 
               <p className="text-xs text-muted">{timeZoneLabel(view.timeZone, new Date(view.startsAt))}</p>
             </div>
             <div
-              className="grid size-24 -rotate-12 place-items-center rounded-full border-2 border-teal-700 bg-white text-center text-teal-700"
+              className="grid size-28 -rotate-12 place-items-center rounded-full border-2 border-teal-700 bg-white text-center text-teal-700"
               data-testid="confirmed-seal"
             >
-              <div className="grid size-[5.2rem] place-content-center rounded-full border border-teal-700 px-1 leading-tight">
-                <span className="line-clamp-2 text-[0.55rem] font-bold uppercase tracking-wide">{site.name}</span>
-                <span className="text-[0.8rem] font-extrabold tracking-wide">CONFIRMED</span>
-                <span className="text-[0.55rem] font-semibold text-gold-700">{formatSealDate(view.bookedAt, view.timeZone)}</span>
-                {view.isSample ? <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-muted">Demo</span> : null}
+              <div className="grid size-[6.1rem] place-content-center rounded-full border border-teal-700 px-1.5 leading-tight">
+                <span className="line-clamp-1 text-[0.65rem] font-bold uppercase tracking-wide">{site.name}</span>
+                <span className="text-base font-extrabold tracking-wide">CONFIRMED</span>
+                <span className="text-xs font-semibold text-gold-700">{formatSealDate(view.bookedAt, view.timeZone)}</span>
+                {view.isSample ? <span className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-muted">Demo</span> : null}
               </div>
             </div>
           </div>
