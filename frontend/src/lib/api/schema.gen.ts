@@ -1352,6 +1352,13 @@ export interface components {
             };
             agenda: {
                 doctor: components["schemas"]["DoctorRef"];
+                /** @description the doctor's working sessions today in clinic time, for the agenda's off-hours hatching */
+                sessions: {
+                    /** @example 09:00 */
+                    start: string;
+                    /** @example 13:00 */
+                    end: string;
+                }[];
                 items: components["schemas"]["BookingSummary"][];
             }[];
             nextUp: components["schemas"]["BookingSummary"][];

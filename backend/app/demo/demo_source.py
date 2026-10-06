@@ -2,9 +2,11 @@
 any repository (SC-005; guarded by a test); the dataset is built in memory from a seeded PRNG."""
 
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
+from app.booking.slots import WEEKDAYS, Busy, SessionRule
+from app.command_centre import metrics
 from app.command_centre import status as rules
 from app.command_centre.common import day_bounds, format_phone, resolve_range
 from app.command_centre.masking import mask_email, mask_mobile, short_name
@@ -18,10 +20,11 @@ from app.command_centre.schemas import (
     DoctorRef,
     HistoryItem,
     Lookups,
+    Overview,
     PhoneReveal,
 )
 from app.demo import generator
-from app.demo.generator import DemoBooking, DemoDataset, DemoStaff
+from app.demo.generator import DemoBooking, DemoDataset, DemoDoctor, DemoStaff
 from app.errors import NotFound
 
 ONLINE_BOOKING = "Online booking"
@@ -185,3 +188,54 @@ class DemoSource:
 
     def reveal_phone(self, reference: str) -> PhoneReveal:
         return format_phone(self._find(reference).phone)
+
+    # ----- overview (US3) ---------------------------------------------------------------
+
+    def _plan(self, doctor: DemoDoctor, days: tuple[date, ...], tz: ZoneInfo) -> metrics.DoctorPlan:
+        sessions = [
+            SessionRule(
+                WEEKDAYS[weekday],
+                time(begin // 60, begin % 60),
+                time(end // 60, end % 60),
+                generator.SLOT_MINUTES,
+            )
+            for weekday, spans in doctor.sessions.items()
+            for begin, end in spans
+        ]
+        leave = [
+            Busy(*day_bounds(day, tz)) for day in days if (doctor.slug, day) in self.dataset.leave
+        ]
+        return metrics.DoctorPlan(
+            doctor=DoctorRef(
+                id=doctor_uuid(doctor.slug),
+                name=doctor.name,
+                department_name=doctor.department,
+                is_active=True,
+            ),
+            sessions=sessions,
+            leave=leave,
+        )
+
+    def overview(self, tz: ZoneInfo, now: datetime) -> Overview:
+        today = self.demo_date
+        earlier = today - timedelta(days=metrics.TREND_DAYS)
+        dataset = self.dataset
+        todays = [b for b in dataset.bookings if b.starts_at.astimezone(tz).date() == today]
+        # A like-for-like comparison: last week's day as it stood at this time of day, so a
+        # half-finished Monday is not set against a finished one (the sample data can say so).
+        week_ago = now - timedelta(days=metrics.TREND_DAYS)
+        last_counts = metrics.day_counts(
+            ((b.starts_at, b.status_at(week_ago)) for b in dataset.bookings), earlier, tz
+        )
+        return metrics.build_overview(
+            day=today,
+            now=now,
+            tz=tz,
+            plans=[self._plan(d, (today, earlier), tz) for d in dataset.doctors],
+            today=[BookingSummary(**self._summary_fields(b, tz, now)) for b in todays],
+            last_week_counts=last_counts,
+            holiday_today=dataset.holidays.get(today),
+            holiday_last_week=earlier in dataset.holidays,
+            recent=[],
+            is_sample=True,
+        )

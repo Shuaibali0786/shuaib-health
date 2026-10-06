@@ -9,7 +9,13 @@ from datetime import datetime
 from typing import Protocol
 from zoneinfo import ZoneInfo
 
-from app.command_centre.schemas import BookingDetail, BookingPage, BookingSearchRequest, Lookups
+from app.command_centre.schemas import (
+    BookingDetail,
+    BookingPage,
+    BookingSearchRequest,
+    Lookups,
+    Overview,
+)
 
 
 class CommandCentreSource(Protocol):
@@ -20,3 +26,5 @@ class CommandCentreSource(Protocol):
     def detail(self, reference: str, tz: ZoneInfo, now: datetime) -> BookingDetail: ...
 
     def lookups(self) -> Lookups: ...
+
+    def overview(self, tz: ZoneInfo, now: datetime) -> Overview: ...

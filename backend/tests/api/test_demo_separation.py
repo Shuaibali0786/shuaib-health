@@ -20,7 +20,7 @@ pytestmark = pytest.mark.db
 
 REAL_REFERENCE = "ABCDEFGHJK"
 # (path, how the demo and staff answers are walked); extended by the US4/US3/US6/US7/US8 stories.
-READ_ROUTES = ["/staff"]
+READ_ROUTES = ["/staff", "/overview"]
 
 
 def walk(value: Any) -> list[dict[str, Any]]:
@@ -73,7 +73,8 @@ def test_demo_reads_return_only_sample_records(
     assert answer.status_code == 200
     records = walk(answer.json())
     assert records
-    assert all(r.get("isSample") is True for r in records if "id" in r or "reference" in r)
+    # Bookings and staff say they are samples; a bare doctor reference carries no such flag.
+    assert all(r.get("isSample") is True for r in records if "reference" in r or "email" in r)
     assert all(str(r["reference"]).startswith("D") for r in records if "reference" in r)
     assert REAL_REFERENCE not in answer.text
 

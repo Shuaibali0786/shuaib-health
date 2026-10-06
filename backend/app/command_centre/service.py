@@ -7,7 +7,7 @@ passed in.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
 
@@ -17,6 +17,8 @@ from sqlmodel import Session, col
 
 from app import models as m
 from app.auth import audit
+from app.booking.slots import Busy, SessionRule
+from app.command_centre import metrics
 from app.command_centre import status as rules
 from app.command_centre.common import day_bounds, format_phone, resolve_range
 from app.command_centre.masking import mask_email, mask_mobile, short_name
@@ -30,7 +32,9 @@ from app.command_centre.schemas import (
     DoctorRef,
     HistoryItem,
     Lookups,
+    Overview,
     PhoneReveal,
+    RecentBooking,
     StatusChangeResult,
 )
 from app.command_centre.status import Status
@@ -343,3 +347,66 @@ def reveal_phone(db: Session, actor: "Viewer", reference: str) -> PhoneReveal:
     )
     db.commit()
     return format_phone(appt.patient_phone)
+
+
+RECENT_LIMIT = 5
+
+
+def _rules_of(weekly: repo.WeeklyPlan) -> list[SessionRule]:
+    return [
+        SessionRule(s.weekday, s.start_time, s.end_time, s.slot_minutes) for s in weekly.sessions
+    ]
+
+
+def overview(db: Session, tz: ZoneInfo, now: datetime) -> Overview:
+    """Today at a glance from the database: the bookings of the clinic-local day, last week's counts
+    for the trends, the 005 schedules, leave and holidays for utilisation, and the newest bookings
+    for the notifications."""
+    today = now.astimezone(tz).date()
+    earlier = today - timedelta(days=metrics.TREND_DAYS)
+    lo, hi = day_bounds(today, tz)
+    earlier_lo, earlier_hi = day_bounds(earlier, tz)
+
+    rows = repo.day_bookings(db, lo, hi)
+    last_counts = repo.status_counts(
+        db,
+        q=None,
+        starts_from=earlier_lo,
+        starts_before=earlier_hi,
+        doctor_id=None,
+        department_id=None,
+    )
+    leave = repo.leave_between(db, earlier_lo, hi)
+    holidays = repo.holiday_names(db, [today, earlier])
+    plans = [
+        metrics.DoctorPlan(
+            doctor=DoctorRef(
+                id=require(w.doctor.id),
+                name=w.doctor.full_name,
+                department_name=w.department_name,
+                is_active=w.doctor.is_active,
+            ),
+            sessions=_rules_of(w),
+            leave=[Busy(a, b) for a, b in leave.get(require(w.doctor.id), [])],
+        )
+        for w in repo.weekly_plans(db)
+    ]
+    recent = [
+        RecentBooking(
+            **_summary_fields(r, tz, now),
+            booked_at=r.appointment.created_at or r.appointment.starts_at,
+        )
+        for r in repo.recent_bookings(db, RECENT_LIMIT)
+    ]
+    return metrics.build_overview(
+        day=today,
+        now=now,
+        tz=tz,
+        plans=plans,
+        today=[BookingSummary(**_summary_fields(r, tz, now)) for r in rows],
+        last_week_counts=last_counts,
+        holiday_today=holidays.get(today),
+        holiday_last_week=earlier in holidays,
+        recent=recent,
+        is_sample=False,
+    )

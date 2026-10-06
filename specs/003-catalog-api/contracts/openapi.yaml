@@ -804,9 +804,16 @@ components:
           type: array
           items:
             type: object
-            required: [doctor, items]
+            required: [doctor, sessions, items]
             properties:
               doctor: { $ref: "#/components/schemas/DoctorRef" }
+              sessions:
+                type: array
+                description: the doctor's working sessions today in clinic time, for the agenda's off-hours hatching
+                items:
+                  type: object
+                  required: [start, end]
+                  properties: { start: { type: string, example: "09:00" }, end: { type: string, example: "13:00" } }
               items: { type: array, items: { $ref: "#/components/schemas/BookingSummary" } }
         nextUp: { type: array, maxItems: 5, items: { $ref: "#/components/schemas/BookingSummary" } }
         recentBookings:

@@ -7,7 +7,13 @@ from sqlalchemy import text
 from sqlmodel import Session
 
 from app.command_centre import service
-from app.command_centre.schemas import BookingDetail, BookingPage, BookingSearchRequest, Lookups
+from app.command_centre.schemas import (
+    BookingDetail,
+    BookingPage,
+    BookingSearchRequest,
+    Lookups,
+    Overview,
+)
 
 READ_TIMEOUT = "3s"
 
@@ -30,3 +36,6 @@ class RealSource:
 
     def lookups(self) -> Lookups:
         return service.lookups(self.db)
+
+    def overview(self, tz: ZoneInfo, now: datetime) -> Overview:
+        return service.overview(self.db, tz, now)

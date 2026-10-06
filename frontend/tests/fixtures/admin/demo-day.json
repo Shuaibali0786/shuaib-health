@@ -160,6 +160,1437 @@
       }
     ]
   },
+  "overview": {
+    "localDate": "2026-10-05",
+    "now": "2026-10-05T06:20:45Z",
+    "kpis": {
+      "appointments": {
+        "value": 56,
+        "previous": 62,
+        "delta": -6,
+        "comparedTo": "2026-09-28"
+      },
+      "arrived": {
+        "value": 17,
+        "previous": 20,
+        "delta": -3,
+        "comparedTo": "2026-09-28"
+      },
+      "completed": {
+        "value": 15,
+        "previous": 17,
+        "delta": -2,
+        "comparedTo": "2026-09-28"
+      },
+      "noShows": {
+        "value": 4,
+        "previous": 2,
+        "delta": 2,
+        "comparedTo": "2026-09-28"
+      },
+      "cancellations": {
+        "value": 2,
+        "previous": 2,
+        "delta": 0,
+        "comparedTo": "2026-09-28"
+      },
+      "utilisationPct": {
+        "value": 70,
+        "previous": 78,
+        "delta": -8,
+        "comparedTo": "2026-09-28"
+      }
+    },
+    "agenda": [
+      {
+        "doctor": {
+          "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+          "name": "Dr. Hassan Mirza",
+          "departmentName": "General Medicine",
+          "isActive": true
+        },
+        "sessions": [
+          {
+            "start": "09:00",
+            "end": "13:00"
+          }
+        ],
+        "items": [
+          {
+            "reference": "D6X0A10GGY",
+            "startsAt": "2026-10-05T04:00:00Z",
+            "endsAt": "2026-10-05T04:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "09:00",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Talha Z.",
+            "phoneMasked": "0340****662",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DXYHP6Q5DQ",
+            "startsAt": "2026-10-05T04:15:00Z",
+            "endsAt": "2026-10-05T04:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "09:15",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Usman B.",
+            "phoneMasked": "0331****532",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DB1MYZ1FN8",
+            "startsAt": "2026-10-05T04:30:00Z",
+            "endsAt": "2026-10-05T04:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "09:30",
+            "status": "cancelled",
+            "version": 1,
+            "patientNameMasked": "Zubair S.",
+            "phoneMasked": "0331****212",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DYYHN8T0XQ",
+            "startsAt": "2026-10-05T04:45:00Z",
+            "endsAt": "2026-10-05T05:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "09:45",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Nimra A.",
+            "phoneMasked": "0301****945",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DDDNHYAF5V",
+            "startsAt": "2026-10-05T05:00:00Z",
+            "endsAt": "2026-10-05T05:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "10:00",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Talha N.",
+            "phoneMasked": "0340****446",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DNWF52X3Y3",
+            "startsAt": "2026-10-05T05:15:00Z",
+            "endsAt": "2026-10-05T05:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "10:15",
+            "status": "no_show",
+            "version": 1,
+            "patientNameMasked": "Usman A.",
+            "phoneMasked": "0331****612",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DAQDJDRTHB",
+            "startsAt": "2026-10-05T05:45:00Z",
+            "endsAt": "2026-10-05T06:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "10:45",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Talha R.",
+            "phoneMasked": "0333****149",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DHBKDS7EF7",
+            "startsAt": "2026-10-05T06:00:00Z",
+            "endsAt": "2026-10-05T06:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "11:00",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Ayesha H.",
+            "phoneMasked": "0340****582",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DQ94N8M9EM",
+            "startsAt": "2026-10-05T06:15:00Z",
+            "endsAt": "2026-10-05T06:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "11:15",
+            "status": "arrived",
+            "version": 1,
+            "patientNameMasked": "Danish R.",
+            "phoneMasked": "0345****375",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [
+              "completed",
+              "no_show"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DYCSD9YE9Y",
+            "startsAt": "2026-10-05T06:30:00Z",
+            "endsAt": "2026-10-05T06:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "11:30",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Mehwish S.",
+            "phoneMasked": "0315****858",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DRHS8AJAE0",
+            "startsAt": "2026-10-05T06:45:00Z",
+            "endsAt": "2026-10-05T07:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "11:45",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Usman T.",
+            "phoneMasked": "0321****339",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "D3YGBQSK6H",
+            "startsAt": "2026-10-05T07:00:00Z",
+            "endsAt": "2026-10-05T07:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "12:00",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Javeria A.",
+            "phoneMasked": "0340****446",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DXYFFD4ZKM",
+            "startsAt": "2026-10-05T07:15:00Z",
+            "endsAt": "2026-10-05T07:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "12:15",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Yasir I.",
+            "phoneMasked": "0321****587",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DRN15595W2",
+            "startsAt": "2026-10-05T07:45:00Z",
+            "endsAt": "2026-10-05T08:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "12:45",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Saad I.",
+            "phoneMasked": "0321****523",
+            "doctor": {
+              "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+              "name": "Dr. Hassan Mirza",
+              "departmentName": "General Medicine",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          }
+        ]
+      },
+      {
+        "doctor": {
+          "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+          "name": "Dr. Zainab Memon",
+          "departmentName": "Pathology Lab",
+          "isActive": true
+        },
+        "sessions": [
+          {
+            "start": "09:00",
+            "end": "12:00"
+          }
+        ],
+        "items": [
+          {
+            "reference": "DVBM27XR0A",
+            "startsAt": "2026-10-05T04:00:00Z",
+            "endsAt": "2026-10-05T04:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "09:00",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Kamran B.",
+            "phoneMasked": "0300****952",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DV06FQTQ4C",
+            "startsAt": "2026-10-05T04:15:00Z",
+            "endsAt": "2026-10-05T04:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "09:15",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Zubair A.",
+            "phoneMasked": "0321****803",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DSKW4EN65Z",
+            "startsAt": "2026-10-05T04:30:00Z",
+            "endsAt": "2026-10-05T04:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "09:30",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Amna B.",
+            "phoneMasked": "0321****051",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DHEYHYB36R",
+            "startsAt": "2026-10-05T04:45:00Z",
+            "endsAt": "2026-10-05T05:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "09:45",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Asad K.",
+            "phoneMasked": "0321****787",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "D2PWBGYWAV",
+            "startsAt": "2026-10-05T05:00:00Z",
+            "endsAt": "2026-10-05T05:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "10:00",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Saba K.",
+            "phoneMasked": "0331****164",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DGWQB3VW5T",
+            "startsAt": "2026-10-05T05:15:00Z",
+            "endsAt": "2026-10-05T05:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "10:15",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Amna I.",
+            "phoneMasked": "0345****887",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DE4JRBJNQ6",
+            "startsAt": "2026-10-05T05:30:00Z",
+            "endsAt": "2026-10-05T05:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "10:30",
+            "status": "no_show",
+            "version": 1,
+            "patientNameMasked": "Iqra T.",
+            "phoneMasked": "0345****215",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DG93119VTX",
+            "startsAt": "2026-10-05T05:45:00Z",
+            "endsAt": "2026-10-05T06:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "10:45",
+            "status": "no_show",
+            "version": 1,
+            "patientNameMasked": "Rabia H.",
+            "phoneMasked": "0300****608",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DS07KVTFFY",
+            "startsAt": "2026-10-05T06:00:00Z",
+            "endsAt": "2026-10-05T06:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "11:00",
+            "status": "no_show",
+            "version": 1,
+            "patientNameMasked": "Zubair A.",
+            "phoneMasked": "0315****978",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DHSRPK5W32",
+            "startsAt": "2026-10-05T06:15:00Z",
+            "endsAt": "2026-10-05T06:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "11:15",
+            "status": "arrived",
+            "version": 1,
+            "patientNameMasked": "Hira K.",
+            "phoneMasked": "0333****189",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [
+              "completed",
+              "no_show"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "D8T3P23ZFB",
+            "startsAt": "2026-10-05T06:30:00Z",
+            "endsAt": "2026-10-05T06:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "11:30",
+            "status": "cancelled",
+            "version": 1,
+            "patientNameMasked": "Khadija Z.",
+            "phoneMasked": "0300****624",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DBVWRZMCEM",
+            "startsAt": "2026-10-05T06:45:00Z",
+            "endsAt": "2026-10-05T07:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "11:45",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Nimra L.",
+            "phoneMasked": "0333****037",
+            "doctor": {
+              "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+              "name": "Dr. Zainab Memon",
+              "departmentName": "Pathology Lab",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          }
+        ]
+      },
+      {
+        "doctor": {
+          "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+          "name": "Dr. Sana Farooqui",
+          "departmentName": "Pediatrics",
+          "isActive": true
+        },
+        "sessions": [
+          {
+            "start": "10:00",
+            "end": "14:00"
+          }
+        ],
+        "items": [
+          {
+            "reference": "DZK01MH9JN",
+            "startsAt": "2026-10-05T05:00:00Z",
+            "endsAt": "2026-10-05T05:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "10:00",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Anaya R.",
+            "phoneMasked": "0301****617",
+            "doctor": {
+              "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+              "name": "Dr. Sana Farooqui",
+              "departmentName": "Pediatrics",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DYS95J0FHK",
+            "startsAt": "2026-10-05T05:30:00Z",
+            "endsAt": "2026-10-05T05:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "10:30",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Hadi Z.",
+            "phoneMasked": "0301****009",
+            "doctor": {
+              "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+              "name": "Dr. Sana Farooqui",
+              "departmentName": "Pediatrics",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DBRY1ZCCFF",
+            "startsAt": "2026-10-05T05:45:00Z",
+            "endsAt": "2026-10-05T06:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "10:45",
+            "status": "completed",
+            "version": 1,
+            "patientNameMasked": "Musa Z.",
+            "phoneMasked": "0340****462",
+            "doctor": {
+              "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+              "name": "Dr. Sana Farooqui",
+              "departmentName": "Pediatrics",
+              "isActive": true
+            },
+            "allowedNext": [],
+            "isSample": true
+          },
+          {
+            "reference": "DKQQPPAEPW",
+            "startsAt": "2026-10-05T06:30:00Z",
+            "endsAt": "2026-10-05T06:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "11:30",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Arham K.",
+            "phoneMasked": "0315****746",
+            "doctor": {
+              "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+              "name": "Dr. Sana Farooqui",
+              "departmentName": "Pediatrics",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DWEN25WXPY",
+            "startsAt": "2026-10-05T06:45:00Z",
+            "endsAt": "2026-10-05T07:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "11:45",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Anaya B.",
+            "phoneMasked": "0321****395",
+            "doctor": {
+              "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+              "name": "Dr. Sana Farooqui",
+              "departmentName": "Pediatrics",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "D3VNRTTS1D",
+            "startsAt": "2026-10-05T07:00:00Z",
+            "endsAt": "2026-10-05T07:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "12:00",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Alishba S.",
+            "phoneMasked": "0315****482",
+            "doctor": {
+              "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+              "name": "Dr. Sana Farooqui",
+              "departmentName": "Pediatrics",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "D0DCJTJ0Z9",
+            "startsAt": "2026-10-05T07:45:00Z",
+            "endsAt": "2026-10-05T08:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "12:45",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Inaya H.",
+            "phoneMasked": "0301****721",
+            "doctor": {
+              "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+              "name": "Dr. Sana Farooqui",
+              "departmentName": "Pediatrics",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DSXGRXRYQB",
+            "startsAt": "2026-10-05T08:30:00Z",
+            "endsAt": "2026-10-05T08:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "13:30",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Alishba B.",
+            "phoneMasked": "0331****716",
+            "doctor": {
+              "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+              "name": "Dr. Sana Farooqui",
+              "departmentName": "Pediatrics",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          }
+        ]
+      },
+      {
+        "doctor": {
+          "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+          "name": "Dr. Maryam Baloch",
+          "departmentName": "Dermatology",
+          "isActive": true
+        },
+        "sessions": [
+          {
+            "start": "12:00",
+            "end": "17:00"
+          }
+        ],
+        "items": [
+          {
+            "reference": "DJR9VCRKPB",
+            "startsAt": "2026-10-05T07:15:00Z",
+            "endsAt": "2026-10-05T07:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "12:15",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Hira R.",
+            "phoneMasked": "0300****080",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "D32J57R6BJ",
+            "startsAt": "2026-10-05T07:30:00Z",
+            "endsAt": "2026-10-05T07:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "12:30",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Hira R.",
+            "phoneMasked": "0345****071",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DYB68MJPGS",
+            "startsAt": "2026-10-05T07:45:00Z",
+            "endsAt": "2026-10-05T08:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "12:45",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Zubair Z.",
+            "phoneMasked": "0340****318",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DTAKMJ3CC9",
+            "startsAt": "2026-10-05T08:00:00Z",
+            "endsAt": "2026-10-05T08:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "13:00",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Waqas A.",
+            "phoneMasked": "0300****560",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "D5DN7HDY9E",
+            "startsAt": "2026-10-05T08:15:00Z",
+            "endsAt": "2026-10-05T08:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "13:15",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Sadia R.",
+            "phoneMasked": "0301****785",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "arrived",
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DKZVBQZFW2",
+            "startsAt": "2026-10-05T09:00:00Z",
+            "endsAt": "2026-10-05T09:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "14:00",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Yasir B.",
+            "phoneMasked": "0315****018",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DDFTR90RA8",
+            "startsAt": "2026-10-05T09:15:00Z",
+            "endsAt": "2026-10-05T09:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "14:15",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Fatima L.",
+            "phoneMasked": "0321****099",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "D4SVG7CY57",
+            "startsAt": "2026-10-05T09:45:00Z",
+            "endsAt": "2026-10-05T10:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "14:45",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Sana A.",
+            "phoneMasked": "0340****182",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DCJ1368ENK",
+            "startsAt": "2026-10-05T10:00:00Z",
+            "endsAt": "2026-10-05T10:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "15:00",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Sana S.",
+            "phoneMasked": "0321****187",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DF20ZZ7MJY",
+            "startsAt": "2026-10-05T10:30:00Z",
+            "endsAt": "2026-10-05T10:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "15:30",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Ali A.",
+            "phoneMasked": "0300****392",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DHKMX3YVWK",
+            "startsAt": "2026-10-05T11:00:00Z",
+            "endsAt": "2026-10-05T11:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "16:00",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Nimra S.",
+            "phoneMasked": "0333****165",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "D453R60YFQ",
+            "startsAt": "2026-10-05T11:30:00Z",
+            "endsAt": "2026-10-05T11:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "16:30",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Ayesha Z.",
+            "phoneMasked": "0321****659",
+            "doctor": {
+              "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+              "name": "Dr. Maryam Baloch",
+              "departmentName": "Dermatology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          }
+        ]
+      },
+      {
+        "doctor": {
+          "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+          "name": "Dr. Imran Qureshi",
+          "departmentName": "Cardiology",
+          "isActive": true
+        },
+        "sessions": [
+          {
+            "start": "16:00",
+            "end": "20:00"
+          }
+        ],
+        "items": [
+          {
+            "reference": "DWB9M7CP5X",
+            "startsAt": "2026-10-05T11:30:00Z",
+            "endsAt": "2026-10-05T11:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "16:30",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Fatima J.",
+            "phoneMasked": "0340****478",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DZD6VADAKC",
+            "startsAt": "2026-10-05T11:45:00Z",
+            "endsAt": "2026-10-05T12:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "16:45",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Iqra S.",
+            "phoneMasked": "0321****219",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DVNE864AR4",
+            "startsAt": "2026-10-05T12:15:00Z",
+            "endsAt": "2026-10-05T12:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "17:15",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Danish S.",
+            "phoneMasked": "0340****974",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DTQ4GW8GG5",
+            "startsAt": "2026-10-05T12:45:00Z",
+            "endsAt": "2026-10-05T13:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "17:45",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Maryam J.",
+            "phoneMasked": "0315****578",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DAS2V68E2T",
+            "startsAt": "2026-10-05T13:00:00Z",
+            "endsAt": "2026-10-05T13:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "18:00",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Nimra N.",
+            "phoneMasked": "0331****988",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DEFEVS7QS0",
+            "startsAt": "2026-10-05T13:15:00Z",
+            "endsAt": "2026-10-05T13:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "18:15",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Junaid S.",
+            "phoneMasked": "0300****896",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DZCJ0RF5JE",
+            "startsAt": "2026-10-05T13:30:00Z",
+            "endsAt": "2026-10-05T13:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "18:30",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Hira J.",
+            "phoneMasked": "0300****408",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "D42ZR9AS77",
+            "startsAt": "2026-10-05T13:45:00Z",
+            "endsAt": "2026-10-05T14:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "18:45",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Yasir S.",
+            "phoneMasked": "0301****977",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DJ7388PNKH",
+            "startsAt": "2026-10-05T14:00:00Z",
+            "endsAt": "2026-10-05T14:15:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "19:00",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Iqra R.",
+            "phoneMasked": "0340****374",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DVN11Z768C",
+            "startsAt": "2026-10-05T14:15:00Z",
+            "endsAt": "2026-10-05T14:30:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "19:15",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Maryam R.",
+            "phoneMasked": "0333****789",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DGAT1V7Y9B",
+            "startsAt": "2026-10-05T14:30:00Z",
+            "endsAt": "2026-10-05T14:45:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "19:30",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Talha L.",
+            "phoneMasked": "0340****622",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          },
+          {
+            "reference": "DFCY080M9G",
+            "startsAt": "2026-10-05T14:45:00Z",
+            "endsAt": "2026-10-05T15:00:00Z",
+            "localDate": "2026-10-05",
+            "localTime": "19:45",
+            "status": "confirmed",
+            "version": 1,
+            "patientNameMasked": "Waqas B.",
+            "phoneMasked": "0345****143",
+            "doctor": {
+              "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+              "name": "Dr. Imran Qureshi",
+              "departmentName": "Cardiology",
+              "isActive": true
+            },
+            "allowedNext": [
+              "cancelled"
+            ],
+            "isSample": true
+          }
+        ]
+      }
+    ],
+    "nextUp": [
+      {
+        "reference": "DYCSD9YE9Y",
+        "startsAt": "2026-10-05T06:30:00Z",
+        "endsAt": "2026-10-05T06:45:00Z",
+        "localDate": "2026-10-05",
+        "localTime": "11:30",
+        "status": "confirmed",
+        "version": 1,
+        "patientNameMasked": "Mehwish S.",
+        "phoneMasked": "0315****858",
+        "doctor": {
+          "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+          "name": "Dr. Hassan Mirza",
+          "departmentName": "General Medicine",
+          "isActive": true
+        },
+        "allowedNext": [
+          "arrived",
+          "cancelled"
+        ],
+        "isSample": true
+      },
+      {
+        "reference": "DKQQPPAEPW",
+        "startsAt": "2026-10-05T06:30:00Z",
+        "endsAt": "2026-10-05T06:45:00Z",
+        "localDate": "2026-10-05",
+        "localTime": "11:30",
+        "status": "confirmed",
+        "version": 1,
+        "patientNameMasked": "Arham K.",
+        "phoneMasked": "0315****746",
+        "doctor": {
+          "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+          "name": "Dr. Sana Farooqui",
+          "departmentName": "Pediatrics",
+          "isActive": true
+        },
+        "allowedNext": [
+          "arrived",
+          "cancelled"
+        ],
+        "isSample": true
+      },
+      {
+        "reference": "DRHS8AJAE0",
+        "startsAt": "2026-10-05T06:45:00Z",
+        "endsAt": "2026-10-05T07:00:00Z",
+        "localDate": "2026-10-05",
+        "localTime": "11:45",
+        "status": "confirmed",
+        "version": 1,
+        "patientNameMasked": "Usman T.",
+        "phoneMasked": "0321****339",
+        "doctor": {
+          "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+          "name": "Dr. Hassan Mirza",
+          "departmentName": "General Medicine",
+          "isActive": true
+        },
+        "allowedNext": [
+          "arrived",
+          "cancelled"
+        ],
+        "isSample": true
+      },
+      {
+        "reference": "DWEN25WXPY",
+        "startsAt": "2026-10-05T06:45:00Z",
+        "endsAt": "2026-10-05T07:00:00Z",
+        "localDate": "2026-10-05",
+        "localTime": "11:45",
+        "status": "confirmed",
+        "version": 1,
+        "patientNameMasked": "Anaya B.",
+        "phoneMasked": "0321****395",
+        "doctor": {
+          "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+          "name": "Dr. Sana Farooqui",
+          "departmentName": "Pediatrics",
+          "isActive": true
+        },
+        "allowedNext": [
+          "arrived",
+          "cancelled"
+        ],
+        "isSample": true
+      },
+      {
+        "reference": "DBVWRZMCEM",
+        "startsAt": "2026-10-05T06:45:00Z",
+        "endsAt": "2026-10-05T07:00:00Z",
+        "localDate": "2026-10-05",
+        "localTime": "11:45",
+        "status": "confirmed",
+        "version": 1,
+        "patientNameMasked": "Nimra L.",
+        "phoneMasked": "0333****037",
+        "doctor": {
+          "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+          "name": "Dr. Zainab Memon",
+          "departmentName": "Pathology Lab",
+          "isActive": true
+        },
+        "allowedNext": [
+          "arrived",
+          "cancelled"
+        ],
+        "isSample": true
+      }
+    ],
+    "recentBookings": [],
+    "isSample": true
+  },
   "details": [
     {
       "reference": "D6X0A10GGY",

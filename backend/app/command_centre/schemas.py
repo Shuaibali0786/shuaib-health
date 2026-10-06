@@ -185,3 +185,52 @@ class BookingChanged(CamelModel):
 
     error: ErrorInfo
     latest: BookingDetail | None = None
+
+
+class Trend(CamelModel):
+    """A KPI value, the same weekday's value a week earlier and their difference.
+
+    ``None`` means "not known" (utilisation with no scheduled slots), shown as a dash.
+    """
+
+    value: int | None = None
+    previous: int | None = None
+    delta: int | None = None
+    compared_to: date
+
+
+class Kpis(CamelModel):
+    appointments: Trend
+    arrived: Trend
+    completed: Trend
+    no_shows: Trend
+    cancellations: Trend
+    utilisation_pct: Trend
+
+
+class WorkHours(CamelModel):
+    """One session of a doctor's day in clinic time, for the agenda's off-hours hatching."""
+
+    start: str
+    end: str
+
+
+class AgendaDoctor(CamelModel):
+    doctor: DoctorRef
+    sessions: list[WorkHours]
+    items: list[BookingSummary]
+
+
+class RecentBooking(BookingSummary):
+    booked_at: AwareDatetime
+
+
+class Overview(CamelModel):
+    local_date: date
+    now: AwareDatetime
+    clinic_closed: str | None = None
+    kpis: Kpis
+    agenda: list[AgendaDoctor]
+    next_up: list[BookingSummary] = Field(max_length=5)
+    recent_bookings: list[RecentBooking] = Field(default_factory=list, max_length=5)
+    is_sample: bool

@@ -85,6 +85,16 @@ def _grid(day: date, rule: SessionRule, tz: ZoneInfo) -> list[SlotOut]:
     return out
 
 
+def scheduled_grid(day: date, sessions: list[SessionRule], tz: ZoneInfo) -> list[SlotOut]:
+    """Every slot of the weekday's sessions, before lead time, leave and bookings.
+
+    The Command Centre counts these as "scheduled" for chair utilisation.
+    """
+    weekday = WEEKDAYS[day.weekday()]
+    todays = sorted((s for s in sessions if s.weekday == weekday), key=lambda s: s.start)
+    return [slot for rule in todays for slot in _grid(day, rule, tz)]
+
+
 def _build_day(
     day: date,
     *,

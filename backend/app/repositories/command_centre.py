@@ -2,7 +2,7 @@
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, TypedDict
 
 from sqlalchemy import Select, or_
@@ -173,3 +173,77 @@ def lookups(db: Session) -> tuple[list[tuple[m.Doctor, str]], list[m.Department]
 
 def doctor_id_of(doctor: m.Doctor) -> uuid.UUID:
     return require_id(doctor.id)
+
+
+# ----- Overview (US3) ---------------------------------------------------------------------------
+
+
+def day_bookings(db: Session, starts_from: datetime, starts_before: datetime) -> list[BookingRow]:
+    """Every booking starting in the window, whatever its status, in agenda order."""
+    stmt = (
+        select(m.Appointment, m.Doctor, m.Department)
+        .join(m.Doctor, col(m.Doctor.id) == col(m.Appointment.doctor_id))
+        .join(m.Department, col(m.Department.id) == col(m.Appointment.department_id))
+        .where(col(m.Appointment.starts_at) >= starts_from)
+        .where(col(m.Appointment.starts_at) < starts_before)
+        .order_by(
+            col(m.Appointment.starts_at), col(m.Doctor.full_name), col(m.Appointment.reference)
+        )
+    )
+    return [BookingRow(a, d, p) for a, d, p in db.exec(stmt).all()]
+
+
+def recent_bookings(db: Session, limit: int) -> list[BookingRow]:
+    """The newest bookings by the time they were made, for the new-booking notifications."""
+    stmt = (
+        select(m.Appointment, m.Doctor, m.Department)
+        .join(m.Doctor, col(m.Doctor.id) == col(m.Appointment.doctor_id))
+        .join(m.Department, col(m.Department.id) == col(m.Appointment.department_id))
+        .order_by(col(m.Appointment.created_at).desc(), col(m.Appointment.reference))
+        .limit(limit)
+    )
+    return [BookingRow(a, d, p) for a, d, p in db.exec(stmt).all()]
+
+
+@dataclass(frozen=True)
+class WeeklyPlan:
+    doctor: m.Doctor
+    department_name: str
+    sessions: list[m.DoctorWeeklySchedule]
+
+
+def weekly_plans(db: Session) -> list[WeeklyPlan]:
+    """Active doctors of active departments with their weekly sessions."""
+    doctors = db.exec(
+        select(m.Doctor, m.Department.name)
+        .join(m.Department, col(m.Department.id) == col(m.Doctor.department_id))
+        .where(col(m.Doctor.is_active), col(m.Department.is_active))
+    ).all()
+    sessions: dict[uuid.UUID, list[m.DoctorWeeklySchedule]] = {}
+    for row in db.exec(select(m.DoctorWeeklySchedule)).all():
+        sessions.setdefault(row.doctor_id, []).append(row)
+    return [WeeklyPlan(d, name, sessions.get(require_id(d.id), [])) for d, name in doctors]
+
+
+def leave_between(
+    db: Session, starts_from: datetime, starts_before: datetime
+) -> dict[uuid.UUID, list[tuple[datetime, datetime]]]:
+    """Leave overlapping the window, per doctor. The internal note is never selected."""
+    rows = db.exec(
+        select(m.DoctorLeave.doctor_id, m.DoctorLeave.starts_at, m.DoctorLeave.ends_at)
+        .where(col(m.DoctorLeave.starts_at) < starts_before)
+        .where(col(m.DoctorLeave.ends_at) > starts_from)
+    ).all()
+    out: dict[uuid.UUID, list[tuple[datetime, datetime]]] = {}
+    for doctor_id, start, end in rows:
+        out.setdefault(doctor_id, []).append((start, end))
+    return out
+
+
+def holiday_names(db: Session, days: list[date]) -> dict[date, str]:
+    rows = db.exec(
+        select(col(m.ClinicHoliday.holiday_date), col(m.ClinicHoliday.name)).where(
+            col(m.ClinicHoliday.holiday_date).in_(days)
+        )
+    ).all()
+    return {day: name for day, name in rows}
