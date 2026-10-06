@@ -170,3 +170,23 @@ def test_leave_added_by_the_clinic_survives_a_reseed(db_session: Session) -> Non
         text("SELECT count(*) FROM doctor_leave WHERE NOT is_sample")
     ).scalar_one()
     assert manual == 1
+
+
+def test_seeding_creates_no_staff_and_the_seed_never_touches_auth() -> None:
+    import ast
+    from pathlib import Path
+
+    forbidden_names = {"StaffAccount", "StaffSession", "DemoSession", "LoginThrottle"}
+    for source in Path(SEED_DIR).parent.glob("*.py"):
+        for node in ast.walk(ast.parse(source.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.ImportFrom):
+                assert not (node.module or "").startswith("app.auth"), source.name
+                assert not forbidden_names & {a.name for a in node.names}, source.name
+            elif isinstance(node, ast.Import):
+                assert not any(a.name.startswith("app.auth") for a in node.names), source.name
+
+
+def test_staff_tables_are_empty_after_seeding(db_session: Session) -> None:
+    run_seed_again(db_session)
+    for table in ("staff_account", "staff_session", "demo_session"):
+        assert db_session.execute(text(f"SELECT count(*) FROM {table}")).scalar_one() == 0, table

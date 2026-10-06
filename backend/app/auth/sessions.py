@@ -170,8 +170,32 @@ def end_demo_session(db: Session, session_id: uuid.UUID, now: datetime) -> None:
     """A demo session ends by expiring immediately (it has no ``ended_at``)."""
     row = db.get(m.DemoSession, session_id)
     if row is not None and row.expires_at > now:
-        row.expires_at = now
+        # The table requires expiry after creation, so a session ended in its first instant
+        # expires one microsecond later.
+        row.expires_at = max(now, (row.created_at or now) + timedelta(microseconds=1))
         db.flush()
+
+
+def end_presented(
+    db: Session, settings: Settings, token: str | None, reason: EndReason, now: datetime
+) -> None:
+    """End whatever session ``token`` names, valid or not (sign-in must never reuse a token)."""
+    kind = tokens.token_kind(token) if token else None
+    if token is None or kind is None:
+        return
+    token_hash = tokens.hash_token(settings.session_secret, token)
+    if kind == "demo":
+        demo = db.exec(
+            select(m.DemoSession).where(col(m.DemoSession.token_hash) == token_hash)
+        ).first()
+        if demo is not None and demo.id is not None:
+            end_demo_session(db, demo.id, now)
+        return
+    row = db.exec(
+        select(m.StaffSession).where(col(m.StaffSession.token_hash) == token_hash)
+    ).first()
+    if row is not None and row.id is not None:
+        end_session(db, row.id, reason, now)
 
 
 def end_all_for_staff(
