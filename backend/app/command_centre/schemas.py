@@ -45,6 +45,7 @@ class StaffOut(CamelModel):
     id: uuid.UUID
     email: str
     display_name: str
+    job_title: str | None = None
     role: Role
     is_active: bool
     must_change_password: bool | None = None

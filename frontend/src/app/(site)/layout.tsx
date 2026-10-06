@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { NoticeBar } from "@/components/layout/NoticeBar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
       <body className="flex min-h-screen flex-col">
         <SkipLink />
+        <AnnouncementBar />
         <NoticeBar />
         <SiteHeader />
         <main id="main-content" tabIndex={-1} className="flex-1">

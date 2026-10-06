@@ -88,8 +88,11 @@ REASONS: Final[dict[str, tuple[str, ...]]] = {
         "Diabetes screening",
     ),
 }
+# (name, role, email, job title, days before today of the last sign-in, minute of that day)
 STAFF: Final = (
-    ("Sample Admin", "admin", "sample.admin@example.com"),
-    ("Sample Receptionist A", "receptionist", "sample.reception.a@example.com"),
-    ("Sample Receptionist B", "receptionist", "sample.reception.b@example.com"),
+    ("Ayesha Khan", "admin", "ayesha.khan@example.com", "Clinic Manager", 0, 7 * 60 + 52),
+    ("Bilal Raza", "receptionist", "bilal.raza@example.com", "Front Desk Lead", 0, 8 * 60 + 14),
+    ("Hina Siddiqui", "receptionist", "hina.siddiqui@example.com", "Receptionist", 1, 17 * 60 + 38),
+    ("Omar Farooq", "admin", "omar.farooq@example.com", "Operations Coordinator", 2, 9 * 60 + 6),
+    ("Sana Malik", "receptionist", "sana.malik@example.com", "Appointments Lead", 4, 16 * 60 + 21),
 )

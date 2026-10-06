@@ -757,6 +757,17 @@ svg.i-sm {
   font-size: 12.5px;
   color: var(--muted);
 }
+/* The disclaimer sits below the shell, so the navy column is painted on the page (fixed to the viewport)
+   as well as by the sticky sidebar: no white strip under the sidebar at the end of a long page. */
+@media (min-width: 901px) {
+  body:has(.shell) {
+    background-image: linear-gradient(90deg, var(--side-bg) 256px, transparent 256px);
+    background-attachment: fixed;
+  }
+  body:has(.shell) .disclaimer {
+    padding-left: calc(256px + 16px);
+  }
+}
 
 /* ---------- Forms, sign-in, staff ---------- */
 .form {

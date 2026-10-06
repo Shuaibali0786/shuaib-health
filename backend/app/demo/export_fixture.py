@@ -61,8 +61,10 @@ def build_fixture(demo_date: date, clinic_time: time) -> dict[str, Any]:
                 "id": str(member.id),
                 "email": member.email,
                 "displayName": member.display_name,
+                "jobTitle": member.job_title,
                 "role": member.role,
                 "isActive": True,
+                "lastSignInAt": _iso(member.last_sign_in_at),
                 "isSample": True,
             }
             for member in source.staff()

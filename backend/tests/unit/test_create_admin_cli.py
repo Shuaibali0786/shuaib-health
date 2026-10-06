@@ -35,7 +35,7 @@ def run(
         list(args),
         stdin=io.StringIO(stdin),
         session_factory=lambda: Borrowed(),  # type: ignore[arg-type,return-value]
-        **kwargs,  # type: ignore[arg-type]
+        **kwargs,
     )
 
 

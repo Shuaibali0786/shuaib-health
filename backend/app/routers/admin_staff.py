@@ -62,8 +62,10 @@ def list_staff(
                 id=member.id,
                 email=member.email,
                 display_name=member.display_name,
+                job_title=member.job_title,
                 role=member.role,
                 is_active=True,
+                last_sign_in_at=member.last_sign_in_at,
                 is_sample=True,
             )
             for member in DemoSource(viewer.demo_date).staff()

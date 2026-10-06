@@ -54,7 +54,7 @@ export function StaffTable({ staff, actions, readOnly, busyId }: { staff: Staff[
               <tr key={member.id} data-staff={member.email}>
                 <td className="who-cell">
                   <b>{member.displayName}</b>
-                  <span>{member.email}</span>
+                  <span>{member.jobTitle ? `${member.jobTitle} · ${member.email}` : member.email}</span>
                 </td>
                 <td data-label="Role">{readOnly ? (member.role === "admin" ? "Admin" : "Receptionist") : <RoleSelect member={member} onRole={actions.onRole} disabled={disabled} />}</td>
                 <td data-label="Status">

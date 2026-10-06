@@ -88,7 +88,7 @@ test.describe("accessibility (WCAG 2.2 AA)", () => {
         return {
           id: name,
           ring,
-          underHeader: !element.closest("header") && !isSkipLink && box.top < header.bottom - 0.5 && box.bottom > 0,
+          underHeader: !element.closest("header") && !isSkipLink && box.top < header.bottom - 0.5 && box.bottom > header.top + 0.5,
           tooSmall: box.width < 24 || box.height < 24,
           first: isSkipLink,
         };

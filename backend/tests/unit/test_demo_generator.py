@@ -117,13 +117,16 @@ def test_mondays_and_saturdays_are_busy() -> None:
 
 def test_staff_and_activity_are_synthetic() -> None:
     ds = dataset()
-    assert {s.display_name for s in ds.staff} == {
-        "Sample Admin",
-        "Sample Receptionist A",
-        "Sample Receptionist B",
-    }
+    names = {s.display_name for s in ds.staff}
+    day_start = datetime(2026, 10, 5, tzinfo=CLINIC_ZONE)
+    assert len(names) >= 4 and not any(n.startswith("Sample") for n in names)
+    assert all(s.job_title for s in ds.staff)
+    assert all(
+        day_start - timedelta(days=7) < s.last_sign_in_at < day_start + timedelta(days=1)
+        for s in ds.staff
+    )
     assert ds.activity
-    assert all(a.staff_name.startswith("Sample ") for a in ds.activity)
+    assert {a.staff_name for a in ds.activity} <= names
     times = [a.occurred_at for a in ds.activity]
     assert times == sorted(times, reverse=True)
 

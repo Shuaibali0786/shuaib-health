@@ -1530,6 +1530,8 @@ export interface components {
             id: string;
             email: string;
             displayName: string;
+            /** @description Sample staff only: the role title shown on the demo staff list. */
+            jobTitle?: string;
             role: components["schemas"]["Role"];
             isActive: boolean;
             mustChangePassword?: boolean;

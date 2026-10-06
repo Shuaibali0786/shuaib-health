@@ -109,6 +109,8 @@ class DemoStaff:
     display_name: str
     role: Literal["admin", "receptionist"]
     email: str
+    job_title: str
+    last_sign_in_at: datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -218,10 +220,17 @@ def _slots(doctor: DemoDoctor, weekday: int) -> list[int]:
     ]
 
 
-def _staff() -> tuple[DemoStaff, ...]:
+def _staff(today: date) -> tuple[DemoStaff, ...]:
     return tuple(
-        DemoStaff(uuid.uuid5(uuid.NAMESPACE_URL, f"{SEED_PREFIX}staff:{email}"), name, role, email)  # type: ignore[arg-type]
-        for name, role, email in names.STAFF
+        DemoStaff(
+            uuid.uuid5(uuid.NAMESPACE_URL, f"{SEED_PREFIX}staff:{email}"),
+            name,
+            role,  # type: ignore[arg-type]
+            email,
+            job_title,
+            _local_midnight(today - timedelta(days=days_back)) + timedelta(minutes=minute),
+        )
+        for name, role, email, job_title, days_back, minute in names.STAFF
     )
 
 
@@ -342,7 +351,7 @@ def build_dataset(demo_date: date) -> DemoDataset:
     leave: set[tuple[str, date]] = set()
     holidays = {demo_date + timedelta(days=6): "Clinic closed (sample holiday)"}
     bookings = _bookings(rnd, demo_date, doctors, leave, holidays)
-    staff = _staff()
+    staff = _staff(demo_date)
     return DemoDataset(
         demo_date=demo_date,
         catalog_etag=catalog_etag(),

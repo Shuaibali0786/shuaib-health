@@ -21,7 +21,7 @@ describe("demo-day.json", () => {
 
   it("has the three sample staff, each marked as sample", () => {
     const staff = StaffListSchema.parse(fixture.staff);
-    expect(staff.map((member) => member.displayName)).toEqual(["Sample Admin", "Sample Receptionist A", "Sample Receptionist B"]);
+    expect(staff.map((member) => member.displayName)).toEqual(["Ayesha Khan", "Bilal Raza", "Hina Siddiqui", "Omar Farooq", "Sana Malik"]);
     expect(staff.every((member) => member.isSample === true)).toBe(true);
   });
 

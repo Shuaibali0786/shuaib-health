@@ -78,6 +78,35 @@ test.describe("shell", () => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Good (morning|afternoon|evening), Sample$/);
   });
 
+  test("the navy side column reaches the bottom of the window, also at the end of a page", async ({ page, isMobile }) => {
+    test.skip(isMobile, "the side column only exists from 901 px");
+    await page.goto("/admin/staff");
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    const viewport = page.viewportSize()!;
+    const shot = await page.screenshot({ clip: { x: 0, y: viewport.height - 48, width: 200, height: 48 } });
+    // Decode in the page: every pixel of the strip must be the dark navy of the column, never white.
+    const brightest = await page.evaluate(async (base64) => {
+      const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${base64}`)).blob());
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const context = canvas.getContext("2d")!;
+      context.drawImage(bitmap, 0, 0);
+      const { data } = context.getImageData(0, 0, bitmap.width, bitmap.height);
+      let max = 0;
+      for (let i = 0; i < data.length; i += 4) max = Math.max(max, data[i]!, data[i + 1]!, data[i + 2]!);
+      return max;
+    }, shot.toString("base64"));
+    expect(brightest).toBeLessThan(120);
+  });
+
+  test("the demo card says Read-only · Admin view under the name", async ({ page, context, baseURL, isMobile }) => {
+    test.skip(isMobile, "the account card is in the side column");
+    await signIn(context, "demo", baseURL!);
+    await page.goto("/admin");
+    const card = page.locator(".side .who");
+    await expect(card.locator("b")).toHaveText("Demo viewer");
+    await expect(card.locator("span")).toHaveText("Read-only · Admin view");
+  });
+
   test("signed out, /admin goes to the sign-in page and keeps the path", async ({ page, context }) => {
     await context.clearCookies();
     await page.goto("/admin");

@@ -34,6 +34,7 @@ export const StaffSchema = z.object({
   id: z.uuid(),
   email: z.string(),
   displayName: z.string(),
+  jobTitle: z.string().optional(),
   role: RoleSchema,
   isActive: z.boolean(),
   mustChangePassword: z.boolean().optional(),

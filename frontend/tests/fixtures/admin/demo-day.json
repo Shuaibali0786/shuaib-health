@@ -15,27 +15,53 @@
   },
   "staff": [
     {
-      "id": "11e13f71-dd9a-5a1f-ba3a-06fd1534f03a",
-      "email": "sample.admin@example.com",
-      "displayName": "Sample Admin",
+      "id": "89f77602-67ba-5e73-9bbb-37238855442b",
+      "email": "ayesha.khan@example.com",
+      "displayName": "Ayesha Khan",
+      "jobTitle": "Clinic Manager",
       "role": "admin",
       "isActive": true,
+      "lastSignInAt": "2026-10-05T02:52:00Z",
       "isSample": true
     },
     {
-      "id": "1eaac4e8-ce52-5d13-9b70-b37acacdcfad",
-      "email": "sample.reception.a@example.com",
-      "displayName": "Sample Receptionist A",
+      "id": "38c867da-14cc-5b61-93fb-f74842112682",
+      "email": "bilal.raza@example.com",
+      "displayName": "Bilal Raza",
+      "jobTitle": "Front Desk Lead",
       "role": "receptionist",
       "isActive": true,
+      "lastSignInAt": "2026-10-05T03:14:00Z",
       "isSample": true
     },
     {
-      "id": "cf99974f-d9fd-53bf-b999-5a8f21e152da",
-      "email": "sample.reception.b@example.com",
-      "displayName": "Sample Receptionist B",
+      "id": "910fd550-4d48-55c6-acb9-217b91d52fcd",
+      "email": "hina.siddiqui@example.com",
+      "displayName": "Hina Siddiqui",
+      "jobTitle": "Receptionist",
       "role": "receptionist",
       "isActive": true,
+      "lastSignInAt": "2026-10-04T12:38:00Z",
+      "isSample": true
+    },
+    {
+      "id": "4bbbee26-2b96-5e0c-b73d-db9d7afa18fe",
+      "email": "omar.farooq@example.com",
+      "displayName": "Omar Farooq",
+      "jobTitle": "Operations Coordinator",
+      "role": "admin",
+      "isActive": true,
+      "lastSignInAt": "2026-10-03T04:06:00Z",
+      "isSample": true
+    },
+    {
+      "id": "b79ccea2-420f-5bce-85a6-72ece7fa661b",
+      "email": "sana.malik@example.com",
+      "displayName": "Sana Malik",
+      "jobTitle": "Appointments Lead",
+      "role": "receptionist",
+      "isActive": true,
+      "lastSignInAt": "2026-10-01T11:21:00Z",
       "isSample": true
     }
   ],

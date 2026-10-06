@@ -32,7 +32,7 @@ export function isActive(href: string, pathname: string): boolean {
 }
 
 export function roleLabel(viewer: Pick<Viewer, "kind" | "role">): string {
-  if (viewer.kind === "demo") return "Demo viewer";
+  if (viewer.kind === "demo") return "Read-only · Admin view";
   return viewer.role === "admin" ? "Admin" : "Receptionist";
 }
 

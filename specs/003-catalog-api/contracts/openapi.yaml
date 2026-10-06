@@ -971,6 +971,7 @@ components:
         id: { type: string, format: uuid }
         email: { type: string }
         displayName: { type: string }
+        jobTitle: { type: string, description: "Sample staff only: the role title shown on the demo staff list." }
         role: { $ref: "#/components/schemas/Role" }
         isActive: { type: boolean }
         mustChangePassword: { type: boolean }

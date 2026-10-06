@@ -70,7 +70,8 @@ test.describe("the public pages' demo control", () => {
       const forms = page.locator("form[data-demo-entry]");
       await expect(forms.first()).toHaveAttribute("action", "/admin/demo/start");
       await expect(forms.first()).toHaveAttribute("method", "post");
-      await expect(forms.first().locator("button[type=submit]")).toHaveText("View Demo Dashboard");
+      await expect(page.getByTestId("announcement-bar").locator("form[data-demo-entry]")).toHaveCount(1);
+      await expect(page.getByRole("contentinfo").locator("form[data-demo-entry] button[type=submit]")).toHaveText("View Demo Dashboard");
       const hrefs = await page.locator("a[href]").evaluateAll((links) => links.map((a) => a.getAttribute("href") ?? ""));
       expect(hrefs.filter((href) => href.startsWith("/admin")), path).toEqual([]);
       for (const link of (await page.locator("a[href^='/']").all()).slice(0, 10)) await link.hover({ timeout: 1000 }).catch(() => {});
@@ -103,7 +104,7 @@ test.describe("the demo is read-only on the server", () => {
     await page.getByRole("button", DEMO_BUTTON).click();
     await expectDemoOverview(page);
     const staff = await page.evaluate(async () => (await fetch("/api/admin/staff")).json());
-    expect(staff.map((member: { displayName: string }) => member.displayName)).toEqual(["Sample Admin", "Sample Receptionist A", "Sample Receptionist B"]);
+    expect(staff.map((member: { displayName: string }) => member.displayName)).toEqual(["Ayesha Khan", "Bilal Raza", "Hina Siddiqui", "Omar Farooq", "Sana Malik"]);
   });
 });
 
