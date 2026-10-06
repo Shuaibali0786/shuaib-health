@@ -136,4 +136,6 @@ def test_generation_is_fast() -> None:
     generator.build_dataset(date(2026, 11, 2))  # warm: the catalog file is read once
     started = time.perf_counter()
     generator.build_dataset(date(2026, 11, 3))
-    assert time.perf_counter() - started < 0.15
+    # Generation is ~0.1-0.2 s on a dev laptop; 0.5 s leaves headroom for slow
+    # or loaded CI machines while still catching an accidental O(n^2) regression.
+    assert time.perf_counter() - started < 0.5
