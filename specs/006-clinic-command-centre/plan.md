@@ -21,7 +21,7 @@ Give clinic staff a private, premium **Command Centre** under `/admin` (Overview
 - Server components render first paint; small client islands for filters, drawer, confirm/undo, phone reveal; a browser-only **demo overlay** makes demo interactions feel real and vanish on reload.
 - Hand-built accessible SVG charts (< 6 kB, no chart library) (R13). Brand tokens shared via `tokens.css`; serif display face (**Cormorant Garamond**, approved at the gate) + "navy night" dark theme scoped to admin (R14). Live feel: Karachi clock, 30 s polling of the Overview with new-booking notifications, moving "now" marker, KPI count-up (R19, FR-040…FR-044).
 
-**Design gate (FR-039)**: right after this plan, a static design preview (Overview + Bookings; 390/1440 px; light/dark; demo data) is built under `specs/006-clinic-command-centre/design-preview/` and work **stops** for Shuaib's approval before any feature code (R18). **Approved 2026-10-06** with font A and the live changes (R18 outcome, R19).
+**Design gate (FR-039)**: right after this plan, a static design preview (Overview + Bookings; 390/1280/1366/1440 px; light/dark; demo data) is built under `specs/006-clinic-command-centre/design-preview/` and work **stops** for Shuaib's approval before any feature code (R18). **Approved 2026-10-06** with font A and the live changes (R18 outcome, R19).
 
 ## Technical Context
 
@@ -31,7 +31,7 @@ Give clinic staff a private, premium **Command Centre** under `/admin` (Overview
 - Frontend: Next.js 16.3.7, React 19.2, zod, lucide-react, framer-motion (existing). **No new dependency**: charts are hand-built SVG; the serif face comes through `next/font/google`; no state library (R11).
 
 **Storage**: Neon Postgres. New tables `staff_account`, `staff_session`, `demo_session`, `login_throttle`, `appointment_status_change`; `appointment` and `audit_log` extended (data-model.md). Demo data is never stored.
-**Testing**: pytest (unit: rules, KPIs, generator determinism, password policy, CSRF, masking; api: auth matrix, route-policy introspection, status/undo/concurrency, data separation, log safety; migrations up/down; perf with 30 k rows); Vitest (BFF allow-list and guards, cookie flags, schemas, overlay store, chart components, formatting); Playwright admin projects `admin-desktop` (1440×900) and `admin-mobile` (Pixel 7 / 390 px), visual baselines (light/dark × desktop/mobile), axe on every screen and state, keyboard-only journeys, reduced motion, isolation spec.
+**Testing**: pytest (unit: rules, KPIs, generator determinism, password policy, CSRF, masking; api: auth matrix, route-policy introspection, status/undo/concurrency, data separation, log safety; migrations up/down; perf with 30 k rows); Vitest (BFF allow-list and guards, cookie flags, schemas, overlay store, chart components, formatting); Playwright admin projects `admin-desktop` (1440×900), `admin-laptop-1366` (1366×768), `admin-laptop-1280` (1280×800) and `admin-mobile` (Pixel 7 / 390 px), visual baselines (light/dark × 390/1280/1366/1440, frozen clock), axe on every screen and state, keyboard-only journeys, reduced motion, isolation spec.
 **Target Platform**: backend on Render-type host; website on Vercel/Node.
 **Project Type**: Web application (`backend/` + `frontend/`).
 
@@ -77,9 +77,9 @@ specs/006-clinic-command-centre/
 │   ├── command-centre-api.openapi.yaml  # delta → merged into specs/003-catalog-api/contracts/openapi.yaml (1.2.0)
 │   ├── auth-matrix.md                   # endpoint × viewer matrix (SC-004)
 │   └── website-admin.md                 # pages, cookie, BFF allow-list, isolation proofs, mock API
-├── design-preview/                      # FR-039 gate (next step, before any feature code)
-│   ├── index.html, overview.html, bookings.html, preview.css, demo-day.json
-│   └── screenshots/                     # 390/1440 × light/dark × Overview/Bookings
+├── design-preview/                      # FR-039 gate — approved 2026-10-06 (font A + live changes)
+│   ├── index.html, preview.html, preview.css, render.js, data.js, capture.mjs, README.md
+│   └── screenshots/                     # 390/1280/1366/1440 × light/dark × Overview/Bookings states
 ├── checklists/requirements.md
 └── tasks.md                             # /sp.tasks
 ```
@@ -162,8 +162,8 @@ frontend/
 │   │   ├── marker.ts                     # __SH_COMMAND_CENTRE__ sentinel
 │   │   ├── lib/bffRoutes.ts, server.ts (server-only), client.ts, schemas.ts (zod), format.ts (Karachi)
 │   │   ├── state/demoOverlay.ts, undo.ts, theme.ts, clinicClock.ts, livePoll.ts, newBookings.ts (R19)
-│   │   ├── shell/AppShell, SideNav, BottomNav, DemoRibbon, ThemeToggle, SessionExpiredDialog
-│   │   ├── overview/KpiCard, KpiGrid, AgendaTimeline, NextUpList
+│   │   ├── shell/AppShell, SideNav, BottomNav, MobileTopBar, StatusBar, DemoRibbon, ThemeToggle, SessionExpiredDialog
+│   │   ├── overview/KpiCard, KpiGrid, AgendaTimeline, AgendaList, NextUpList, StatusMix, NewBookingToast
 │   │   ├── bookings/FilterBar, StickyFilters, BookingTable, BookingCard, BookingDrawer, StatusActions,
 │   │   │           ConfirmDialog, UndoToast, PhoneReveal, StatusBadge, Pagination
 │   │   ├── charts/ColumnChart, BarList, StatusBreakdown, HourHeatStrip, ChartFigure (summary + table)
@@ -199,14 +199,14 @@ frontend/
 
 | Phase | Goal | Main work | Checkpoint |
 |---|---|---|---|
-| **0. Design preview — GATE** (FR-039) | Approve the look before code | Static HTML preview (Overview + Bookings incl. drawer/confirm), 390/1440 × light/dark, demo fixture; serif face options; screenshots; private preview link | **STOP until Shuaib approves** — ✅ approved 2026-10-06 (font A + live changes); approved screenshots = baseline reference |
+| **0. Design preview — GATE** (FR-039) | Approve the look before code | Static HTML preview (Overview + Bookings incl. drawer/confirm), 390/1280/1366/1440 × light/dark, demo fixture; serif face options; screenshots; private preview link | **STOP until Shuaib approves** — ✅ approved 2026-10-06 (font A + live changes); approved screenshots = baseline reference |
 | **1. Setup & contract** | Baselines; API agreed first | Record backend/frontend/Lighthouse/bundle baselines in `results.md`; merge OpenAPI delta (1.2.0); regenerate types; zod schemas; drift tests | Existing suites green; contract parses; drift tests catch injected drift |
 | **2. Foundation: data + auth core** | FR-001–009 core | `0003` migration; settings (`SESSION_SECRET` fail fast); passwords, tokens, sessions, throttle, CSRF; `require_viewer` + policy table + introspection test; `create_admin` CLI; seed guard | Migration up/down + lossy-downgrade refusal; unit tests; introspection test green |
 | **3. Website restructure & isolation** | FR-036 foundation | `git mv` public routes into `(site)`; `tokens.css`/`site.css`/`admin.css`; admin root layout + `global-not-found`; BFF allow-list + session/demo handlers; isolation script + sentinel e2e | All existing unit/e2e green unchanged; isolation proofs green; Lighthouse ≥ baseline |
 | **4. US2 Sign-in & roles** 🎯 | Secure access | Login page, sign-out, expiry dialog, change password, staff screen (create/reset/deactivate/role, last-admin) | Full auth matrix green (SC-004); lockout/timing/fixation/expiry tests; e2e per role |
 | **5. US1 Public demo** 🎯 | One-click demo | Generator + `DemoSource`; demo start (rate limited); ribbon; overlay; footer/About/login buttons | Determinism + separation tests (SC-005); demo e2e incl. reload reset and crafted-write refusal |
-| **6. US3 Overview** | Today at a glance | Metrics (pure), real/demo sources, KPI cards with trends, agenda timeline, next-up + Mark arrived | Fixed-data KPI tests incl. 23:45 boundary with non-Karachi TZ (SC-009); e2e |
-| **7. US4 Bookings** | Daily work | Search (POST), filters (URL-safe), pagination, drawer, status actions + confirm + undo, conflict, reveal (60 s), cancel frees slot | Status/undo/concurrency tests; reveal audit; e2e find → arrive → complete < 15 s (SC-003) |
+| **6. US4 Bookings** | Daily work | Search (POST), filters (URL-safe), pagination, drawer, status actions + confirm + undo, conflict, reveal (60 s), cancel frees slot | Status/undo/concurrency tests; reveal audit; e2e find → arrive → complete < 15 s (SC-003) |
+| **7. US3 Overview** | Today at a glance, live | Metrics (pure), real/demo sources, KPI cards with trends, agenda timeline (chips open the US4 drawer), next-up + Mark arrived (US4 status actions), live clock, polling, new-booking notifications | Fixed-data KPI tests incl. 23:45 boundary with non-Karachi TZ (SC-009); overview + live e2e (frozen clock) |
 | **8. US5 Mobile & polish** | Premium on phones | Bottom nav, cards, sticky filters, skeletons, empty/error states, themes, reduced motion | axe zero violations × screens × themes × widths (SC-006); keyboard-only journeys; visual baselines |
 | **9. US6 Insights + US7 Doctors today** | P2 screens | SVG charts with summaries/tables; ranges; doctors today | Exact-value tests; perf 30 k rows p95 < 1 s (NFR-001) |
 | **10. US8 Activity** | Accountability | Feed with filters; synthetic feed for demo | Event-order test; receptionist refused |
@@ -217,8 +217,8 @@ frontend/
 - **API auth matrix** (contracts/auth-matrix.md): every admin endpoint × {no session, demo, receptionist, admin, must-change-password} + session-state variants + CSRF/proxy/Origin negatives; generated from `ENDPOINT_POLICIES`; route introspection guarantees completeness (SC-004).
 - **Unit**: transitions/time rules, KPIs/utilisation/trends/insights (fixed clock, non-Karachi `TZ`), generator determinism and distributions, password policy, token/CSRF, lockout windows, masking, Karachi formatting, overlay and undo stores, BFF guards.
 - **Integration**: status change atomicity (fault injection between history and audit insert → rollback), concurrent changes (one 200, one 409), undo races, cancel → slot reappears in public slots, last-admin race, demo/real separation, log safety.
-- **Playwright**: `admin-desktop` + `admin-mobile` projects; journeys per role and demo; keyboard-only; reduced motion; offline/slow/expired.
-- **Visual baselines**: Overview, Bookings (list + drawer), Insights, Doctors today × light/dark × 390 / 1280 / 1366 / 1440 px on the deterministic demo fixture, with the Playwright clock paused (`clock.install` + `pauseAt`, advanced with `runFor`) and animations disabled; approved at the gate. A clipping check (no sideways scroll, no clipped or self-overflowing text) runs at every width (FR-045). The new-booking toast shot allows a small `maxDiffPixels` for anti-aliasing of its shadow layer.
+- **Playwright**: `admin-desktop`, `admin-laptop-1366`, `admin-laptop-1280` and `admin-mobile` projects; journeys per role and demo; keyboard-only; reduced motion; offline/slow/expired.
+- **Visual baselines** (SC-010): Overview, Bookings (list, drawer, confirm), the agenda chip tooltip and the new-booking toast × light/dark × 390 / 1280 / 1366 / 1440 px on the deterministic demo fixture, with the Playwright clock paused (`clock.install` + `pauseAt`, advanced with `runFor`) and animations disabled; reviewed against the approved gate screenshots. A clipping check (no sideways scroll, no clipped or self-overflowing text) runs on **every** admin screen at every width (FR-045), inside the visual and a11y specs. The new-booking toast shot allows a small `maxDiffPixels` for anti-aliasing of its shadow layer.
 - **Accessibility**: axe (WCAG 2.2 AA tags) on every screen/state in both themes and widths; focus-trap/return tests for drawer/dialogs; charts' summary + table.
 - **Isolation**: build-manifest script, runtime sentinel scan with prefetch, Lighthouse vs baseline.
 
