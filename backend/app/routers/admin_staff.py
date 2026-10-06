@@ -1,4 +1,4 @@
-"""Staff administration (admins only; Feature 006). A demo viewer sees an empty list for now."""
+"""Staff administration (admins only; Feature 006). A demo viewer sees the sample staff."""
 
 import uuid
 from typing import Annotated
@@ -12,6 +12,7 @@ from app.auth.policies import Policy
 from app.booking.clock import ClockDep
 from app.command_centre.schemas import ResetPasswordRequest, StaffCreate, StaffOut, StaffPatch
 from app.db import SessionDep
+from app.demo.demo_source import DemoSource
 from app.deps import ADMIN_ERRORS_DOC
 from app.schemas import ErrorResponse
 
@@ -55,8 +56,18 @@ def list_staff(
     response: Response,
 ) -> list[StaffOut]:
     response.headers.update(NO_STORE)
-    if viewer.is_demo:
-        return []  # synthetic staff arrive with the demo story
+    if viewer.is_demo and viewer.demo_date is not None:
+        return [
+            StaffOut(
+                id=member.id,
+                email=member.email,
+                display_name=member.display_name,
+                role=member.role,
+                is_active=True,
+                is_sample=True,
+            )
+            for member in DemoSource(viewer.demo_date).staff()
+        ]
     return [staff_out(s) for s in service.list_staff(db)]
 
 

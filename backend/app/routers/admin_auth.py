@@ -7,10 +7,12 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, Header, Response, status
 from sqlalchemy import Engine
 
-from app.auth import service, tokens
+from app.auth import events, service, sessions, tokens
 from app.auth.deps import Viewer, require_viewer
 from app.auth.policies import Policy
+from app.booking import limits
 from app.booking.clock import ClockDep
+from app.booking.privacy import fingerprint
 from app.command_centre.schemas import (
     ChangePasswordRequest,
     SessionIssued,
@@ -19,7 +21,7 @@ from app.command_centre.schemas import (
 )
 from app.db import SessionDep, get_engine
 from app.deps import ADMIN_ERRORS_DOC, ClientIpDep, SettingsDep
-from app.errors import ClinicNotConfigured
+from app.errors import ClinicNotConfigured, RateLimited
 from app.repositories import clinic as clinic_repo
 from app.schemas import ErrorResponse
 from app.settings import Settings
@@ -72,6 +74,52 @@ def _issued_out(
         session_expires_at=min(issued.session.idle_expires_at, issued.session.absolute_expires_at),
     )
     return SessionIssued(token=issued.token, viewer=viewer)
+
+
+@router.post(
+    "/demo/start",
+    response_model=SessionIssued,
+    response_model_exclude_none=True,
+    responses=ISSUE_ERRORS,
+    operation_id="adminDemoStart",
+    summary="Start a read-only demo",
+)
+def demo_start(
+    _: Annotated[None, Depends(require_viewer(Policy.PUBLIC_PROXY))],
+    db: SessionDep,
+    engine: Annotated[Engine, Depends(get_engine)],
+    settings: SettingsDep,
+    client_ip: ClientIpDep,
+    timezone: Annotated[str, Depends(clinic_timezone)],
+    clock: ClockDep,
+    response: Response,
+    session_token: Annotated[str | None, Header(alias="X-Session-Token")] = None,
+) -> SessionIssued:
+    """A 2-hour demo for today's clinic date. Any session presented with the request ends first."""
+    response.headers.update(NO_STORE)
+    now = clock.now()
+    bucket = limits.demo_ip_bucket(settings.privacy_hash_key, client_ip)
+    retry = limits.hit(
+        engine, bucket, limits.DEMO_IP_WINDOW, settings.demo_limit_per_ip_per_hour, now
+    )
+    if retry is not None:
+        raise RateLimited(retry)
+    sessions.end_presented(db, settings, session_token, "replaced", now)
+    demo_date = now.astimezone(ZoneInfo(timezone)).date()
+    fp = fingerprint(settings.privacy_hash_key, client_ip)
+    token, row = sessions.create_demo_session(db, settings, demo_date, fp, now)
+    db.commit()
+    if row.id is None:
+        raise RuntimeError("session was not persisted")
+    events.emit("demo.started")
+    viewer = ViewerOut(
+        kind="demo",
+        csrf_token=tokens.csrf_token(settings.session_secret, row.id),
+        clinic_today=demo_date,
+        timezone=timezone,
+        session_expires_at=row.expires_at,
+    )
+    return SessionIssued(token=token, viewer=viewer)
 
 
 @router.get(

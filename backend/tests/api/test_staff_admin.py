@@ -208,7 +208,13 @@ def test_a_receptionist_and_a_demo_viewer_are_refused(
         db_session, cc_settings, cc_clock.now().date(), FP, cc_clock.now()
     )
     dh = headers(token, csrf_for(cc_settings, row.id))
-    assert cc_client.get(f"{API}/staff", headers=dh).json() == []
+    sample = cc_client.get(f"{API}/staff", headers=dh).json()
+    assert [x["displayName"] for x in sample] == [
+        "Sample Admin",
+        "Sample Receptionist A",
+        "Sample Receptionist B",
+    ]
+    assert all(x["isSample"] is True for x in sample)
     assert error_code(cc_client.post(f"{API}/staff", json=new_member(), headers=dh)) == (
         "demo_read_only"
     )

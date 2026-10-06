@@ -25,10 +25,10 @@ from app.auth.policies import (
 )
 from app.booking.clock import ClockDep
 from app.booking.privacy import fingerprint
-from app.command_centre.demo_source import DemoSource
 from app.command_centre.real_source import RealSource
 from app.command_centre.source import CommandCentreSource
 from app.db import SessionDep
+from app.demo.demo_source import DemoSource
 from app.deps import ClientIpDep, SettingsDep, require_proxy_secret
 from app.errors import AdminError
 
