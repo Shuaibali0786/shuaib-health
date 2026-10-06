@@ -42,6 +42,7 @@ class ErrorInfo(CamelModel):
     message: str
     request_id: str
     details: list[ErrorDetail] | None = Field(default=None)
+    retry_after_seconds: int | None = Field(default=None)
 
 
 class ErrorResponse(CamelModel):

@@ -10,12 +10,16 @@ const MOCK_PORT = 4010;
 // The recorded clinic settings, as the server-side fallback for the emergency number.
 const clinicFallback = JSON.stringify(JSON.parse(readFileSync("tests/fixtures/api/clinic.json", "utf8")));
 
+const ADMIN_SPECS = /admin-.*\.spec\.ts$/;
+const ADMIN_IGNORE = ["**/stateful/**", "**/offline/**"];
+
 // Main config: production build against the mock API in "ok" mode. Specs here never switch modes,
 // so they can run fully parallel. Mode-switching specs live in tests/e2e/stateful (own config) and
 // API-less builds in tests/e2e/offline (own config).
 export default defineConfig({
   testDir: "./tests/e2e",
-  testIgnore: ["**/stateful/**", "**/offline/**"],
+  // Staff-app specs (Feature 006) run only in the admin-* projects below.
+  testIgnore: ["**/stateful/**", "**/offline/**", "**/admin-*.spec.ts"],
   globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -32,6 +36,31 @@ export default defineConfig({
     {
       name: "desktop",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
+    },
+    // Command Centre (Feature 006). Only tests/e2e/admin-*.spec.ts; the public projects above ignore them.
+    {
+      name: "admin-desktop",
+      testMatch: ADMIN_SPECS,
+      testIgnore: ADMIN_IGNORE,
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
+    },
+    {
+      name: "admin-laptop-1366",
+      testMatch: ADMIN_SPECS,
+      testIgnore: ADMIN_IGNORE,
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1366, height: 768 } },
+    },
+    {
+      name: "admin-laptop-1280",
+      testMatch: ADMIN_SPECS,
+      testIgnore: ADMIN_IGNORE,
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
+    },
+    {
+      name: "admin-mobile",
+      testMatch: ADMIN_SPECS,
+      testIgnore: ADMIN_IGNORE,
+      use: { ...devices["Pixel 7"] },
     },
   ],
   webServer: [

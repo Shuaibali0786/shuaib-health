@@ -13,6 +13,27 @@ const eslintConfig = defineConfig([
       "@next/next/no-img-element": "error",
     },
   },
+  // Feature 006 (ADR 0008): the staff app is isolated. Only src/admin/**, the (admin) route group and
+  // tests may import it, so no public-site bundle can pull in admin code.
+  {
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/admin", "@/admin/**"],
+              message: "Only src/admin/** and src/app/(admin)/** may import @/admin/* (ADR 0008).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/admin/**", "src/app/(admin)/**", "tests/**"],
+    rules: { "no-restricted-imports": "off" },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

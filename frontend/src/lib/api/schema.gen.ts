@@ -711,6 +711,300 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/auth/sign-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Ends any presented session first (fixation). Limits per IP (429 rate_limited) and per typed email (429 account_locked). */
+        post: operations["adminSignIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/demo/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Creates a 2-hour read-only demo session for today's Karachi date. Ends any presented session first. */
+        post: operations["adminDemoStart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/auth/sign-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["adminSignOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Ends all of the staff member's sessions and issues a fresh one. */
+        post: operations["adminChangePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/lookups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminLookups"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/bookings/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description A read sent as POST so personal search terms never appear in a URL (FR-021). Default = today, all doctors, all statuses. */
+        post: operations["adminBookingSearch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/bookings/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminBookingDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/bookings/{reference}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["adminBookingChangeStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/bookings/{reference}/status/undo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["adminBookingUndoStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/bookings/{reference}/reveal-phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Staff → audit row booking.phone_revealed (reference only). Demo → synthetic number, nothing stored. */
+        post: operations["adminBookingRevealPhone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminInsights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/doctors-today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminDoctorsToday"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminStaffList"];
+        put?: never;
+        post: operations["adminStaffCreate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/staff/{staffId}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["adminStaffResetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/staff/{staffId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Change role and/or active flag. Deactivation ends all sessions. Refuses to leave zero active admins (409 last_admin). */
+        patch: operations["adminStaffUpdate"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -893,9 +1187,10 @@ export interface components {
         };
         ErrorInfo: {
             /** @enum {string} */
-            code: "not_found" | "method_not_allowed" | "validation_error" | "rate_limited" | "internal_error" | "service_unavailable" | "not_configured" | "forbidden" | "request_rejected" | "slot_taken" | "slot_unavailable" | "booking_limit_reached" | "idempotency_key_reused";
+            code: "not_found" | "method_not_allowed" | "validation_error" | "rate_limited" | "internal_error" | "service_unavailable" | "not_configured" | "forbidden" | "request_rejected" | "slot_taken" | "slot_unavailable" | "booking_limit_reached" | "idempotency_key_reused" | "not_signed_in" | "session_expired" | "sign_in_failed" | "account_locked" | "csrf_failed" | "demo_read_only" | "password_change_required" | "weak_password" | "email_taken" | "last_admin" | "transition_not_allowed" | "booking_changed" | "undo_unavailable";
             message: string;
             requestId: string;
+            retryAfterSeconds?: number;
             details?: {
                 field: string;
                 issue: string;
@@ -992,6 +1287,271 @@ export interface components {
             error: components["schemas"]["ErrorInfo"];
             alternatives?: components["schemas"]["AlternativeSlot"][];
         };
+        ErrorResponse: {
+            error: components["schemas"]["ErrorInfo"];
+        };
+        /** @enum {string} */
+        Role: "admin" | "receptionist";
+        /** @enum {string} */
+        BookingStatus: "confirmed" | "arrived" | "completed" | "no_show" | "cancelled";
+        Viewer: {
+            /** @enum {string} */
+            kind: "staff" | "demo";
+            /** @description staff only */
+            role?: components["schemas"]["Role"];
+            displayName?: string;
+            mustChangePassword?: boolean;
+            csrfToken: string;
+            /**
+             * Format: date
+             * @description staff: today in clinic time; demo: the session's demo date
+             */
+            clinicToday: string;
+            /** @example Asia/Karachi */
+            timezone: string;
+            /**
+             * Format: date-time
+             * @description earlier of idle and absolute expiry
+             */
+            sessionExpiresAt?: string;
+        };
+        SignInRequest: {
+            email: string;
+            password: string;
+        };
+        /** @description Returned to the website server only. The BFF moves `token` into the cookie and strips it from the browser response. */
+        SessionIssued: {
+            token: string;
+            viewer: components["schemas"]["Viewer"];
+        };
+        ChangePasswordRequest: {
+            currentPassword: string;
+            newPassword: string;
+        };
+        Trend: {
+            value: number | null;
+            previous: number | null;
+            delta: number | null;
+            /** Format: date */
+            comparedTo: string;
+        };
+        Overview: {
+            /** Format: date */
+            localDate: string;
+            /** Format: date-time */
+            now: string;
+            /** @description holiday name when closed */
+            clinicClosed?: string | null;
+            kpis: {
+                appointments: components["schemas"]["Trend"];
+                arrived: components["schemas"]["Trend"];
+                completed: components["schemas"]["Trend"];
+                noShows: components["schemas"]["Trend"];
+                cancellations: components["schemas"]["Trend"];
+                utilisationPct: components["schemas"]["Trend"];
+            };
+            agenda: {
+                doctor: components["schemas"]["DoctorRef"];
+                items: components["schemas"]["BookingSummary"][];
+            }[];
+            nextUp: components["schemas"]["BookingSummary"][];
+            /** @description The most recently created bookings (any appointment date), newest first (FR-042). The client polls this endpoint every 30 s (FR-041) and shows a notification for each item whose bookedAt is later than the newest it has already seen; on first load it only records the newest bookedAt. Demo: always empty (the browser simulates new bookings itself). */
+            recentBookings?: (components["schemas"]["BookingSummary"] & {
+                /** Format: date-time */
+                bookedAt: string;
+            })[];
+            isSample: boolean;
+        };
+        DoctorRef: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            departmentName: string;
+            isActive?: boolean;
+        };
+        BookingSummary: {
+            reference: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: date */
+            localDate: string;
+            localTime: string;
+            status: components["schemas"]["BookingStatus"];
+            version: number;
+            /** @example Ayesha K. */
+            patientNameMasked: string;
+            doctor: components["schemas"]["DoctorRef"];
+            /** @description server-computed with the clock (FR-023/024) */
+            allowedNext: components["schemas"]["BookingStatus"][];
+            isSample?: boolean;
+        };
+        BookingDetail: components["schemas"]["BookingSummary"] & {
+            patientName: string;
+            /** @example 0300****567 */
+            phoneMasked: string;
+            emailMasked?: string | null;
+            reason?: string | null;
+            feePkr: number;
+            /** Format: date-time */
+            bookedAt: string;
+            history: {
+                /** Format: date-time */
+                at: string;
+                fromStatus?: components["schemas"]["BookingStatus"] | null;
+                toStatus: components["schemas"]["BookingStatus"];
+                /** @description staff display name or 'Online booking' */
+                actor: string;
+                isUndo: boolean;
+            }[];
+        };
+        BookingSearchRequest: {
+            /** @description reference or patient name; never logged */
+            q?: string;
+            /** Format: date */
+            from?: string;
+            /** Format: date */
+            to?: string;
+            /** Format: uuid */
+            doctorId?: string;
+            /** Format: uuid */
+            departmentId?: string;
+            statuses?: components["schemas"]["BookingStatus"][];
+            /** @default 1 */
+            page: number;
+        };
+        BookingPage: {
+            items: components["schemas"]["BookingSummary"][];
+            total: number;
+            page: number;
+            /** @constant */
+            pageSize: 20;
+        };
+        StatusChangeRequest: {
+            to: components["schemas"]["BookingStatus"];
+            expectedVersion: number;
+        };
+        StatusChangeResult: {
+            booking: components["schemas"]["BookingDetail"];
+            /** Format: uuid */
+            changeId: string;
+            /** Format: date-time */
+            undoExpiresAt: string;
+        };
+        UndoRequest: {
+            /** Format: uuid */
+            changeId: string;
+        };
+        BookingChanged: {
+            error: components["schemas"]["ErrorInfo"];
+            latest?: components["schemas"]["BookingDetail"];
+        };
+        PhoneReveal: {
+            /** @example 0300 1234567 */
+            phone: string;
+            telHref: string;
+            /** @constant */
+            maskAfterSeconds: 60;
+        };
+        Insights: {
+            /** @enum {integer} */
+            rangeDays: 7 | 30 | 90;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            total: number;
+            perDay: {
+                /** Format: date */
+                date: string;
+                count: number;
+            }[];
+            byDepartment: {
+                departmentName: string;
+                count: number;
+                cancelled: number;
+            }[];
+            byStatus: {
+                status: components["schemas"]["BookingStatus"];
+                count: number;
+            }[];
+            byHour: {
+                hour: number;
+                count: number;
+            }[];
+            isSample: boolean;
+        };
+        DoctorsToday: {
+            /** Format: date */
+            localDate: string;
+            clinicClosed?: string | null;
+            working: {
+                doctor: components["schemas"]["DoctorRef"];
+                sessions: {
+                    start?: string;
+                    end?: string;
+                }[];
+                scheduled: number;
+                booked: number;
+                free: number;
+                freePassed?: number;
+                utilisationPct: number;
+                /** @description local HH:MM */
+                nextFree?: string | null;
+            }[];
+            onLeave: components["schemas"]["DoctorRef"][];
+            notIn: components["schemas"]["DoctorRef"][];
+        };
+        ActivityEvent: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            at: string;
+            action: string;
+            outcome: string;
+            actorName?: string | null;
+            actorRole?: string | null;
+            bookingReference?: string | null;
+            fromStatus?: string | null;
+            toStatus?: string | null;
+            /** @description first 6 chars of the keyed IP fingerprint */
+            networkTag?: string;
+            isSample?: boolean;
+        };
+        ActivityPage: {
+            items: components["schemas"]["ActivityEvent"][];
+            total: number;
+            page: number;
+            pageSize: number;
+        };
+        Staff: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            displayName: string;
+            role: components["schemas"]["Role"];
+            isActive: boolean;
+            mustChangePassword?: boolean;
+            /** Format: date-time */
+            lastSignInAt?: string | null;
+            isSample?: boolean;
+        };
+        StaffCreate: {
+            email: string;
+            displayName: string;
+            role: components["schemas"]["Role"];
+            temporaryPassword: string;
+        };
+        Lookups: {
+            doctors: components["schemas"]["DoctorRef"][];
+            departments: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                isActive?: boolean;
+            }[];
+        };
     };
     responses: {
         /** @description If-None-Match matched; no body */
@@ -1038,6 +1598,51 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
+        /** @description 401 not_signed_in / session_expired */
+        Unauthenticated: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description 403 forbidden / demo_read_only / password_change_required / csrf_failed */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description 409 (see code) */
+        Conflict: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["BookingChanged"];
+            };
+        };
+        /** @description 422 validation_error / weak_password */
+        Validation: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description 429 rate_limited / account_locked (Retry-After header) */
+        AdminRateLimited: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
     };
     parameters: {
         page: number;
@@ -1045,6 +1650,8 @@ export interface components {
         /** @description Case-insensitive contains; % and _ are literal */
         q: string;
         slug: components["schemas"]["Slug"];
+        /** @description Booking reference without dash (Crockford base32). */
+        Reference: string;
     };
     requestBodies: never;
     headers: {
@@ -1056,4 +1663,552 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
+export interface operations {
+    adminSignIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignInRequest"];
+            };
+        };
+        responses: {
+            /** @description signed in */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionIssued"];
+                };
+            };
+            /** @description sign_in_failed (generic) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+            429: components["responses"]["AdminRateLimited"];
+        };
+    };
+    adminDemoStart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description demo session */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionIssued"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["AdminRateLimited"];
+        };
+    };
+    adminMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description current viewer */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Viewer"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+        };
+    };
+    adminSignOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description session ended */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminChangePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description new session */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionIssued"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    adminLookups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description filter options incl. inactive records */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Lookups"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminOverview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description today at a glance; polled every 30 s while visible (FR-041) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Overview"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminBookingSearch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BookingSearchRequest"];
+            };
+        };
+        responses: {
+            /** @description page of bookings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingPage"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    adminBookingDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Booking reference without dash (Crockford base32). */
+                reference: components["parameters"]["Reference"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description detail (phone and email masked) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingDetail"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminBookingChangeStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Booking reference without dash (Crockford base32). */
+                reference: components["parameters"]["Reference"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description changed (booking + status history + audit in one transaction) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusChangeResult"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    adminBookingUndoStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Booking reference without dash (Crockford base32). */
+                reference: components["parameters"]["Reference"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UndoRequest"];
+            };
+        };
+        responses: {
+            /** @description restored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingDetail"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description undo_unavailable / slot_taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingChanged"];
+                };
+            };
+        };
+    };
+    adminBookingRevealPhone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Booking reference without dash (Crockford base32). */
+                reference: components["parameters"]["Reference"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description full phone */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneReveal"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminInsights: {
+        parameters: {
+            query: {
+                range: 7 | 30 | 90;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description charts data */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Insights"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    adminDoctorsToday: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description who is in today */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorsToday"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminActivity: {
+        parameters: {
+            query?: {
+                action?: string;
+                staffId?: string;
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description newest first (demo → synthetic feed) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityPage"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminStaffList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description staff accounts (demo → synthetic) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Staff"][];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminStaffCreate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffCreate"];
+            };
+        };
+        responses: {
+            /** @description created (must change password at first sign-in) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Staff"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description email_taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
+    adminStaffResetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                staffId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    temporaryPassword: string;
+                };
+            };
+        };
+        responses: {
+            /** @description reset; all of that person's sessions ended */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
+    adminStaffUpdate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                staffId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    role?: components["schemas"]["Role"];
+                    isActive?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Staff"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description last_admin */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+}

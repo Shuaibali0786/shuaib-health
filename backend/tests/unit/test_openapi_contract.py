@@ -1,7 +1,8 @@
 """The committed contract (specs/003-catalog-api/contracts/openapi.yaml) and the app agree.
 
 Checks paths and methods, query parameters, documented error statuses, and the property names
-of every response schema that exists under the same name in both.
+of every response schema that exists under the same name in both. The /api/v1/admin/* operations are
+checked by tests/api/test_admin_contract.py.
 """
 
 from pathlib import Path
@@ -35,7 +36,7 @@ def operations(spec: dict[str, Any]) -> dict[tuple[str, str], dict[str, Any]]:
         (path, method): op
         for path, item in spec["paths"].items()
         for method, op in item.items()
-        if method in HTTP_METHODS
+        if method in HTTP_METHODS and not path.startswith("/api/v1/admin/")
     }
 
 

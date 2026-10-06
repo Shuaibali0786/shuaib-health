@@ -49,14 +49,14 @@ description: "Task list for Feature 006 — Clinic Command Centre (staff dashboa
 
 **Purpose**: baselines, dependency, contract first (Principle IV).
 
-- [ ] T001 Record "before" baselines in `specs/006-clinic-command-centre/results.md`: backend `uv run pytest -q` counts, frontend `npm test` and `npm run test:e2e` counts, Lighthouse scores for the 005 page set (same procedure as `specs/005-appointment-booking/results.md`), and public route JS/CSS sizes from `npm run build`
-- [ ] T002 [P] Add `argon2-cffi` to `backend/pyproject.toml` and refresh `backend/uv.lock` (`uv add argon2-cffi`)
-- [ ] T003 [P] Add `SESSION_SECRET` and the optional tunables from `quickstart.md` §1 (STAFF_IDLE_MINUTES … STATUS_UNDO_SECONDS) as placeholders to `backend/.env.example`
-- [ ] T004 Merge `specs/006-clinic-command-centre/contracts/command-centre-api.openapi.yaml` (incl. `Overview.recentBookings`) into `specs/003-catalog-api/contracts/openapi.yaml`, bump `info.version` to 1.2.0, and validate that it parses
-- [ ] T005 Regenerate `frontend/src/lib/api/schema.gen.ts` from the merged contract and extend `frontend/tests/unit/api-contract-drift.test.ts` to cover the admin paths
-- [ ] T006 [P] Add backend contract drift test `backend/tests/api/test_admin_contract.py`: every `/api/v1/admin/*` path, method and response schema in `app.openapi()` matches the merged contract (fails while routes are missing; it goes green story by story)
-- [ ] T007 [P] Add ESLint `no-restricted-imports` in `frontend/eslint.config.mjs`: nothing outside `src/admin/**` and `src/app/(admin)/**` may import `@/admin/*`
-- [ ] T008 [P] Add Playwright projects `admin-desktop` (1440×900), `admin-laptop-1366` (1366×768), `admin-laptop-1280` (1280×800) and `admin-mobile` (Pixel 7, 390 px) matching `tests/e2e/admin-*.spec.ts` in `frontend/playwright.config.ts`; keep the existing projects unchanged
+- [X] T001 Record "before" baselines in `specs/006-clinic-command-centre/results.md`: backend `uv run pytest -q` counts, frontend `npm test` and `npm run test:e2e` counts, Lighthouse scores for the 005 page set (same procedure as `specs/005-appointment-booking/results.md`), and public route JS/CSS sizes from `npm run build`
+- [X] T002 [P] Add `argon2-cffi` to `backend/pyproject.toml` and refresh `backend/uv.lock` (`uv add argon2-cffi`)
+- [X] T003 [P] Add `SESSION_SECRET` and the optional tunables from `quickstart.md` §1 (STAFF_IDLE_MINUTES … STATUS_UNDO_SECONDS) as placeholders to `backend/.env.example`
+- [X] T004 Merge `specs/006-clinic-command-centre/contracts/command-centre-api.openapi.yaml` (incl. `Overview.recentBookings`) into `specs/003-catalog-api/contracts/openapi.yaml`, bump `info.version` to 1.2.0, and validate that it parses
+- [X] T005 Regenerate `frontend/src/lib/api/schema.gen.ts` from the merged contract and extend `frontend/tests/unit/api-contract-drift.test.ts` to cover the admin paths
+- [X] T006 [P] Add backend contract drift test `backend/tests/api/test_admin_contract.py`: every `/api/v1/admin/*` path, method and response schema in `app.openapi()` matches the merged contract (fails while routes are missing; it goes green story by story)
+- [X] T007 [P] Add ESLint `no-restricted-imports` in `frontend/eslint.config.mjs`: nothing outside `src/admin/**` and `src/app/(admin)/**` may import `@/admin/*`
+- [X] T008 [P] Add Playwright projects `admin-desktop` (1440×900), `admin-laptop-1366` (1366×768), `admin-laptop-1280` (1280×800) and `admin-mobile` (Pixel 7, 390 px) matching `tests/e2e/admin-*.spec.ts` in `frontend/playwright.config.ts`; keep the existing projects unchanged
 
 **CHECKPOINT 1**: existing backend and frontend suites green; merged contract parses; `npm run lint` green; drift tests fail only for not-yet-built admin routes.
 
