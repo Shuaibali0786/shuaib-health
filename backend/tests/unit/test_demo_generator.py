@@ -8,14 +8,14 @@ from zoneinfo import ZoneInfo
 from app.demo import generator, names
 from app.demo.generator import DemoDataset
 
-KARACHI = ZoneInfo("Asia/Karachi")
+CLINIC_ZONE = ZoneInfo("Asia/Karachi")
 TODAY = date(2026, 10, 5)  # a Monday
 NOW = datetime(2026, 10, 5, 6, 20, 45, tzinfo=UTC)  # 11:20:45 in Karachi
 CROCKFORD = set("0123456789ABCDEFGHJKMNPQRSTVWXYZ")
 
 
 def local_date(booking: generator.DemoBooking) -> date:
-    return booking.starts_at.astimezone(KARACHI).date()
+    return booking.starts_at.astimezone(CLINIC_ZONE).date()
 
 
 def dataset() -> DemoDataset:

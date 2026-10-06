@@ -155,3 +155,36 @@ The earlier pytest E/F marks (73 errors/failures) were all one cause: the commit
 | `node scripts/check-admin-isolation.mjs` | OK: 18 public routes, 62 prerendered pages, 22 manifests clean |
 | Main Playwright projects | not run: no public page or layout changed |
 | Visual baselines | none regenerated, none changed |
+
+## Phase 4 (US1 — one-click demo)
+
+| Tasks | Commit |
+|-------|--------|
+| T068–T071, T075–T079 backend (generator, names, demo session start, sample staff, fixture exporter) | see `git log` after `78885d3` |
+| T072–T074, T079–T084 frontend (demo route, button, ribbon, overlay store, fixture parity, mock API, e2e) | see `git log` after `78885d3` |
+
+**Decisions and deviations**
+- Common-password list: 30,591 entries (confirmed at the start of this phase).
+- `DemoSource` moved to `backend/app/demo/demo_source.py` (the task path); `get_source` imports it from there.
+- A booking stores its planned `outcome`; `status_at(now)` derives the status, so one cached dataset serves any time of day.
+- The generator reads the seed catalog JSON directly and takes the clinic time zone from it (white-label test caught a hard-coded zone).
+- Staff pages send `Referrer-Policy: no-referrer`, so a form posted from the login page carries `Origin: null`. The demo route accepts that only with `Sec-Fetch-Site: same-origin`.
+- Ended demo: the login page shows "Start a fresh demo" when the cookie is a demo cookie that no longer works; the in-app session dialog does the same for demo viewers. The e2e uses a dedicated mock token `cd_e2e-demo-expired` (the global `session-expired` mode would break the parallel admin projects).
+- `Back to website` / `Staff sign-in` ribbon links use `next/link` with `prefetch={false}` (lint rule).
+- Real-booking 404 for the demo and the `READ_ROUTES` separation list grow as each story adds routes (only `/staff` and `me` exist now).
+- **Not in this phase (belong to US3/US4, tasks T118–T122):** the Overview agenda with its moving "Now" line and the simulated new-booking toast. The live clock and Live pill (StatusBar) already work in the demo; the simulation engine is not built yet.
+
+## Checkpoint 4 (US1)
+
+| Check | Result |
+|-------|--------|
+| `ruff check` / `ruff format --check` / `mypy` | pass / pass / only the 7 errors that existed before (migrations, one CLI test) |
+| Backend pytest (full) | 711 passed, 1 failed (white-label: hard-coded time zone, fixed) then the failing test and every demo/staff/contract/policy test re-run green; 1 skipped, 10 xfailed |
+| `npm run typecheck` / `npm run lint` | pass / pass |
+| Vitest | **1193 passed** (84 files) |
+| Playwright admin projects (4) | **380 passed** |
+| Playwright main projects (public pages changed) | 982 passed; 62 visual baselines failed, regenerated, then 62/62 pass |
+| `check-admin-isolation.mjs` | OK |
+| Lighthouse for pages with the demo button | not run |
+
+**Visual baselines regenerated (62 PNGs, desktop + mobile).** Why: every public page's footer gained the "View Demo Dashboard" button; the diff image of one page showed only that button changed. The About page gained a short "See how the clinic team works" section.

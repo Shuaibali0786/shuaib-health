@@ -3,9 +3,9 @@
     uv run python -m app.demo.export_fixture --date 2026-10-05 --now 11:20
 
 The output (``frontend/tests/fixtures/admin/demo-day.json`` by default) is what the backend's demo
-source would give a visitor on that date at that clinic time, so the mock API, the design preview and
-the real demo agree. Each story that adds a demo read route extends this file. Nothing here touches
-the database.
+source would give a visitor on that date at that clinic time, so the mock API, the design preview
+and the real demo agree. Each story that adds a demo read route extends this file. Nothing here
+touches the database.
 """
 
 import argparse
@@ -20,7 +20,7 @@ from app.command_centre.masking import short_name
 from app.demo import generator
 from app.demo.demo_source import DemoSource
 
-CLINIC_TZ = "Asia/Karachi"
+CLINIC_TZ = generator.CLINIC_TZ_NAME
 DEFAULT_OUT = Path(__file__).resolve().parents[3] / "frontend/tests/fixtures/admin/demo-day.json"
 SECONDS = 45  # the mock clock rests at hh:mm:45, matching the end-to-end tests' paused clock
 SESSION_HOURS = 2
@@ -32,9 +32,15 @@ def _iso(moment: datetime) -> str:
 
 def build_fixture(demo_date: date, clinic_time: time) -> dict[str, Any]:
     source = DemoSource(demo_date)
-    local_now = datetime.combine(demo_date, clinic_time.replace(second=SECONDS), tzinfo=generator.KARACHI)
+    local_now = datetime.combine(
+        demo_date, clinic_time.replace(second=SECONDS), tzinfo=generator.CLINIC_ZONE
+    )
     now = local_now.astimezone(UTC)
-    day = [b for b in source.dataset.bookings if b.starts_at.astimezone(generator.KARACHI).date() == demo_date]
+    day = [
+        b
+        for b in source.dataset.bookings
+        if b.starts_at.astimezone(generator.CLINIC_ZONE).date() == demo_date
+    ]
     return {
         "meta": {
             "date": demo_date.isoformat(),
@@ -67,7 +73,7 @@ def build_fixture(demo_date: date, clinic_time: time) -> dict[str, Any]:
                 "startsAt": _iso(b.starts_at),
                 "endsAt": _iso(b.ends_at),
                 "localDate": demo_date.isoformat(),
-                "localTime": b.starts_at.astimezone(generator.KARACHI).strftime("%H:%M"),
+                "localTime": b.starts_at.astimezone(generator.CLINIC_ZONE).strftime("%H:%M"),
                 "status": b.status_at(now),
                 "patientNameMasked": short_name(f"{b.patient_first} {b.patient_last}"),
                 "doctorSlug": b.doctor_slug,
@@ -82,7 +88,9 @@ def build_fixture(demo_date: date, clinic_time: time) -> dict[str, Any]:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0] if __doc__ else None)
-    parser.add_argument("--date", required=True, type=date.fromisoformat, help="clinic date, YYYY-MM-DD")
+    parser.add_argument(
+        "--date", required=True, type=date.fromisoformat, help="clinic date, YYYY-MM-DD"
+    )
     parser.add_argument("--now", required=True, type=time.fromisoformat, help="clinic time, HH:MM")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args(argv)

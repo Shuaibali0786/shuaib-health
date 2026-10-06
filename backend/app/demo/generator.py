@@ -1,6 +1,6 @@
 """The deterministic demo dataset (ADR-0009, data-model §9). In memory only.
 
-Built from the public sample catalog files and a PRNG seeded with the Karachi date, so the same
+Built from the public sample catalog files and a PRNG seeded with the clinic-local date, so the same
 date always gives the same clinic. This module must not import the database, the models or a
 repository (SC-005; ``tests/unit/test_demo_import_guard.py``).
 
@@ -22,7 +22,6 @@ from zoneinfo import ZoneInfo
 from app.demo import names
 
 SEED_DATA = Path(__file__).resolve().parent.parent / "seed" / "data"
-KARACHI = ZoneInfo("Asia/Karachi")
 SEED_PREFIX = "shuaib-health-demo:v1:"
 CROCKFORD: Final = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 DAYS_BACK = 90
@@ -51,6 +50,8 @@ def _catalog() -> tuple[dict[str, Any], int, str]:
 
 
 SLOT_MINUTES = _catalog()[1]
+CLINIC_TZ_NAME: str = _catalog()[0]["siteConfig"]["timeZone"]
+CLINIC_ZONE = ZoneInfo(CLINIC_TZ_NAME)
 
 
 def catalog_etag() -> str:
@@ -161,7 +162,7 @@ def _doctors() -> tuple[DemoDoctor, ...]:
 
 
 def _local_midnight(day: date) -> datetime:
-    return datetime.combine(day, time(0, 0), tzinfo=KARACHI).astimezone(UTC)
+    return datetime.combine(day, time(0, 0), tzinfo=CLINIC_ZONE).astimezone(UTC)
 
 
 def _pick[T](rnd: random.Random, items: tuple[T, ...]) -> T:
@@ -285,7 +286,7 @@ def _activity(
 ) -> tuple[DemoActivity, ...]:
     by_day: dict[date, list[DemoBooking]] = {}
     for booking in bookings:
-        by_day.setdefault(booking.starts_at.astimezone(KARACHI).date(), []).append(booking)
+        by_day.setdefault(booking.starts_at.astimezone(CLINIC_ZONE).date(), []).append(booking)
     events: list[DemoActivity] = []
     for back in range(7):
         day = today - timedelta(days=back)
@@ -335,7 +336,7 @@ def _activity(
 
 
 def build_dataset(demo_date: date) -> DemoDataset:
-    """A fresh dataset for ``demo_date`` (Karachi date). Prefer ``get_dataset``, which caches."""
+    """A fresh dataset for ``demo_date`` (clinic-local date). Prefer ``get_dataset`` (cached)."""
     rnd = random.Random(SEED_PREFIX + demo_date.isoformat())  # noqa: S311 - deterministic sample data, not security
     doctors = _doctors()
     leave: set[tuple[str, date]] = set()

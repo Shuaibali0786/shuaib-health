@@ -1,4 +1,4 @@
-"""The committed demo fixture is exactly what the generator produces (so the mock API never drifts)."""
+"""The committed demo fixture is exactly what the generator produces (no mock API drift)."""
 
 import json
 from datetime import date, time
