@@ -206,11 +206,11 @@ export function OverviewScreen({ initial, demo, firstName, timeZone, serverNow }
           </div>
         </div>
         <div className="actions">
-          <Link className="btn" href="/admin/bookings">
+          <Link className="btn" href="/admin/bookings" prefetch={false}>
             <Search className="i i-sm" aria-hidden="true" />
             Find a booking
           </Link>
-          <Link className="btn btn-primary" href="/admin/bookings">
+          <Link className="btn btn-primary" href="/admin/bookings" prefetch={false}>
             <CalendarCheck className="i i-sm" aria-hidden="true" />
             Open bookings
           </Link>
@@ -239,7 +239,7 @@ export function OverviewScreen({ initial, demo, firstName, timeZone, serverNow }
             {meta}
           </span>
           <span className="right">
-            <Link className="btn btn-quiet btn-sm" href="/admin/doctors">
+            <Link className="btn btn-quiet btn-sm" href="/admin/doctors" prefetch={false}>
               Doctors today
               <ChevronRight className="i i-sm" aria-hidden="true" />
             </Link>

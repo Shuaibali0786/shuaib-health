@@ -54,7 +54,7 @@ test.describe("the clock and the greeting", () => {
 
   test("the Now line moves to the next minute after 60 seconds", async ({ page, isMobile }) => {
     await openOverview(page);
-    const marker = isMobile ? page.getByTestId("now-row") : page.getByTestId("now-marker");
+    const marker = isMobile ? page.getByTestId("now-row").locator("visible=true").first() : page.getByTestId("now-marker");
     if (isMobile) await expect(marker).toHaveText("Now 11:20");
     else await expect(marker).toHaveAttribute("data-label", "Now 11:20");
     await page.clock.runFor(60_000);

@@ -1,12 +1,10 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-import { setTheme, signIn } from "./admin-helpers";
+import { setTheme, signIn, wcagViolations } from "./admin-helpers";
 
 // The Command Centre shell (Phase 2): navigation by role, the live status line, theme without a flash,
 // nothing clipped at the four admin widths, and no axe violations in either theme.
 
-const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const ADMIN_NAV = ["Overview", "Bookings", "Doctors", "Insights", "Activity", "Staff"];
 const RECEPTIONIST_NAV = ["Overview", "Bookings", "Doctors", "Insights"];
 
@@ -196,8 +194,7 @@ test.describe("layout and accessibility", () => {
       await setTheme(context, theme, baseURL!);
       await page.goto("/admin");
       await page.waitForLoadState("networkidle");
-      const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
-      expect(results.violations.map((v) => `${v.id} (${v.impact}) on ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+      expect(await wcagViolations(page)).toEqual([]);
     });
   }
 });

@@ -1,8 +1,7 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
-import { signIn } from "./admin-helpers";
+import { signIn, wcagViolations } from "./admin-helpers";
 
 // The Overview against the mock API (Feature 006, US3), with the clock paused at Mon 5 Oct 2026, 11:20:45
 // in the clinic. The numbers come from the demo day the backend generator produced
@@ -121,7 +120,7 @@ test.describe("the demo day", () => {
   test("on a phone, a doctor's rows open the booking and the Now line sits before the next patient", async ({ page, isMobile }) => {
     test.skip(!isMobile, "the collapsible list is the phone agenda");
     await openOverview(page);
-    await expect(page.getByTestId("now-row")).toHaveText("Now 11:20");
+    await expect(page.getByTestId("now-row").locator("visible=true").first()).toHaveText("Now 11:20");
     await openPanels(page);
     const target = overview.nextUp[0] as Item;
     await opener(page, target.reference).click();
@@ -184,7 +183,7 @@ test.describe("states", () => {
   test("a day with no bookings says so and lists no one", async ({ page, context, baseURL }) => {
     await signIn(context, "empty", baseURL!);
     await openOverview(page);
-    await expect(page.getByRole("heading", { name: "No bookings today" }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "No bookings today" }).locator("visible=true").first()).toBeVisible();
     await expect(page.getByText("No more confirmed patients today.")).toBeVisible();
     await expect(page.locator('[data-kpi="appointments"]').getByTestId("count-final")).toHaveText("0");
     await expect(page.getByTestId("status-mix").locator('[data-status="confirmed"] .n')).toHaveText("0");
@@ -194,8 +193,8 @@ test.describe("states", () => {
   test("a clinic holiday says the clinic is closed and why", async ({ page, context, baseURL }) => {
     await signIn(context, "closed", baseURL!);
     await openOverview(page);
-    await expect(page.getByRole("heading", { name: "The clinic is closed today" }).first()).toBeVisible();
-    await expect(page.getByText("Founders Day. There are no appointments to show.").first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "The clinic is closed today" }).locator("visible=true").first()).toBeVisible();
+    await expect(page.getByText("Founders Day. There are no appointments to show.").locator("visible=true").first()).toBeVisible();
     await expect(page.locator('[data-kpi="utilisationPct"]').getByText("Not available, no scheduled slots today")).toHaveCount(1);
   });
 });
@@ -208,12 +207,6 @@ test.describe("quality", () => {
     await page.clock.runFor(1000);
     await page.clock.resume(); // axe uses timers of its own
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-    // The timeline chips are one 15-minute slot wide (about 21 px at 1440), as in the approved preview; WCAG 2.2
-    // target size (24 px) is therefore checked for everything except them. Reported as an open decision (see results.md).
-    const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
-    const results = await new AxeBuilder({ page }).withTags(tags).disableRules(["target-size"]).analyze();
-    const sizes = await new AxeBuilder({ page }).withRules(["target-size"]).exclude(".tl-b").analyze();
-    const lines = (r: typeof results) => r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`);
-    expect([...lines(results), ...lines(sizes)]).toEqual([]);
+    expect(await wcagViolations(page)).toEqual([]);
   });
 });
