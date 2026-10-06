@@ -96,3 +96,9 @@ def test_short_email_local_parts_are_not_used_for_the_contains_rule() -> None:
 def test_common_password_list_is_loaded_lower_case() -> None:
     assert "password1234" in passwords.common_passwords()
     assert all(p == p.lower() for p in passwords.common_passwords())
+
+
+def test_common_password_list_is_large_and_within_policy_length() -> None:
+    common = passwords.common_passwords()
+    assert len(common) >= 25_000
+    assert all(passwords.MIN_LENGTH <= len(p) <= passwords.MAX_LENGTH for p in common)
