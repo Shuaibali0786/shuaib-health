@@ -29,6 +29,8 @@ const baseStaff = () => [
   { id: "33333333-3333-4333-8333-333333333333", email: "must-change@clinic.test", displayName: "Sample Receptionist B", role: "receptionist", isActive: true, mustChangePassword: true, lastSignInAt: null, password: PASSWORD, token: "cs_e2e-must-change" },
 ];
 
+const omit = (object, keys) => Object.fromEntries(Object.entries(object).filter(([key]) => !keys.includes(key)));
+
 const errorBody = (code, message, extra = {}) => ({ error: { code, message, requestId: "mock", ...extra } });
 
 export const csrfFor = (token) => `csrf-${token}`;
@@ -36,7 +38,7 @@ export const csrfFor = (token) => `csrf-${token}`;
 /** The Viewer of a contract (`GET /admin/auth/me`) for a session entry. */
 function viewerOf(token, session, now) {
   const expires = new Date(Date.parse(now) + 30 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
-  const { email: _email, ...rest } = session;
+  const rest = omit(session, ["email"]);
   return { ...rest, csrfToken: csrfFor(token), clinicToday: TODAY, timezone: TIME_ZONE, sessionExpiresAt: expires };
 }
 
@@ -46,7 +48,7 @@ export function viewerFor(token, now) {
   return session ? viewerOf(token, session, now) : null;
 }
 
-const publicStaff = ({ password: _p, token: _t, ...member }) => member;
+const publicStaff = (member) => omit(member, ["password", "token"]);
 
 export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45Z", proxySecret = process.env.MOCK_PROXY_SECRET } = {}) {
   const secretOk = (headers) => !proxySecret || headers["x-proxy-secret"] === proxySecret;

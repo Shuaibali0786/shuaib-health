@@ -5,6 +5,7 @@ import { useId, useState, type FormEvent } from "react";
 import type { Role } from "@/admin/lib/schemas";
 import { generateTempPassword } from "@/admin/lib/tempPassword";
 import { AlertDialog, Dialog } from "@/admin/ui/Dialog";
+import { useHydrated } from "@/admin/ui/useHydrated";
 
 export type NewStaff = { email: string; displayName: string; role: Role; temporaryPassword: string };
 
@@ -14,6 +15,7 @@ export function CreateStaffForm({ onCreate, pending }: { onCreate: (member: NewS
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("receptionist");
+  const hydrated = useHydrated();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,7 +47,7 @@ export function CreateStaffForm({ onCreate, pending }: { onCreate: (member: NewS
           </select>
         </div>
         <div>
-          <button type="submit" className="btn btn-primary" disabled={pending}>
+          <button type="submit" className="btn btn-primary" disabled={pending || !hydrated}>
             Add staff member
           </button>
         </div>

@@ -56,8 +56,8 @@ export function StaffTable({ staff, actions, readOnly, busyId }: { staff: Staff[
                   <b>{member.displayName}</b>
                   <span>{member.email}</span>
                 </td>
-                <td>{readOnly ? (member.role === "admin" ? "Admin" : "Receptionist") : <RoleSelect member={member} onRole={actions.onRole} disabled={disabled} />}</td>
-                <td>
+                <td data-label="Role">{readOnly ? (member.role === "admin" ? "Admin" : "Receptionist") : <RoleSelect member={member} onRole={actions.onRole} disabled={disabled} />}</td>
+                <td data-label="Status">
                   <span className={`pill ${member.isActive ? "pill-ok" : "pill-off"}`}>{member.isActive ? "Active" : "Inactive"}</span>
                   {member.mustChangePassword ? (
                     <span className="muted" style={{ display: "block", fontSize: 12.5, marginTop: 4 }}>
@@ -65,7 +65,7 @@ export function StaffTable({ staff, actions, readOnly, busyId }: { staff: Staff[
                     </span>
                   ) : null}
                 </td>
-                <td className="num">{lastSeen(member.lastSignInAt)}</td>
+                <td className="num" data-label="Last sign-in">{lastSeen(member.lastSignInAt)}</td>
                 <td>
                   {readOnly ? null : (
                     <div className="row-actions">

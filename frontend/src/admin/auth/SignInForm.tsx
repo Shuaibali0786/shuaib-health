@@ -4,6 +4,7 @@ import { useId, useState, type FormEvent } from "react";
 
 import { adminRequest, setCsrfToken } from "@/admin/lib/client";
 import { ViewerSchema, type Viewer } from "@/admin/lib/schemas";
+import { useHydrated } from "@/admin/ui/useHydrated";
 
 import { signInMessage } from "./copy";
 
@@ -25,6 +26,7 @@ export function SignInForm({ onSignedIn, formId, hideSubmit = false, autoFocus =
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const hydrated = useHydrated();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,7 +64,7 @@ export function SignInForm({ onSignedIn, formId, hideSubmit = false, autoFocus =
         </p>
       ) : null}
       {hideSubmit ? null : (
-        <button type="submit" className="btn btn-primary btn-block" disabled={pending}>
+        <button type="submit" className="btn btn-primary btn-block" disabled={pending || !hydrated}>
           {pending ? "Signing in…" : "Sign in"}
         </button>
       )}

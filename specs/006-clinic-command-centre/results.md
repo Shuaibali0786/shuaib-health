@@ -118,3 +118,40 @@ Public route first-load JS (kB, uncompressed) vs Phase 1: `/contact` 906.4 (=), 
 | Playwright main projects (mobile, iphone, desktop) | **1044 passed**, 11 skipped (= baseline), 0 failed; 6.1 min |
 
 The earlier pytest E/F marks (73 errors/failures) were all one cause: the committing-test cleanup `TRUNCATE` did not include `appointment_status_change`, so rows left by those tests broke the FK on later cleanup. Fixed in `642a1db` and `92c6136`; this full run has no E or F.
+
+## Phase 3 — US2 sign-in and roles (T050–T067)
+
+| Group | Commit |
+|-------|--------|
+| Common-password list: 30 591 entries (12–128 chars) bundled in `backend/app/auth/data/common-passwords.txt`, no runtime network | `48329d1`, `57dafc0` |
+| Sign-in, sessions, password change, staff admin, `create_admin` CLI, backend tests (T050–T055, T058–T061) | `75a678b` |
+| Session/password routes, login, password and Staff screens, SessionBoundary, mock API, unit + e2e tests (T056–T057, T062–T067) | see `git log` after `75a678b` |
+
+**Password list.** The "top 10k" list has only 10 entries of 12+ characters, so it was not enough alone. The data file merges SecLists `10k-most-common`, `100k-most-used-passwords-NCSC`, `Pwdb_top-1000000` and `xato-net-10-million-passwords-100000` with the earlier hand-written list, keeps 12–128 characters, lower-cases, de-duplicates and sorts (provenance in `backend/app/auth/data/README.md`). Was ~200 entries.
+
+**Deviations and decisions**
+- Wrong *current* password on change-password answers `422 validation_error` (field `currentPassword`), not 401: a 401 would clear the cookie and sign the person out over a typo.
+- The failure that triggers the lock already answers `429 account_locked` (so the 5th wrong password says "try again in 15 minutes"); unknown emails lock the same way.
+- `end_demo_session` now expires a demo session one microsecond after creation at the earliest (the table requires `expires_at > created_at`; found by a test).
+- Shared route helpers moved to `src/admin/lib/sessionRoute.ts` (`isSameOrigin`, cookie strings, `withoutToken`, JSON body reader); the catch-all route imports them.
+- Submit buttons of the sign-in, password and add-staff forms are disabled until hydration (`useHydrated`), so an early submit cannot be a native GET carrying the password in the URL. This also removed a flaky e2e.
+- `Dialog` body is a `div` (a form cannot sit inside a `p`).
+- Staff table becomes stacked rows at ≤ 900 px (row actions overlapped on phones).
+- Deferred to US1 as the tasks say: the demo button on the login page, and the "The demo has ended" variant of the session dialog. Demo viewers get an empty staff list and `demo_read_only` on writes.
+- Last-admin e2e stubs the 409 (parallel projects share one mock server); the rule itself is proven by backend tests, including a deterministic lock test that fails when `FOR UPDATE` is removed.
+
+## Checkpoint 3 (US2)
+
+| Check | Result |
+|-------|--------|
+| `uv run ruff check .` / `ruff format --check .` / `mypy` | pass / pass / pass (70 source files) |
+| Backend pytest (full) | **683 passed**, 1 skipped, 3 deselected, 11 xfailed (later stories), 0 failed; 17 min (Phase 2: 518 passed, 18 xfailed) |
+| `test_sign_in` / `test_sessions` / `test_staff_admin` / `test_create_admin_cli` | 15 / 14 / 13 / 6 passed |
+| `test_auth_matrix` | **104 passed** (SC-004 so far: 8 of the 19 table rows exist; each is run against 5 viewer kinds, 7 session states, proxy-secret/Origin and CSRF negatives; rows for later stories are generated as their routes land) |
+| `npm run typecheck` / `npm run lint` | pass / pass (0 warnings) |
+| `npm test` (Vitest) | **1166 passed** (80 files; Phase 2: 1098) |
+| Playwright admin projects (4), full | **320 passed**, 132 skipped (viewport-specific), 0 failed |
+| of which new: `admin-auth`, `admin-staff`, `admin-auth-a11y` (axe, both themes) | all green in all four projects |
+| `node scripts/check-admin-isolation.mjs` | OK: 18 public routes, 62 prerendered pages, 22 manifests clean |
+| Main Playwright projects | not run: no public page or layout changed |
+| Visual baselines | none regenerated, none changed |

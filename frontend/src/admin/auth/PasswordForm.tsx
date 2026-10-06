@@ -5,6 +5,7 @@ import { useId, useState, type FormEvent } from "react";
 
 import { adminRequest, setCsrfToken } from "@/admin/lib/client";
 import { ViewerSchema } from "@/admin/lib/schemas";
+import { useHydrated } from "@/admin/ui/useHydrated";
 
 import { passwordMessage } from "./copy";
 
@@ -19,6 +20,7 @@ export function PasswordForm({ forced }: { forced: boolean }) {
   const [repeat, setRepeat] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const hydrated = useHydrated();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,7 +61,7 @@ export function PasswordForm({ forced }: { forced: boolean }) {
         </p>
       ) : null}
       <div>
-        <button type="submit" className="btn btn-primary" disabled={pending}>
+        <button type="submit" className="btn btn-primary" disabled={pending || !hydrated}>
           {pending ? "Saving…" : "Save new password"}
         </button>
       </div>

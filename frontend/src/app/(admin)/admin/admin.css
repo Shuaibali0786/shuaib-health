@@ -821,7 +821,7 @@ svg.i-sm {
   margin-bottom: 22px;
 }
 .auth-card .brand-row .mono {
-  background: var(--primary-bg);
+  background: var(--side-bg);
   color: var(--color-gold-300);
 }
 .auth-card .brand-row .brand-name {
@@ -942,6 +942,51 @@ svg.i-sm {
 .stack {
   display: grid;
   gap: 18px;
+}
+
+/* Phones and tablets: a table row becomes a stacked block, so nothing scrolls sideways or overlaps. */
+@media (max-width: 900px) {
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+  }
+  .table tr {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .table tr:last-child {
+    border-bottom: 0;
+  }
+  .table td {
+    padding: 6px 0;
+    border: 0;
+  }
+  .table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .table .row-actions {
+    justify-content: flex-start;
+    margin-top: 6px;
+  }
+  .panel-pad {
+    padding: 16px 16px 20px;
+  }
 }
 
 /* ---------- Laptop widths (901-1439 px): nothing clipped ---------- */
