@@ -104,3 +104,17 @@ Deviations: `src/proxy.ts` (admin-only matcher) added for the 302 to sign-in and
 | Lighthouse, stateful/offline e2e | not run (not requested) |
 
 Public route first-load JS (kB, uncompressed) vs Phase 1: `/contact` 906.4 (=), `/` 493.0 (=), `/book-appointment` 699.9 (699.7), `/doctors` 500.8 (500.5), `/health-tips` 498.5 (498.2), `/lab-tests` 484.6 (484.3), `/departments/[slug]` 482.2 (=), `/about` 479.1 (=), `/faq` 463.3 (=), `/_not-found` 460.8 (463.3). Four listing routes grew 0.2–0.3 kB (bundler regrouping; no public code changed).
+
+## Phase 2 — final verification (clean re-run, same commit as Checkpoint 2 + cleanup fix)
+
+| Check | Result |
+|-------|--------|
+| `uv run ruff check .` / `ruff format --check .` | pass / pass (129 files) |
+| `uv run mypy` | pass, 124 source files, 0 errors |
+| Backend pytest (full, single run) | **518 passed**, 1 skipped, 3 deselected, 18 xfailed (later stories), 0 failed, 0 errors; 605 s |
+| `npm run typecheck` / `npm run lint` | pass / pass |
+| `npm test` (Vitest) | **1098 passed** (75 files) |
+| Playwright admin projects (4) | **224 passed**, 132 skipped (viewport-specific), 0 failed; 5.3 min |
+| Playwright main projects (mobile, iphone, desktop) | **1044 passed**, 11 skipped (= baseline), 0 failed; 6.1 min |
+
+The earlier pytest E/F marks (73 errors/failures) were all one cause: the committing-test cleanup `TRUNCATE` did not include `appointment_status_change`, so rows left by those tests broke the FK on later cleanup. Fixed in `642a1db` and `92c6136`; this full run has no E or F.
