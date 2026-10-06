@@ -46,6 +46,7 @@ def settings_factory() -> SettingsFactory:
             "cors_origins": "http://localhost:3000",
             "booking_proxy_secret": "test-proxy-secret-0123456789abcdef",
             "privacy_hash_key": "test-privacy-key-0123456789abcdefgh",
+            "session_secret": "test-session-secret-0123456789abcdef",
         }
         values.update(overrides)
         return Settings(_env_file=None, **values)

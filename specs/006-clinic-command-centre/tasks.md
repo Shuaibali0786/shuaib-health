@@ -68,13 +68,13 @@ description: "Task list for Feature 006 — Clinic Command Centre (staff dashboa
 
 ### Settings, migration and models
 
-- [ ] T009 [P] Write failing tests in `backend/tests/unit/test_settings.py`: the app refuses to start without `SESSION_SECRET` or with fewer than 32 characters; tunables default to the quickstart values
-- [ ] T010 Add `session_secret` (SecretStr, ≥ 32, fail fast) and the auth/demo/undo tunables to `backend/app/settings.py`
-- [ ] T011 [P] Write failing migration tests in `backend/tests/migrations/test_migrations.py` (`db`): `0003` upgrade creates every table, column, CHECK, index and the widened exclusion constraint of data-model §1–§7; downgrade restores 0002 when no `arrived`/`no_show` rows exist and **refuses** (raises) when they do
-- [ ] T012 Write `backend/migrations/versions/0003_command_centre.py` (down revision `0002_booking`) per data-model §1–§7
-- [ ] T013 Add `StaffAccount`, `StaffSession`, `DemoSession`, `LoginThrottle`, `AppointmentStatusChange`, `Appointment.version`, the new statuses and the new `AuditLog` columns/values to `backend/app/models.py`; rename `CONFIRMED_SQL` to `OCCUPYING_SQL = "status <> 'cancelled'"` and use it in `backend/app/repositories/availability.py` (max-active-per-phone keeps `status = 'confirmed'`)
-- [ ] T014 [P] Extend `backend/tests/api/test_slots_api.py` (`db`): an `arrived` booking still blocks its slot; a `cancelled` one frees it
-- [ ] T015 [P] Add the new error codes (`not_signed_in`, `session_expired`, `forbidden`, `demo_read_only`, `password_change_required`, `csrf_failed`, `sign_in_failed`, `account_locked`, `weak_password`, `email_taken`, `last_admin`, `transition_not_allowed`, `booking_changed`, `undo_unavailable`, `slot_taken`) to `backend/app/errors.py`
+- [X] T009 [P] Write failing tests in `backend/tests/unit/test_settings.py`: the app refuses to start without `SESSION_SECRET` or with fewer than 32 characters; tunables default to the quickstart values
+- [X] T010 Add `session_secret` (SecretStr, ≥ 32, fail fast) and the auth/demo/undo tunables to `backend/app/settings.py`
+- [X] T011 [P] Write failing migration tests in `backend/tests/migrations/test_migrations.py` (`db`): `0003` upgrade creates every table, column, CHECK, index and the widened exclusion constraint of data-model §1–§7; downgrade restores 0002 when no `arrived`/`no_show` rows exist and **refuses** (raises) when they do
+- [X] T012 Write `backend/migrations/versions/0003_command_centre.py` (down revision `0002_booking`) per data-model §1–§7
+- [X] T013 Add `StaffAccount`, `StaffSession`, `DemoSession`, `LoginThrottle`, `AppointmentStatusChange`, `Appointment.version`, the new statuses and the new `AuditLog` columns/values to `backend/app/models.py`; rename `CONFIRMED_SQL` to `OCCUPYING_SQL = "status <> 'cancelled'"` and use it in `backend/app/repositories/availability.py` (max-active-per-phone keeps `status = 'confirmed'`)
+- [X] T014 [P] Extend `backend/tests/api/test_slots_api.py` (`db`): an `arrived` booking still blocks its slot; a `cancelled` one frees it
+- [X] T015 [P] Add the new error codes (`not_signed_in`, `session_expired`, `forbidden`, `demo_read_only`, `password_change_required`, `csrf_failed`, `sign_in_failed`, `account_locked`, `weak_password`, `email_taken`, `last_admin`, `transition_not_allowed`, `booking_changed`, `undo_unavailable`, `slot_taken`) to `backend/app/errors.py`
 
 ### Auth core (pure first)
 

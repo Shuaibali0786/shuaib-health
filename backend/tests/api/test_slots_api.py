@@ -194,3 +194,36 @@ def test_dates_follow_the_clinic_day_not_utc(make_client: Callable[..., TestClie
     override_clock(test_client.app, clock)  # type: ignore[arg-type]
     body = get_days(test_client, "dr-omar-sheikh")
     assert body["days"][0]["date"] == date(2026, 10, 5).isoformat()
+
+
+@pytest.mark.parametrize(
+    ("status", "frees_slot"),
+    [("arrived", False), ("completed", False), ("no_show", False), ("cancelled", True)],
+)
+def test_only_a_cancelled_booking_frees_its_slot(
+    slots_client: TestClient, db_session: Session, status: str, frees_slot: bool
+) -> None:
+    doctor = db_session.exec(select(m.Doctor).where(col(m.Doctor.slug) == "dr-omar-sheikh")).one()
+    first = next(
+        d for d in get_days(slots_client, "dr-omar-sheikh")["days"] if d["status"] == "available"
+    )
+    slot = first["slots"][0]
+    db_session.add(
+        m.Appointment(
+            reference="ABCDEFGHJK",
+            doctor_id=doctor.id,  # type: ignore[arg-type]
+            department_id=doctor.department_id,
+            starts_at=datetime.fromisoformat(slot["startsAt"].replace("Z", "+00:00")),
+            ends_at=datetime.fromisoformat(slot["endsAt"].replace("Z", "+00:00")),
+            status=status,
+            fee_pkr=doctor.fee_pkr,
+            patient_name="Test Patient",
+            patient_phone="+923001234567",
+            rules_accepted_at=FROZEN_NOW,
+            rules_version="0" * 16,
+        )
+    )
+    db_session.flush()
+    again = get_days(slots_client, "dr-omar-sheikh")["days"]
+    same_day = next(d for d in again if d["date"] == first["date"])
+    assert (slot["startsAt"] in [s["startsAt"] for s in same_day["slots"]]) is frees_slot

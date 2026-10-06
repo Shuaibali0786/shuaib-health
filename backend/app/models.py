@@ -3,8 +3,8 @@
 Constraint and index names come from the naming convention below so that models, the Alembic
 migration and ``alembic check`` agree. The no-overlap exclusion constraint on
 ``doctor_weekly_schedule`` exists only in the migration (it needs ``btree_gist``). The same is true
-of the no-overlap exclusion constraint on ``appointment``: it exists only in migration 0002
-(ADR-0005), and it is the double-booking guarantee.
+of the no-overlap exclusion constraint on ``appointment``: it exists only in migrations 0002 and
+0003 (ADR-0005, ADR-0010), and it is the double-booking guarantee.
 """
 
 import uuid
@@ -316,10 +316,22 @@ class HealthPackageTest(SQLModel, table=True):
     sort_order: int = _small_int()
 
 
-CONFIRMED_SQL = "status = 'confirmed'"
+OCCUPYING_SQL = "status <> 'cancelled'"  # a booking in any other status holds its slot
+CONFIRMED_SQL = "status = 'confirmed'"  # max-active-per-phone counts only these
+STATUSES_SQL = "('confirmed','arrived','completed','no_show','cancelled')"
+AUDIT_ACTIONS_SQL = (
+    "('appointment.created','appointment.rejected','auth.sign_in','auth.sign_in_failed',"
+    "'auth.lockout','auth.sign_out','auth.session_expired','auth.password_changed',"
+    "'booking.status_changed','booking.status_undone','booking.phone_revealed','staff.created',"
+    "'staff.password_reset','staff.deactivated','staff.reactivated','staff.role_changed')"
+)
 AUDIT_OUTCOMES_SQL = (
     "('ok','rate_limited_ip','rate_limited_phone','limit_reached','trap','slot_taken',"
-    "'slot_unavailable')"
+    "'slot_unavailable','refused','bad_credentials','locked','inactive')"
+)
+SESSION_END_REASONS_SQL = (
+    "('sign_out','idle','absolute','evicted','password_changed','password_reset',"
+    "'deactivated','replaced')"
 )
 
 
@@ -350,7 +362,8 @@ class Appointment(Entity, table=True):
     __table_args__ = (
         CheckConstraint("reference ~ '^[0-9A-HJKMNP-TV-Z]{10}$'", name="reference_format"),
         CheckConstraint("ends_at > starts_at", name="ends_after_starts"),
-        CheckConstraint("status IN ('confirmed','cancelled','completed')", name="status_valid"),
+        CheckConstraint(f"status IN {STATUSES_SQL}", name="status_valid"),
+        CheckConstraint("version >= 1", name="version_positive"),
         CheckConstraint("fee_pkr >= 0", name="fee_pkr_non_negative"),
         CheckConstraint(r"patient_phone ~ '^\+923[0-9]{9}$'", name="patient_phone_format"),
         Index(
@@ -359,6 +372,7 @@ class Appointment(Entity, table=True):
             "starts_at",
             postgresql_where=text(CONFIRMED_SQL),
         ),
+        Index("ix_appointment_starts_at", "starts_at"),
     )
 
     reference: str = Field(max_length=10, unique=True)
@@ -366,6 +380,11 @@ class Appointment(Entity, table=True):
     department_id: uuid.UUID = _fk("department.id", "RESTRICT")
     starts_at: datetime = _instant()
     ends_at: datetime = _instant(index=True)
+    version: int = Field(
+        default=1,
+        sa_type=Integer,
+        sa_column_kwargs={"server_default": text("1"), "nullable": False},
+    )
     status: str = Field(
         default="confirmed",
         max_length=12,
@@ -410,10 +429,14 @@ class RateLimitCounter(SQLModel, table=True):
 class AuditLog(SQLModel, table=True):
     __tablename__ = "audit_log"
     __table_args__ = (
-        CheckConstraint(
-            "action IN ('appointment.created','appointment.rejected')", name="action_valid"
-        ),
+        CheckConstraint(f"action IN {AUDIT_ACTIONS_SQL}", name="action_valid"),
         CheckConstraint(f"outcome IN {AUDIT_OUTCOMES_SQL}", name="outcome_valid"),
+        CheckConstraint("actor_type IN ('anonymous','staff','system')", name="actor_type_valid"),
+        CheckConstraint(
+            "actor_role IS NULL OR actor_role IN ('admin','receptionist')", name="actor_role_valid"
+        ),
+        Index("ix_audit_log_actor_staff_id_occurred_at", "actor_staff_id", "occurred_at"),
+        Index("ix_audit_log_action_occurred_at", "action", "occurred_at"),
     )
 
     id: uuid.UUID | None = _uuid_pk()
@@ -434,3 +457,111 @@ class AuditLog(SQLModel, table=True):
     target_type: str | None = Field(default=None, max_length=30)
     target_id: uuid.UUID | None = Field(default=None, sa_type=UUID_TYPE)
     request_id: str | None = Field(default=None, max_length=64)
+    actor_staff_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(UUID_TYPE, ForeignKey("staff_account.id", ondelete="RESTRICT")),
+    )
+    actor_role: str | None = Field(default=None, max_length=16)
+    target_reference: str | None = Field(default=None, sa_type=CHAR(10))
+    from_status: str | None = Field(default=None, max_length=12)
+    to_status: str | None = Field(default=None, max_length=12)
+
+
+class StaffAccount(Entity, table=True):
+    __tablename__ = "staff_account"
+    __table_args__ = (
+        CheckConstraint("role IN ('admin','receptionist')", name="role_valid"),
+        CheckConstraint("password_hash LIKE '$argon2id$%'", name="password_hash_argon2id"),
+    )
+
+    email: str = Field(max_length=254, unique=True)
+    display_name: str = Field(max_length=60)
+    role: str = Field(max_length=16)
+    is_active: bool = _flag(True)
+    password_hash: str = Field(max_length=255)
+    must_change_password: bool = _flag(False)
+    password_changed_at: datetime | None = _timestamp()
+    last_sign_in_at: datetime | None = _instant(nullable=True)
+    created_by_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(UUID_TYPE, ForeignKey("staff_account.id", ondelete="RESTRICT")),
+    )
+
+
+class StaffSession(SQLModel, table=True):
+    __tablename__ = "staff_session"
+    __table_args__ = (
+        CheckConstraint("absolute_expires_at > created_at", name="absolute_after_created"),
+        CheckConstraint(
+            f"end_reason IS NULL OR end_reason IN {SESSION_END_REASONS_SQL}",
+            name="end_reason_valid",
+        ),
+        Index(
+            "ix_staff_session_staff_id_active",
+            "staff_id",
+            postgresql_where=text("ended_at IS NULL"),
+        ),
+    )
+
+    id: uuid.UUID | None = _uuid_pk()
+    staff_id: uuid.UUID = _fk("staff_account.id", "RESTRICT", index=False)
+    token_hash: str = Field(sa_type=CHAR(64), unique=True)
+    created_at: datetime | None = _timestamp()
+    last_seen_at: datetime | None = _timestamp()
+    idle_expires_at: datetime = _instant()
+    absolute_expires_at: datetime = _instant()
+    ended_at: datetime | None = _instant(nullable=True)
+    end_reason: str | None = Field(default=None, max_length=20)
+    ip_fingerprint: str = Field(sa_type=CHAR(16))
+
+
+class DemoSession(SQLModel, table=True):
+    __tablename__ = "demo_session"
+    __table_args__ = (CheckConstraint("expires_at > created_at", name="expires_after"),)
+
+    id: uuid.UUID | None = _uuid_pk()
+    token_hash: str = Field(sa_type=CHAR(64), unique=True)
+    demo_date: date
+    created_at: datetime | None = _timestamp()
+    expires_at: datetime = _instant(index=True)
+    ip_fingerprint: str = Field(sa_type=CHAR(16))
+
+
+class LoginThrottle(SQLModel, table=True):
+    __tablename__ = "login_throttle"
+    __table_args__ = (CheckConstraint("failed_count >= 1", name="failed_count_positive"),)
+
+    subject_hash: str = Field(sa_column=Column(CHAR(64), primary_key=True))
+    failed_count: int = _small_int()
+    window_started_at: datetime = _instant()
+    locked_until: datetime | None = _instant(nullable=True)
+    expires_at: datetime = _instant(index=True)
+
+
+class AppointmentStatusChange(SQLModel, table=True):
+    __tablename__ = "appointment_status_change"
+    __table_args__ = (
+        CheckConstraint(f"from_status IN {STATUSES_SQL}", name="from_valid"),
+        CheckConstraint(f"to_status IN {STATUSES_SQL}", name="to_valid"),
+        CheckConstraint("from_status <> to_status", name="status_differs"),
+        CheckConstraint("is_undo = (undoes_change_id IS NOT NULL)", name="undo_consistent"),
+        Index(
+            "ix_appointment_status_change_appointment_id_occurred_at",
+            "appointment_id",
+            "occurred_at",
+        ),
+    )
+
+    id: uuid.UUID | None = _uuid_pk()
+    appointment_id: uuid.UUID = _fk("appointment.id", "CASCADE", index=False)
+    from_status: str = Field(max_length=12)
+    to_status: str = Field(max_length=12)
+    actor_staff_id: uuid.UUID = _fk("staff_account.id", "RESTRICT", index=False)
+    occurred_at: datetime | None = _timestamp()
+    version_after: int = Field(sa_type=Integer)
+    is_undo: bool = _flag(False)
+    undoes_change_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(UUID_TYPE, ForeignKey("appointment_status_change.id")),
+    )
+    undo_expires_at: datetime | None = _instant(nullable=True)

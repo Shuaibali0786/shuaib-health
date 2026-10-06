@@ -160,7 +160,7 @@ def load_availability(
         none_text.label("n"),
     ).where(
         col(m.Appointment.doctor_id) == doctor_id,
-        col(m.Appointment.status) == "confirmed",
+        col(m.Appointment.status) != "cancelled",
         col(m.Appointment.starts_at) < end,
         col(m.Appointment.ends_at) > start,
     )

@@ -174,3 +174,25 @@ def test_request_rejected_is_generic() -> None:
     error = check_shape(response.json(), "request_rejected")
     assert error["message"] == REQUEST_REJECTED_MESSAGE
     assert "details" not in error
+
+
+def test_admin_errors_use_the_documented_status_and_never_echo_input() -> None:
+    from app.errors import ADMIN_ERRORS, AdminError
+
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get("/boom/{code}")
+    def boom(code: str) -> None:
+        raise AdminError(code, retry_after=900 if code == "account_locked" else None)  # type: ignore[arg-type]
+
+    client = TestClient(app)
+    for code, (status, message) in ADMIN_ERRORS.items():
+        response = client.get(f"/boom/{code}")
+        assert response.status_code == status
+        body = response.json()["error"]
+        assert (body["code"], body["message"]) == (code, message)
+        assert response.headers["cache-control"] == "no-store"
+    locked = client.get("/boom/account_locked")
+    assert locked.headers["retry-after"] == "900"
+    assert locked.json()["error"]["retryAfterSeconds"] == 900

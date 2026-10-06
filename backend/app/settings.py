@@ -59,14 +59,24 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     booking_proxy_secret: SecretStr
     privacy_hash_key: SecretStr
+    session_secret: SecretStr
     demo_mode: bool = True
     booking_purge_after_days: int = Field(7, ge=1, le=90)
     booking_limit_per_ip_per_hour: int = Field(10, ge=1, le=1000)
     booking_limit_per_phone_per_day: int = Field(5, ge=1, le=100)
     lookup_limit_per_ip_per_minute: int = Field(20, ge=1, le=1000)
     audit_purge_after_days: int = Field(90, ge=7, le=365)
+    staff_idle_minutes: int = Field(30, ge=1, le=240)
+    staff_absolute_hours: int = Field(12, ge=1, le=72)
+    staff_max_sessions: int = Field(3, ge=1, le=20)
+    login_lock_failures: int = Field(5, ge=1, le=50)
+    login_lock_minutes: int = Field(15, ge=1, le=1440)
+    login_limit_per_ip_per_15min: int = Field(20, ge=1, le=1000)
+    demo_limit_per_ip_per_hour: int = Field(10, ge=1, le=1000)
+    demo_session_hours: int = Field(2, ge=1, le=24)
+    status_undo_seconds: int = Field(10, ge=1, le=120)
 
-    @field_validator("booking_proxy_secret", "privacy_hash_key", mode="before")
+    @field_validator("booking_proxy_secret", "privacy_hash_key", "session_secret", mode="before")
     @classmethod
     def _secret_is_long_enough(cls, value: object, info: ValidationInfo) -> object:
         raw = value.get_secret_value() if isinstance(value, SecretStr) else value
