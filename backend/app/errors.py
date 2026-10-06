@@ -237,7 +237,8 @@ async def _request_invalid(_: Request, exc: Exception) -> JSONResponse:
     return error_response(422, "validation_error", "Some request parameters are invalid.", details)
 
 
-async def _forbidden(_: Request, __: Exception) -> JSONResponse:
+async def _forbidden(request: Request, __: Exception) -> JSONResponse:
+    request.state.cc_code = "forbidden"
     return error_response(403, "forbidden", "Forbidden.")
 
 
@@ -245,8 +246,9 @@ async def _request_rejected(_: Request, __: Exception) -> JSONResponse:
     return error_response(400, "request_rejected", REQUEST_REJECTED_MESSAGE)
 
 
-async def _admin_error(_: Request, exc: Exception) -> JSONResponse:
+async def _admin_error(request: Request, exc: Exception) -> JSONResponse:
     error = cast(AdminError, exc)
+    request.state.cc_code = error.code  # read by the access log, never logged with any input
     status, message = ADMIN_ERRORS[error.code]
     headers = {"Retry-After": str(error.retry_after)} if error.retry_after is not None else None
     response = error_response(status, error.code, message, headers=headers, extra=error.extra)

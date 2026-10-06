@@ -27,7 +27,6 @@ PENDING_ADMIN_OPERATIONS: frozenset[str] = frozenset(
     {
         "adminSignIn",
         "adminDemoStart",
-        "adminMe",
         "adminSignOut",
         "adminChangePassword",
         "adminLookups",

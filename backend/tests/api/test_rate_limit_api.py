@@ -48,3 +48,36 @@ def test_trusted_proxy_hop_separates_clients(settings_factory: SettingsFactory) 
     again = client.get("/api/v1/nope", headers={"X-Forwarded-For": "1.1.1.1"})
     other = client.get("/api/v1/nope", headers={"X-Forwarded-For": "2.2.2.2"})
     assert (first.status_code, again.status_code, other.status_code) == (404, 429, 404)
+
+
+ME = "/api/v1/admin/auth/me"
+
+
+def test_admin_routes_are_counted_by_the_global_limiter(settings_factory: SettingsFactory) -> None:
+    client = make(settings_factory, 3)
+    # No proxy secret: refused with 403 before any database access, but still counted.
+    assert [client.get(ME).status_code for _ in range(3)] == [403, 403, 403]
+    blocked = client.get(ME)
+    assert blocked.status_code == 429
+    assert blocked.json()["error"]["code"] == "rate_limited"
+
+
+def test_admin_limit_is_keyed_by_the_proxy_supplied_client_ip(
+    settings_factory: SettingsFactory,
+) -> None:
+    client = make(settings_factory, 2)
+    secret = {"X-Proxy-Secret": "test-proxy-secret-0123456789abcdef"}
+
+    def call(ip: str) -> int:
+        return client.get(ME, headers={**secret, "X-Client-IP": ip}).status_code
+
+    assert [call("203.0.113.1"), call("203.0.113.1")] == [401, 401]
+    assert call("203.0.113.1") == 429
+    assert call("203.0.113.2") == 401  # another visitor behind the same website server
+
+
+def test_default_limit_leaves_headroom_for_thirty_second_polling(
+    settings_factory: SettingsFactory,
+) -> None:
+    # One tab polls twice a minute; several tabs and page loads still fit comfortably.
+    assert settings_factory().rate_limit_per_minute >= 30

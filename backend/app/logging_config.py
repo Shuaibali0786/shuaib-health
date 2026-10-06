@@ -13,7 +13,18 @@ from typing import Any
 
 request_id_var: ContextVar[str] = ContextVar("request_id", default="-")
 
-ALLOWED_EXTRAS = ("event", "method", "path", "route", "status", "durationMs", "deleted")
+ALLOWED_EXTRAS = (
+    "event",
+    "method",
+    "path",
+    "route",
+    "status",
+    "durationMs",
+    "deleted",
+    "role",
+    "outcome",
+    "code",
+)
 
 _DB_URL_RE = re.compile(r"postgres(?:ql)?(?:\+\w+)?://\S+", re.IGNORECASE)
 _REDACTED = "postgresql://***"
