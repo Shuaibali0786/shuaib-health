@@ -13,7 +13,7 @@ labels: ["sign-in","sessions","roles","staff-admin","password-policy","bff","e2e
 links:
   spec: specs/006-clinic-command-centre/spec.md
   ticket: null
-  adr: history/adr/0007-staff-auth.md
+  adr: history/adr/0007-staff-auth-opaque-sessions-and-policy-table.md
   pr: null
 files:
  - backend/app/auth/service.py
