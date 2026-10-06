@@ -50,3 +50,11 @@ export function greeting(value: Date | string | number, timeZone = CLINIC_TIME_Z
   if (hour >= 12 && hour < 17) return "Good afternoon";
   return "Good evening";
 }
+
+/** The instant (ms) the clinic's calendar `date` begins in `timeZone`, whatever the device's zone is. */
+export function clinicMidnight(date: string, timeZone = CLINIC_TIME_ZONE): number {
+  const guess = Date.parse(`${date}T00:00:00Z`);
+  const p = parts(new Date(guess), { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }, timeZone);
+  const asUtc = Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day), Number(p.hour), Number(p.minute), Number(p.second));
+  return guess - (asUtc - guess);
+}

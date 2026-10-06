@@ -7,6 +7,7 @@ import { EMPTY_FILTERS, filtersToBody, filtersToSearch, type BookingFilters } fr
 import {
   BookingDetailSchema,
   BookingPageSchema,
+  OverviewSchema,
   StatusChangeResultSchema,
   type BookingDetail,
   type BookingPage,
@@ -14,10 +15,13 @@ import {
   type BookingSummary,
   type HistoryItem,
   type Lookups,
+  type RecentBooking,
 } from "@/admin/lib/schemas";
-import { STATUS_LABEL, allowedNext } from "@/admin/lib/statusRules";
+import { allowedNext } from "@/admin/lib/statusRules";
 import { clinicClock } from "@/admin/state/clinicClock";
+import { NewBookingToasts } from "@/admin/overview/NewBookingToast";
 import { demoOverlay } from "@/admin/state/demoOverlay";
+import { newBookings } from "@/admin/state/newBookings";
 import { undoStore } from "@/admin/state/undo";
 import { useLivePoll } from "@/admin/state/liveStatus";
 import { EmptyState, ErrorState } from "@/admin/ui/States";
@@ -30,34 +34,12 @@ import { FilterBar, dateLabel, type FilterChange } from "./FilterBar";
 import { Pagination } from "./Pagination";
 import { StickyFilters } from "./StickyFilters";
 import { UndoToast } from "./UndoToast";
-import { bookingMessage, latestFrom } from "./copy";
+import { bookingMessage, latestFrom, messageFor, summaryOf } from "./copy";
 
 const SEARCH_DEBOUNCE_MS = 300;
 const DEMO_ACTOR = "You (demo)";
 
 type Counts = Partial<Record<BookingStatus, number>>;
-
-const summaryOf = (detail: BookingDetail): BookingSummary => ({
-  reference: detail.reference,
-  startsAt: detail.startsAt,
-  endsAt: detail.endsAt,
-  localDate: detail.localDate,
-  localTime: detail.localTime,
-  status: detail.status,
-  version: detail.version,
-  patientNameMasked: detail.patientNameMasked,
-  phoneMasked: detail.phoneMasked,
-  doctor: detail.doctor,
-  allowedNext: detail.allowedNext,
-  isSample: detail.isSample,
-});
-
-const messageFor = (request: ChangeRequest): string => {
-  const who = request.booking.patientNameMasked;
-  if (request.to === "no_show") return `Marked ${who} as a no-show.`;
-  if (request.to === "cancelled") return `Cancelled the booking for ${who}.`;
-  return `Marked ${who} as ${STATUS_LABEL[request.to].toLowerCase()}.`;
-};
 
 /**
  * The Bookings screen (US4): search and filters, the list (table on desktop, cards on phones), the detail
@@ -158,11 +140,18 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
 
   // ----- Live refresh (FR-041): the list only; the open drawer and the focus are not touched ------
 
+  // The same tick also asks the Overview for the newest bookings, so a "New booking" notification
+  // appears here too (US3, FR-042). If that call fails the list still refreshes.
   const load = useCallback(async (signal: AbortSignal) => {
     const asked = filtersRef.current;
-    return { asked, page: await adminRequest({ method: "POST", path: "bookings/search", body: filtersToBody(asked), signal }, BookingPageSchema) };
+    const [page, overview] = await Promise.all([
+      adminRequest({ method: "POST", path: "bookings/search", body: filtersToBody(asked), signal }, BookingPageSchema),
+      adminRequest({ path: "overview", signal }, OverviewSchema).catch(() => null),
+    ]);
+    return { asked, page, recent: overview?.recentBookings ?? null };
   }, []);
-  const onData = useCallback(({ asked, page }: { asked: BookingFilters; page: BookingPage }) => {
+  const onData = useCallback(({ asked, page, recent }: { asked: BookingFilters; page: BookingPage; recent: RecentBooking[] | null }) => {
+    if (recent) newBookings.ingest(recent);
     if (JSON.stringify(asked) !== JSON.stringify(filtersRef.current)) return; // the filters moved on meanwhile
     setData(page);
     setFailed(false);
@@ -173,6 +162,17 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
     });
   }, []);
   const { refresh } = useLivePoll({ load, onData, onError: useCallback(() => setFailed(true), []) });
+
+  // A visitor who opens Bookings first has no baseline yet: learn it now, so that a booking made in the
+  // first 30 seconds is announced instead of being taken for something that was already there.
+  useEffect(() => {
+    if (newBookings.isSeeded()) return;
+    const controller = new AbortController();
+    adminRequest({ path: "overview", signal: controller.signal }, OverviewSchema)
+      .then((overview) => newBookings.ingest(overview.recentBookings ?? []))
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
 
   // ----- The drawer's details ------------------------------------------------------------------
 
@@ -352,6 +352,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
       />
       <ConfirmDialog request={request} busy={busy} onConfirm={() => void confirm()} onCancel={() => setRequest(null)} />
       <UndoToast />
+      <NewBookingToasts today={clinicToday} onView={(booking) => open(booking)} />
     </>
   );
 }

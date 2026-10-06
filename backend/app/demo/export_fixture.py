@@ -78,9 +78,7 @@ def build_fixture(demo_date: date, clinic_time: time) -> dict[str, Any]:
             for member in source.staff()
         ],
         "lookups": source.lookups().model_dump(mode="json", by_alias=True, exclude_none=True),
-        "overview": source.overview(zone, now).model_dump(
-            mode="json", by_alias=True, exclude_none=True
-        ),
+        "overview": source.overview(zone, now).model_dump(mode="json", by_alias=True),
         "details": details,
         "bookings": [
             {

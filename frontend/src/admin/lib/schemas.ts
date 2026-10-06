@@ -105,3 +105,38 @@ export type BookingPage = z.infer<typeof BookingPageSchema>;
 export type HistoryItem = z.infer<typeof HistoryItemSchema>;
 export type StatusChangeResult = z.infer<typeof StatusChangeResultSchema>;
 export type PhoneReveal = z.infer<typeof PhoneRevealSchema>;
+
+// ----- Overview (US3) -----------------------------------------------------------------------
+
+/** A KPI against the same weekday a week earlier. Null means "not known" (utilisation with no slots). */
+export const TrendSchema = z.object({ value: z.number().int().nullable(), previous: z.number().int().nullable(), delta: z.number().int().nullable(), comparedTo: z.iso.date() });
+
+export const KpisSchema = z.object({
+  appointments: TrendSchema,
+  arrived: TrendSchema,
+  completed: TrendSchema,
+  noShows: TrendSchema,
+  cancellations: TrendSchema,
+  utilisationPct: TrendSchema,
+});
+
+export const WorkHoursSchema = z.object({ start: z.string(), end: z.string() });
+export const AgendaDoctorSchema = z.object({ doctor: DoctorRefSchema, sessions: z.array(WorkHoursSchema), items: z.array(BookingSummarySchema) });
+export const RecentBookingSchema = BookingSummarySchema.extend({ bookedAt: z.iso.datetime({ offset: true }) });
+
+export const OverviewSchema = z.object({
+  localDate: z.iso.date(),
+  now: z.iso.datetime({ offset: true }),
+  clinicClosed: z.string().nullable().optional(),
+  kpis: KpisSchema,
+  agenda: z.array(AgendaDoctorSchema),
+  nextUp: z.array(BookingSummarySchema).max(5),
+  recentBookings: z.array(RecentBookingSchema).max(5).optional(),
+  isSample: z.boolean(),
+});
+
+export type Trend = z.infer<typeof TrendSchema>;
+export type Kpis = z.infer<typeof KpisSchema>;
+export type AgendaDoctor = z.infer<typeof AgendaDoctorSchema>;
+export type RecentBooking = z.infer<typeof RecentBookingSchema>;
+export type Overview = z.infer<typeof OverviewSchema>;

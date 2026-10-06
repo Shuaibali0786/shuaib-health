@@ -4,22 +4,9 @@ import { Clock } from "lucide-react";
 import { useEffect } from "react";
 
 import { clinicDate, formatClock, formatDayMonth } from "@/admin/lib/format";
-import { clinicClock, useClinicNow } from "@/admin/state/clinicClock";
+import { clinicClock, deviceReference, useClinicNow } from "@/admin/state/clinicClock";
 import { formatUpdatedAgo } from "@/admin/state/livePoll";
 import { useLiveStatus } from "@/admin/state/liveStatus";
-
-/** The device clock reading at about the moment the server rendered the page, from navigation timing. */
-function deviceReference(): number {
-  const now = Date.now();
-  try {
-    const [entry] = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
-    const at = performance.timeOrigin + (entry?.responseStart ?? Number.NaN);
-    if (Number.isFinite(at) && at <= now && now - at < 5 * 60_000) return at;
-  } catch {
-    // Navigation timing is not available everywhere; "now" is close enough.
-  }
-  return now;
-}
 
 /** "Asia/Karachi" -> "Karachi". */
 function cityOf(timeZone: string): string {

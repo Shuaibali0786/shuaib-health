@@ -1,10 +1,10 @@
-import type { BookingStatus } from "@/admin/lib/schemas";
+import type { BookingDetail, BookingStatus, BookingSummary } from "@/admin/lib/schemas";
 
 /**
  * What a demo visitor changes, kept in the browser's memory on top of the server's sample data (ADR-0009).
  * The demo server is strictly read-only: a status change here never leaves this module, is keyed by booking
  * reference, and is gone on reload or when the demo ends. Undo works for ten seconds, like the real one.
- * Simulated new bookings are added by the Overview story.
+ * The Overview also keeps the bookings the demo simulates here (see demoSimulation.ts); they never reach the server.
  */
 
 export const UNDO_WINDOW_MS = 10_000;
@@ -23,6 +23,8 @@ type Listener = () => void;
 export class DemoOverlay {
   private status = new Map<string, BookingStatus>();
   private changes = new Map<string, OverlayChange[]>();
+  private simulated = new Map<string, BookingDetail>();
+  private simulatedList: readonly BookingSummary[] = [];
   private snapshot = 0;
   private readonly listeners = new Set<Listener>();
 
@@ -55,6 +57,23 @@ export class DemoOverlay {
     return latest.from;
   }
 
+  /** Adds a simulated online booking (it exists only in this browser). */
+  addBooking(detail: BookingDetail): void {
+    this.simulated.set(detail.reference, detail);
+    this.simulatedList = [...this.simulatedList, detail];
+    this.emit();
+  }
+
+  /** The simulated bookings, as list rows. The same array until another is added. */
+  bookings(): readonly BookingSummary[] {
+    return this.simulatedList;
+  }
+
+  /** The detail of a simulated booking, or undefined for one the server knows. */
+  detailOf(reference: string): BookingDetail | undefined {
+    return this.simulated.get(reference);
+  }
+
   statusOf(reference: string, serverStatus: BookingStatus): BookingStatus {
     return this.status.get(reference) ?? serverStatus;
   }
@@ -78,6 +97,8 @@ export class DemoOverlay {
   reset(): void {
     this.status = new Map();
     this.changes = new Map();
+    this.simulated = new Map();
+    this.simulatedList = [];
     this.emit();
   }
 

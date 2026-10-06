@@ -36,7 +36,6 @@ def lookups(
 @router.get(
     "/overview",
     response_model=Overview,
-    response_model_exclude_none=True,
     responses=ADMIN_ERRORS_DOC,
     operation_id="adminOverview",
     summary="Today at a glance",

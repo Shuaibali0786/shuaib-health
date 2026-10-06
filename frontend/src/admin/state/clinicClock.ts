@@ -101,6 +101,19 @@ export class ClinicClock {
   }
 }
 
+/** The device clock reading at about the moment the server rendered the page, from navigation timing. */
+export function deviceReference(): number {
+  const now = Date.now();
+  try {
+    const [entry] = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+    const at = performance.timeOrigin + (entry?.responseStart ?? Number.NaN);
+    if (Number.isFinite(at) && at <= now && now - at < 5 * 60_000) return at;
+  } catch {
+    // Navigation timing is not available everywhere; "now" is close enough.
+  }
+  return now;
+}
+
 export const clinicClock = new ClinicClock();
 
 /** The clinic time in ms, re-rendering every second. `serverNowMs` is what the server rendered. */

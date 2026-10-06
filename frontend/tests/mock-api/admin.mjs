@@ -3,7 +3,8 @@
 // here. In memory only. Node built-ins only. Never used in production.
 //
 // Test sessions (the session cookie value is the token): cs_e2e-admin, cs_e2e-receptionist,
-// cs_e2e-must-change (staff), cd_e2e-demo (demo) and cd_e2e-demo-expired (a demo whose two hours are up).
+// cs_e2e-must-change (staff), cs_e2e-closed and cs_e2e-empty (staff whose Overview is a clinic holiday and a day with
+// no bookings), cd_e2e-demo (demo) and cd_e2e-demo-expired (a demo whose two hours are up).
 // Anything else is "not signed in". `POST /admin/demo/start` issues a new demo session from the committed
 // demo day (tests/fixtures/admin/demo-day.json, produced by the backend generator); a caller whose
 // X-Client-IP is 198.51.100.99 is always told the demo is busy (429).
@@ -30,6 +31,8 @@ const baseSessions = () => ({
   "cs_e2e-admin": { kind: "staff", role: "admin", displayName: "Sample Admin", mustChangePassword: false, email: "admin@clinic.test" },
   "cs_e2e-receptionist": { kind: "staff", role: "receptionist", displayName: "Sample Receptionist A", mustChangePassword: false, email: "receptionist@clinic.test" },
   "cs_e2e-must-change": { kind: "staff", role: "receptionist", displayName: "Sample Receptionist B", mustChangePassword: true, email: "must-change@clinic.test" },
+  "cs_e2e-closed": { kind: "staff", role: "receptionist", displayName: "Sample Receptionist C", mustChangePassword: false, email: "closed@clinic.test", overview: "closed" },
+  "cs_e2e-empty": { kind: "staff", role: "receptionist", displayName: "Sample Receptionist D", mustChangePassword: false, email: "empty@clinic.test", overview: "empty" },
   "cd_e2e-demo": { kind: "demo" },
   "cd_e2e-demo-expired": { kind: "demo", expired: true },
 });
@@ -49,7 +52,7 @@ export const csrfFor = (token) => `csrf-${token}`;
 /** The Viewer of a contract (`GET /admin/auth/me`) for a session entry. */
 function viewerOf(token, session, now) {
   const expires = new Date(Date.parse(now) + 30 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
-  const rest = omit(session, ["email", "expired"]);
+  const rest = omit(session, ["email", "expired", "overview"]);
   return { ...rest, csrfToken: csrfFor(token), clinicToday: TODAY, timezone: TIME_ZONE, sessionExpiresAt: expires };
 }
 
@@ -223,6 +226,12 @@ export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45
           member.role = nextRole;
           member.isActive = nextActive;
           return { status: 200, body: publicStaff(member) };
+        }
+
+        if (method === "GET" && route === "/overview") {
+          const result = gate(headers, mode);
+          if (result.error) return result.error;
+          return { status: 200, body: bookings.overview(result.session) };
         }
 
         const bookingRoute = /^\/(lookups|bookings\/)/.test(route) || route === "/bookings/search";

@@ -22,6 +22,8 @@ export function allowedNext(status, startsAtMs, nowMs) {
   return DISPLAY_ORDER.filter((to) => TRANSITIONS[status].includes(to) && timeOk[to]);
 }
 
+const minutesOf = (hhmm) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+
 const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 const randomCode = (length) => Array.from({ length }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join("");
 
@@ -74,6 +76,8 @@ export function createBookings({ fixture, now }) {
       startsAt: starts.toISOString().replace(/\.\d{3}Z$/, "Z"),
       endsAt: ends.toISOString().replace(/\.\d{3}Z$/, "Z"),
       localTime: clinic,
+      // Newer than every seeded booking and than the one before it, so the Overview's recentBookings sees it as new.
+      bookedAt: new Date(nowMs() + serial * 1000).toISOString().replace(/\.\d{3}Z$/, "Z"),
       patientName: name,
       patientNameMasked: `${name.split(" ")[0]} ${name.split(" ").at(-1)?.[0] ?? ""}.`,
       history: [{ at: stamp(), toStatus: "confirmed", actor: "Online booking", isUndo: false }],
@@ -181,5 +185,60 @@ export function createBookings({ fixture, now }) {
     return refuse(404, "not_found", "Not found.");
   }
 
-  return { handle, reset, createFresh };
+  /**
+   * `GET /admin/overview`: the same definitions as the backend (data-model §8) over the day's bookings. The
+   * doctors, their sessions and last week's numbers come from the fixture; today's numbers follow the bookings,
+   * so a status change or a new booking shows up. A session marked `overview: "closed"` or `"empty"` gets a
+   * holiday or a day with no bookings.
+   */
+  function overview(session) {
+    const demo = session.kind === "demo";
+    const base = fixture.overview;
+    const state = session.overview;
+    const todays = state ? [] : (demo ? demoBookings : staffBookings).filter((b) => b.localDate === fixture.meta.date);
+    const counts = { confirmed: 0, arrived: 0, completed: 0, no_show: 0, cancelled: 0 };
+    for (const b of todays) counts[b.status] += 1;
+    const appointments = todays.length - counts.cancelled;
+    const slots = base.agenda.reduce((sum, row) => sum + row.sessions.reduce((n, s) => n + Math.floor((minutesOf(s.end) - minutesOf(s.start)) / fixture.meta.slotMinutes), 0), 0);
+    const trend = (key, value) => {
+      const previous = base.kpis[key].previous;
+      return { value, previous, delta: value === null || previous === null ? null : value - previous, comparedTo: base.kpis[key].comparedTo };
+    };
+    const closed = state === "closed";
+    const kpis = {
+      appointments: trend("appointments", appointments),
+      arrived: trend("arrived", counts.arrived + counts.completed),
+      completed: trend("completed", counts.completed),
+      noShows: trend("noShows", counts.no_show),
+      cancellations: trend("cancellations", counts.cancelled),
+      utilisationPct: trend("utilisationPct", closed ? null : Math.floor((200 * appointments + slots) / (2 * slots))),
+    };
+    const rows = new Map(base.agenda.map((row) => [row.doctor.id, { doctor: row.doctor, sessions: row.sessions, items: [] }]));
+    for (const b of todays) rows.get(b.doctor.id)?.items.push(summaryOf(b));
+    const agenda = todays.length === 0 ? [] : [...rows.values()].map((row) => ({ ...row, items: row.items.sort((a, b) => a.startsAt.localeCompare(b.startsAt) || a.reference.localeCompare(b.reference)) }));
+    const nextUp = todays
+      .filter((b) => b.status === "confirmed" && Date.parse(b.startsAt) >= nowMs() - 15 * 60_000)
+      .sort((a, b) => a.startsAt.localeCompare(b.startsAt) || a.doctor.name.localeCompare(b.doctor.name) || a.reference.localeCompare(b.reference))
+      .slice(0, 5)
+      .map(summaryOf);
+    const recentBookings = demo
+      ? []
+      : staffBookings
+          .filter((b) => b.bookedAt)
+          .sort((a, b) => b.bookedAt.localeCompare(a.bookedAt) || a.reference.localeCompare(b.reference))
+          .slice(0, 5)
+          .map((b) => ({ ...summaryOf(b), bookedAt: b.bookedAt }));
+    return {
+      localDate: fixture.meta.date,
+      now: now,
+      clinicClosed: closed ? "Founders Day" : null,
+      kpis,
+      agenda,
+      nextUp,
+      recentBookings,
+      isSample: demo,
+    };
+  }
+
+  return { handle, reset, createFresh, overview };
 }

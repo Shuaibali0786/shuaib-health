@@ -7,6 +7,10 @@ export const SESSIONS = {
   admin: "cs_e2e-admin",
   receptionist: "cs_e2e-receptionist",
   demo: "cd_e2e-demo",
+  /** A receptionist whose Overview is a clinic holiday. */
+  closed: "cs_e2e-closed",
+  /** A receptionist whose Overview is a day with no bookings. */
+  empty: "cs_e2e-empty",
 } as const;
 
 /** Signs a browser context in as one of the mock API's test sessions, as the real sign-in would. */

@@ -2,7 +2,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import type * as z from "zod";
 
 import type { components } from "@/lib/api/schema.gen";
-import { BookingDetailSchema, BookingStatusSchema, BookingSummarySchema, DoctorRefSchema, ErrorResponseSchema, LookupsSchema, RoleSchema, ViewerSchema } from "@/admin/lib/schemas";
+import { BookingDetailSchema, BookingStatusSchema, BookingSummarySchema, DoctorRefSchema, ErrorResponseSchema, LookupsSchema, OverviewSchema, RoleSchema, TrendSchema, ViewerSchema } from "@/admin/lib/schemas";
 
 type Schemas = components["schemas"];
 
@@ -14,6 +14,12 @@ describe("admin schemas match the contract", () => {
     expectTypeOf<z.infer<typeof DoctorRefSchema>>().toEqualTypeOf<Schemas["DoctorRef"]>();
     expectTypeOf<z.infer<typeof BookingSummarySchema>>().toEqualTypeOf<Schemas["BookingSummary"]>();
     expectTypeOf<z.infer<typeof LookupsSchema>["doctors"]>().toEqualTypeOf<Schemas["Lookups"]["doctors"]>();
+    expectTypeOf<z.infer<typeof TrendSchema>>().toEqualTypeOf<Schemas["Trend"]>();
+    expectTypeOf<z.infer<typeof OverviewSchema>["kpis"]>().toEqualTypeOf<Schemas["Overview"]["kpis"]>();
+    expectTypeOf<z.infer<typeof OverviewSchema>["agenda"]>().toEqualTypeOf<Schemas["Overview"]["agenda"]>();
+    // The generated type is an intersection (summary and bookedAt); the schema is the same shape, extended.
+    expectTypeOf<NonNullable<z.infer<typeof OverviewSchema>["recentBookings"]>[number]>().toExtend<NonNullable<Schemas["Overview"]["recentBookings"]>[number]>();
+    expectTypeOf<NonNullable<Schemas["Overview"]["recentBookings"]>[number]>().toExtend<NonNullable<z.infer<typeof OverviewSchema>["recentBookings"]>[number]>();
     // The detail is the summary plus its own fields.
     expectTypeOf<z.infer<typeof BookingDetailSchema>["feePkr"]>().toEqualTypeOf<number>();
     expect(true).toBe(true);

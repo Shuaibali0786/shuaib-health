@@ -88,7 +88,7 @@ def test_kpis_trends_agenda_and_next_up(
     assert body["localDate"] == "2026-10-05"
     assert body["isSample"] is False
     assert body["now"].startswith("2026-10-05T04:00:00")
-    assert "clinicClosed" not in body
+    assert body["clinicClosed"] is None
 
     kpis = body["kpis"]
     assert kpis["appointments"] == {
@@ -150,7 +150,8 @@ def test_a_clinic_holiday_closes_the_day(
     db_session.flush()
     body = get_overview(cc_client, staff_headers)
     assert body["clinicClosed"] == "Founders Day"
-    assert "value" not in body["kpis"]["utilisationPct"]  # no scheduled slots: a dash
+    assert body["kpis"]["utilisationPct"]["value"] is None  # no scheduled slots: a dash
+    assert body["kpis"]["utilisationPct"]["delta"] is None
 
 
 def test_doctor_leave_removes_slots_from_utilisation(

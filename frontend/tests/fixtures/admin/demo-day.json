@@ -163,6 +163,7 @@
   "overview": {
     "localDate": "2026-10-05",
     "now": "2026-10-05T06:20:45Z",
+    "clinicClosed": null,
     "kpis": {
       "appointments": {
         "value": 56,

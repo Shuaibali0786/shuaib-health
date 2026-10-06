@@ -1,6 +1,9 @@
 // Calm, specific messages for the Bookings screen. The screens branch on the error code, never on message text.
 import { AdminApiError } from "@/admin/lib/client";
-import { BookingDetailSchema, type BookingDetail } from "@/admin/lib/schemas";
+import { BookingDetailSchema, type BookingDetail, type BookingSummary } from "@/admin/lib/schemas";
+import { STATUS_LABEL } from "@/admin/lib/statusRules";
+
+import type { ChangeRequest } from "./ConfirmDialog";
 
 export function bookingMessage(error: unknown): string {
   if (!(error instanceof AdminApiError)) return "Something went wrong. Please try again.";
@@ -32,3 +35,27 @@ export function latestFrom(error: unknown): BookingDetail | null {
   const parsed = BookingDetailSchema.safeParse(body?.latest);
   return parsed.success ? parsed.data : null;
 }
+
+/** The list row of a booking the server returned in full. */
+export const summaryOf = (detail: BookingDetail): BookingSummary => ({
+  reference: detail.reference,
+  startsAt: detail.startsAt,
+  endsAt: detail.endsAt,
+  localDate: detail.localDate,
+  localTime: detail.localTime,
+  status: detail.status,
+  version: detail.version,
+  patientNameMasked: detail.patientNameMasked,
+  phoneMasked: detail.phoneMasked,
+  doctor: detail.doctor,
+  allowedNext: detail.allowedNext,
+  isSample: detail.isSample,
+});
+
+/** The sentence of the undo offer: "Marked Ayesha K. as arrived." */
+export const messageFor = (request: ChangeRequest): string => {
+  const who = request.booking.patientNameMasked;
+  if (request.to === "no_show") return `Marked ${who} as a no-show.`;
+  if (request.to === "cancelled") return `Cancelled the booking for ${who}.`;
+  return `Marked ${who} as ${STATUS_LABEL[request.to].toLowerCase()}.`;
+};
