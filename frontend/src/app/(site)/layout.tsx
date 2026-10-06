@@ -7,7 +7,7 @@ import { SkipLink } from "@/components/layout/SkipLink";
 import { getSiteConfig } from "@/lib/content";
 import { siteUrl } from "@/lib/seo";
 import { THEME_COLOR } from "../theme-color";
-import "../globals.css";
+import "./site.css";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",

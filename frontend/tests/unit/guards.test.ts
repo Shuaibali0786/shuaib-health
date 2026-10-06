@@ -28,8 +28,8 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
   // Features 004 and 005: the catalog reader, the booking proxy and the booking flow's browser client are the only places that may call fetch;
   // the API settings are read in lib/api/config.ts, and the start-up check in instrumentation.ts reads
   // the framework's own NEXT_RUNTIME / NEXT_PHASE.
-  it("has no fetch( in src outside lib/api/http.ts, lib/booking/backend.ts and lib/booking/client.ts", () => {
-    expect(offenders(/\bfetch\s*\(/, (path) => ["lib/api/http.ts", "lib/booking/backend.ts", "lib/booking/client.ts"].includes(path))).toEqual([]);
+  it("has no fetch( in src outside the catalog, booking and staff-app call sites", () => {
+    expect(offenders(/\bfetch\s*\(/, (path) => ["lib/api/http.ts", "lib/booking/backend.ts", "lib/booking/client.ts", "admin/lib/client.ts", "admin/lib/server.ts"].includes(path))).toEqual([]);
   });
 
   it("has no backend env names in src outside lib/api/config.ts and instrumentation.ts", () => {
@@ -52,7 +52,7 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
     expect(offenders(/dangerouslySetInnerHTML/, (path) => path === "components/seo/JsonLd.tsx")).toEqual([]);
   });
 
-  it("has no hex colour literal in components or pages (tokens live in globals.css)", () => {
+  it("has no hex colour literal in components or pages (tokens live in tokens.css)", () => {
     const hex = /#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b(?![\w-])/;
     const inScope = (path: string) => !(path.startsWith("components/") || path.startsWith("app/"));
     // Icon and image generators and the theme-color constant need literal colours (tokens.test.ts checks the constant).

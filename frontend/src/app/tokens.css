@@ -1,8 +1,8 @@
-@import "tailwindcss";
-
 /*
   Shuaib Health design tokens (design-system.md §1–§3).
   This file (and app/icon.svg) is the ONLY place hex values may appear.
+  It is shared by the public site (site.css) and the Command Centre (admin.css); Tailwind only
+  emits the variables a stylesheet actually uses.
   Components use the generated utilities, for example text-navy-900,
   bg-teal-50, rounded-card, shadow-soft.
 
@@ -66,6 +66,70 @@
   --color-cat-cyan: #22d3ee;
   --color-cat-cyan-tint: #ecfeff;
 
+  /*
+    Command Centre (approved design preview, research R14). Light "cc-" tokens, "night-" tokens for
+    the navy night theme, and one status colour set per theme. Only admin.css uses them, so the
+    public stylesheet never contains them.
+  */
+  --color-navy-950: #061a33;
+  --color-gold-300: #dcc28a;
+
+  --color-cc-bg: #f4f7fa;
+  --color-cc-tint: #eef3f8;
+  --color-cc-card-2: #f7f9fc;
+  --color-cc-border-strong: #b9c7d5;
+  --color-cc-ribbon: #fbf7ee;
+  --color-cc-side-ink: #c6d3e1;
+  --color-cc-side-muted: #8fa3ba;
+
+  /* Light status lines are a shade darker than the preview (teal-500, gold-500, #e0897f) to reach 3:1 on a card. */
+  --color-st-confirmed-bg: #edf3fb;
+  --color-st-confirmed-ink: #1d4e89;
+  --color-st-confirmed-line: #3b74b8;
+  --color-st-arrived-bg: #f0fdfa;
+  --color-st-arrived-ink: #0f766e;
+  --color-st-arrived-line: #0d9488;
+  --color-st-completed-bg: #eef1f5;
+  --color-st-completed-ink: #33465f;
+  --color-st-completed-line: #7a8ba0;
+  --color-st-no-show-bg: #fbf5e6;
+  --color-st-no-show-ink: #7a5c14;
+  --color-st-no-show-line: #a8812e;
+  --color-st-cancelled-bg: #fef3f2;
+  --color-st-cancelled-ink: #b42318;
+  --color-st-cancelled-line: #d4655a;
+
+  --color-night-bg: #061a33;
+  --color-night-tint: #082040;
+  --color-night-card: #0b2545;
+  --color-night-card-2: #0e2c52;
+  --color-night-heading: #f3f6fa;
+  --color-night-ink: #dbe4ee;
+  --color-night-muted: #9fb2c7;
+  --color-night-side: #04132a;
+  --color-night-side-muted: #8196ae;
+  --color-night-ribbon: #0d2a4c;
+  --color-night-border: rgb(255 255 255 / 9%);
+  --color-night-border-strong: rgb(255 255 255 / 18%);
+  --color-night-accent-bg: rgb(94 234 212 / 10%);
+  --color-night-scrim: rgb(2 10 22 / 62%);
+
+  --color-night-st-confirmed-bg: rgb(125 175 235 / 13%);
+  --color-night-st-confirmed-ink: #b9d4f5;
+  --color-night-st-confirmed-line: #7fb0ea;
+  --color-night-st-arrived-bg: rgb(94 234 212 / 12%);
+  --color-night-st-arrived-ink: #5eead4;
+  --color-night-st-arrived-line: #5eead4;
+  --color-night-st-completed-bg: rgb(255 255 255 / 7%);
+  --color-night-st-completed-ink: #c9d5e2;
+  --color-night-st-completed-line: #8fa3ba;
+  --color-night-st-no-show-bg: rgb(220 194 138 / 13%);
+  --color-night-st-no-show-ink: #dcc28a;
+  --color-night-st-no-show-line: #dcc28a;
+  --color-night-st-cancelled-bg: rgb(248 113 113 / 13%);
+  --color-night-st-cancelled-ink: #fbb4ac;
+  --color-night-st-cancelled-line: #f08a80;
+
   /* Shape */
   --radius-control: 0.75rem;
   --radius-card: 1.25rem;
@@ -88,101 +152,7 @@
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* next/font sets --font-jakarta and --font-inter on <html> at runtime. */
+/* next/font sets --font-cormorant on <html> in the admin root layout (display type, weight 600). */
 @theme inline {
-  --font-heading: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-}
-
-/*
-  Gradients (design-system.md §1). Which text each may carry:
-  brand: none (decoration) | accent: navy-900 | deep: white and teal-300 | soft: navy, ink, muted, teal-700
-*/
-@utility bg-brand-gradient {
-  background-image: linear-gradient(135deg, var(--color-teal-500), var(--color-blue-600));
-}
-
-@utility bg-accent-gradient {
-  background-image: linear-gradient(135deg, var(--color-teal-500), var(--color-sky-400));
-}
-
-@utility bg-deep-gradient {
-  background-image: linear-gradient(135deg, var(--color-navy-900), var(--color-navy-800));
-}
-
-@utility bg-soft-gradient {
-  background-image: linear-gradient(180deg, var(--color-teal-50), var(--color-blue-50));
-}
-
-@layer base {
-  html {
-    color-scheme: light;
-    /* Sticky header height, so focused elements are never hidden under it (WCAG 2.2 2.4.11). */
-    scroll-padding-top: 4.5rem;
-    -webkit-text-size-adjust: 100%;
-  }
-
-  body {
-    background-color: var(--color-background);
-    color: var(--color-ink);
-    font-family: var(--font-sans);
-    font-size: 1rem;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    color: var(--color-navy-900);
-    font-family: var(--font-heading);
-    line-height: 1.2;
-    text-wrap: balance;
-  }
-
-  /* Visible focus on every interactive element, never removed. */
-  :focus-visible {
-    outline: 2px solid var(--color-blue-700);
-    outline-offset: 2px;
-  }
-
-  /* Dark surfaces (footer, facts band, CTA band) use a lighter ring. */
-  .on-dark :focus-visible,
-  .on-dark:focus-visible {
-    outline-color: var(--color-teal-300);
-  }
-
-  /* Anchor target for the skip link. */
-  main:focus {
-    outline: none;
-  }
-}
-
-/* Users who prefer reduced motion get no movement, scaling or long transitions. */
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* Printing the confirmation slip: only the card, not the site chrome or the action buttons. */
-@media print {
-  header,
-  footer,
-  nav {
-    display: none !important;
-  }
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
 }

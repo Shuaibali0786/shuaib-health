@@ -1,0 +1,111 @@
+@import "tailwindcss" source(none);
+@import "../tokens.css";
+
+/*
+  Public website styles. Tailwind scans only the public sources, so no admin class can reach this
+  stylesheet (ADR 0008). Brand tokens live in ../tokens.css.
+*/
+@source "./";
+@source "../global-not-found.tsx";
+@source "../../components";
+@source "../../data";
+@source "../../lib";
+
+/* next/font sets --font-jakarta and --font-inter on <html> at runtime. */
+@theme inline {
+  --font-heading: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+  Gradients (design-system.md §1). Which text each may carry:
+  brand: none (decoration) | accent: navy-900 | deep: white and teal-300 | soft: navy, ink, muted, teal-700
+*/
+@utility bg-brand-gradient {
+  background-image: linear-gradient(135deg, var(--color-teal-500), var(--color-blue-600));
+}
+
+@utility bg-accent-gradient {
+  background-image: linear-gradient(135deg, var(--color-teal-500), var(--color-sky-400));
+}
+
+@utility bg-deep-gradient {
+  background-image: linear-gradient(135deg, var(--color-navy-900), var(--color-navy-800));
+}
+
+@utility bg-soft-gradient {
+  background-image: linear-gradient(180deg, var(--color-teal-50), var(--color-blue-50));
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    /* Sticky header height, so focused elements are never hidden under it (WCAG 2.2 2.4.11). */
+    scroll-padding-top: 4.5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--color-navy-900);
+    font-family: var(--font-heading);
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+
+  /* Visible focus on every interactive element, never removed. */
+  :focus-visible {
+    outline: 2px solid var(--color-blue-700);
+    outline-offset: 2px;
+  }
+
+  /* Dark surfaces (footer, facts band, CTA band) use a lighter ring. */
+  .on-dark :focus-visible,
+  .on-dark:focus-visible {
+    outline-color: var(--color-teal-300);
+  }
+
+  /* Anchor target for the skip link. */
+  main:focus {
+    outline: none;
+  }
+}
+
+/* Users who prefer reduced motion get no movement, scaling or long transitions. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Printing the confirmation slip: only the card, not the site chrome or the action buttons. */
+@media print {
+  header,
+  footer,
+  nav {
+    display: none !important;
+  }
+}

@@ -7,6 +7,7 @@ import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { ADMIN_MODES, ADMIN_SLOW_MS, createAdmin } from "./admin.mjs";
 import { BOOKING_MODES, BOOKING_SLOW_MS, createBooking } from "./booking.mjs";
 
 const FIXTURES = fileURLToPath(new URL("../fixtures/api/", import.meta.url));
@@ -23,7 +24,11 @@ export const MODES = [
   "rules-empty",
   "rebrand",
   ...BOOKING_MODES,
+  ...ADMIN_MODES,
 ];
+
+// Modes that only change the booking or the staff-app routes; the catalog behaves as in "ok".
+const NON_CATALOG_MODES = [...BOOKING_MODES, ...ADMIN_MODES];
 
 // URL path (after /api/v1) -> fixture / resource name.
 const ROUTES = {
@@ -119,6 +124,7 @@ export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok"
   const state = { mode: startMode, resources: null, log: {} };
   const slowTimers = new Set();
   const booking = createBooking({ now, proxySecret });
+  const admin = createAdmin({ now, proxySecret });
   if (startMode === "slot-taken") booking.armSlotTaken();
 
   const appliesTo = (resource) => !state.resources || state.resources.includes(resource);
@@ -136,7 +142,7 @@ export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok"
   function catalog(req, res, url, resource) {
     state.log[resource] = (state.log[resource] ?? 0) + 1;
     // The booking modes only affect the booking routes; the catalog behaves as in "ok".
-    const mode = appliesTo(resource) && !BOOKING_MODES.includes(state.mode) ? state.mode : "ok";
+    const mode = appliesTo(resource) && !NON_CATALOG_MODES.includes(state.mode) ? state.mode : "ok";
 
     if (mode === "down") {
       req.socket.destroy();
@@ -209,6 +215,34 @@ export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok"
     }
     if (path === "/" && req.method === "GET") {
       send(res, 200, { status: "ok", mode: state.mode });
+      return;
+    }
+
+    if (path.startsWith("/api/v1/admin/")) {
+      const mode = ADMIN_MODES.includes(state.mode) ? state.mode : "ok";
+      const call = admin.handle({ method: req.method ?? "GET", path, headers: req.headers, bodyText: "", mode });
+      (state.log.admin ??= []).push(call.entry);
+      if (mode === "admin-down") {
+        req.socket.destroy();
+        return;
+      }
+      const respond = () => {
+        const result = call.run();
+        send(res, result.status, result.body, result.headers);
+      };
+      if (mode === "admin-slow") {
+        const timer = setTimeout(() => {
+          slowTimers.delete(timer);
+          if (!res.destroyed) respond();
+        }, ADMIN_SLOW_MS);
+        slowTimers.add(timer);
+        res.on("close", () => {
+          clearTimeout(timer);
+          slowTimers.delete(timer);
+        });
+        return;
+      }
+      respond();
       return;
     }
 
