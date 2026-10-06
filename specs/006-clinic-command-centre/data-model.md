@@ -159,7 +159,10 @@ DemoDataset(date d, catalog version)
                              today → by time vs request "now" (arrived/completed before now, confirmed after)
                              future → confirmed 94 % / cancelled 6 %
                    reference: Crockford base32 from the PRNG with prefix "D" (never collides with real ones in tests)
-                   patient: from a fixed list of 60 sample first names + 40 surname initials; phone +92300000xxxx
+                   patient: fits the department (FR-038) — Gynecology: women aged 21–46; Pediatrics: children 0–12
+                            booked by a parent ("booked by mother/father"), contact = the parent; Cardiology: adults 38–78;
+                            others: adults of any gender. Fixed sample lists of women's, men's, girls' and boys' first
+                            names + surname initials; reasons from a per-department list; phone +92300000xxxx
   activity:        synthetic sign-ins, status changes and reveals by 3 sample staff over the last 7 days
   staff:           "Sample Admin", "Sample Receptionist A/B"
 Seed: random.Random("shuaib-health-demo:v1:" + d.isoformat())

@@ -120,6 +120,20 @@ components:
               doctor: { $ref: "#/components/schemas/DoctorRef" }
               items: { type: array, items: { $ref: "#/components/schemas/BookingSummary" } }
         nextUp: { type: array, maxItems: 5, items: { $ref: "#/components/schemas/BookingSummary" } }
+        recentBookings:
+          type: array
+          maxItems: 5
+          description: >-
+            The most recently created bookings (any appointment date), newest first (FR-042). The client polls this
+            endpoint every 30 s (FR-041) and shows a notification for each item whose bookedAt is later than the newest
+            it has already seen; on first load it only records the newest bookedAt. Demo: always empty (the browser
+            simulates new bookings itself).
+          items:
+            allOf:
+              - $ref: "#/components/schemas/BookingSummary"
+              - type: object
+                required: [bookedAt]
+                properties: { bookedAt: { type: string, format: date-time } }
         isSample: { type: boolean }
     DoctorRef:
       type: object
@@ -360,7 +374,7 @@ paths:
       operationId: adminOverview
       x-policy: READ
       responses:
-        "200": { description: today at a glance, content: { application/json: { schema: { $ref: "#/components/schemas/Overview" } } } }
+        "200": { description: "today at a glance; polled every 30 s while visible (FR-041)", content: { application/json: { schema: { $ref: "#/components/schemas/Overview" } } } }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
   /admin/bookings/search:

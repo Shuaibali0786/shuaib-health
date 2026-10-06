@@ -27,6 +27,11 @@ The Command Centre is a showcase as much as a tool: the first impression must be
 - Q: What scale and reliability targets apply? → A (agent): one clinic, ≤ 20 staff, ≤ 300 bookings/day, ≤ 30,000 bookings in 90 days; dashboard failures must never affect public booking (Non-Functional section).
 - Q: What canonical terms are used? → A (agent): "Booking" is the record; "appointment" is its time slot; statuses are Confirmed, Arrived, Completed, No-show, Cancelled; "Staff" = Admin or Receptionist.
 
+### Session 2026-10-06 (design gate)
+
+- Q: Which heading face? → A: Design approved with font A, **Cormorant Garamond**, for headings and KPI numerals (Inter stays the body face).
+- Q: What changes before build? → A (owner): department-realistic sample patients (FR-038); agenda entries show time, initials and status and open the drawer (FR-019); nothing clipped at 1280/1366 px (FR-045); a live, premium feel — live Karachi clock, auto-refresh with a Live indicator, moving "now" marker, time-based greeting, KPI count-up, new-booking notifications, a working remembered theme switch (FR-040…FR-044); visual tests freeze the clock (SC-010).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - One-click public demo (Priority: P1)
@@ -89,6 +94,9 @@ On opening the Command Centre, staff see today (clinic time) at a glance: KPI ca
 4. **Given** "Next patients up", **When** viewed, **Then** it lists the next up-to-5 confirmed (not yet arrived) appointments from now, with time, doctor, masked patient name and a one-tap "Mark arrived".
 5. **Given** the clock passes midnight in Karachi, **When** the Overview is refreshed, **Then** it shows the new day; the device's own time zone never changes which day is "today".
 6. **Given** a day with no bookings, **When** the Overview loads, **Then** a calm, branded empty state is shown instead of zeros and blank charts alone.
+7. **Given** the Overview is open, **When** time passes, **Then** the header clock ticks every second in clinic time (e.g. "11:20:45 AM · Karachi"), the greeting follows the clinic hour (Good morning / afternoon / evening), the agenda's "now" marker moves every minute, and KPIs and lists refresh on their own every 30 seconds with a "Live · updated just now" indicator.
+8. **Given** a new online booking arrives while the Overview or Bookings screen is open, **When** the next refresh sees it, **Then** an elegant notification names the masked patient, doctor and time, offers "View booking", and the new agenda entry is briefly highlighted; in demo mode such bookings are simulated from time to time.
+9. **Given** an agenda entry, **When** it is hovered, focused or tapped, **Then** its time, the patient's initials and its status are shown, and activating it opens that booking's detail drawer.
 
 ---
 
@@ -234,7 +242,7 @@ The Admin sees a chronological feed of security-relevant and operational events:
 
 - **FR-017**: The Overview MUST show KPI cards for today (Karachi): appointments (non-cancelled), arrived, completed, no-shows, cancellations and chair utilisation %, each with the change vs the same weekday last week.
 - **FR-018**: Chair utilisation MUST be calculated as booked non-cancelled slots ÷ all scheduled slots for working doctors today (excluding leave and holidays).
-- **FR-019**: The Overview MUST show today's agenda grouped by doctor in time order with a current-time marker, and a "Next patients up" list of the next 5 confirmed appointments with a one-tap "Mark arrived".
+- **FR-019**: The Overview MUST show today's agenda grouped by doctor in time order with a current-time marker, and a "Next patients up" list of the next 5 confirmed appointments with a one-tap "Mark arrived". Each agenda entry MUST show its time, patient initials and status on hover, focus or tap (dismissible with Escape, never by colour alone, with an accessible name) and MUST open the booking's detail drawer when activated.
 
 **Bookings**
 
@@ -265,7 +273,16 @@ The Admin sees a chronological feed of security-relevant and operational events:
 - **FR-035**: "Today", day boundaries, KPIs, charts and all displayed times MUST use the clinic time zone (Asia/Karachi), labelled as clinic time.
 - **FR-036**: Dashboard code and assets MUST NOT load on any public page; the public pages' performance, accessibility, best-practice and SEO scores MUST NOT decrease.
 - **FR-037**: Personal data (names, phones, emails, reasons, search terms) MUST NOT appear in logs, error reports or page addresses; dashboard pages MUST not be indexed by search engines nor cached by shared caches.
-- **FR-038**: Only fake/synthetic data may be used in tests, previews and the demo.
+- **FR-038**: Only fake/synthetic data may be used in tests, previews and the demo. Sample patients MUST be believable for their department: Gynecology patients are women, Pediatrics patients are children (aged 0–12, booked by a parent), and visit reasons fit the department.
+
+**Live experience**
+
+- **FR-040**: The Command Centre header MUST show a live clinic-time clock with seconds (e.g. "11:20:45 AM · Karachi"), and the Overview MUST greet the viewer by clinic time of day ("Good morning" 05:00–11:59, "Good afternoon" 12:00–16:59, otherwise "Good evening").
+- **FR-041**: Overview and Bookings MUST refresh KPIs and lists automatically every 30 seconds (pausing while the tab is hidden and refreshing as soon as it is visible again), show a "Live" indicator with the time since the last update, and move the agenda's "now" marker every minute, without moving keyboard focus or resetting open panels. A failed refresh keeps the last data and shows the calm error state (FR-033).
+- **FR-042**: When a refresh finds bookings created since the screen last looked, the dashboard MUST show a dismissible notification per new booking (masked name, doctor, department, time, "View booking"), at most 3 at once, auto-hiding after 8 seconds unless hovered or focused, announced politely to screen readers. In demo mode the browser MUST simulate such a booking from time to time; it is part of the in-browser demo state (FR-013) and never sent to the server.
+- **FR-043**: KPI numbers MUST count up gently on first load and when they change; all such motion (count-up, live pulse, highlights, notification slide) MUST be removed for users who prefer reduced motion (FR-034).
+- **FR-044**: The Light / Night / Auto theme switch MUST apply immediately, follow the device setting live in Auto, and be remembered on that device.
+- **FR-045**: Nothing may be clipped, overlapped or cut off, and no page may scroll sideways, at 390 px (phone), 1280 px and 1366 px (laptops) and 1440 px (desktop) widths.
 
 **Delivery gate**
 
@@ -301,7 +318,7 @@ The Admin sees a chronological feed of security-relevant and operational events:
 - **SC-007**: Public pages' quality scores (performance, accessibility, best practices, SEO) are equal to or better than before this feature, and no dashboard code is downloaded on any public page.
 - **SC-008**: Zero personal data (names, phones, emails, reasons, passwords) found in application logs or page addresses after running the full automated test suite.
 - **SC-009**: KPI, agenda, Insights and Doctors-today numbers exactly match expected values for fixed test data, including bookings at 23:45 Karachi time.
-- **SC-010**: Visual baselines for Overview and Bookings (phone and desktop, light and dark) are approved by the owner at the design gate and remain matched at release.
+- **SC-010**: Visual baselines for Overview and Bookings (phone 390 px, laptop 1280 px and 1366 px, desktop 1440 px; light and dark) are approved by the owner at the design gate and remain matched at release. Baselines are taken with a frozen clock so repeated runs are identical, and an automated check finds zero clipped or overflowing elements at every width.
 
 ## Assumptions
 

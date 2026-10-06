@@ -19,9 +19,9 @@ Give clinic staff a private, premium **Command Centre** under `/admin` (Overview
 - Public routes move into `app/(site)/` (URLs unchanged); the Command Centre gets its **own root layout** in `app/(admin)/admin/`, its own CSS entry and fonts, so no admin JS/CSS/font is in any public page graph — proven by a build-manifest check, a runtime Playwright scan for a sentinel string, and Lighthouse (R11, R12).
 - Same-origin BFF: an allow-listed catch-all `app/api/admin/[...path]` plus dedicated session/demo handlers that own the `__Host-cc_session` cookie.
 - Server components render first paint; small client islands for filters, drawer, confirm/undo, phone reveal; a browser-only **demo overlay** makes demo interactions feel real and vanish on reload.
-- Hand-built accessible SVG charts (< 6 kB, no chart library) (R13). Brand tokens shared via `tokens.css`; serif display face + "navy night" dark theme scoped to admin (R14).
+- Hand-built accessible SVG charts (< 6 kB, no chart library) (R13). Brand tokens shared via `tokens.css`; serif display face (**Cormorant Garamond**, approved at the gate) + "navy night" dark theme scoped to admin (R14). Live feel: Karachi clock, 30 s polling of the Overview with new-booking notifications, moving "now" marker, KPI count-up (R19, FR-040…FR-044).
 
-**Design gate (FR-039)**: right after this plan, a static design preview (Overview + Bookings; 390/1440 px; light/dark; demo data) is built under `specs/006-clinic-command-centre/design-preview/` and work **stops** for Shuaib's approval before any feature code (R18).
+**Design gate (FR-039)**: right after this plan, a static design preview (Overview + Bookings; 390/1440 px; light/dark; demo data) is built under `specs/006-clinic-command-centre/design-preview/` and work **stops** for Shuaib's approval before any feature code (R18). **Approved 2026-10-06** with font A and the live changes (R18 outcome, R19).
 
 ## Technical Context
 
@@ -45,7 +45,7 @@ Give clinic staff a private, premium **Command Centre** under `/admin` (Overview
 **Constraints**: "today" = Asia/Karachi everywhere; UTC storage; no personal data in logs, URLs, audit or counters; demo never touches real data; dashboard failure/overload must not affect public booking (statement timeout 3 s on admin reads, demo generator cached, per-IP demo limit); build independent of backend (Principle V).
 **Scale/Scope**: 1 clinic, ≤ 20 staff, ≤ 300 bookings/day, ≤ 30 k bookings in 90 days; 7 screens; ~20 admin endpoints.
 
-No NEEDS CLARIFICATION remain: the spec's Clarifications session and the user's planning guidance resolved policy; the rest is decided in [research.md](./research.md) R1–R18. One item is **confirmed at the design gate** rather than now: the serif display face (R14 — the website's headings are currently sans-serif Plus Jakarta Sans).
+No NEEDS CLARIFICATION remain: the spec's Clarifications session and the user's planning guidance resolved policy; the rest is decided in [research.md](./research.md) R1–R19. The serif display face was confirmed at the design gate: Cormorant Garamond (R14).
 
 ## Constitution Check
 
@@ -70,7 +70,7 @@ No NEEDS CLARIFICATION remain: the spec's Clarifications session and the user's 
 specs/006-clinic-command-centre/
 ├── spec.md
 ├── plan.md                              # this file
-├── research.md                          # R1–R18
+├── research.md                          # R1–R19
 ├── data-model.md                        # tables, state machine, KPIs, demo dataset, validation
 ├── quickstart.md
 ├── contracts/
@@ -161,7 +161,7 @@ frontend/
 │   ├── admin/                            # NEW: all Command Centre code (CSS scope root)
 │   │   ├── marker.ts                     # __SH_COMMAND_CENTRE__ sentinel
 │   │   ├── lib/bffRoutes.ts, server.ts (server-only), client.ts, schemas.ts (zod), format.ts (Karachi)
-│   │   ├── state/demoOverlay.ts, undo.ts, theme.ts
+│   │   ├── state/demoOverlay.ts, undo.ts, theme.ts, clinicClock.ts, livePoll.ts, newBookings.ts (R19)
 │   │   ├── shell/AppShell, SideNav, BottomNav, DemoRibbon, ThemeToggle, SessionExpiredDialog
 │   │   ├── overview/KpiCard, KpiGrid, AgendaTimeline, NextUpList
 │   │   ├── bookings/FilterBar, StickyFilters, BookingTable, BookingCard, BookingDrawer, StatusActions,
@@ -181,7 +181,7 @@ frontend/
     └── e2e/admin-demo, admin-auth (per role, lockout message, expiry), admin-bookings (find → arrive → complete,
             undo, reveal, conflict), admin-overview, admin-insights, admin-doctors, admin-activity, admin-staff,
             admin-mobile (bottom nav, cards, sticky filters, 44px), admin-a11y (axe × screens × themes × widths,
-            keyboard-only, reduced motion), admin-visual (baselines), admin-isolation, honesty (extended)
+            keyboard-only, reduced motion), admin-visual (baselines at 390/1280/1366/1440 + clipping check), admin-live (frozen clock: tick, poll, toast, now marker), admin-isolation, honesty (extended)
 ```
 
 **Structure Decision**: existing web-application layout. Backend adds three domain packages (`auth/`, `command_centre/`, `demo/`) with pure logic separated from routers and repositories, following 005. Frontend splits into two root layouts via route groups, and puts all Command Centre code under `src/admin/` so CSS scoping, the isolation check and code review have one clear boundary.
@@ -199,7 +199,7 @@ frontend/
 
 | Phase | Goal | Main work | Checkpoint |
 |---|---|---|---|
-| **0. Design preview — GATE** (FR-039) | Approve the look before code | Static HTML preview (Overview + Bookings incl. drawer/confirm), 390/1440 × light/dark, demo fixture; serif face options; screenshots; private preview link | **STOP until Shuaib approves**; approved screenshots = baseline reference |
+| **0. Design preview — GATE** (FR-039) | Approve the look before code | Static HTML preview (Overview + Bookings incl. drawer/confirm), 390/1440 × light/dark, demo fixture; serif face options; screenshots; private preview link | **STOP until Shuaib approves** — ✅ approved 2026-10-06 (font A + live changes); approved screenshots = baseline reference |
 | **1. Setup & contract** | Baselines; API agreed first | Record backend/frontend/Lighthouse/bundle baselines in `results.md`; merge OpenAPI delta (1.2.0); regenerate types; zod schemas; drift tests | Existing suites green; contract parses; drift tests catch injected drift |
 | **2. Foundation: data + auth core** | FR-001–009 core | `0003` migration; settings (`SESSION_SECRET` fail fast); passwords, tokens, sessions, throttle, CSRF; `require_viewer` + policy table + introspection test; `create_admin` CLI; seed guard | Migration up/down + lossy-downgrade refusal; unit tests; introspection test green |
 | **3. Website restructure & isolation** | FR-036 foundation | `git mv` public routes into `(site)`; `tokens.css`/`site.css`/`admin.css`; admin root layout + `global-not-found`; BFF allow-list + session/demo handlers; isolation script + sentinel e2e | All existing unit/e2e green unchanged; isolation proofs green; Lighthouse ≥ baseline |
@@ -218,7 +218,7 @@ frontend/
 - **Unit**: transitions/time rules, KPIs/utilisation/trends/insights (fixed clock, non-Karachi `TZ`), generator determinism and distributions, password policy, token/CSRF, lockout windows, masking, Karachi formatting, overlay and undo stores, BFF guards.
 - **Integration**: status change atomicity (fault injection between history and audit insert → rollback), concurrent changes (one 200, one 409), undo races, cancel → slot reappears in public slots, last-admin race, demo/real separation, log safety.
 - **Playwright**: `admin-desktop` + `admin-mobile` projects; journeys per role and demo; keyboard-only; reduced motion; offline/slow/expired.
-- **Visual baselines**: Overview, Bookings (list + drawer), Insights, Doctors today × light/dark × desktop/mobile on the deterministic demo fixture with a frozen clock; approved at the gate.
+- **Visual baselines**: Overview, Bookings (list + drawer), Insights, Doctors today × light/dark × 390 / 1280 / 1366 / 1440 px on the deterministic demo fixture, with the Playwright clock paused (`clock.install` + `pauseAt`, advanced with `runFor`) and animations disabled; approved at the gate. A clipping check (no sideways scroll, no clipped or self-overflowing text) runs at every width (FR-045). The new-booking toast shot allows a small `maxDiffPixels` for anti-aliasing of its shadow layer.
 - **Accessibility**: axe (WCAG 2.2 AA tags) on every screen/state in both themes and widths; focus-trap/return tests for drawer/dialogs; charts' summary + table.
 - **Isolation**: build-manifest script, runtime sentinel scan with prefetch, Lighthouse vs baseline.
 
