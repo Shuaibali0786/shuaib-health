@@ -184,7 +184,11 @@ def committing_engine(seeded_engine: Engine) -> Iterator[Engine]:
 def committing_cleanup(committing_engine: Engine) -> Iterator[None]:
     yield
     with committing_engine.begin() as conn:
-        conn.execute(text("TRUNCATE appointment, idempotency_key, rate_limit_counter, audit_log"))
+        conn.execute(
+            text(
+                "TRUNCATE appointment, appointment_status_change, idempotency_key, rate_limit_counter, audit_log"
+            )
+        )
 
 
 @pytest.fixture
