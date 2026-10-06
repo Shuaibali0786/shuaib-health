@@ -26,3 +26,21 @@ export const ViewerSchema = z.object({
 export type Role = z.infer<typeof RoleSchema>;
 export type BookingStatus = z.infer<typeof BookingStatusSchema>;
 export type Viewer = z.infer<typeof ViewerSchema>;
+
+/** What the backend returns to this server on sign-in and password change. The token never leaves the server. */
+export const SessionIssuedSchema = z.object({ token: z.string().min(1), viewer: ViewerSchema });
+
+export const StaffSchema = z.object({
+  id: z.uuid(),
+  email: z.string(),
+  displayName: z.string(),
+  role: RoleSchema,
+  isActive: z.boolean(),
+  mustChangePassword: z.boolean().optional(),
+  lastSignInAt: z.iso.datetime({ offset: true }).nullable().optional(),
+  isSample: z.boolean().optional(),
+});
+export const StaffListSchema = z.array(StaffSchema);
+
+export type SessionIssued = z.infer<typeof SessionIssuedSchema>;
+export type Staff = z.infer<typeof StaffSchema>;

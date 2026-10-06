@@ -1,5 +1,6 @@
 import { SESSION_COOKIE } from "@/admin/lib/cookie";
 import { callAdminBackend } from "@/admin/lib/server";
+import { clearedSessionCookie, cookieValue, isSameOrigin, withoutToken } from "@/admin/lib/sessionRoute";
 import { matchAdminRoute, type AdminMethod } from "@/admin/lib/bffRoutes";
 import { ApiError } from "@/lib/api/http";
 import { clientIpFrom } from "@/lib/booking/backend";
@@ -14,35 +15,6 @@ import { errorJson, noStoreJson } from "@/lib/booking/respond";
 export const dynamic = "force-dynamic";
 
 const PASS_THROUGH = new Set([200, 201, 204, 401, 403, 404, 409, 422, 429, 503]);
-
-/** CSRF guard (005 pattern): the browser sends `Origin` on every non-GET, and it must be this site. */
-function isSameOrigin(request: Request): boolean {
-  if (request.headers.get("origin") !== new URL(request.url).origin) return false;
-  const site = request.headers.get("sec-fetch-site");
-  return site === null || site === "same-origin";
-}
-
-/** Removes any `token` property so a session token can never reach the browser through this route. */
-function withoutToken(body: unknown): unknown {
-  if (body && typeof body === "object" && !Array.isArray(body) && "token" in body) {
-    const rest = { ...(body as Record<string, unknown>) };
-    delete rest.token;
-    return rest;
-  }
-  return body;
-}
-
-function clearedSessionCookie(): string {
-  return `${SESSION_COOKIE}=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=Strict`;
-}
-
-function cookieValue(request: Request, name: string): string | undefined {
-  for (const part of (request.headers.get("cookie") ?? "").split(";")) {
-    const [key, ...rest] = part.trim().split("=");
-    if (key === name) return rest.join("=") || undefined;
-  }
-  return undefined;
-}
 
 async function handle(request: Request, ctx: RouteContext<"/api/admin/[...path]">): Promise<Response> {
   const requestId = crypto.randomUUID();

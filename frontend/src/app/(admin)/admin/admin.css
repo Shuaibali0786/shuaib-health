@@ -708,10 +708,15 @@ svg.i-sm {
   font-size: calc(24px * var(--display-scale));
   line-height: 1.15;
 }
-.dialog p {
+.dialog p,
+.dialog .dialog-body {
   margin: 0 0 20px;
   color: var(--muted);
   font-size: 14px;
+}
+.dialog .dialog-lead {
+  display: block;
+  margin-bottom: 14px;
 }
 .dialog .acts {
   display: flex;
@@ -742,6 +747,201 @@ svg.i-sm {
   text-align: center;
   font-size: 12.5px;
   color: var(--muted);
+}
+
+/* ---------- Forms, sign-in, staff ---------- */
+.form {
+  display: grid;
+  gap: 16px;
+}
+.field {
+  display: grid;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--heading);
+}
+.field input,
+.field select {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--radius-ctl);
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--ink);
+  width: 100%;
+}
+.field .hint {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.field-error {
+  margin: 0;
+  color: var(--st-cancelled-ink);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.btn-block {
+  width: 100%;
+}
+.btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.side-foot .btn-quiet {
+  color: var(--side-ink);
+  justify-content: flex-start;
+}
+.m-top .signout {
+  margin-left: auto;
+  color: var(--color-white);
+  border-color: color-mix(in srgb, var(--color-white) 30%, transparent);
+  background: transparent;
+}
+.auth-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+}
+.auth-card {
+  width: min(420px, 100%);
+  padding: 32px 28px 28px;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: 22px;
+  box-shadow: var(--shadow-lift-cc);
+}
+.auth-card .brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.auth-card .brand-row .mono {
+  background: var(--primary-bg);
+  color: var(--color-gold-300);
+}
+.auth-card .brand-row .brand-name {
+  color: var(--heading);
+}
+.auth-card .brand-row .brand-sub {
+  color: var(--muted);
+}
+.auth-card h1 {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: calc(30px * var(--display-scale));
+  color: var(--heading);
+}
+.auth-card .lead {
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.auth-credit {
+  margin: 18px 0 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.auth-credit a {
+  color: inherit;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.table th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.table tr:last-child td {
+  border-bottom: 0;
+}
+.table .who-cell b {
+  display: block;
+  color: var(--heading);
+}
+.table .who-cell span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.table .row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--st-confirmed-line);
+  background: var(--st-confirmed-bg);
+  color: var(--st-confirmed-ink);
+}
+.pill-ok {
+  border-color: var(--st-arrived-line);
+  background: var(--st-arrived-bg);
+  color: var(--st-arrived-ink);
+}
+.pill-off {
+  border-color: var(--st-cancelled-line);
+  background: var(--st-cancelled-bg);
+  color: var(--st-cancelled-ink);
+}
+.panel-pad {
+  padding: 18px 26px 24px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+.notice-line {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.temp-password {
+  display: block;
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-ctl);
+  border: 1px dashed var(--border-strong);
+  background: var(--card-2);
+  color: var(--heading);
+  font: 600 17px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.04em;
+  user-select: all;
+  word-break: break-all;
+}
+.stack {
+  display: grid;
+  gap: 18px;
 }
 
 /* ---------- Laptop widths (901-1439 px): nothing clipped ---------- */

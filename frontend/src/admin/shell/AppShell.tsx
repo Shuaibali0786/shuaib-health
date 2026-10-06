@@ -1,5 +1,8 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { SessionBoundary } from "@/admin/auth/SessionBoundary";
+import { SignOutButton } from "@/admin/auth/SignOutButton";
 import type { Viewer } from "@/admin/lib/schemas";
 import { LiveStatusProvider } from "@/admin/state/liveStatus";
 import { CREDIT } from "@/lib/honesty";
@@ -20,6 +23,7 @@ export function AppShell({ viewer, clinicName, serverNow, children }: { viewer: 
   const name = viewer.displayName ?? "Demo viewer";
   return (
     <LiveStatusProvider>
+      <SessionBoundary viewer={viewer} />
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
@@ -39,6 +43,12 @@ export function AppShell({ viewer, clinicName, serverNow, children }: { viewer: 
                 <span>{roleLabel(viewer)}</span>
               </div>
             </div>
+            {viewer.kind === "staff" ? (
+              <Link href="/admin/account/password" prefetch={false} className="btn btn-quiet btn-sm">
+                Change password
+              </Link>
+            ) : null}
+            <SignOutButton />
           </div>
         </aside>
         <div className="main">

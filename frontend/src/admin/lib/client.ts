@@ -30,6 +30,15 @@ export class AdminApiError extends Error {
 }
 
 let csrfToken: string | null = null;
+const sessionEndedListeners = new Set<(code: AdminApiError["code"]) => void>();
+
+/** Called when any request finds the session over (401), so one dialog can offer sign-in again. */
+export function onSessionEnded(listener: (code: AdminApiError["code"]) => void): () => void {
+  sessionEndedListeners.add(listener);
+  return () => {
+    sessionEndedListeners.delete(listener);
+  };
+}
 
 /** The session's CSRF token, learned from `me` / sign-in. It is sent as `X-CSRF-Token` on every non-GET. */
 export function setCsrfToken(token: string | null): void {
@@ -37,7 +46,7 @@ export function setCsrfToken(token: string | null): void {
 }
 
 export type AdminRequest = {
-  method?: "GET" | "POST" | "PATCH";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   /** Path after `/api/admin/`, for example `"overview"` or `"bookings/search"`. */
   path: string;
   body?: unknown;
@@ -74,7 +83,7 @@ export async function adminRequest<T>(request: AdminRequest, schema: z.ZodType<T
 
   let body: unknown = null;
   try {
-    body = await res.json();
+    if (res.status !== 204) body = await res.json();
   } catch {
     // An empty or non-JSON body stays null.
   }
@@ -82,7 +91,10 @@ export async function adminRequest<T>(request: AdminRequest, schema: z.ZodType<T
   if (!res.ok) {
     const parsed = ErrorResponseSchema.safeParse(body);
     const code = parsed.success ? parsed.data.error.code : res.status >= 500 ? "upstream_error" : "invalid_response";
-    throw new AdminApiError(res.status, code, retryAfterSeconds(res), body);
+    const failure = new AdminApiError(res.status, code, retryAfterSeconds(res), body);
+    // Only a request made with a session can end one; a failed sign-in is a 401 too.
+    if (res.status === 401 && failure.isSessionEnded) for (const listener of sessionEndedListeners) listener(code);
+    throw failure;
   }
   const parsed = schema.safeParse(body);
   if (!parsed.success) throw new AdminApiError(res.status, "invalid_response");

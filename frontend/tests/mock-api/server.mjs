@@ -206,6 +206,7 @@ export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok"
       state.resources = null;
       state.log = {};
       booking.reset();
+      admin.reset();
       res.writeHead(204).end();
       return;
     }
@@ -220,7 +221,8 @@ export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok"
 
     if (path.startsWith("/api/v1/admin/")) {
       const mode = ADMIN_MODES.includes(state.mode) ? state.mode : "ok";
-      const call = admin.handle({ method: req.method ?? "GET", path, headers: req.headers, bodyText: "", mode });
+      const bodyText = req.method === "POST" || req.method === "PATCH" ? await readBody(req) : "";
+      const call = admin.handle({ method: req.method ?? "GET", path, headers: req.headers, bodyText, mode });
       (state.log.admin ??= []).push(call.entry);
       if (mode === "admin-down") {
         req.socket.destroy();

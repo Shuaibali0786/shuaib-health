@@ -9,6 +9,8 @@ import { getSiteConfig } from "@/lib/content";
 // Every signed-in screen is private and per request.
 export const dynamic = "force-dynamic";
 
+const PASSWORD_PAGE = "/admin/account/password";
+
 /** The pathname the proxy recorded, if it is a plain /admin path; never a query string or another host. */
 async function requestedPath(): Promise<string> {
   const value = (await headers()).get("x-cc-pathname") ?? "";
@@ -31,6 +33,9 @@ export default async function AuthenticatedLayout({ children }: LayoutProps<"/ad
       </main>
     );
   }
+
+  // A temporary or reset password must be replaced before anything else (the backend refuses reads too).
+  if (result.viewer.mustChangePassword && (await requestedPath()) !== PASSWORD_PAGE) redirect(PASSWORD_PAGE);
 
   const site = await getSiteConfig();
   return (

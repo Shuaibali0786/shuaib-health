@@ -25,7 +25,9 @@ function Modal({ open, onClose, title, children, actions, role }: DialogProps & 
       <div className="scrim over" onClick={onClose} aria-hidden="true" />
       <div ref={panel} role={role} aria-modal="true" aria-labelledby={titleId} aria-describedby={bodyId} tabIndex={-1} className="dialog">
         <h2 id={titleId}>{title}</h2>
-        <p id={bodyId}>{children}</p>
+        <div id={bodyId} className="dialog-body">
+          {children}
+        </div>
         <div className="acts" ref={safe}>
           {actions}
         </div>

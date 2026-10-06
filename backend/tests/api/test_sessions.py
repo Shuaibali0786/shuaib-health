@@ -156,7 +156,8 @@ def test_change_password_needs_the_current_password(
         json={"currentPassword": "not-the-password-1", "newPassword": NEW_PASSWORD},
         headers=headers(issued["token"], issued["viewer"]["csrfToken"]),
     )
-    assert response.status_code == 401
+    assert (response.status_code, error_code(response)) == (422, "validation_error")
+    assert response.json()["error"]["details"][0]["field"] == "currentPassword"
     assert cc_client.get(ME, headers=headers(issued["token"])).status_code == 200
 
 

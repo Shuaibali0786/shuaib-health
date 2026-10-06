@@ -16,7 +16,7 @@ from app import models as m
 from app.auth import audit, events, passwords, sessions, throttle
 from app.auth.deps import Viewer
 from app.booking.privacy import fingerprint
-from app.errors import AdminError, NotFound
+from app.errors import AdminError, NotFound, RequestInvalid
 from app.settings import Settings
 
 Role = Literal["admin", "receptionist"]
@@ -136,7 +136,8 @@ def change_password(
     if staff is None:
         raise AdminError("demo_read_only")
     if not passwords.verify_password(staff.password_hash, current_password):
-        raise AdminError("sign_in_failed")
+        # 422, not 401: the session is fine, the form field is wrong (a 401 would sign them out).
+        raise RequestInvalid("currentPassword", "is incorrect")
     enforce_policy(new_password, staff.email, staff.password_hash)
     staff.password_hash = passwords.hash_password(new_password)
     staff.must_change_password = False
