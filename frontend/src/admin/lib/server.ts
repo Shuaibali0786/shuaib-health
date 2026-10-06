@@ -103,7 +103,28 @@ export async function adminGet(path: string): Promise<AdminBackendResult> {
   });
 }
 
-export type ViewerResult = { kind: "ok"; viewer: Viewer } | { kind: "signed-out" } | { kind: "unavailable" };
+/**
+ * A read sent as POST for a server component (the bookings search keeps personal search terms out of
+ * addresses). The CSRF token is the signed-in viewer's own, which `me` returns to this server.
+ */
+export async function adminPostRead(path: string, body: unknown, csrfToken: string): Promise<AdminBackendResult> {
+  const matched = matchAdminRoute("POST", path.split("/"));
+  if (!matched || matched.invalid.length > 0) throw new ApiError("invalid");
+  const sessionToken = (await cookies()).get(SESSION_COOKIE)?.value;
+  return callAdminBackend({
+    method: "POST",
+    path: matched.backendPath as `/${string}`,
+    template: matched.template,
+    body,
+    sessionToken,
+    csrfToken,
+    clientIp: clientIpFrom(await headers()),
+    requestId: crypto.randomUUID(),
+    timeoutMs: matched.route.timeoutMs,
+  });
+}
+
+export type ViewerResult ={ kind: "ok"; viewer: Viewer } | { kind: "signed-out" } | { kind: "unavailable" };
 
 /**
  * Who is looking at this page, asked of the backend once per request (React `cache` shares the answer

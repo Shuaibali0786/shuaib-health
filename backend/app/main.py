@@ -24,6 +24,8 @@ from app.middleware.request_id import RequestIdMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.routers import (
     admin_auth,
+    admin_bookings,
+    admin_dashboard,
     admin_staff,
     appointments,
     clinic,
@@ -103,6 +105,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(appointments.router)
     api.include_router(admin_auth.router)
     api.include_router(admin_staff.router)
+    api.include_router(admin_bookings.router)
+    api.include_router(admin_dashboard.router)
     app.include_router(api)
 
     # add_middleware wraps the current stack, so the LAST one added is the OUTERMOST.

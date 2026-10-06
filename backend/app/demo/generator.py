@@ -220,6 +220,14 @@ def _slots(doctor: DemoDoctor, weekday: int) -> list[int]:
     ]
 
 
+OPERATOR_CODES: Final = ("00", "01", "15", "21", "31", "33", "40", "45")
+
+
+def _phone(serial: int) -> str:
+    """A sample mobile number in the 0300-0345 ranges; ``example`` numbers, never real ones."""
+    return f"+923{OPERATOR_CODES[serial % len(OPERATOR_CODES)]}000{serial:04d}"
+
+
 def _staff(today: date) -> tuple[DemoStaff, ...]:
     return tuple(
         DemoStaff(
@@ -280,7 +288,7 @@ def _bookings(
                         patient_age=age,
                         patient_gender=gender,
                         booked_by=booked_by,
-                        phone=f"+92300000{int(rnd.random() * 10000):04d}",
+                        phone=_phone(int(rnd.random() * 10000)),
                         email=f"{contact.lower()}{int(rnd.random() * 90) + 10}@example.com",
                         reason=_pick(rnd, names.REASONS[doctor.department]),
                         fee_pkr=doctor.fee_pkr,

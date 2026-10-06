@@ -5,6 +5,9 @@ import { useEffect, useRef } from "react";
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/** Open modals, innermost last: a dialog opened over the drawer handles Tab and Escape, the drawer waits. */
+const openModals: object[] = [];
+
 function focusables(container: HTMLElement): HTMLElement[] {
   return [...container.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => !el.hasAttribute("hidden") && el.getAttribute("aria-hidden") !== "true");
 }
@@ -31,11 +34,13 @@ export function useModal(open: boolean, onClose: () => void, initialFocus?: () =
     if (!open) return;
     const container = panel.current;
     if (!container) return;
+    const token = {};
+    openModals.push(token);
     opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     (pickInitial.current?.() ?? focusables(container)[0] ?? container).focus();
 
     function onKeyDown(event: KeyboardEvent) {
-      if (!container) return;
+      if (!container || openModals[openModals.length - 1] !== token) return;
       if (event.key === "Escape") {
         event.stopPropagation();
         close.current();
@@ -66,6 +71,7 @@ export function useModal(open: boolean, onClose: () => void, initialFocus?: () =
     document.addEventListener("keydown", onKeyDown, true);
     return () => {
       document.removeEventListener("keydown", onKeyDown, true);
+      openModals.splice(openModals.indexOf(token), 1);
       const target = opener.current;
       if (target && document.contains(target)) target.focus();
     };

@@ -70,6 +70,11 @@ export class DemoOverlay {
     return this.changes.get(reference) ?? [];
   }
 
+  /** Every booking the visitor has changed, for adjusting counts. */
+  references(): string[] {
+    return [...this.status.keys()];
+  }
+
   reset(): void {
     this.status = new Map();
     this.changes = new Map();

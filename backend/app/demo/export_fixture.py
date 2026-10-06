@@ -15,6 +15,7 @@ from collections.abc import Sequence
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from app.command_centre.masking import short_name
 from app.demo import generator
@@ -40,6 +41,13 @@ def build_fixture(demo_date: date, clinic_time: time) -> dict[str, Any]:
         b
         for b in source.dataset.bookings
         if b.starts_at.astimezone(generator.CLINIC_ZONE).date() == demo_date
+    ]
+    zone = ZoneInfo(CLINIC_TZ)
+    details = [
+        source.detail(b.reference, zone, now).model_dump(
+            mode="json", by_alias=True, exclude_none=True
+        )
+        for b in sorted(day, key=lambda item: (item.starts_at, item.doctor_name, item.reference))
     ]
     return {
         "meta": {
@@ -69,6 +77,8 @@ def build_fixture(demo_date: date, clinic_time: time) -> dict[str, Any]:
             }
             for member in source.staff()
         ],
+        "lookups": source.lookups().model_dump(mode="json", by_alias=True, exclude_none=True),
+        "details": details,
         "bookings": [
             {
                 "reference": b.reference,

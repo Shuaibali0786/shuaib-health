@@ -25,13 +25,7 @@ ADMIN_PREFIX = "/api/v1/admin/"
 # operationId values whose routes do not exist yet. Remove an entry when its route lands.
 PENDING_ADMIN_OPERATIONS: frozenset[str] = frozenset(
     {
-        "adminLookups",
         "adminOverview",
-        "adminBookingSearch",
-        "adminBookingDetail",
-        "adminBookingChangeStatus",
-        "adminBookingUndoStatus",
-        "adminBookingRevealPhone",
         "adminInsights",
         "adminDoctorsToday",
         "adminActivity",

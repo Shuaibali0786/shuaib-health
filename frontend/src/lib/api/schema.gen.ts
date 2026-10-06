@@ -1382,6 +1382,8 @@ export interface components {
             version: number;
             /** @example Ayesha K. */
             patientNameMasked: string;
+            /** @example 0300****567 */
+            phoneMasked: string;
             doctor: components["schemas"]["DoctorRef"];
             /** @description server-computed with the clock (FR-023/024) */
             allowedNext: components["schemas"]["BookingStatus"][];
@@ -1389,10 +1391,12 @@ export interface components {
         };
         BookingDetail: components["schemas"]["BookingSummary"] & {
             patientName: string;
-            /** @example 0300****567 */
-            phoneMasked: string;
             emailMasked?: string | null;
             reason?: string | null;
+            /** @description Pediatrics (demo sample data): the child's age */
+            patientAge?: number;
+            /** @description Pediatrics (demo sample data): mother or father */
+            bookedBy?: string;
             feePkr: number;
             /** Format: date-time */
             bookedAt: string;
@@ -1424,6 +1428,10 @@ export interface components {
         BookingPage: {
             items: components["schemas"]["BookingSummary"][];
             total: number;
+            /** @description bookings per status for the same filters, ignoring the status filter (the chips) */
+            statusCounts?: {
+                [key: string]: number;
+            };
             page: number;
             /** @constant */
             pageSize: 20;

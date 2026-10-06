@@ -188,3 +188,37 @@ The earlier pytest E/F marks (73 errors/failures) were all one cause: the commit
 | Lighthouse for pages with the demo button | not run |
 
 **Visual baselines regenerated (62 PNGs, desktop + mobile).** Why: every public page's footer gained the "View Demo Dashboard" button; the diff image of one page showed only that button changed. The About page gained a short "See how the clinic team works" section.
+
+## Part A (small fixes, before Phase 5) — commit 7e30681
+
+Announcement bar above the navbar on every public page; navy side column also fills the strip under the shell; demo card "Read-only · Admin view"; five realistic sample staff with titles and relative last sign-in times (new optional `jobTitle`). Visual baselines regenerated (62): pixel diff against the old ones shows only the added 40 px bar and the 40 px offset; below the bar the only differences are a few anti-aliasing pixels (pill borders), content identical. The a11y focus-ring "under the header" check was tightened to a real overlap test.
+
+## Phase 5 (US4 — Bookings)
+
+| Tasks | Notes |
+|-------|-------|
+| T085–T089, T093–T096, T105 backend | status rules (pure), search with `statusCounts`, detail, status change / undo / reveal in one transaction each, lookups; demo equivalents in `DemoSource` |
+| T090–T092, T097–T104 frontend | mock API (`admin-bookings.mjs`), table, cards, filters, drawer, confirm, undo toast, phone reveal, Bookings page |
+
+**Decisions and deviations**
+- Contract additions (both copies): `phoneMasked` moved onto `BookingSummary` (lists show a masked phone), `statusCounts` on `BookingPage` (chip counts), `patientAge` / `bookedBy` on `BookingDetail` (Pediatrics, demo), `BookingChanged` used for every 409 on a booking write.
+- History order and "latest change" use `(occurred_at, version_after)` so two changes in the same instant stay ordered.
+- A nested dialog (confirm over the drawer) handles Tab and Escape first (modal stack in `useModal`).
+- T105: the demo/staff separation cases for bookings live in `tests/api/test_bookings_admin.py`.
+- Demo rows keep the server's `allowedNext` until the visitor changes them; then the website's copy of the rules applies (kept equal to the mock's copy by a grid test).
+- e2e cannot assert the "Arrived can be marked from…" hint: the Next server clock and the mock's frozen clock differ in tests (unit-tested instead).
+- Sample phone numbers now vary in prefix (0300–0345).
+
+## Checkpoint 5 (US4)
+
+| Check | Result |
+|-------|--------|
+| `ruff check` / `ruff format --check` / `mypy` | pass / pass / **pass** (the 7 earlier errors were `mypy .` including migrations; configured `mypy` is clean) |
+| Backend pytest (full) | 865 passed, 1 failed, 1 skipped, 4 xfailed |
+| the 1 failure | `test_generation_is_fast` (<0.15 s): 0.18 s on this machine, and 0.187 s at HEAD without my changes, so a slow-machine timing flake, not a regression |
+| `npm run typecheck` / `npm run lint` | pass / pass |
+| Vitest | **1229 passed** (89 files) |
+| Playwright main + admin, all projects | **1469 passed**, 146 skipped (viewport-specific), 0 failed |
+| `admin-bookings.spec.ts` | green on desktop and mobile |
+| `check-admin-isolation.mjs` | OK |
+| SC-003 (search to Completed) | well under 15 s in the e2e (asserted < 15 s) |

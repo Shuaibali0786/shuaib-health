@@ -13,6 +13,8 @@
 
 import { readFileSync } from "node:fs";
 
+import { createBookings } from "./admin-bookings.mjs";
+
 const DEMO_DAY = JSON.parse(readFileSync(new URL("../fixtures/admin/demo-day.json", import.meta.url), "utf8"));
 
 export const ADMIN_MODES = ["admin-down", "admin-slow", "session-expired", "booking-changed"];
@@ -64,11 +66,13 @@ export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45
   let sessions = baseSessions();
   let staff = baseStaff();
   let counter = 0;
+  const bookings = createBookings({ fixture: DEMO_DAY, now });
 
   const reset = () => {
     sessions = baseSessions();
     staff = baseStaff();
     counter = 0;
+    bookings.reset();
   };
 
   const parse = (bodyText) => {
@@ -221,10 +225,22 @@ export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45
           return { status: 200, body: publicStaff(member) };
         }
 
+        const bookingRoute = /^\/(lookups|bookings\/)/.test(route) || route === "/bookings/search";
+        if (bookingRoute) {
+          // Reads, the search and the phone reveal are open to staff and demo; a status change is staff-only.
+          // Every POST carries the CSRF token of a staff session.
+          const result = gate(headers, mode);
+          if (result.error) return result.error;
+          if (method === "POST" && result.session.kind === "staff" && headers["x-csrf-token"] !== csrfFor(result.token)) return refuse(403, "csrf_failed", "The request could not be verified.");
+          if (method === "POST" && /\/status(\/undo)?$/.test(route) && result.session.kind === "demo") return refuse(403, "demo_read_only", "The demo is read-only.");
+          const answer = bookings.handle({ method, route, bodyText, session: result.session, mode });
+          if (answer) return answer;
+        }
+
         return refuse(404, "not_found", "Not found.");
       },
     };
   }
 
-  return { handle, reset };
+  return { handle, reset, newBooking: bookings.createFresh };
 }

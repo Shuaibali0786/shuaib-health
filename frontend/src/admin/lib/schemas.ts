@@ -45,3 +45,63 @@ export const StaffListSchema = z.array(StaffSchema);
 
 export type SessionIssued = z.infer<typeof SessionIssuedSchema>;
 export type Staff = z.infer<typeof StaffSchema>;
+
+// ----- Bookings (US4) -----------------------------------------------------------------------
+
+export const DoctorRefSchema = z.object({ id: z.uuid(), name: z.string(), departmentName: z.string(), isActive: z.boolean().optional() });
+export const DepartmentRefSchema = z.object({ id: z.uuid(), name: z.string(), isActive: z.boolean().optional() });
+export const LookupsSchema = z.object({ doctors: z.array(DoctorRefSchema), departments: z.array(DepartmentRefSchema) });
+
+export const BookingSummarySchema = z.object({
+  reference: z.string(),
+  startsAt: z.iso.datetime({ offset: true }),
+  endsAt: z.iso.datetime({ offset: true }),
+  localDate: z.iso.date(),
+  localTime: z.string(),
+  status: BookingStatusSchema,
+  version: z.number().int(),
+  patientNameMasked: z.string(),
+  phoneMasked: z.string(),
+  doctor: DoctorRefSchema,
+  allowedNext: z.array(BookingStatusSchema),
+  isSample: z.boolean().optional(),
+});
+
+export const HistoryItemSchema = z.object({
+  at: z.iso.datetime({ offset: true }),
+  fromStatus: BookingStatusSchema.nullable().optional(),
+  toStatus: BookingStatusSchema,
+  actor: z.string(),
+  isUndo: z.boolean(),
+});
+
+export const BookingDetailSchema = BookingSummarySchema.extend({
+  patientName: z.string(),
+  emailMasked: z.string().nullable().optional(),
+  reason: z.string().nullable().optional(),
+  patientAge: z.number().int().optional(),
+  bookedBy: z.string().optional(),
+  feePkr: z.number().int(),
+  bookedAt: z.iso.datetime({ offset: true }),
+  history: z.array(HistoryItemSchema),
+});
+
+export const BookingPageSchema = z.object({
+  items: z.array(BookingSummarySchema),
+  total: z.number().int(),
+  statusCounts: z.partialRecord(BookingStatusSchema, z.number().int()).optional(),
+  page: z.number().int(),
+  pageSize: z.number().int(),
+});
+
+export const StatusChangeResultSchema = z.object({ booking: BookingDetailSchema, changeId: z.uuid(), undoExpiresAt: z.iso.datetime({ offset: true }) });
+export const PhoneRevealSchema = z.object({ phone: z.string(), telHref: z.string(), maskAfterSeconds: z.number().int() });
+
+export type DoctorRef = z.infer<typeof DoctorRefSchema>;
+export type Lookups = z.infer<typeof LookupsSchema>;
+export type BookingSummary = z.infer<typeof BookingSummarySchema>;
+export type BookingDetail = z.infer<typeof BookingDetailSchema>;
+export type BookingPage = z.infer<typeof BookingPageSchema>;
+export type HistoryItem = z.infer<typeof HistoryItemSchema>;
+export type StatusChangeResult = z.infer<typeof StatusChangeResultSchema>;
+export type PhoneReveal = z.infer<typeof PhoneRevealSchema>;

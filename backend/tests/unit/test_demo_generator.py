@@ -1,5 +1,6 @@
 """The demo dataset: deterministic, department-realistic, and fast (FR-038, data-model §9)."""
 
+import re
 import time
 from collections import Counter
 from datetime import UTC, date, datetime, timedelta
@@ -42,7 +43,7 @@ def test_range_references_and_sample_flag() -> None:
     assert len(refs) == len(set(refs))
     assert all(len(r) == 10 and r[0] == "D" and set(r[1:]) <= CROCKFORD for r in refs)
     assert all(b.is_sample for b in ds.bookings)
-    assert all(b.phone.startswith("+92300000") and len(b.phone) == 13 for b in ds.bookings)
+    assert all(re.fullmatch(r"\+923[0-9]{2}000[0-9]{4}", b.phone) for b in ds.bookings)
 
 
 def test_no_double_booked_slots() -> None:

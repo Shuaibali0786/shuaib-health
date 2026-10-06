@@ -65,6 +65,2382 @@
       "isSample": true
     }
   ],
+  "lookups": {
+    "doctors": [
+      {
+        "id": "8fe6a141-f1d9-5e46-843d-35f8d97973db",
+        "name": "Dr. Ayesha Rahman",
+        "departmentName": "Gynecology",
+        "isActive": true
+      },
+      {
+        "id": "9df72deb-8c94-5c28-8a84-3469ffcc4c47",
+        "name": "Dr. Bilal Ansari",
+        "departmentName": "Dental",
+        "isActive": true
+      },
+      {
+        "id": "46e42d11-980e-5865-8427-a3312f458714",
+        "name": "Dr. Faisal Chaudhry",
+        "departmentName": "Pediatrics",
+        "isActive": true
+      },
+      {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      {
+        "id": "9c809090-bbfd-591a-96c7-badc7be6514d",
+        "name": "Dr. Omar Sheikh",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      {
+        "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+        "name": "Dr. Sana Farooqui",
+        "departmentName": "Pediatrics",
+        "isActive": true
+      },
+      {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      }
+    ],
+    "departments": [
+      {
+        "id": "45b0a8fb-62d0-57a6-87f7-f5e3305fff7a",
+        "name": "Cardiology",
+        "isActive": true
+      },
+      {
+        "id": "67c0b9bf-0103-5850-b500-e78c1bea4f32",
+        "name": "Dental",
+        "isActive": true
+      },
+      {
+        "id": "7cf5e042-86bd-538f-8915-63ab352b512b",
+        "name": "Dermatology",
+        "isActive": true
+      },
+      {
+        "id": "5e72ac34-1675-5657-93ea-dc98db7a823a",
+        "name": "General Medicine",
+        "isActive": true
+      },
+      {
+        "id": "7e943166-661c-538f-9bdd-9f387cde2d34",
+        "name": "Gynecology",
+        "isActive": true
+      },
+      {
+        "id": "5ad7a16d-586e-501a-a154-ad683366e3ee",
+        "name": "Pathology Lab",
+        "isActive": true
+      },
+      {
+        "id": "1a2f55d9-7c88-5ab7-afb0-1ab1cffbff94",
+        "name": "Pediatrics",
+        "isActive": true
+      }
+    ]
+  },
+  "details": [
+    {
+      "reference": "D6X0A10GGY",
+      "startsAt": "2026-10-05T04:00:00Z",
+      "endsAt": "2026-10-05T04:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "09:00",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Talha Z.",
+      "phoneMasked": "0340****662",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Talha Zaidi",
+      "emailMasked": "t****@e****.com",
+      "reason": "Follow-up visit",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-01T03:41:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T03:41:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T03:55:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Bilal Raza",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:15:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Bilal Raza",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 67
+    },
+    {
+      "reference": "DVBM27XR0A",
+      "startsAt": "2026-10-05T04:00:00Z",
+      "endsAt": "2026-10-05T04:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "09:00",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Kamran B.",
+      "phoneMasked": "0300****952",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Kamran Baig",
+      "emailMasked": "k****@e****.com",
+      "reason": "Thyroid profile review",
+      "feePkr": 1500,
+      "bookedAt": "2026-10-02T02:29:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T02:29:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T03:55:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Ayesha Khan",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:15:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Ayesha Khan",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 38
+    },
+    {
+      "reference": "DXYHP6Q5DQ",
+      "startsAt": "2026-10-05T04:15:00Z",
+      "endsAt": "2026-10-05T04:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "09:15",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Usman B.",
+      "phoneMasked": "0331****532",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Usman Butt",
+      "emailMasked": "u****@e****.com",
+      "reason": "Prescription renewal",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-02T01:18:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T01:18:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:10:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Sana Malik",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:30:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Sana Malik",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 37
+    },
+    {
+      "reference": "DV06FQTQ4C",
+      "startsAt": "2026-10-05T04:15:00Z",
+      "endsAt": "2026-10-05T04:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "09:15",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Zubair A.",
+      "phoneMasked": "0321****803",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Zubair Anwar",
+      "emailMasked": "z****@e****.com",
+      "reason": "Sample collection",
+      "feePkr": 1500,
+      "bookedAt": "2026-10-03T03:25:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T03:25:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:10:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Bilal Raza",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:30:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Bilal Raza",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 71
+    },
+    {
+      "reference": "DB1MYZ1FN8",
+      "startsAt": "2026-10-05T04:30:00Z",
+      "endsAt": "2026-10-05T04:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "09:30",
+      "status": "cancelled",
+      "version": 1,
+      "patientNameMasked": "Zubair S.",
+      "phoneMasked": "0331****212",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Zubair Shah",
+      "emailMasked": "z****@e****.com",
+      "reason": "Follow-up visit",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-03T11:12:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T11:12:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-04T11:12:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "cancelled",
+          "actor": "Hina Siddiqui",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 32
+    },
+    {
+      "reference": "DSKW4EN65Z",
+      "startsAt": "2026-10-05T04:30:00Z",
+      "endsAt": "2026-10-05T04:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "09:30",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Amna B.",
+      "phoneMasked": "0321****051",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Amna Baig",
+      "emailMasked": "a****@e****.com",
+      "reason": "Diabetes screening",
+      "feePkr": 1500,
+      "bookedAt": "2026-10-01T23:59:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T23:59:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:25:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Sana Malik",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:45:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Sana Malik",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 39
+    },
+    {
+      "reference": "DYYHN8T0XQ",
+      "startsAt": "2026-10-05T04:45:00Z",
+      "endsAt": "2026-10-05T05:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "09:45",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Nimra A.",
+      "phoneMasked": "0301****945",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Nimra Aslam",
+      "emailMasked": "n****@e****.com",
+      "reason": "Follow-up visit",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-01T03:12:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T03:12:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:40:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Omar Farooq",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:00:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Omar Farooq",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 22
+    },
+    {
+      "reference": "DHEYHYB36R",
+      "startsAt": "2026-10-05T04:45:00Z",
+      "endsAt": "2026-10-05T05:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "09:45",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Asad K.",
+      "phoneMasked": "0321****787",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Asad Khan",
+      "emailMasked": "a****@e****.com",
+      "reason": "Diabetes screening",
+      "feePkr": 1500,
+      "bookedAt": "2026-10-03T20:15:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T20:15:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:40:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Hina Siddiqui",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:00:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Hina Siddiqui",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 73
+    },
+    {
+      "reference": "DDDNHYAF5V",
+      "startsAt": "2026-10-05T05:00:00Z",
+      "endsAt": "2026-10-05T05:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "10:00",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Talha N.",
+      "phoneMasked": "0340****446",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Talha Nadeem",
+      "emailMasked": "t****@e****.com",
+      "reason": "Prescription renewal",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-01T00:23:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T00:23:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:55:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Hina Siddiqui",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:15:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Hina Siddiqui",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 63
+    },
+    {
+      "reference": "DZK01MH9JN",
+      "startsAt": "2026-10-05T05:00:00Z",
+      "endsAt": "2026-10-05T05:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "10:00",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Anaya R.",
+      "phoneMasked": "0301****617",
+      "doctor": {
+        "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+        "name": "Dr. Sana Farooqui",
+        "departmentName": "Pediatrics",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Anaya Raza",
+      "emailMasked": "a****@e****.com",
+      "reason": "Cough and cold",
+      "feePkr": 2500,
+      "bookedAt": "2026-10-01T19:57:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T19:57:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:55:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Omar Farooq",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:15:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Omar Farooq",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 6,
+      "bookedBy": "father"
+    },
+    {
+      "reference": "D2PWBGYWAV",
+      "startsAt": "2026-10-05T05:00:00Z",
+      "endsAt": "2026-10-05T05:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "10:00",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Saba K.",
+      "phoneMasked": "0331****164",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Saba Khan",
+      "emailMasked": "s****@e****.com",
+      "reason": "Sample collection",
+      "feePkr": 1500,
+      "bookedAt": "2026-10-02T04:22:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T04:22:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T04:55:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Sana Malik",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:15:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Sana Malik",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 51
+    },
+    {
+      "reference": "DNWF52X3Y3",
+      "startsAt": "2026-10-05T05:15:00Z",
+      "endsAt": "2026-10-05T05:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "10:15",
+      "status": "no_show",
+      "version": 1,
+      "patientNameMasked": "Usman A.",
+      "phoneMasked": "0331****612",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Usman Anwar",
+      "emailMasked": "u****@e****.com",
+      "reason": "Follow-up visit",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-03T04:32:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T04:32:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:30:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "no_show",
+          "actor": "Ayesha Khan",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 57
+    },
+    {
+      "reference": "DGWQB3VW5T",
+      "startsAt": "2026-10-05T05:15:00Z",
+      "endsAt": "2026-10-05T05:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "10:15",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Amna I.",
+      "phoneMasked": "0345****887",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Amna Iqbal",
+      "emailMasked": "a****@e****.com",
+      "reason": "Blood test review",
+      "feePkr": 1500,
+      "bookedAt": "2026-09-30T19:28:00Z",
+      "history": [
+        {
+          "at": "2026-09-30T19:28:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:10:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Sana Malik",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:30:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Sana Malik",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 38
+    },
+    {
+      "reference": "DYS95J0FHK",
+      "startsAt": "2026-10-05T05:30:00Z",
+      "endsAt": "2026-10-05T05:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "10:30",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Hadi Z.",
+      "phoneMasked": "0301****009",
+      "doctor": {
+        "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+        "name": "Dr. Sana Farooqui",
+        "departmentName": "Pediatrics",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Hadi Zaidi",
+      "emailMasked": "z****@e****.com",
+      "reason": "Cough and cold",
+      "feePkr": 2500,
+      "bookedAt": "2026-10-03T04:20:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T04:20:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:25:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Sana Malik",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:45:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Sana Malik",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 8,
+      "bookedBy": "father"
+    },
+    {
+      "reference": "DE4JRBJNQ6",
+      "startsAt": "2026-10-05T05:30:00Z",
+      "endsAt": "2026-10-05T05:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "10:30",
+      "status": "no_show",
+      "version": 1,
+      "patientNameMasked": "Iqra T.",
+      "phoneMasked": "0345****215",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Iqra Tariq",
+      "emailMasked": "i****@e****.com",
+      "reason": "Diabetes screening",
+      "feePkr": 1500,
+      "bookedAt": "2026-10-03T22:04:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T22:04:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:45:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "no_show",
+          "actor": "Omar Farooq",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 48
+    },
+    {
+      "reference": "DAQDJDRTHB",
+      "startsAt": "2026-10-05T05:45:00Z",
+      "endsAt": "2026-10-05T06:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "10:45",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Talha R.",
+      "phoneMasked": "0333****149",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Talha Raza",
+      "emailMasked": "t****@e****.com",
+      "reason": "Routine check-up",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-03T17:07:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T17:07:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:40:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Omar Farooq",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T06:00:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Omar Farooq",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 46
+    },
+    {
+      "reference": "DBRY1ZCCFF",
+      "startsAt": "2026-10-05T05:45:00Z",
+      "endsAt": "2026-10-05T06:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "10:45",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Musa Z.",
+      "phoneMasked": "0340****462",
+      "doctor": {
+        "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+        "name": "Dr. Sana Farooqui",
+        "departmentName": "Pediatrics",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Musa Zaidi",
+      "emailMasked": "s****@e****.com",
+      "reason": "Vaccination",
+      "feePkr": 2500,
+      "bookedAt": "2026-10-02T00:58:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T00:58:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:40:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Omar Farooq",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T06:00:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Omar Farooq",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 4,
+      "bookedBy": "mother"
+    },
+    {
+      "reference": "DG93119VTX",
+      "startsAt": "2026-10-05T05:45:00Z",
+      "endsAt": "2026-10-05T06:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "10:45",
+      "status": "no_show",
+      "version": 1,
+      "patientNameMasked": "Rabia H.",
+      "phoneMasked": "0300****608",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Rabia Hussain",
+      "emailMasked": "r****@e****.com",
+      "reason": "Blood test review",
+      "feePkr": 1500,
+      "bookedAt": "2026-10-02T05:17:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T05:17:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T06:00:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "no_show",
+          "actor": "Ayesha Khan",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 36
+    },
+    {
+      "reference": "DHBKDS7EF7",
+      "startsAt": "2026-10-05T06:00:00Z",
+      "endsAt": "2026-10-05T06:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "11:00",
+      "status": "completed",
+      "version": 1,
+      "patientNameMasked": "Ayesha H.",
+      "phoneMasked": "0340****582",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Ayesha Hussain",
+      "emailMasked": "a****@e****.com",
+      "reason": "Skin rash",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-02T05:50:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T05:50:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T05:55:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Bilal Raza",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T06:15:00Z",
+          "fromStatus": "arrived",
+          "toStatus": "completed",
+          "actor": "Bilal Raza",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 38
+    },
+    {
+      "reference": "DS07KVTFFY",
+      "startsAt": "2026-10-05T06:00:00Z",
+      "endsAt": "2026-10-05T06:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "11:00",
+      "status": "no_show",
+      "version": 1,
+      "patientNameMasked": "Zubair A.",
+      "phoneMasked": "0315****978",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Zubair Anwar",
+      "emailMasked": "z****@e****.com",
+      "reason": "Sample collection",
+      "feePkr": 1500,
+      "bookedAt": "2026-10-03T08:06:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T08:06:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T06:15:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "no_show",
+          "actor": "Omar Farooq",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 48
+    },
+    {
+      "reference": "DQ94N8M9EM",
+      "startsAt": "2026-10-05T06:15:00Z",
+      "endsAt": "2026-10-05T06:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "11:15",
+      "status": "arrived",
+      "version": 1,
+      "patientNameMasked": "Danish R.",
+      "phoneMasked": "0345****375",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [
+        "completed",
+        "no_show"
+      ],
+      "isSample": true,
+      "patientName": "Danish Raza",
+      "emailMasked": "d****@e****.com",
+      "reason": "Fever and cough",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-02T02:28:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T02:28:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T06:10:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Hina Siddiqui",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 49
+    },
+    {
+      "reference": "DHSRPK5W32",
+      "startsAt": "2026-10-05T06:15:00Z",
+      "endsAt": "2026-10-05T06:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "11:15",
+      "status": "arrived",
+      "version": 1,
+      "patientNameMasked": "Hira K.",
+      "phoneMasked": "0333****189",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [
+        "completed",
+        "no_show"
+      ],
+      "isSample": true,
+      "patientName": "Hira Khan",
+      "emailMasked": "h****@e****.com",
+      "reason": "Diabetes screening",
+      "feePkr": 1500,
+      "bookedAt": "2026-10-02T21:02:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T21:02:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-05T06:10:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "arrived",
+          "actor": "Bilal Raza",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 74
+    },
+    {
+      "reference": "DYCSD9YE9Y",
+      "startsAt": "2026-10-05T06:30:00Z",
+      "endsAt": "2026-10-05T06:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "11:30",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Mehwish S.",
+      "phoneMasked": "0315****858",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Mehwish Shah",
+      "emailMasked": "m****@e****.com",
+      "reason": "Skin rash",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-01T21:16:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T21:16:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 23
+    },
+    {
+      "reference": "DKQQPPAEPW",
+      "startsAt": "2026-10-05T06:30:00Z",
+      "endsAt": "2026-10-05T06:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "11:30",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Arham K.",
+      "phoneMasked": "0315****746",
+      "doctor": {
+        "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+        "name": "Dr. Sana Farooqui",
+        "departmentName": "Pediatrics",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Arham Khan",
+      "emailMasked": "h****@e****.com",
+      "reason": "Growth check",
+      "feePkr": 2500,
+      "bookedAt": "2026-10-03T02:02:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T02:02:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 7,
+      "bookedBy": "mother"
+    },
+    {
+      "reference": "D8T3P23ZFB",
+      "startsAt": "2026-10-05T06:30:00Z",
+      "endsAt": "2026-10-05T06:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "11:30",
+      "status": "cancelled",
+      "version": 1,
+      "patientNameMasked": "Khadija Z.",
+      "phoneMasked": "0300****624",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [],
+      "isSample": true,
+      "patientName": "Khadija Zaidi",
+      "emailMasked": "k****@e****.com",
+      "reason": "Diabetes screening",
+      "feePkr": 1500,
+      "bookedAt": "2026-10-02T05:19:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T05:19:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        },
+        {
+          "at": "2026-10-03T05:19:00Z",
+          "fromStatus": "confirmed",
+          "toStatus": "cancelled",
+          "actor": "Bilal Raza",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 29
+    },
+    {
+      "reference": "DRHS8AJAE0",
+      "startsAt": "2026-10-05T06:45:00Z",
+      "endsAt": "2026-10-05T07:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "11:45",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Usman T.",
+      "phoneMasked": "0321****339",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Usman Tariq",
+      "emailMasked": "u****@e****.com",
+      "reason": "Blood pressure review",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-01T06:27:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T06:27:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 66
+    },
+    {
+      "reference": "DWEN25WXPY",
+      "startsAt": "2026-10-05T06:45:00Z",
+      "endsAt": "2026-10-05T07:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "11:45",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Anaya B.",
+      "phoneMasked": "0321****395",
+      "doctor": {
+        "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+        "name": "Dr. Sana Farooqui",
+        "departmentName": "Pediatrics",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Anaya Baig",
+      "emailMasked": "h****@e****.com",
+      "reason": "Growth check",
+      "feePkr": 2500,
+      "bookedAt": "2026-09-30T23:25:00Z",
+      "history": [
+        {
+          "at": "2026-09-30T23:25:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 1,
+      "bookedBy": "mother"
+    },
+    {
+      "reference": "DBVWRZMCEM",
+      "startsAt": "2026-10-05T06:45:00Z",
+      "endsAt": "2026-10-05T07:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "11:45",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Nimra L.",
+      "phoneMasked": "0333****037",
+      "doctor": {
+        "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+        "name": "Dr. Zainab Memon",
+        "departmentName": "Pathology Lab",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Nimra Latif",
+      "emailMasked": "n****@e****.com",
+      "reason": "Diabetes screening",
+      "feePkr": 1500,
+      "bookedAt": "2026-10-01T05:03:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T05:03:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 65
+    },
+    {
+      "reference": "D3YGBQSK6H",
+      "startsAt": "2026-10-05T07:00:00Z",
+      "endsAt": "2026-10-05T07:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "12:00",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Javeria A.",
+      "phoneMasked": "0340****446",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Javeria Anwar",
+      "emailMasked": "j****@e****.com",
+      "reason": "Blood pressure review",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-03T18:26:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T18:26:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 52
+    },
+    {
+      "reference": "D3VNRTTS1D",
+      "startsAt": "2026-10-05T07:00:00Z",
+      "endsAt": "2026-10-05T07:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "12:00",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Alishba S.",
+      "phoneMasked": "0315****482",
+      "doctor": {
+        "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+        "name": "Dr. Sana Farooqui",
+        "departmentName": "Pediatrics",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Alishba Siddiqui",
+      "emailMasked": "m****@e****.com",
+      "reason": "Vaccination",
+      "feePkr": 2500,
+      "bookedAt": "2026-10-04T04:18:00Z",
+      "history": [
+        {
+          "at": "2026-10-04T04:18:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 3,
+      "bookedBy": "mother"
+    },
+    {
+      "reference": "DXYFFD4ZKM",
+      "startsAt": "2026-10-05T07:15:00Z",
+      "endsAt": "2026-10-05T07:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "12:15",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Yasir I.",
+      "phoneMasked": "0321****587",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Yasir Iqbal",
+      "emailMasked": "y****@e****.com",
+      "reason": "Skin rash",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-02T22:17:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T22:17:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 54
+    },
+    {
+      "reference": "DJR9VCRKPB",
+      "startsAt": "2026-10-05T07:15:00Z",
+      "endsAt": "2026-10-05T07:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "12:15",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Hira R.",
+      "phoneMasked": "0300****080",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Hira Rehman",
+      "emailMasked": "h****@e****.com",
+      "reason": "Eczema flare-up",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-04T02:21:00Z",
+      "history": [
+        {
+          "at": "2026-10-04T02:21:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 52
+    },
+    {
+      "reference": "D32J57R6BJ",
+      "startsAt": "2026-10-05T07:30:00Z",
+      "endsAt": "2026-10-05T07:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "12:30",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Hira R.",
+      "phoneMasked": "0345****071",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Hira Rehman",
+      "emailMasked": "h****@e****.com",
+      "reason": "Acne review",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-03T04:53:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T04:53:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 26
+    },
+    {
+      "reference": "DRN15595W2",
+      "startsAt": "2026-10-05T07:45:00Z",
+      "endsAt": "2026-10-05T08:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "12:45",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Saad I.",
+      "phoneMasked": "0321****523",
+      "doctor": {
+        "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+        "name": "Dr. Hassan Mirza",
+        "departmentName": "General Medicine",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Saad Iqbal",
+      "emailMasked": "s****@e****.com",
+      "reason": "Routine check-up",
+      "feePkr": 2000,
+      "bookedAt": "2026-10-01T04:38:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T04:38:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 29
+    },
+    {
+      "reference": "DYB68MJPGS",
+      "startsAt": "2026-10-05T07:45:00Z",
+      "endsAt": "2026-10-05T08:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "12:45",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Zubair Z.",
+      "phoneMasked": "0340****318",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Zubair Zaidi",
+      "emailMasked": "z****@e****.com",
+      "reason": "Follow-up visit",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-01T23:43:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T23:43:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 41
+    },
+    {
+      "reference": "D0DCJTJ0Z9",
+      "startsAt": "2026-10-05T07:45:00Z",
+      "endsAt": "2026-10-05T08:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "12:45",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Inaya H.",
+      "phoneMasked": "0301****721",
+      "doctor": {
+        "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+        "name": "Dr. Sana Farooqui",
+        "departmentName": "Pediatrics",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Inaya Hussain",
+      "emailMasked": "m****@e****.com",
+      "reason": "Well-child check-up",
+      "feePkr": 2500,
+      "bookedAt": "2026-10-03T03:40:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T03:40:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 5,
+      "bookedBy": "mother"
+    },
+    {
+      "reference": "DTAKMJ3CC9",
+      "startsAt": "2026-10-05T08:00:00Z",
+      "endsAt": "2026-10-05T08:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "13:00",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Waqas A.",
+      "phoneMasked": "0300****560",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Waqas Anwar",
+      "emailMasked": "w****@e****.com",
+      "reason": "Mole check",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-01T22:38:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T22:38:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 30
+    },
+    {
+      "reference": "D5DN7HDY9E",
+      "startsAt": "2026-10-05T08:15:00Z",
+      "endsAt": "2026-10-05T08:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "13:15",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Sadia R.",
+      "phoneMasked": "0301****785",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "arrived",
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Sadia Rehman",
+      "emailMasked": "s****@e****.com",
+      "reason": "Eczema flare-up",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-04T07:19:00Z",
+      "history": [
+        {
+          "at": "2026-10-04T07:19:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 59
+    },
+    {
+      "reference": "DSXGRXRYQB",
+      "startsAt": "2026-10-05T08:30:00Z",
+      "endsAt": "2026-10-05T08:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "13:30",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Alishba B.",
+      "phoneMasked": "0331****716",
+      "doctor": {
+        "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+        "name": "Dr. Sana Farooqui",
+        "departmentName": "Pediatrics",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Alishba Baig",
+      "emailMasked": "s****@e****.com",
+      "reason": "Growth check",
+      "feePkr": 2500,
+      "bookedAt": "2026-10-03T05:55:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T05:55:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 0,
+      "bookedBy": "mother"
+    },
+    {
+      "reference": "DKZVBQZFW2",
+      "startsAt": "2026-10-05T09:00:00Z",
+      "endsAt": "2026-10-05T09:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "14:00",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Yasir B.",
+      "phoneMasked": "0315****018",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Yasir Butt",
+      "emailMasked": "y****@e****.com",
+      "reason": "Mole check",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-03T02:33:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T02:33:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 20
+    },
+    {
+      "reference": "DDFTR90RA8",
+      "startsAt": "2026-10-05T09:15:00Z",
+      "endsAt": "2026-10-05T09:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "14:15",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Fatima L.",
+      "phoneMasked": "0321****099",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Fatima Latif",
+      "emailMasked": "f****@e****.com",
+      "reason": "Acne review",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-02T02:23:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T02:23:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 58
+    },
+    {
+      "reference": "D4SVG7CY57",
+      "startsAt": "2026-10-05T09:45:00Z",
+      "endsAt": "2026-10-05T10:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "14:45",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Sana A.",
+      "phoneMasked": "0340****182",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Sana Akhtar",
+      "emailMasked": "s****@e****.com",
+      "reason": "Hair fall",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-03T03:13:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T03:13:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 34
+    },
+    {
+      "reference": "DCJ1368ENK",
+      "startsAt": "2026-10-05T10:00:00Z",
+      "endsAt": "2026-10-05T10:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "15:00",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Sana S.",
+      "phoneMasked": "0321****187",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Sana Shah",
+      "emailMasked": "s****@e****.com",
+      "reason": "Skin rash",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-02T22:59:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T22:59:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 50
+    },
+    {
+      "reference": "DF20ZZ7MJY",
+      "startsAt": "2026-10-05T10:30:00Z",
+      "endsAt": "2026-10-05T10:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "15:30",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Ali A.",
+      "phoneMasked": "0300****392",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Ali Anwar",
+      "emailMasked": "a****@e****.com",
+      "reason": "Mole check",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-03T02:08:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T02:08:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 27
+    },
+    {
+      "reference": "DHKMX3YVWK",
+      "startsAt": "2026-10-05T11:00:00Z",
+      "endsAt": "2026-10-05T11:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "16:00",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Nimra S.",
+      "phoneMasked": "0333****165",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Nimra Siddiqui",
+      "emailMasked": "n****@e****.com",
+      "reason": "Follow-up visit",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-04T10:40:00Z",
+      "history": [
+        {
+          "at": "2026-10-04T10:40:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 55
+    },
+    {
+      "reference": "DWB9M7CP5X",
+      "startsAt": "2026-10-05T11:30:00Z",
+      "endsAt": "2026-10-05T11:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "16:30",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Fatima J.",
+      "phoneMasked": "0340****478",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Fatima Javed",
+      "emailMasked": "f****@e****.com",
+      "reason": "Chest discomfort",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-03T18:48:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T18:48:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 62
+    },
+    {
+      "reference": "D453R60YFQ",
+      "startsAt": "2026-10-05T11:30:00Z",
+      "endsAt": "2026-10-05T11:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "16:30",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Ayesha Z.",
+      "phoneMasked": "0321****659",
+      "doctor": {
+        "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+        "name": "Dr. Maryam Baloch",
+        "departmentName": "Dermatology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Ayesha Zaidi",
+      "emailMasked": "a****@e****.com",
+      "reason": "Skin rash",
+      "feePkr": 3000,
+      "bookedAt": "2026-10-03T05:49:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T05:49:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 33
+    },
+    {
+      "reference": "DZD6VADAKC",
+      "startsAt": "2026-10-05T11:45:00Z",
+      "endsAt": "2026-10-05T12:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "16:45",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Iqra S.",
+      "phoneMasked": "0321****219",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Iqra Shah",
+      "emailMasked": "i****@e****.com",
+      "reason": "Palpitations",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-02T08:58:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T08:58:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 69
+    },
+    {
+      "reference": "DVNE864AR4",
+      "startsAt": "2026-10-05T12:15:00Z",
+      "endsAt": "2026-10-05T12:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "17:15",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Danish S.",
+      "phoneMasked": "0340****974",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Danish Shah",
+      "emailMasked": "d****@e****.com",
+      "reason": "Chest discomfort",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-03T04:39:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T04:39:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 74
+    },
+    {
+      "reference": "DTQ4GW8GG5",
+      "startsAt": "2026-10-05T12:45:00Z",
+      "endsAt": "2026-10-05T13:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "17:45",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Maryam J.",
+      "phoneMasked": "0315****578",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Maryam Javed",
+      "emailMasked": "m****@e****.com",
+      "reason": "Chest discomfort",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-02T06:22:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T06:22:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 64
+    },
+    {
+      "reference": "DAS2V68E2T",
+      "startsAt": "2026-10-05T13:00:00Z",
+      "endsAt": "2026-10-05T13:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "18:00",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Nimra N.",
+      "phoneMasked": "0331****988",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Nimra Nadeem",
+      "emailMasked": "n****@e****.com",
+      "reason": "ECG review",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-01T10:16:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T10:16:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 51
+    },
+    {
+      "reference": "DEFEVS7QS0",
+      "startsAt": "2026-10-05T13:15:00Z",
+      "endsAt": "2026-10-05T13:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "18:15",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Junaid S.",
+      "phoneMasked": "0300****896",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Junaid Shah",
+      "emailMasked": "j****@e****.com",
+      "reason": "Chest discomfort",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-01T05:05:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T05:05:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 75
+    },
+    {
+      "reference": "DZCJ0RF5JE",
+      "startsAt": "2026-10-05T13:30:00Z",
+      "endsAt": "2026-10-05T13:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "18:30",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Hira J.",
+      "phoneMasked": "0300****408",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Hira Javed",
+      "emailMasked": "h****@e****.com",
+      "reason": "ECG review",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-03T03:19:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T03:19:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 49
+    },
+    {
+      "reference": "D42ZR9AS77",
+      "startsAt": "2026-10-05T13:45:00Z",
+      "endsAt": "2026-10-05T14:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "18:45",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Yasir S.",
+      "phoneMasked": "0301****977",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Yasir Siddiqui",
+      "emailMasked": "y****@e****.com",
+      "reason": "Palpitations",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-01T06:58:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T06:58:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 39
+    },
+    {
+      "reference": "DJ7388PNKH",
+      "startsAt": "2026-10-05T14:00:00Z",
+      "endsAt": "2026-10-05T14:15:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "19:00",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Iqra R.",
+      "phoneMasked": "0340****374",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Iqra Rehman",
+      "emailMasked": "i****@e****.com",
+      "reason": "Blood pressure review",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-03T08:00:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T08:00:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 61
+    },
+    {
+      "reference": "DVN11Z768C",
+      "startsAt": "2026-10-05T14:15:00Z",
+      "endsAt": "2026-10-05T14:30:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "19:15",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Maryam R.",
+      "phoneMasked": "0333****789",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Maryam Raza",
+      "emailMasked": "m****@e****.com",
+      "reason": "Blood pressure review",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-02T05:24:00Z",
+      "history": [
+        {
+          "at": "2026-10-02T05:24:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 74
+    },
+    {
+      "reference": "DGAT1V7Y9B",
+      "startsAt": "2026-10-05T14:30:00Z",
+      "endsAt": "2026-10-05T14:45:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "19:30",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Talha L.",
+      "phoneMasked": "0340****622",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Talha Latif",
+      "emailMasked": "t****@e****.com",
+      "reason": "Blood pressure review",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-03T00:39:00Z",
+      "history": [
+        {
+          "at": "2026-10-03T00:39:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 46
+    },
+    {
+      "reference": "DFCY080M9G",
+      "startsAt": "2026-10-05T14:45:00Z",
+      "endsAt": "2026-10-05T15:00:00Z",
+      "localDate": "2026-10-05",
+      "localTime": "19:45",
+      "status": "confirmed",
+      "version": 1,
+      "patientNameMasked": "Waqas B.",
+      "phoneMasked": "0345****143",
+      "doctor": {
+        "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+        "name": "Dr. Imran Qureshi",
+        "departmentName": "Cardiology",
+        "isActive": true
+      },
+      "allowedNext": [
+        "cancelled"
+      ],
+      "isSample": true,
+      "patientName": "Waqas Baig",
+      "emailMasked": "w****@e****.com",
+      "reason": "Follow-up after echo",
+      "feePkr": 3500,
+      "bookedAt": "2026-10-01T12:55:00Z",
+      "history": [
+        {
+          "at": "2026-10-01T12:55:00Z",
+          "toStatus": "confirmed",
+          "actor": "Online booking",
+          "isUndo": false
+        }
+      ],
+      "patientAge": 48
+    }
+  ],
   "bookings": [
     {
       "reference": "D6X0A10GGY",

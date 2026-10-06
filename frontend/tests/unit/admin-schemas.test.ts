@@ -2,7 +2,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import type * as z from "zod";
 
 import type { components } from "@/lib/api/schema.gen";
-import { BookingStatusSchema, ErrorResponseSchema, RoleSchema, ViewerSchema } from "@/admin/lib/schemas";
+import { BookingDetailSchema, BookingStatusSchema, BookingSummarySchema, DoctorRefSchema, ErrorResponseSchema, LookupsSchema, RoleSchema, ViewerSchema } from "@/admin/lib/schemas";
 
 type Schemas = components["schemas"];
 
@@ -11,6 +11,11 @@ describe("admin schemas match the contract", () => {
     expectTypeOf<z.infer<typeof RoleSchema>>().toEqualTypeOf<Schemas["Role"]>();
     expectTypeOf<z.infer<typeof BookingStatusSchema>>().toEqualTypeOf<Schemas["BookingStatus"]>();
     expectTypeOf<z.infer<typeof ViewerSchema>>().toEqualTypeOf<Schemas["Viewer"]>();
+    expectTypeOf<z.infer<typeof DoctorRefSchema>>().toEqualTypeOf<Schemas["DoctorRef"]>();
+    expectTypeOf<z.infer<typeof BookingSummarySchema>>().toEqualTypeOf<Schemas["BookingSummary"]>();
+    expectTypeOf<z.infer<typeof LookupsSchema>["doctors"]>().toEqualTypeOf<Schemas["Lookups"]["doctors"]>();
+    // The detail is the summary plus its own fields.
+    expectTypeOf<z.infer<typeof BookingDetailSchema>["feePkr"]>().toEqualTypeOf<number>();
     expect(true).toBe(true);
   });
 

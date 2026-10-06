@@ -219,6 +219,13 @@ export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok"
       return;
     }
 
+    if (path === "/__admin/new-booking" && req.method === "POST") {
+      // Test seeding: a fresh future booking for one test to own (the admin specs run in parallel).
+      const body = JSON.parse((await readBody(req)) || "{}");
+      send(res, 200, { reference: admin.newBooking(body) });
+      return;
+    }
+
     if (path.startsWith("/api/v1/admin/")) {
       const mode = ADMIN_MODES.includes(state.mode) ? state.mode : "ok";
       const bodyText = req.method === "POST" || req.method === "PATCH" ? await readBody(req) : "";

@@ -830,7 +830,7 @@ components:
       properties: { id: { type: string, format: uuid }, name: { type: string }, departmentName: { type: string }, isActive: { type: boolean } }
     BookingSummary:
       type: object
-      required: [reference, startsAt, endsAt, localDate, localTime, status, version, patientNameMasked, doctor, allowedNext]
+      required: [reference, startsAt, endsAt, localDate, localTime, status, version, patientNameMasked, phoneMasked, doctor, allowedNext]
       properties:
         reference: { type: string }
         startsAt: { type: string, format: date-time }
@@ -840,6 +840,7 @@ components:
         status: { $ref: "#/components/schemas/BookingStatus" }
         version: { type: integer }
         patientNameMasked: { type: string, example: "Ayesha K." }
+        phoneMasked: { type: string, example: "0300****567" }
         doctor: { $ref: "#/components/schemas/DoctorRef" }
         allowedNext: { type: array, items: { $ref: "#/components/schemas/BookingStatus" }, description: "server-computed with the clock (FR-023/024)" }
         isSample: { type: boolean }
@@ -847,12 +848,13 @@ components:
       allOf:
         - $ref: "#/components/schemas/BookingSummary"
         - type: object
-          required: [patientName, phoneMasked, feePkr, bookedAt, history]
+          required: [patientName, feePkr, bookedAt, history]
           properties:
             patientName: { type: string }
-            phoneMasked: { type: string, example: "0300****567" }
             emailMasked: { type: [string, "null"] }
             reason: { type: [string, "null"] }
+            patientAge: { type: integer, description: "Pediatrics (demo sample data): the child's age" }
+            bookedBy: { type: string, description: "Pediatrics (demo sample data): mother or father" }
             feePkr: { type: integer }
             bookedAt: { type: string, format: date-time }
             history:
@@ -882,6 +884,7 @@ components:
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/BookingSummary" } }
         total: { type: integer }
+        statusCounts: { type: object, additionalProperties: { type: integer }, description: "bookings per status for the same filters, ignoring the status filter (the chips)" }
         page: { type: integer }
         pageSize: { type: integer, const: 20 }
     StatusChangeRequest:
