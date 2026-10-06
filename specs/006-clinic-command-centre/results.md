@@ -75,3 +75,32 @@ Caveats: the Lighthouse runs happened after the Phase 1 edits to `src/lib/bookin
 | `npm test` (Vitest) | **884 passed** (68 files; baseline 863): +21 admin drift tests |
 | `npm run test:e2e` | **1044 passed**, 11 skipped (same as baseline), 6.1 min |
 | Visual baselines | none regenerated, none changed (no snapshot file in `git status`) |
+
+## Phase 2 — foundational (T009–T049)
+
+| Group | Commits |
+|-------|---------|
+| Migration, models, settings, error codes | `8dfe159` (migration 0003 upgraded/downgraded on the dev database; 18 migration tests) |
+| Auth core, sessions, throttle, policy table, `/admin/auth/me`, access log | `07f15e7` |
+| Route groups: pure move (T028) | `77bbc8d` |
+| Tokens split, admin root layout, BFF, isolation proofs, mock admin API | `ce02d55` |
+| Shell, UI primitives, authenticated layout | `54b8434` |
+| Clock, polling | `9b5e2c6` |
+
+Deviations: `src/proxy.ts` (admin-only matcher) added for the 302 to sign-in and the `next` pathname; admin Inter uses its own font module (a shared one put Cormorant `@font-face` into every public page); light status line colours darkened to reach 3:1 (arrived #0d9488, no-show #a8812e, cancelled #d4655a); test cleanup TRUNCATE now includes `appointment_status_change`.
+
+## Checkpoint 2
+
+| Check | Result |
+|-------|--------|
+| `uv run ruff check .` / `mypy` | pass / pass (124 files) |
+| Backend pytest (full) | 485 passed, 73 broke on a test-cleanup FK (fixed); the 47 affected tests re-run: all pass; 18 xfailed (later stories), 1 skipped |
+| `npm test` (Vitest) | **1098 passed** (75 files; Phase 1: 884) |
+| typecheck / lint | pass / pass |
+| Playwright admin projects (4) | 223 passed, 132 skipped (viewport-specific), 1 test bug fixed and re-run green |
+| Playwright main projects (mobile, iphone, desktop) | **1044 passed**, 11 skipped (= baseline) |
+| `node scripts/check-admin-isolation.mjs` | OK: 18 public routes, 20 pages, 22 manifests clean |
+| Visual baselines | none regenerated, none changed |
+| Lighthouse, stateful/offline e2e | not run (not requested) |
+
+Public route first-load JS (kB, uncompressed) vs Phase 1: `/contact` 906.4 (=), `/` 493.0 (=), `/book-appointment` 699.9 (699.7), `/doctors` 500.8 (500.5), `/health-tips` 498.5 (498.2), `/lab-tests` 484.6 (484.3), `/departments/[slug]` 482.2 (=), `/about` 479.1 (=), `/faq` 463.3 (=), `/_not-found` 460.8 (463.3). Four listing routes grew 0.2–0.3 kB (bundler regrouping; no public code changed).

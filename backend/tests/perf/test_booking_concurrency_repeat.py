@@ -30,7 +30,8 @@ def test_one_hundred_races_never_double_book(
         with committing_engine.begin() as conn:  # an empty slot for the next race
             conn.execute(
                 text(
-                    "TRUNCATE appointment, appointment_status_change, idempotency_key, rate_limit_counter, audit_log"
+                    "TRUNCATE appointment, appointment_status_change, idempotency_key, "
+                    "rate_limit_counter, audit_log"
                 )
             )
     assert not anomalies, anomalies
