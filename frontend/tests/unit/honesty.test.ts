@@ -138,7 +138,7 @@ describe("the checks themselves", () => {
 
 describe("the About page makes no invented claims (FR-061)", () => {
   const aboutText = stringValues(aboutContent);
-  const aboutSource = codeFiles.filter((file) => file.path === "/src/app/about/page.tsx" || file.path.startsWith("/src/components/about/"));
+  const aboutSource = codeFiles.filter((file) => file.path === "/src/app/(site)/about/page.tsx" || file.path.startsWith("/src/components/about/"));
 
   it("has the page and its component to scan", () => {
     expect(aboutSource.length).toBeGreaterThanOrEqual(2);

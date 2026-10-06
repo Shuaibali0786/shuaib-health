@@ -50,7 +50,7 @@ describe("brand tokens", () => {
   });
 
   it("maps both fonts through next/font variables", () => {
-    const layout = read("src/app/layout.tsx");
+    const layout = read("src/app/(site)/layout.tsx");
     expect(layout).toMatch(/Plus_Jakarta_Sans/);
     expect(layout).toMatch(/--font-jakarta/);
     expect(layout).toMatch(/Inter\(/);

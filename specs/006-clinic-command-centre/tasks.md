@@ -93,7 +93,7 @@ description: "Task list for Feature 006 — Clinic Command Centre (staff dashboa
 
 ### Website restructure and isolation (pure move first)
 
-- [ ] T028 Move every public route into `frontend/src/app/(site)/` with `git mv` (layout.tsx, page.tsx, about … terms, robots/sitemap stay at the app root). Commit it as a **pure move** with URLs unchanged. Gate: `npm test`, `npm run test:e2e` and Lighthouse all equal the T001 baselines
+- [X] T028 Move every public route into `frontend/src/app/(site)/` with `git mv` (layout.tsx, page.tsx, about … terms, robots/sitemap stay at the app root). Commit it as a **pure move** with URLs unchanged. Gate: `npm test`, `npm run test:e2e` and Lighthouse all equal the T001 baselines
 - [ ] T029 Extract the `@theme` brand tokens from `frontend/src/app/globals.css` into `frontend/src/app/tokens.css` (single source of hex values), rename the public entry to `frontend/src/app/(site)/site.css` (`@import "tailwindcss" source(none); @import "../tokens.css";` with `@source` limited to public sources), and update `frontend/tests/unit/tokens.test.ts` to scan `tokens.css`
 - [ ] T030 Add the approved admin tokens to `frontend/src/app/tokens.css`: `navy-950`, `gold-300`, the navy-night palette, the status colours for both themes, and `--font-display` (Cormorant Garamond, weight 600, scale 1.18), copying values from `design-preview/preview.css`. Extend `frontend/tests/unit/tokens.test.ts` with AA contrast pairs for both themes and 3:1 non-text pairs for status lines
 - [ ] T031 Move `frontend/src/app/not-found.tsx` content to `frontend/src/app/global-not-found.tsx` (required with multiple root layouts); the existing not-found e2e stays green

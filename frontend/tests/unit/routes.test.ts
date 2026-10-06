@@ -19,7 +19,9 @@ function pageRoutes(dir = APP, prefix = ""): string[] {
   if (existsSync(join(dir, "page.tsx")) && prefix !== "") routes.push(prefix);
   for (const entry of readdirSync(dir)) {
     const path = join(dir, entry);
-    if (statSync(path).isDirectory() && !entry.startsWith("[")) routes.push(...pageRoutes(path, `${prefix}/${entry}`));
+    if (!statSync(path).isDirectory() || entry.startsWith("[")) continue;
+    // A route group such as (site) adds no URL segment.
+    routes.push(...pageRoutes(path, entry.startsWith("(") ? prefix : `${prefix}/${entry}`));
   }
   return routes;
 }
