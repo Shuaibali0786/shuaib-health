@@ -406,6 +406,15 @@ svg.i-sm {
   border-radius: 50%;
   background: var(--gold-line);
 }
+.ribbon a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+.ribbon .links {
+  margin-left: auto;
+  display: flex;
+  gap: 18px;
+}
 .content {
   padding: 34px 40px 28px;
   width: 100%;
@@ -842,6 +851,38 @@ svg.i-sm {
   color: var(--muted);
   font-size: 14px;
 }
+.auth-demo {
+  margin-top: 20px;
+  display: grid;
+  gap: 10px;
+}
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.auth-or::before,
+.auth-or::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--hairline);
+}
+.auth-demo-note {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--ribbon-bg);
+  color: var(--ribbon-ink);
+  font-size: 13px;
+}
+.auth-demo-help {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12.5px;
+}
 .auth-credit {
   margin: 18px 0 0;
   text-align: center;
@@ -1048,6 +1089,10 @@ svg.i-sm {
     font-size: 12.5px;
     flex-wrap: wrap;
     gap: 6px 10px;
+  }
+  .ribbon .links {
+    margin-left: 0;
+    gap: 14px;
   }
   .content {
     padding: 22px 16px 24px;

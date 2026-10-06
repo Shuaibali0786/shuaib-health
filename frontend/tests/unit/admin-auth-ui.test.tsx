@@ -86,6 +86,19 @@ describe("SessionBoundary", () => {
     expect(refresh).toHaveBeenCalledTimes(1);
   });
 
+  it("offers an ended demo a fresh one as a plain form, never a sign-in", async () => {
+    render(<SessionBoundary viewer={{ csrfToken: "csrf-demo", kind: "demo" }} />);
+    fetchMock.mockResolvedValueOnce(reply(401, errorBody("session_expired")));
+    await expect(adminRequest({ path: "overview" }, z.unknown())).rejects.toBeInstanceOf(AdminApiError);
+    const dialog = await screen.findByRole("dialog", { name: "Your demo has ended" });
+    const start = screen.getByRole("button", { name: "Start a fresh demo" });
+    expect(dialog).toContainElement(start);
+    const form = start.closest("form");
+    expect(form).toHaveAttribute("action", "/admin/demo/start");
+    expect(form).toHaveAttribute("method", "post");
+    expect(screen.queryByLabelText("Password")).toBeNull();
+  });
+
   it("does not open for a failed sign-in (a 401 that is not a session ending)", async () => {
     render(<SessionBoundary viewer={{ csrfToken: "csrf-old" }} />);
     fetchMock.mockResolvedValueOnce(reply(401, errorBody("sign_in_failed")));

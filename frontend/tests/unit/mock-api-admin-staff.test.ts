@@ -97,7 +97,8 @@ describe("mock admin API: staff", () => {
     expect((await call("GET", "/staff", { token: "cs_e2e-admin" })).status).toBe(200);
     expect(await codeOf(await call("GET", "/staff", { token: "cs_e2e-receptionist" }))).toBe("forbidden");
     expect(await codeOf(await call("GET", "/staff", { token: "cs_e2e-must-change" }))).toBe("password_change_required");
-    expect(await (await call("GET", "/staff", { token: "cd_e2e-demo" })).json()).toEqual([]);
+    const demoStaff = await (await call("GET", "/staff", { token: "cd_e2e-demo" })).json();
+    expect(demoStaff.map((member: { displayName: string }) => member.displayName)).toEqual(["Sample Admin", "Sample Receptionist A", "Sample Receptionist B"]);
   });
 
   it("creates, resets, deactivates and keeps the last admin", async () => {

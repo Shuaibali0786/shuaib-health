@@ -9,6 +9,7 @@ import { CREDIT } from "@/lib/honesty";
 
 import { BottomNav } from "./BottomNav";
 import { Brand } from "./Brand";
+import { DemoRibbon } from "./DemoRibbon";
 import { MobileTopBar } from "./MobileTopBar";
 import { SideNav } from "./SideNav";
 import { StatusBar } from "./StatusBar";
@@ -53,6 +54,7 @@ export function AppShell({ viewer, clinicName, serverNow, children }: { viewer: 
         </aside>
         <div className="main">
           <MobileTopBar clinicName={clinicName} />
+          {viewer.kind === "demo" ? <DemoRibbon /> : null}
           <main id="main-content" tabIndex={-1} className="content">
             <StatusBar serverNow={serverNow} timeZone={viewer.timezone} demoDate={viewer.kind === "demo" ? viewer.clinicToday : undefined} />
             {children}

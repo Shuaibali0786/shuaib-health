@@ -3,17 +3,25 @@
 // here. In memory only. Node built-ins only. Never used in production.
 //
 // Test sessions (the session cookie value is the token): cs_e2e-admin, cs_e2e-receptionist,
-// cs_e2e-must-change (staff) and cd_e2e-demo (demo). Anything else is "not signed in".
+// cs_e2e-must-change (staff), cd_e2e-demo (demo) and cd_e2e-demo-expired (a demo whose two hours are up).
+// Anything else is "not signed in". `POST /admin/demo/start` issues a new demo session from the committed
+// demo day (tests/fixtures/admin/demo-day.json, produced by the backend generator); a caller whose
+// X-Client-IP is 198.51.100.99 is always told the demo is busy (429).
 //
 // Test accounts (password `PASSWORD`): admin@clinic.test, receptionist@clinic.test,
 // must-change@clinic.test. `locked@clinic.test` is always locked (429 account_locked, 900 s).
+
+import { readFileSync } from "node:fs";
+
+const DEMO_DAY = JSON.parse(readFileSync(new URL("../fixtures/admin/demo-day.json", import.meta.url), "utf8"));
 
 export const ADMIN_MODES = ["admin-down", "admin-slow", "session-expired", "booking-changed"];
 export const ADMIN_SLOW_MS = 20_000;
 export const PASSWORD = "Correct-Horse-9-Battery";
 
-const TODAY = "2026-10-05"; // Mon 5 Oct 2026 in the clinic, the date the mock "now" falls on
-const TIME_ZONE = "Asia/Karachi";
+const TODAY = DEMO_DAY.meta.date; // Mon 5 Oct 2026 in the clinic, the date the mock "now" falls on
+const TIME_ZONE = DEMO_DAY.meta.timezone;
+const DEMO_BUSY_IP = "198.51.100.99";
 const COMMON = new Set(["password1234", "password12345", "qwertyuiop12"]);
 
 const baseSessions = () => ({
@@ -21,6 +29,7 @@ const baseSessions = () => ({
   "cs_e2e-receptionist": { kind: "staff", role: "receptionist", displayName: "Sample Receptionist A", mustChangePassword: false, email: "receptionist@clinic.test" },
   "cs_e2e-must-change": { kind: "staff", role: "receptionist", displayName: "Sample Receptionist B", mustChangePassword: true, email: "must-change@clinic.test" },
   "cd_e2e-demo": { kind: "demo" },
+  "cd_e2e-demo-expired": { kind: "demo", expired: true },
 });
 
 const baseStaff = () => [
@@ -38,7 +47,7 @@ export const csrfFor = (token) => `csrf-${token}`;
 /** The Viewer of a contract (`GET /admin/auth/me`) for a session entry. */
 function viewerOf(token, session, now) {
   const expires = new Date(Date.parse(now) + 30 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
-  const rest = omit(session, ["email"]);
+  const rest = omit(session, ["email", "expired"]);
   return { ...rest, csrfToken: csrfFor(token), clinicToday: TODAY, timezone: TIME_ZONE, sessionExpiresAt: expires };
 }
 
@@ -87,6 +96,7 @@ export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45
     const token = headers["x-session-token"];
     const session = token ? sessions[token] : undefined;
     if (!session) return { error: refuse(401, "not_signed_in", "Please sign in.") };
+    if (session.expired) return { error: refuse(401, "session_expired", "Your session has ended. Please sign in again.") };
     if (write && session.kind === "staff" && headers["x-csrf-token"] !== csrfFor(token)) return { error: refuse(403, "csrf_failed", "The request could not be verified.") };
     if (session.mustChangePassword && !readsOnly) return { error: refuse(403, "password_change_required", "Please choose a new password first.") };
     if (session.kind === "demo" && (write || staffOnly)) return { error: refuse(403, "demo_read_only", "The demo is read-only.") };
@@ -112,7 +122,18 @@ export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45
           const token = headers["x-session-token"];
           const session = token ? sessions[token] : undefined;
           if (!session) return refuse(401, "not_signed_in", "Please sign in.");
+          if (session.expired) return refuse(401, "session_expired", "Your session has ended. Please sign in again.");
           return { status: 200, body: viewerOf(token, session, now) };
+        }
+
+        if (method === "POST" && route === "/demo/start") {
+          if (headers["x-client-ip"] === DEMO_BUSY_IP) {
+            return { status: 429, headers: { "Retry-After": "60" }, body: errorBody("rate_limited", "Too many requests. Try again later.", { retryAfterSeconds: 60 }) };
+          }
+          counter += 1;
+          const token = `cd_e2e-issued-${counter}`;
+          sessions[token] = { kind: "demo" };
+          return { status: 200, body: { token, viewer: viewerOf(token, sessions[token], now) } };
         }
 
         if (method === "POST" && route === "/auth/sign-in") {
@@ -156,7 +177,7 @@ export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45
         if (route === "/staff" && method === "GET") {
           const result = gate(headers, mode, { admin: true });
           if (result.error) return result.error;
-          return { status: 200, body: result.session.kind === "demo" ? [] : staff.map(publicStaff) };
+          return { status: 200, body: result.session.kind === "demo" ? DEMO_DAY.staff : staff.map(publicStaff) };
         }
 
         if (route === "/staff" && method === "POST") {
