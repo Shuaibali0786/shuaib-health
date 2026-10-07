@@ -293,12 +293,12 @@ description: "Task list for Feature 006 — Clinic Command Centre (staff dashboa
 
 **Independent Test**: with fixed data each chart shows the exact expected totals for each range, and the text alternative lists the same numbers.
 
-- [ ] T134 [P] [US6] Write insights cases in `backend/tests/unit/test_metrics.py` (zero-filled days ending today, by department with a cancelled column, all five statuses, busiest hours in clinic time, "too little data" < 5) and `backend/tests/api/test_insights_api.py` (`db`; range ∉ {7,30,90} → 422; demo totals)
-- [ ] T135 [P] [US6] Write `backend/tests/perf/test_command_centre_latency.py`: with 30 k synthetic bookings, search and every Insights range p95 < 1 s (target 400 ms), Overview p95 < 300 ms (NFR-001)
-- [ ] T136 [P] [US6] Write `frontend/tests/unit/charts.test.tsx`: each chart renders `<figure>` with `role="img"` + summary sentence, a "Show data table" `<details>` with a real `<table>`, focusable bars with value labels, patterns for no-show/cancelled; and `frontend/tests/e2e/admin-insights.spec.ts` (range switch 7/30/90 via `?range=`, keyboard through bars, empty state)
-- [ ] T137 [US6] Implement insights in `backend/app/command_centre/metrics.py`, queries in `backend/app/repositories/command_centre.py`, `insights()` in both sources, and `GET /admin/insights` in `backend/app/routers/admin_dashboard.py`; add it to the mock API
-- [ ] T138 [P] [US6] Build `frontend/src/admin/charts/ChartFigure.tsx`, `ColumnChart.tsx`, `BarList.tsx`, `StatusBreakdown.tsx`, `HourHeatStrip.tsx` (hand-built SVG, < 6 kB total, token colours, both themes)
-- [ ] T139 [US6] Build `frontend/src/app/(admin)/admin/(app)/insights/page.tsx` (range in URL, server-rendered charts, empty state)
+- [X] T134 [P] [US6] Write insights cases in `backend/tests/unit/test_metrics.py` (zero-filled days ending today, by department with a cancelled column, all five statuses, busiest hours in clinic time, "too little data" < 5) and `backend/tests/api/test_insights_api.py` (`db`; range ∉ {7,30,90} → 422; demo totals)
+- [X] T135 [P] [US6] Write `backend/tests/perf/test_command_centre_latency.py`: with 30 k synthetic bookings, search and every Insights range p95 < 1 s (target 400 ms), Overview p95 < 300 ms (NFR-001)
+- [X] T136 [P] [US6] Write `frontend/tests/unit/charts.test.tsx`: each chart renders `<figure>` with `role="img"` + summary sentence, a "Show data table" `<details>` with a real `<table>`, focusable bars with value labels, patterns for no-show/cancelled; and `frontend/tests/e2e/admin-insights.spec.ts` (range switch 7/30/90 via `?range=`, keyboard through bars, empty state)
+- [X] T137 [US6] Implement insights in `backend/app/command_centre/metrics.py`, queries in `backend/app/repositories/command_centre.py`, `insights()` in both sources, and `GET /admin/insights` in `backend/app/routers/admin_dashboard.py`; add it to the mock API
+- [X] T138 [P] [US6] Build `frontend/src/admin/charts/ChartFigure.tsx`, `ColumnChart.tsx`, `BarList.tsx`, `StatusBreakdown.tsx`, `HourHeatStrip.tsx` (hand-built SVG, < 6 kB total, token colours, both themes)
+- [X] T139 [US6] Build `frontend/src/app/(admin)/admin/(app)/insights/page.tsx` (range in URL, server-rendered charts, empty state)
 
 **CHECKPOINT 8 (US6)**: insights tests + perf test green; chart bundle size recorded.
 
@@ -310,10 +310,10 @@ description: "Task list for Feature 006 — Clinic Command Centre (staff dashboa
 
 **Independent Test**: with fixed schedules, leave and bookings, each doctor's booked, free and utilisation values match; on leave → "On leave"; holiday → "Clinic closed today".
 
-- [ ] T140 [P] [US7] Write doctors-today cases in `backend/tests/unit/test_metrics.py` (free = scheduled − booked, passed free slots flagged, next free slot ≥ now, ordering by next free slot) and `backend/tests/api/test_doctors_today_api.py` (`db`; leave, not in today, holiday, demo)
-- [ ] T141 [P] [US7] Write `frontend/tests/e2e/admin-doctors.spec.ts` (cards, "Not in today" collapsed by default, holiday state)
-- [ ] T142 [US7] Implement doctors-today in `backend/app/command_centre/metrics.py`, both sources and `GET /admin/doctors-today` in `backend/app/routers/admin_dashboard.py`; add it to the mock API
-- [ ] T143 [US7] Build `frontend/src/admin/doctors/DoctorTodayCard.tsx` and `frontend/src/app/(admin)/admin/(app)/doctors/page.tsx`
+- [X] T140 [P] [US7] Write doctors-today cases in `backend/tests/unit/test_metrics.py` (free = scheduled − booked, passed free slots flagged, next free slot ≥ now, ordering by next free slot) and `backend/tests/api/test_doctors_today_api.py` (`db`; leave, not in today, holiday, demo)
+- [X] T141 [P] [US7] Write `frontend/tests/e2e/admin-doctors.spec.ts` (cards, "Not in today" collapsed by default, holiday state)
+- [X] T142 [US7] Implement doctors-today in `backend/app/command_centre/metrics.py`, both sources and `GET /admin/doctors-today` in `backend/app/routers/admin_dashboard.py`; add it to the mock API
+- [X] T143 [US7] Build `frontend/src/admin/doctors/DoctorTodayCard.tsx` and `frontend/src/app/(admin)/admin/(app)/doctors/page.tsx`
 
 **CHECKPOINT 9 (US7)**: doctors-today tests green.
 
@@ -325,10 +325,10 @@ description: "Task list for Feature 006 — Clinic Command Centre (staff dashboa
 
 **Independent Test**: perform a sign-in, a status change, an undo and a reveal; the feed shows the four events in order; a receptionist gets 403.
 
-- [ ] T144 [P] [US8] Write `backend/tests/api/test_activity_api.py` (`db`): newest first, filters by action and staff, paging, receptionist 403, demo gets the synthetic feed only, no password/phone/email/name/reason in any entry, 6-character network tag
-- [ ] T145 [P] [US8] Write `frontend/tests/e2e/admin-activity.spec.ts` (filters, paging, not in receptionist navigation)
-- [ ] T146 [US8] Implement the activity query in `backend/app/repositories/command_centre.py`, `activity()` in both sources, and `GET /admin/activity` (READ_ADMIN) in `backend/app/routers/admin_dashboard.py`; add it to the mock API
-- [ ] T147 [US8] Build `frontend/src/admin/activity/ActivityFeed.tsx` and `frontend/src/app/(admin)/admin/(app)/activity/page.tsx`
+- [X] T144 [P] [US8] Write `backend/tests/api/test_activity_api.py` (`db`): newest first, filters by action and staff, paging, receptionist 403, demo gets the synthetic feed only, no password/phone/email/name/reason in any entry, 6-character network tag
+- [X] T145 [P] [US8] Write `frontend/tests/e2e/admin-activity.spec.ts` (filters, paging, not in receptionist navigation)
+- [X] T146 [US8] Implement the activity query in `backend/app/repositories/command_centre.py`, `activity()` in both sources, and `GET /admin/activity` (READ_ADMIN) in `backend/app/routers/admin_dashboard.py`; add it to the mock API
+- [X] T147 [US8] Build `frontend/src/admin/activity/ActivityFeed.tsx` and `frontend/src/app/(admin)/admin/(app)/activity/page.tsx`
 
 **CHECKPOINT 10 (US8)**: activity tests green; `test_auth_matrix.py` now covers every row of `contracts/auth-matrix.md`.
 

@@ -52,12 +52,29 @@ test.describe("the clock and the greeting", () => {
   });
 
   test("the greeting follows the clinic hour: morning at 11:20, afternoon at 13:05, evening at 19:40", async ({ page }) => {
+    // A real server answers with the time it is; the mock answers with one fixed instant. So that a refresh during the
+    // jump does not set the clinic clock back, the overview answers carry the time that has been fast-forwarded.
+    let skipped = 0;
+    await page.route("**/api/admin/overview", async (route) => {
+      try {
+        const response = await route.fetch();
+        const body = await response.json();
+        body.now = new Date(Date.parse(body.now) + skipped).toISOString();
+        await route.fulfill({ response, json: body });
+      } catch {
+        // The page closed while a refresh was in flight: nothing to answer.
+      }
+    });
     await openOverview(page);
     const heading = page.getByRole("heading", { level: 1 });
     await expect(heading).toHaveText("Good morning");
-    await page.clock.fastForward((1 * 60 + 45) * 60_000 - 45_000 + 1000); // to 13:05
+    const jump = async (ms: number) => {
+      skipped += ms;
+      await page.clock.fastForward(ms);
+    };
+    await jump((1 * 60 + 45) * 60_000 - 45_000 + 1000); // to 13:05
     await expect(heading).toHaveText("Good afternoon");
-    await page.clock.fastForward((6 * 60 + 35) * 60_000); // to 19:40
+    await jump((6 * 60 + 35) * 60_000); // to 19:40
     await expect(heading).toHaveText("Good evening");
   });
 

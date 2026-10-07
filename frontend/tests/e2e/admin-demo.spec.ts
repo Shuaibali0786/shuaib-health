@@ -22,7 +22,7 @@ async function expectDemoOverview(page: Page) {
 test.describe("entering the demo", () => {
   test("from the gold top bar", async ({ page }) => {
     await page.goto("/");
-    await page.getByTestId("announcement-bar").getByRole("button", DEMO_BUTTON).click();
+    await page.getByTestId("announcement-bar").getByRole("button").click();
     await expectDemoOverview(page);
   });
 
@@ -52,7 +52,7 @@ test.describe("entering the demo", () => {
     const context = await browser.newContext({ baseURL, extraHTTPHeaders: { "x-forwarded-for": "198.51.100.99" } });
     const page = await context.newPage();
     await page.goto("/");
-    await page.getByTestId("announcement-bar").getByRole("button", DEMO_BUTTON).click();
+    await page.getByTestId("announcement-bar").getByRole("button").click();
     await expect(page).toHaveURL(/\/admin\/login\?demo=busy$/);
     await expect(page.getByRole("status")).toHaveText("The demo is busy — try again in a minute.");
     await context.close();

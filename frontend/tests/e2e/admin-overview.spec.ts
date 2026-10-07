@@ -61,7 +61,7 @@ test.describe("the demo day", () => {
     ];
     for (const [key, label, value, words] of kpis) {
       const card = page.locator(`[data-kpi="${key}"]`);
-      await expect(card.locator(".label")).toHaveText(label);
+      await expect(card.locator(".label")).toContainText(label); // the tooltip text follows the label
       await expect(card.getByTestId("count-final")).toHaveText(`${value}${key === "utilisationPct" ? "%" : ""}`);
       await expect(card.locator(".kfoot .sr-only")).toHaveText(words);
     }

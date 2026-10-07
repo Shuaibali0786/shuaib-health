@@ -280,3 +280,21 @@ Fixes found by the e2e run: a mobile spec matched one Now row per doctor (made v
 Defects the new checks found and fixed: status icon spilling out of 9 px timeline chips on laptops; doctor column ellipsising department and hours; sticky phone filters sitting 5 px under the 66 px top bar; undo-toast ring failing contrast in Night; **Undo unreachable by keyboard while the drawer is open** (the toast now joins the modal's Tab ring).
 
 Notes: T126 says "5 items" in the bottom nav; the app has 4 (receptionist) or 6 (admin/demo), tested as such. Insights, Doctors today and Activity do not exist yet, so T127 covers the screens that do. Screens with a loading skeleton stream their content, so specs that pause the page clock step it a few 20 ms frames (`revealStreamedContent`).
+
+## Owner review fixes and Checkpoints 8-10 (US6 Insights, US7 Doctors today, US8 Activity)
+
+**Owner review fixes** (b5bdadf, a0c582e): footer demo button removed (top bar, About and sign-in keep theirs); KPI "Arrived" renamed "Checked in" with a tooltip; trend colours follow meaning (fewer no-shows/cancellations is green); the "updated N ago" and the Now line share the clinic clock, which every poll answer re-seeds from the server (the cause of "2 min ago" was a device clock and a stale layout reading used side by side), polling also on focus. Slip: double-ring stamp laid out once (`seal.ts`) for page and PDF, brand fonts (Inter, Plus Jakarta Sans) subset and embedded in the PDF, navy pill, 4 % watermark, buttons beside the slip. Pixel diffs against the old baselines: public pages changed only in the footer button area (identical 9158 px on desktop, 64 px shorter on mobile); admin Overview only inside the KPI cards.
+
+**Phases 8-10**: `GET /admin/insights?range=7|30|90`, `/admin/doctors-today`, `/admin/activity` (admin only; the demo gets a synthetic feed), pure maths in `metrics.py` shared by the real and the demo source; charts are hand-built SVG/HTML with a summary sentence and a data table each, one tab stop with arrow keys, patterns for no-show and cancelled.
+
+| Check | Result |
+|-------|--------|
+| ruff / ruff format / mypy | pass |
+| Backend new tests (`test_metrics`, `test_insights_api`, `test_doctors_today_api`, `test_activity_api`, contract) | 55 passed |
+| Perf, 30 000 bookings, remote dev DB (82 ms per round trip) | search p95 535 ms; Insights 7/30/90 p95 456 / 485 / 561 ms (< 1 s); Overview p95 1032 ms raw, 208 ms after taking off its 10 round trips (< 300 ms); Doctors today 717 ms raw, 58 ms net |
+| tsc / eslint | pass / pass |
+| Vitest | 1355 passed |
+| Playwright (main + admin), full | 1877 passed, 201 skipped; 11 failures from the label rename, the mobile top-bar button name and the mock's fixed clock, fixed and re-run green; one slip e2e flake passed on re-run |
+| Visual baselines | 30 new (Insights, Insights focused, Doctors today, Activity; light and night; four widths); public baselines regenerated for the footer change |
+
+Known limit: with a nearby database the Overview budget holds as measured net of round trips; against the remote dev database its raw p95 is about 1 s.

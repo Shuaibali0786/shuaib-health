@@ -66,8 +66,8 @@ describe("mock admin API: me", () => {
     expect((await me("cs_e2e-admin", "wrong")).status).toBe(403);
   });
 
-  it("is 404 for admin paths it does not serve yet", async () => {
-    const res = await fetch(`${base}/api/v1/admin/insights`, { headers: { "x-proxy-secret": SECRET, "x-session-token": "cs_e2e-admin" } });
+  it("is 404 for admin paths it does not serve", async () => {
+    const res = await fetch(`${base}/api/v1/admin/nothing-here`, { headers: { "x-proxy-secret": SECRET, "x-session-token": "cs_e2e-admin" } });
     expect(res.status).toBe(404);
   });
 });
