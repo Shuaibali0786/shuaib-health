@@ -21,6 +21,7 @@ import { EmptyState, ErrorState } from "@/admin/ui/States";
 
 import { AgendaList } from "./AgendaList";
 import { AgendaTimeline, type OpenBooking } from "./AgendaTimeline";
+import { AgendaViewToggle, type AgendaView } from "./AgendaViewToggle";
 import { KpiGrid } from "./KpiGrid";
 import { NewBookingToasts } from "./NewBookingToast";
 import { NextUpList } from "./NextUpList";
@@ -47,6 +48,7 @@ export function OverviewScreen({ initial, demo, firstName, timeZone, serverNow }
   const [selected, setSelected] = useState<BookingSummary | null>(null);
   const [detail, setDetail] = useState<BookingDetail | null>(null);
   const [detailFailed, setDetailFailed] = useState(false);
+  const [agendaView, setAgendaView] = useState<AgendaView>("timeline");
   const overlayVersion = useSyncExternalStore(demoOverlay.subscribe, demoOverlay.getSnapshot, () => 0);
 
   // The clinic clock follows the API’s own instant: `serverNow` is the `now` of the Overview answer, so the
@@ -238,6 +240,7 @@ export function OverviewScreen({ initial, demo, firstName, timeZone, serverNow }
           <span className="meta" id="ag-meta">
             {meta}
           </span>
+          {empty ? null : <AgendaViewToggle view={agendaView} onChange={setAgendaView} />}
           <span className="right">
             <Link className="btn btn-quiet btn-sm" href="/admin/doctors" prefetch={false}>
               Doctors today
@@ -249,13 +252,19 @@ export function OverviewScreen({ initial, demo, firstName, timeZone, serverNow }
           emptyState
         ) : (
           <>
-            <p className="sr-only">Each booking is a button: focus or hover shows its time, patient initials and status; activate it to open the booking.</p>
-            <AgendaTimeline agenda={view.agenda} nowMs={nowMs} timeZone={timeZone} highlight={glowing} onOpen={openFromChip} />
-            <div className="legend" aria-label="Status key" role="group">
-              {LEGEND.map((status) => (
-                <StatusBadge key={status} status={status} />
-              ))}
-            </div>
+            {agendaView === "timeline" ? (
+              <>
+                <p className="sr-only">Each booking is a button: focus or hover shows its time, patient initials and status; activate it to open the booking.</p>
+                <AgendaTimeline agenda={view.agenda} nowMs={nowMs} timeZone={timeZone} highlight={glowing} onOpen={openFromChip} />
+                <div className="legend" aria-label="Status key" role="group">
+                  {LEGEND.map((status) => (
+                    <StatusBadge key={status} status={status} />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <AgendaList agenda={view.agenda} nowMs={nowMs} timeZone={timeZone} highlight={glowing} onOpen={openFromChip} />
+            )}
           </>
         )}
       </section>

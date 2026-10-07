@@ -5,6 +5,7 @@ import { SessionBoundary } from "@/admin/auth/SessionBoundary";
 import { SignOutButton } from "@/admin/auth/SignOutButton";
 import type { Viewer } from "@/admin/lib/schemas";
 import { LiveStatusProvider } from "@/admin/state/liveStatus";
+import type { ThemePreference } from "@/admin/state/themeCore";
 import { CREDIT } from "@/lib/honesty";
 
 import { BottomNav } from "./BottomNav";
@@ -13,6 +14,7 @@ import { DemoRibbon } from "./DemoRibbon";
 import { MobileTopBar } from "./MobileTopBar";
 import { SideNav } from "./SideNav";
 import { StatusBar } from "./StatusBar";
+import { ThemeSwitch } from "./ThemeToggle";
 import { initials, roleLabel } from "./nav";
 
 /**
@@ -20,7 +22,7 @@ import { initials, roleLabel } from "./nav";
  * and bottom navigation (up to 900 px), the live status line, the main region and the footer credit.
  * Matches the approved design preview at 390 / 1280 / 1366 / 1440 px.
  */
-export function AppShell({ viewer, clinicName, serverNow, children }: { viewer: Viewer; clinicName: string; serverNow: string; children: ReactNode }) {
+export function AppShell({ viewer, clinicName, serverNow, theme = "light", children }: { viewer: Viewer; clinicName: string; serverNow: string; theme?: ThemePreference; children: ReactNode }) {
   const name = viewer.displayName ?? "Demo viewer";
   return (
     <LiveStatusProvider>
@@ -35,6 +37,7 @@ export function AppShell({ viewer, clinicName, serverNow, children }: { viewer: 
           </div>
           <SideNav viewer={viewer} />
           <div className="side-foot">
+            <ThemeSwitch initial={theme} />
             <div className="who">
               <div className="avatar" aria-hidden="true">
                 {initials(name)}
@@ -53,7 +56,7 @@ export function AppShell({ viewer, clinicName, serverNow, children }: { viewer: 
           </div>
         </aside>
         <div className="main">
-          <MobileTopBar clinicName={clinicName} />
+          <MobileTopBar clinicName={clinicName} theme={theme} />
           {viewer.kind === "demo" ? <DemoRibbon /> : null}
           <main id="main-content" tabIndex={-1} className="content">
             <StatusBar serverNow={serverNow} timeZone={viewer.timezone} demoDate={viewer.kind === "demo" ? viewer.clinicToday : undefined} typicalDay={viewer.typicalDay === true} />

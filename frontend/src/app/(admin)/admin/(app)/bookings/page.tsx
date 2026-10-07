@@ -44,7 +44,7 @@ export default async function BookingsPage({ searchParams }: PageProps<"/admin/b
       demo={viewer.kind === "demo"}
       clinicToday={viewer.clinicToday}
       timeZone={viewer.timezone}
-      serverNow={new Date().toISOString()}
+      serverNow={viewer.demoNow ?? new Date().toISOString()}
     />
   );
 }

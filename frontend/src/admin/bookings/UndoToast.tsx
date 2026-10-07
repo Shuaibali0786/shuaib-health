@@ -22,7 +22,7 @@ export function UndoToast() {
   if (!offer) return null;
   const seconds = undoStore.secondsLeft();
   return (
-    <div className="toast" role="status" data-testid="undo-toast">
+    <div className="toast" role="status" data-testid="undo-toast" data-trap-also="">
       <span>{offer.message}</span>
       <button type="button" className="undo" onClick={() => void undoStore.undo()}>
         Undo

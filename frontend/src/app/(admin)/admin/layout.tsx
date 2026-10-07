@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import { cookies } from "next/headers";
+import { parsePreference } from "@/admin/state/themeCore";
 import { AdminMarker } from "@/admin/ui/AdminMarker";
 import { DEMO_NOTICE } from "@/lib/honesty";
 import { THEME_COLOR } from "../../theme-color";
@@ -23,12 +24,6 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = { themeColor: THEME_COLOR };
-
-type ThemePreference = "light" | "dark" | "system";
-
-function parsePreference(value: string | undefined): ThemePreference {
-  return value === "dark" || value === "system" ? value : "light";
-}
 
 /**
  * Own root layout for the staff app. `cc_theme` is read on the server, so the theme is on <html>

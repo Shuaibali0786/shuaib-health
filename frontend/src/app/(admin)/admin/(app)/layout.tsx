@@ -1,9 +1,10 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { getViewer } from "@/admin/lib/server";
 import { AppShell } from "@/admin/shell/AppShell";
 import { ErrorState } from "@/admin/ui/States";
+import { parsePreference } from "@/admin/state/themeCore";
 import { getSiteConfig } from "@/lib/content";
 
 // Every signed-in screen is private and per request.
@@ -38,8 +39,9 @@ export default async function AuthenticatedLayout({ children }: LayoutProps<"/ad
   if (result.viewer.mustChangePassword && (await requestedPath()) !== PASSWORD_PAGE) redirect(PASSWORD_PAGE);
 
   const site = await getSiteConfig();
+  const theme = parsePreference((await cookies()).get("cc_theme")?.value);
   return (
-    <AppShell viewer={result.viewer} clinicName={site.name} serverNow={result.viewer.demoNow ?? new Date().toISOString()}>
+    <AppShell viewer={result.viewer} clinicName={site.name} serverNow={result.viewer.demoNow ?? new Date().toISOString()} theme={theme}>
       {children}
     </AppShell>
   );

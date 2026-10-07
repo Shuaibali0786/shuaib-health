@@ -44,8 +44,10 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
     ["sessionStorage", /\bsessionStorage\b/],
     ["document.cookie", /document\.cookie/],
     ["raw <img", /<img[\s>]/],
-  ])("has no %s in src", (_name, pattern) => {
-    expect(offenders(pattern)).toEqual([]);
+  ])("has no %s in src", (name, pattern) => {
+    // The one exception: the staff app's theme choice (Light, Night, Auto) is written to its own `cc_theme`
+    // cookie from the browser, so it applies at once. It is a display preference, not personal data.
+    expect(offenders(pattern, (path) => name === "document.cookie" && path === "admin/state/theme.ts")).toEqual([]);
   });
 
   it("has no dangerouslySetInnerHTML in src outside the JSON-LD component", () => {
