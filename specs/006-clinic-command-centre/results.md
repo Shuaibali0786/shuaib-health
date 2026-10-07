@@ -259,3 +259,24 @@ Part A: loops cancelled (the one `CronCreate` one-shot was deleted; none run), `
 | Overview at 1440 px vs preview | `results/overview_desktop_light.phase6.png` next to `design-preview/screenshots/overview_desktop_light.png`: same layout, KPI cards, agenda with Now line, Next patients up, Today by status |
 
 Fixes found by the e2e run: a mobile spec matched one Now row per doctor (made visible-only); `target-size` (above); `next/link` prefetch of the not-yet-built `/admin/doctors` page kept the page from going network-idle (`prefetch={false}`); count-up never ran after hydration because the server's "reduced motion" answer used up the first load (fixed, covered by a unit test).
+
+## Demo polish (after Phase 6) and Checkpoint 7 (US5)
+
+**Demo polish** (commit f0827f1): typical clinic day (09:00-20:00 Karachi; outside it the demo stands at 12:30 and runs on, labelled), sample sign-ins never in the future and shown without seconds, one-line KPI trends at 1280/1366/1440, gold sign-in demo button, the browser-simulated demo bookings now counted by Bookings as well as the Overview (they were the cause of "54 vs 53"), View button in the bookings table, `DEMO_ENABLED` (on/off tested in pytest, Vitest and Playwright). Public visual baselines unchanged (main e2e: 1044 passed).
+
+**Phase 7**: theme switch (Light/Night/Auto, `cc_theme` cookie, no flash), agenda Timeline/List switch, `loading.tsx` for every (app) route and `error.tsx` (two automatic retries), clipping helper with self-test, axe + clipping on every existing screen in both themes at four widths, mobile spec, keyboard journeys, reduced motion.
+
+| Check | Result |
+|-------|--------|
+| ruff / ruff format / mypy | pass |
+| Backend pytest (full, before the final doc/test-only edits) | 941 passed, 1 skipped, 3 xfailed |
+| tsc / eslint | pass |
+| Vitest | 1332 passed (99 files) |
+| Playwright admin projects (1440, 1366, 1280, mobile), full | 716 passed, 184 skipped (viewport-specific), 0 failed |
+| Playwright main (public) | 1044 passed (run after Part A) |
+| `check-admin-isolation.mjs` | OK |
+| Visual baselines (`admin-visual`, 46 images) | generated, stable on a second run; **not committed: awaiting approval (SC-010)** |
+
+Defects the new checks found and fixed: status icon spilling out of 9 px timeline chips on laptops; doctor column ellipsising department and hours; sticky phone filters sitting 5 px under the 66 px top bar; undo-toast ring failing contrast in Night; **Undo unreachable by keyboard while the drawer is open** (the toast now joins the modal's Tab ring).
+
+Notes: T126 says "5 items" in the bottom nav; the app has 4 (receptionist) or 6 (admin/demo), tested as such. Insights, Doctors today and Activity do not exist yet, so T127 covers the screens that do. Screens with a loading skeleton stream their content, so specs that pause the page clock step it a few 20 ms frames (`revealStreamedContent`).

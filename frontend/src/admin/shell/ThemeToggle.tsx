@@ -23,11 +23,9 @@ export function ThemeSwitch({ initial }: { initial: ThemePreference }) {
   const systemIsDark = useSystemIsDark();
   return (
     <div className="theme-switch" role="group" aria-label="Theme">
-      <span className="cap" aria-hidden="true">
-        Theme
-      </span>
-      <div className="seg">
-        {THEME_ORDER.map((choice) => (
+      {THEME_ORDER.map((choice) => {
+        const Icon = ICON[choice];
+        return (
           <button
             key={choice}
             type="button"
@@ -36,10 +34,11 @@ export function ThemeSwitch({ initial }: { initial: ThemePreference }) {
             title={choice === "system" ? `Auto follows this device (now ${resolveTheme("system", systemIsDark) === "dark" ? "Night" : "Light"})` : undefined}
             onClick={() => applyTheme(choice)}
           >
+            <Icon className="i i-sm" aria-hidden="true" />
             {THEME_LABEL[choice]}
           </button>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }

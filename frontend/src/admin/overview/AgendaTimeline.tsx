@@ -107,7 +107,12 @@ export function AgendaTimeline({ agenda, nowMs, timeZone, highlight, onOpen }: {
                 <b title={row.doctor.name}>{row.doctor.name}</b>
                 <span>
                   {row.doctor.departmentName}
-                  {row.sessions.length > 0 ? ` · ${row.sessions.map((s) => `${s.start}–${s.end}`).join(", ")}` : ""}
+                  {row.sessions.length > 0 ? (
+                    <>
+                      {" · "}
+                      <span className="hrs">{row.sessions.map((s) => `${s.start}–${s.end}`).join(", ")}</span>
+                    </>
+                  ) : null}
                 </span>
               </div>
               <div className="tl-lane" style={{ backgroundSize: `${(60 / span) * 100}% 100%` }}>

@@ -2012,8 +2012,11 @@ svg.i-sm {
   font-size: 12px;
   line-height: 1.35;
   color: var(--muted);
-  /* Department and hours may take two lines; nothing is cut off with an ellipsis. */
+  /* Department and hours may take two lines (the hours stay together); nothing is cut off with an ellipsis. */
   overflow-wrap: anywhere;
+}
+.tl-doc .hrs {
+  white-space: nowrap;
 }
 .tl-lane {
   position: relative;
@@ -2545,31 +2548,33 @@ svg.i-sm {
 .card-head .seg {
   margin-left: 12px;
 }
+/* The sidebar's theme switch, as in the approved preview: a flat pill with an icon and a name per choice. */
 .theme-switch {
-  display: grid;
-  gap: 6px;
-}
-.theme-switch .cap {
-  font-size: 11.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--side-muted);
-}
-.theme-switch .seg {
   display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--color-white) 6%, transparent);
-  border-color: color-mix(in srgb, var(--color-white) 16%, transparent);
 }
-.theme-switch .seg button {
+.theme-switch button {
   flex: 1;
-  min-width: 0;
-  padding: 0 8px;
-  color: var(--side-ink);
+  min-height: 36px;
+  border: 0;
+  background: transparent;
+  color: var(--side-muted);
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
 }
-.theme-switch .seg button[aria-pressed="true"] {
-  background: color-mix(in srgb, var(--color-white) 16%, transparent);
+.theme-switch button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--color-white) 12%, transparent);
   color: var(--color-white);
-  box-shadow: none;
 }
 .theme-cycle {
   display: inline-flex;
