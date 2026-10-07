@@ -55,10 +55,24 @@ export function OverviewScreen({ initial, demo, firstName, timeZone, serverNow }
   // header clock, the greeting and the "Now" line agree with the status of every booking, whatever the device says.
   useEffect(() => {
     clinicClock.seed(Date.parse(serverNow), deviceReference());
+    setNowMs(clinicClock.now());
   }, [serverNow]);
 
   // The clinic minute moves the "Now" line, the greeting and what the clock allows (arrive from two hours before).
   useEffect(() => clinicClock.onMinute((ms) => setNowMs(ms)), []);
+
+  // Coming back to the tab or window: a throttled background timer may be behind, so catch up at once.
+  useEffect(() => {
+    const catchUp = () => {
+      if (document.visibilityState === "visible") setNowMs(clinicClock.now());
+    };
+    document.addEventListener("visibilitychange", catchUp);
+    window.addEventListener("focus", catchUp);
+    return () => {
+      document.removeEventListener("visibilitychange", catchUp);
+      window.removeEventListener("focus", catchUp);
+    };
+  }, []);
 
   const view = useMemo(
     () => deriveOverview(data, demo ? { nowMs, statusOf: demoOverlay.statusOf.bind(demoOverlay), extras: demoOverlay.bookings() } : { nowMs }),
@@ -100,9 +114,16 @@ export function OverviewScreen({ initial, demo, firstName, timeZone, serverNow }
 
   // ----- Live refresh (FR-041) -------------------------------------------------------------------
 
-  const load = useCallback((signal: AbortSignal) => adminRequest({ path: "overview", signal }, OverviewSchema), []);
+  // Every answer carries the server's instant: it re-seeds the clinic clock before the poller stamps "updated",
+  // so the header clock, the Now line and "updated N ago" cannot drift apart however long the page stays open.
+  const load = useCallback(async (signal: AbortSignal) => {
+    const answer = await adminRequest({ path: "overview", signal }, OverviewSchema);
+    clinicClock.seed(Date.parse(answer.now), Date.now());
+    return answer;
+  }, []);
   const onData = useCallback(
     (next: Overview) => {
+      setNowMs(clinicClock.now());
       setData(next);
       setFailed(false);
       feed(next.recentBookings);

@@ -53,7 +53,7 @@ test.describe("the demo day", () => {
 
     const kpis: [string, string, number, string][] = [
       ["appointments", "Appointments", overview.kpis.appointments.value, phrase(overview.kpis.appointments.delta)],
-      ["arrived", "Arrived", overview.kpis.arrived.value, phrase(overview.kpis.arrived.delta)],
+      ["arrived", "Checked in", overview.kpis.arrived.value, phrase(overview.kpis.arrived.delta)],
       ["completed", "Completed", overview.kpis.completed.value, phrase(overview.kpis.completed.delta)],
       ["noShows", "No-shows", overview.kpis.noShows.value, phrase(overview.kpis.noShows.delta)],
       ["cancellations", "Cancellations", overview.kpis.cancellations.value, phrase(overview.kpis.cancellations.delta)],

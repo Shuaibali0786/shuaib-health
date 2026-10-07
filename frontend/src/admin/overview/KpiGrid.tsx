@@ -7,26 +7,39 @@ import { trendView } from "./model";
 
 type KpiKey = keyof Kpis;
 
-const DEFINITIONS: readonly { key: KpiKey; label: string; icon: LucideIcon }[] = [
+type Definition = { key: KpiKey; label: string; icon: LucideIcon; hint?: string; lowerIsBetter?: boolean };
+
+const DEFINITIONS: readonly Definition[] = [
   { key: "appointments", label: "Appointments", icon: CalendarCheck },
-  { key: "arrived", label: "Arrived", icon: LogIn },
+  // "Arrived" is also a status in Today by status (patients in the clinic right now); this KPI counts everyone who has come in.
+  { key: "arrived", label: "Checked in", icon: LogIn, hint: "Patients who have arrived today, including those already seen: Arrived plus Completed." },
   { key: "completed", label: "Completed", icon: CircleCheck },
-  { key: "noShows", label: "No-shows", icon: UserX },
-  { key: "cancellations", label: "Cancellations", icon: CircleX },
+  { key: "noShows", label: "No-shows", icon: UserX, lowerIsBetter: true },
+  { key: "cancellations", label: "Cancellations", icon: CircleX, lowerIsBetter: true },
   { key: "utilisationPct", label: "Chair utilisation", icon: Gauge },
 ];
 
 const ARROW = { up: ArrowUp, down: ArrowDown, flat: Minus } as const;
 
 /** One number of today with its change on the same weekday last week. Utilisation is a percent and moves in points. */
-export function KpiCard({ id, label, icon: Icon, trend, percent = false }: { id: string; label: string; icon: LucideIcon; trend: Trend; percent?: boolean }) {
-  const view = trendView(trend, percent ? "pts" : "");
+export function KpiCard({ id, label, icon: Icon, trend, percent = false, hint, lowerIsBetter = false }: { id: string; label: string; icon: LucideIcon; trend: Trend; percent?: boolean; hint?: string; lowerIsBetter?: boolean }) {
+  const view = trendView(trend, percent ? "pts" : "", lowerIsBetter);
   const Arrow = view ? ARROW[view.direction] : null;
+  const tipId = `kpi-tip-${id}`;
   return (
     <div className="card kpi" data-kpi={id}>
       <div className="label">
         <Icon className="i i-sm" aria-hidden="true" />
-        {label}
+        {hint ? (
+          <span className="has-tip" tabIndex={0} aria-describedby={tipId}>
+            {label}
+            <span className="tip" role="tooltip" id={tipId}>
+              {hint}
+            </span>
+          </span>
+        ) : (
+          label
+        )}
       </div>
       <div className="value">
         {trend.value === null ? (
@@ -44,7 +57,7 @@ export function KpiCard({ id, label, icon: Icon, trend, percent = false }: { id:
       <div className="kfoot">
         {view && Arrow ? (
           <>
-            <span className={`trend ${view.direction}`}>
+            <span className={`trend ${view.tone} ${view.direction}`}>
               <Arrow className="i i-sm" aria-hidden="true" />
               <span aria-hidden="true">{view.text}</span>
             </span>
@@ -64,7 +77,7 @@ export function KpiGrid({ kpis }: { kpis: Kpis }) {
   return (
     <section className="kpis" aria-label="Today in numbers">
       {DEFINITIONS.map((definition) => (
-        <KpiCard key={definition.key} id={definition.key} label={definition.label} icon={definition.icon} trend={kpis[definition.key]} percent={definition.key === "utilisationPct"} />
+        <KpiCard key={definition.key} id={definition.key} label={definition.label} icon={definition.icon} trend={kpis[definition.key]} percent={definition.key === "utilisationPct"} hint={definition.hint} lowerIsBetter={definition.lowerIsBetter} />
       ))}
     </section>
   );

@@ -22,8 +22,9 @@ function cityOf(timeZone: string): string {
 export function StatusBar({ serverNow, timeZone, demoDate, typicalDay = false }: { serverNow: string; timeZone: string; demoDate?: string; typicalDay?: boolean }) {
   const serverMs = Date.parse(serverNow);
   // Declared before useClinicNow so the offset is known when its subscription starts the clock.
+  // A screen that has fresher data (the Overview's poll) seeds the clock itself; this reading is the shell's, taken when it rendered.
   useEffect(() => {
-    clinicClock.seed(serverMs, deviceReference());
+    if (!clinicClock.isSeeded()) clinicClock.seed(serverMs, deviceReference());
   }, [serverMs]);
   const now = useClinicNow(serverMs);
   const live = useLiveStatus();

@@ -46,16 +46,20 @@ export function lastWeekLabel(comparedTo: string): string {
   return `last ${formatDayMonth(comparedTo).split(" ")[0]}`;
 }
 
-export type TrendView = { direction: "up" | "down" | "flat"; text: string; phrase: string; label: string };
+export type TrendView = { direction: "up" | "down" | "flat"; tone: "good" | "bad" | "flat"; text: string; phrase: string; label: string };
 
-/** The chip beside a KPI: arrow and number, plus the sentence a screen reader gets ("down 4 on last Mon"). */
-export function trendView(trend: Trend, unit: "" | "pts" = ""): TrendView | null {
+/**
+ * The chip beside a KPI: arrow and number, plus the sentence a screen reader gets ("down 4 on last Mon").
+ * `tone` is the meaning of the change: for no-shows and cancellations (`lowerIsBetter`) a fall is good.
+ */
+export function trendView(trend: Trend, unit: "" | "pts" = "", lowerIsBetter = false): TrendView | null {
   if (trend.delta === null) return null;
   const label = lastWeekLabel(trend.comparedTo);
   const size = `${Math.abs(trend.delta)}${unit ? ` ${unit}` : ""}`;
   const direction = trend.delta > 0 ? "up" : trend.delta < 0 ? "down" : "flat";
+  const tone = direction === "flat" ? "flat" : (direction === "down") === lowerIsBetter ? "good" : "bad";
   const phrase = direction === "flat" ? `same as ${label}` : `${direction} ${size} on ${label}`;
-  return { direction, text: size, phrase, label };
+  return { direction, tone, text: size, phrase, label };
 }
 
 export function bookingLength(item: BookingSummary): number {

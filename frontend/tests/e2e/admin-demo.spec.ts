@@ -20,9 +20,9 @@ async function expectDemoOverview(page: Page) {
 }
 
 test.describe("entering the demo", () => {
-  test("from the site footer", async ({ page }) => {
+  test("from the gold top bar", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("contentinfo").getByRole("button", DEMO_BUTTON).click();
+    await page.getByTestId("announcement-bar").getByRole("button", DEMO_BUTTON).click();
     await expectDemoOverview(page);
   });
 
@@ -52,7 +52,7 @@ test.describe("entering the demo", () => {
     const context = await browser.newContext({ baseURL, extraHTTPHeaders: { "x-forwarded-for": "198.51.100.99" } });
     const page = await context.newPage();
     await page.goto("/");
-    await page.getByRole("contentinfo").getByRole("button", DEMO_BUTTON).click();
+    await page.getByTestId("announcement-bar").getByRole("button", DEMO_BUTTON).click();
     await expect(page).toHaveURL(/\/admin\/login\?demo=busy$/);
     await expect(page.getByRole("status")).toHaveText("The demo is busy — try again in a minute.");
     await context.close();
@@ -71,7 +71,7 @@ test.describe("the public pages' demo control", () => {
       await expect(forms.first()).toHaveAttribute("action", "/admin/demo/start");
       await expect(forms.first()).toHaveAttribute("method", "post");
       await expect(page.getByTestId("announcement-bar").locator("form[data-demo-entry]")).toHaveCount(1);
-      await expect(page.getByRole("contentinfo").locator("form[data-demo-entry] button[type=submit]")).toHaveText("View Demo Dashboard");
+      await expect(page.getByRole("contentinfo").locator("form[data-demo-entry]")).toHaveCount(0); // the footer has no demo button
       const hrefs = await page.locator("a[href]").evaluateAll((links) => links.map((a) => a.getAttribute("href") ?? ""));
       expect(hrefs.filter((href) => href.startsWith("/admin")), path).toEqual([]);
       for (const link of (await page.locator("a[href^='/']").all()).slice(0, 10)) await link.hover({ timeout: 1000 }).catch(() => {});

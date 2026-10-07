@@ -1944,11 +1944,12 @@ svg.i-sm {
   padding: 2px 8px;
   border-radius: var(--radius-pill);
 }
-.trend.up {
-  color: var(--accent);
-  background: var(--accent-bg);
+/* Colour follows meaning, not arrow direction: fewer no-shows is good (green), more is bad (red). */
+.trend.good {
+  color: var(--st-completed-ink);
+  background: var(--st-completed-bg);
 }
-.trend.down {
+.trend.bad {
   color: var(--st-cancelled-ink);
   background: var(--st-cancelled-bg);
 }
@@ -2091,6 +2092,39 @@ svg.i-sm {
   50% {
     box-shadow: 0 0 0 5px color-mix(in srgb, var(--gold-line) 35%, transparent);
   }
+}
+/* KPI label with an explanatory tooltip: shown on hover and keyboard focus. */
+.has-tip {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dotted var(--muted);
+  border-radius: 2px;
+}
+.has-tip .tip {
+  display: none;
+  position: absolute;
+  z-index: 7;
+  top: calc(100% + 8px);
+  left: 0;
+  width: max-content;
+  max-width: 220px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-lift-cc);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: normal;
+}
+.has-tip:hover .tip,
+.has-tip:focus .tip,
+.has-tip:focus-visible .tip {
+  display: block;
 }
 .tl-tip {
   position: absolute;

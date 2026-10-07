@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
+import { clinicClock } from "./clinicClock";
 import { LivePoller, type LivePollOptions, type LivePollStatus } from "./livePoll";
 
 type LiveStatusValue = {
@@ -35,7 +36,8 @@ export function useLivePoll<T>(options: Pick<LivePollOptions<T>, "load" | "onDat
   const poller = useRef<LivePoller<T> | null>(null);
 
   useEffect(() => {
-    const next = new LivePoller<T>({ load: loader, onData, onError, intervalMs });
+    // "Updated N ago" is measured on the clinic clock, the same one the header clock shows.
+    const next = new LivePoller<T>({ load: loader, onData, onError, intervalMs, now: () => clinicClock.now() });
     const stopListening = next.subscribe(() => report(next.getStatus()));
     next.start();
     report(next.getStatus());

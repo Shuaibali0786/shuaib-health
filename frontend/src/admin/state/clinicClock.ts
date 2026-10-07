@@ -11,6 +11,7 @@ import { clinicDate } from "@/admin/lib/format";
  */
 export class ClinicClock {
   private offset = 0;
+  private seeded = false;
   private snapshot = Date.now();
   private timer: ReturnType<typeof setInterval> | null = null;
   private readonly ticks = new Set<(nowMs: number) => void>();
@@ -24,6 +25,7 @@ export class ClinicClock {
    * that instant. The default is "now", which is accurate to the time the page took to arrive.
    */
   seed(serverNowMs: number, deviceNowMs: number = Date.now()): void {
+    this.seeded = true;
     this.offset = serverNowMs - deviceNowMs;
     this.snapshot = this.now();
     this.lastMinute = Math.floor(this.snapshot / 60_000);
@@ -32,6 +34,11 @@ export class ClinicClock {
 
   now(): number {
     return Date.now() + this.offset;
+  }
+
+  /** True once any server reading has been given. The shell's render-time reading never overrides a fresher one. */
+  isSeeded(): boolean {
+    return this.seeded;
   }
 
   /** For `useSyncExternalStore`: stable between ticks. */
@@ -107,7 +114,8 @@ export function deviceReference(): number {
   try {
     const [entry] = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
     const at = performance.timeOrigin + (entry?.responseStart ?? Number.NaN);
-    if (Number.isFinite(at) && at <= now && now - at < 5 * 60_000) return at;
+    // Only a page that has just arrived: after a client-side navigation the document's own timing is old.
+    if (Number.isFinite(at) && at <= now && now - at < 20_000) return at;
   } catch {
     // Navigation timing is not available everywhere; "now" is close enough.
   }

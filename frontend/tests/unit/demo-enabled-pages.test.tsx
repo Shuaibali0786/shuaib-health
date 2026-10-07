@@ -25,9 +25,9 @@ afterEach(() => vi.unstubAllEnvs());
 describe("DEMO_ENABLED on", () => {
   beforeEach(() => vi.stubEnv("DEMO_ENABLED", "true"));
 
-  it("the footer offers the demo", async () => {
+  it("the footer has no demo button (the gold top bar carries the entry)", async () => {
     render(await SiteFooter());
-    expect(screen.getByRole("button", { name: DEMO_BUTTON })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: DEMO_BUTTON })).toBeNull();
   });
 
   it("the About page offers the demo", async () => {

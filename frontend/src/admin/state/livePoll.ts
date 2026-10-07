@@ -26,8 +26,13 @@ export type LivePollOptions<T> = {
 export const documentVisibility: Visibility = {
   isVisible: () => typeof document === "undefined" || document.visibilityState === "visible",
   subscribe: (listener) => {
+    // Tab switches fire `visibilitychange`; clicking back into a window that stayed visible fires `focus`.
     document.addEventListener("visibilitychange", listener);
-    return () => document.removeEventListener("visibilitychange", listener);
+    window.addEventListener("focus", listener);
+    return () => {
+      document.removeEventListener("visibilitychange", listener);
+      window.removeEventListener("focus", listener);
+    };
   },
 };
 
