@@ -298,3 +298,5 @@ Notes: T126 says "5 items" in the bottom nav; the app has 4 (receptionist) or 6 
 | Visual baselines | 30 new (Insights, Insights focused, Doctors today, Activity; light and night; four widths); public baselines regenerated for the footer change |
 
 Known limit: with a nearby database the Overview budget holds as measured net of round trips; against the remote dev database its raw p95 is about 1 s.
+
+Backend pytest, full: 1002 passed in the single full run; the 19 failures and 7 errors in that run came from a second full run sharing the dev database at the same time (committing tests, rate-limit counters). The five affected files re-run alone: 72 passed (2 errors only because that run switched off the logging plugin, which `caplog` needs).
