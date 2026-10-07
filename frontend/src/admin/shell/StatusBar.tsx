@@ -19,7 +19,7 @@ function cityOf(timeZone: string): string {
  * the server reading, so a device with the wrong time or zone still shows the clinic time.
  * `demoDate` fixes the date for the demo viewer, whose today is its dataset date.
  */
-export function StatusBar({ serverNow, timeZone, demoDate }: { serverNow: string; timeZone: string; demoDate?: string }) {
+export function StatusBar({ serverNow, timeZone, demoDate, typicalDay = false }: { serverNow: string; timeZone: string; demoDate?: string; typicalDay?: boolean }) {
   const serverMs = Date.parse(serverNow);
   // Declared before useClinicNow so the offset is known when its subscription starts the clock.
   useEffect(() => {
@@ -42,6 +42,11 @@ export function StatusBar({ serverNow, timeZone, demoDate }: { serverNow: string
             {formatClock(now, timeZone)}
           </time>
           <span className="tz">· {cityOf(timeZone)}</span>
+          {typicalDay ? (
+            <span className="typical-day" data-testid="typical-day">
+              Showing a typical clinic day
+            </span>
+          ) : null}
         </span>
         <span className="live-pill" data-state={stale ? "stale" : "live"}>
           <span className="live-dot" aria-hidden="true" />

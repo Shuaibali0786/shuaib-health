@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { VisitSteps } from "@/components/about/VisitSteps";
 import { DemoDashboardButton } from "@/components/demo/DemoDashboardButton";
+import { isDemoEnabled } from "@/lib/demo";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -99,18 +100,20 @@ export default async function AboutPage() {
         </div>
       </Section>
 
-      <Section tone="surface" spacing="compact" labelledBy="staff-demo-title">
-        <h2 id="staff-demo-title" className="text-2xl font-bold">
-          See how the clinic team works
-        </h2>
-        <p className="mt-2 max-w-2xl text-base text-muted">
-          Open the staff dashboard as a read-only demo. No password needed, nothing is saved, and every name and number is
-          sample data.
-        </p>
-        <div className="mt-6">
-          <DemoDashboardButton className="inline-flex min-h-11 items-center justify-center rounded-control bg-navy-900 px-5 py-2.5 text-base font-semibold text-white transition-colors duration-150 hover:bg-navy-800" />
-        </div>
-      </Section>
+      {isDemoEnabled() ? (
+        <Section tone="surface" spacing="compact" labelledBy="staff-demo-title">
+          <h2 id="staff-demo-title" className="text-2xl font-bold">
+            See how the clinic team works
+          </h2>
+          <p className="mt-2 max-w-2xl text-base text-muted">
+            Open the staff dashboard as a read-only demo. No password needed, nothing is saved, and every name and number is
+            sample data.
+          </p>
+          <div className="mt-6">
+            <DemoDashboardButton className="inline-flex min-h-11 items-center justify-center rounded-control bg-navy-900 px-5 py-2.5 text-base font-semibold text-white transition-colors duration-150 hover:bg-navy-800" />
+          </div>
+        </Section>
+      ) : null}
     </>
   );
 }

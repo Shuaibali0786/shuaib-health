@@ -17,6 +17,7 @@ LOGIN_LOCK_MINUTES=15
 LOGIN_LIMIT_PER_IP_PER_15MIN=20
 DEMO_LIMIT_PER_IP_PER_HOUR=10
 DEMO_SESSION_HOURS=2
+DEMO_ENABLED=true            # false for a real clinic: no demo entry, no demo data (website: same name, set before build)
 STATUS_UNDO_SECONDS=10
 ```
 

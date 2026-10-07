@@ -39,7 +39,7 @@ export default async function AuthenticatedLayout({ children }: LayoutProps<"/ad
 
   const site = await getSiteConfig();
   return (
-    <AppShell viewer={result.viewer} clinicName={site.name} serverNow={new Date().toISOString()}>
+    <AppShell viewer={result.viewer} clinicName={site.name} serverNow={result.viewer.demoNow ?? new Date().toISOString()}>
       {children}
     </AppShell>
   );

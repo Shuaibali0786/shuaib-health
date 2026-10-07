@@ -1,19 +1,20 @@
 """Staff administration (admins only; Feature 006). A demo viewer sees the sample staff."""
 
 import uuid
+from datetime import datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Response, status
 
 from app import models as m
 from app.auth import service
-from app.auth.deps import Viewer, require_viewer
+from app.auth.deps import Viewer, require_viewer, viewer_now
 from app.auth.policies import Policy
 from app.booking.clock import ClockDep
 from app.command_centre.schemas import ResetPasswordRequest, StaffCreate, StaffOut, StaffPatch
 from app.db import SessionDep
 from app.demo.demo_source import DemoSource
-from app.deps import ADMIN_ERRORS_DOC
+from app.deps import ADMIN_ERRORS_DOC, SettingsDep
 from app.schemas import ErrorResponse
 
 router = APIRouter(prefix="/admin", tags=["command-centre"])
@@ -26,6 +27,13 @@ WRITE_ERRORS: dict[int | str, dict[str, object]] = {
 }
 StaffId = Annotated[uuid.UUID, Path(alias="staffId")]
 NO_STORE = {"Cache-Control": "no-store"}
+
+
+def past_sign_in(at: datetime, now: datetime) -> datetime:
+    """A sample sign-in is never later than now: if it would be, it goes back whole days."""
+    while at > now:
+        at -= timedelta(days=1)
+    return at
 
 
 def staff_out(staff: m.StaffAccount) -> StaffOut:
@@ -53,10 +61,13 @@ def staff_out(staff: m.StaffAccount) -> StaffOut:
 def list_staff(
     viewer: Annotated[Viewer, Depends(require_viewer(Policy.READ_ADMIN))],
     db: SessionDep,
+    clock: ClockDep,
+    settings: SettingsDep,
     response: Response,
 ) -> list[StaffOut]:
     response.headers.update(NO_STORE)
     if viewer.is_demo and viewer.demo_date is not None:
+        now = viewer_now(viewer, settings, clock.now())
         return [
             StaffOut(
                 id=member.id,
@@ -65,7 +76,7 @@ def list_staff(
                 job_title=member.job_title,
                 role=member.role,
                 is_active=True,
-                last_sign_in_at=member.last_sign_in_at,
+                last_sign_in_at=past_sign_in(member.last_sign_in_at, now),
                 is_sample=True,
             )
             for member in DemoSource(viewer.demo_date).staff()

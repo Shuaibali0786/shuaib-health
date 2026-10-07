@@ -1,5 +1,6 @@
 import { DemoDashboardButton } from "@/components/demo/DemoDashboardButton";
 import { Container } from "@/components/layout/Container";
+import { isDemoEnabled } from "@/lib/demo";
 
 /**
  * Slim portfolio announcement above the header on every public page. Server-rendered at a fixed
@@ -7,6 +8,7 @@ import { Container } from "@/components/layout/Container";
  * shortens on phones. White on navy-900 is 15.4:1; gold-300 on navy-900 is above 9:1.
  */
 export function AnnouncementBar() {
+  if (!isDemoEnabled()) return null;
   return (
     <div className="h-10 border-b-2 border-gold-500 bg-navy-900 text-white" data-testid="announcement-bar">
       <Container className="flex h-full items-center justify-center gap-3 text-[0.8125rem] leading-none">

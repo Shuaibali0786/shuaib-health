@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Header, Response, status
 from sqlalchemy import Engine
 
 from app.auth import events, service, sessions, tokens
-from app.auth.deps import Viewer, require_viewer
+from app.auth.deps import Viewer, demo_clock, require_viewer
 from app.auth.policies import Policy
 from app.booking import limits
 from app.booking.clock import ClockDep
@@ -20,8 +20,9 @@ from app.command_centre.schemas import (
     ViewerOut,
 )
 from app.db import SessionDep, get_engine
+from app.demo.clock import demo_now
 from app.deps import ADMIN_ERRORS_DOC, ClientIpDep, SettingsDep
-from app.errors import ClinicNotConfigured, RateLimited
+from app.errors import ClinicNotConfigured, NotFound, RateLimited
 from app.repositories import clinic as clinic_repo
 from app.schemas import ErrorResponse
 from app.settings import Settings
@@ -43,8 +44,9 @@ def clinic_timezone(db: SessionDep) -> str:
     return settings.time_zone
 
 
-def viewer_out(viewer: Viewer, timezone: str, now: datetime) -> ViewerOut:
+def viewer_out(viewer: Viewer, timezone: str, now: datetime, settings: Settings) -> ViewerOut:
     today = viewer.demo_date or now.astimezone(ZoneInfo(timezone)).date()
+    shown = demo_clock(viewer, settings, now)
     return ViewerOut(
         kind=viewer.kind,
         role=viewer.role,
@@ -54,6 +56,8 @@ def viewer_out(viewer: Viewer, timezone: str, now: datetime) -> ViewerOut:
         clinic_today=today,
         timezone=timezone,
         session_expires_at=viewer.expires_at,
+        demo_now=shown.at if shown else None,
+        typical_day=shown.typical if shown else None,
     )
 
 
@@ -97,6 +101,8 @@ def demo_start(
 ) -> SessionIssued:
     """A 2-hour demo for today's clinic date. Any session presented with the request ends first."""
     response.headers.update(NO_STORE)
+    if not settings.demo_enabled:
+        raise NotFound("Demo")
     now = clock.now()
     bucket = limits.demo_ip_bucket(settings.privacy_hash_key, client_ip)
     retry = limits.hit(
@@ -112,12 +118,15 @@ def demo_start(
     if row.id is None:
         raise RuntimeError("session was not persisted")
     events.emit("demo.started")
+    shown = demo_now(now, demo_date, now)
     viewer = ViewerOut(
         kind="demo",
         csrf_token=tokens.csrf_token(settings.session_secret, row.id),
         clinic_today=demo_date,
         timezone=timezone,
         session_expires_at=row.expires_at,
+        demo_now=shown.at,
+        typical_day=shown.typical,
     )
     return SessionIssued(token=token, viewer=viewer)
 
@@ -132,13 +141,14 @@ def demo_start(
 )
 def me(
     viewer: Annotated[Viewer, Depends(require_viewer(Policy.SELF))],
+    settings: SettingsDep,
     timezone: Annotated[str, Depends(clinic_timezone)],
     clock: ClockDep,
     response: Response,
 ) -> ViewerOut:
     response.headers["Cache-Control"] = "no-store"
     response.headers["X-Robots-Tag"] = "noindex"
-    return viewer_out(viewer, timezone, clock.now())
+    return viewer_out(viewer, timezone, clock.now(), settings)
 
 
 @router.post(

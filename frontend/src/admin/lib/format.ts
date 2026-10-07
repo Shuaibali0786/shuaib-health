@@ -21,6 +21,12 @@ export function formatClock(value: Date | string | number, timeZone = CLINIC_TIM
   return `${p.hour}:${p.minute}:${p.second} ${String(p.dayPeriod).toUpperCase()}`;
 }
 
+/** `7:52 AM` (no seconds) for a time that is a fact, not a ticking clock. */
+export function formatClockShort(value: Date | string | number, timeZone = CLINIC_TIME_ZONE): string {
+  const p = parts(asDate(value), { hour: "numeric", minute: "2-digit", hour12: true }, timeZone);
+  return `${p.hour}:${p.minute} ${String(p.dayPeriod).toUpperCase()}`;
+}
+
 /** The clinic's calendar date for an instant, as `YYYY-MM-DD`. */
 export function clinicDate(value: Date | string | number, timeZone = CLINIC_TIME_ZONE): string {
   const p = parts(asDate(value), { year: "numeric", month: "2-digit", day: "2-digit" }, timeZone);

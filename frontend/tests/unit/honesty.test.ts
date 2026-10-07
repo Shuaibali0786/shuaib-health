@@ -105,9 +105,9 @@ describe("no backend dependency (constitution V)", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("src reads no environment variables except SITE_URL in lib/seo.ts, the API settings in lib/api/config.ts and the start-up check in instrumentation.ts", () => {
+  it("src reads no environment variables except SITE_URL in lib/seo.ts, DEMO_ENABLED in lib/demo.ts, the API settings in lib/api/config.ts and the start-up check in instrumentation.ts", () => {
     const offenders = codeFiles
-      .filter((file) => !["/src/lib/seo.ts", "/src/lib/api/config.ts", "/src/instrumentation.ts"].includes(file.path))
+      .filter((file) => !["/src/lib/seo.ts", "/src/lib/demo.ts", "/src/lib/api/config.ts", "/src/instrumentation.ts"].includes(file.path))
       .filter((file) => /\bprocess\.env\b/.test(file.code))
       .map((file) => file.path);
     expect(offenders).toEqual([]);

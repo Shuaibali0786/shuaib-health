@@ -1314,6 +1314,13 @@ export interface components {
              * @description earlier of idle and absolute expiry
              */
             sessionExpiresAt?: string;
+            /**
+             * Format: date-time
+             * @description demo only: the instant the demo treats as now
+             */
+            demoNow?: string;
+            /** @description demo only: true when outside clinic hours, so a typical clinic day is shown */
+            typicalDay?: boolean;
         };
         SignInRequest: {
             email: string;

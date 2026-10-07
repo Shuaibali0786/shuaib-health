@@ -47,15 +47,16 @@ export function BookingTable({ bookings, onOpen, onQuick, busyReference }: { boo
                   <StatusBadge status={booking.status} />
                 </td>
                 <td>
-                  {quick ? (
-                    <button type="button" className="btn btn-sm" disabled={busyReference === booking.reference} onClick={() => onQuick(booking, quick.to as "arrived" | "completed")} aria-label={`${quick.label}: ${booking.patientNameMasked}, ${booking.localTime}`}>
-                      {quick.label}
+                  <div className="row-actions">
+                    {quick ? (
+                      <button type="button" className="btn btn-sm" disabled={busyReference === booking.reference} onClick={() => onQuick(booking, quick.to as "arrived" | "completed")} aria-label={`${quick.label}: ${booking.patientNameMasked}, ${booking.localTime}`}>
+                        {quick.label}
+                      </button>
+                    ) : null}
+                    <button type="button" className="btn btn-sm btn-quiet" data-view="" onClick={(event) => onOpen(booking, event.currentTarget)} aria-label={`View booking: ${booking.patientNameMasked}, ${booking.localTime}`}>
+                      View
                     </button>
-                  ) : (
-                    <span className="muted" aria-label="No quick action">
-                      —
-                    </span>
-                  )}
+                  </div>
                 </td>
               </tr>
             );

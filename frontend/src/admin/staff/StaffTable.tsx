@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 
-import { clinicDate, formatClock, formatDayMonth } from "@/admin/lib/format";
+import { clinicDate, formatClockShort, formatDayMonth } from "@/admin/lib/format";
 import type { Role, Staff } from "@/admin/lib/schemas";
 
 export type StaffActions = {
@@ -13,7 +13,7 @@ export type StaffActions = {
 
 function lastSeen(value: string | null | undefined): string {
   if (!value) return "Never";
-  return `${formatDayMonth(clinicDate(value))}, ${formatClock(value)}`;
+  return `${formatDayMonth(clinicDate(value))}, ${formatClockShort(value)}`;
 }
 
 function RoleSelect({ member, onRole, disabled }: { member: Staff; onRole: StaffActions["onRole"]; disabled: boolean }) {

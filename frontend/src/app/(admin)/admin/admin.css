@@ -482,6 +482,12 @@ svg.i-sm {
   font-variant-numeric: tabular-nums;
   min-width: 8.6ch;
 }
+.clock .typical-day {
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
 .clock .tz,
 .live-pill .sep,
 .live-pill .updated {
@@ -553,6 +559,21 @@ svg.i-sm {
   background: var(--primary-bg);
   color: var(--primary-ink);
   border-color: transparent;
+}
+/* The one loud button: gold, for the demo entry on the sign-in page. Navy ink on gold is well above 4.5:1. */
+.btn-gold {
+  background: var(--gold-line);
+  color: var(--color-navy-950);
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: var(--shadow-soft-cc);
+}
+.btn-gold:hover {
+  filter: brightness(1.06);
+}
+.btn-lg {
+  min-height: 52px;
+  font-size: 15.5px;
 }
 .btn-quiet {
   border-color: transparent;
@@ -993,6 +1014,8 @@ svg.i-sm {
 }
 .stack {
   display: grid;
+  /* A track that may shrink: a wide table scrolls inside its card instead of widening the page. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
 }
 
@@ -1889,14 +1912,21 @@ svg.i-sm {
 .kfoot {
   margin-top: 10px;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 4px 6px;
   min-height: 22px;
+  white-space: nowrap;
 }
 .kfoot .vs {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 12px;
   color: var(--muted);
+}
+.kfoot .trend {
+  flex: none;
 }
 .trend {
   display: inline-flex;
@@ -2320,6 +2350,17 @@ svg.i-sm {
 @keyframes toast-time {
   to {
     transform: scaleX(0);
+  }
+}
+
+/* Six KPI columns: a little less side padding keeps "vs last Mon" beside a three-digit change on one line */
+@media (min-width: 1400px) {
+  .kpi {
+    padding-inline: 14px;
+  }
+  .kpi::after {
+    left: 14px;
+    right: 14px;
   }
 }
 

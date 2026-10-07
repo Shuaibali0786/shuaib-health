@@ -3,6 +3,7 @@ import { SessionIssuedSchema } from "@/admin/lib/schemas";
 import { callAdminBackend } from "@/admin/lib/server";
 import { cookieValue, isSameOrigin, sessionCookie } from "@/admin/lib/sessionRoute";
 import { clientIpFrom } from "@/lib/booking/backend";
+import { isDemoEnabled } from "@/lib/demo";
 
 // "View Demo Dashboard" (contracts/website-admin.md §3): a plain HTML form POST from the public pages,
 // so the public site ships no staff code. The backend returns the demo token to this server only; it goes
@@ -26,6 +27,8 @@ function redirect(location: string, headers: Record<string, string> = {}): Respo
 }
 
 export async function POST(request: Request): Promise<Response> {
+  // A real clinic deployment has no demo: nothing here, and the backend answers 404 as well.
+  if (!isDemoEnabled()) return new Response(null, { status: 404, headers: { "cache-control": "no-store" } });
   if (!isOwnRequest(request)) return new Response("Forbidden", { status: 403, headers: { "cache-control": "no-store" } });
 
   let result;

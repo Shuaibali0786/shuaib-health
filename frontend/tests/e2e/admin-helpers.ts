@@ -8,6 +8,8 @@ export const SESSIONS = {
   admin: "cs_e2e-admin",
   receptionist: "cs_e2e-receptionist",
   demo: "cd_e2e-demo",
+  /** A demo visitor outside clinic hours: the demo shows a typical clinic day. */
+  demoTypical: "cd_e2e-demo-typical",
   /** A receptionist whose Overview is a clinic holiday. */
   closed: "cs_e2e-closed",
   /** A receptionist whose Overview is a day with no bookings. */

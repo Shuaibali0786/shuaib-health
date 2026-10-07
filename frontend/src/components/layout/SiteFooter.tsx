@@ -4,6 +4,7 @@ import { DemoDashboardButton } from "@/components/demo/DemoDashboardButton";
 import { Container } from "@/components/layout/Container";
 import { footerQuickLinks, legalLinks } from "@/data/navigation";
 import { getDepartments, getSiteConfig } from "@/lib/content";
+import { isDemoEnabled } from "@/lib/demo";
 import { formatOpeningHours } from "@/lib/format";
 import { CREDIT, DEMO_NOTICE } from "@/lib/honesty";
 import { departmentPath, linkPrefetch } from "@/lib/routes";
@@ -34,9 +35,11 @@ export async function SiteFooter() {
               A calm, modern clinic and diagnostic lab website for Karachi. This is a portfolio demo and not a real
               clinic.
             </p>
-            <div className="mt-5">
-              <DemoDashboardButton className="inline-flex min-h-11 items-center justify-center rounded-control bg-white px-5 py-2.5 text-base font-semibold text-navy-900 transition-colors duration-150 hover:bg-teal-50" />
-            </div>
+            {isDemoEnabled() ? (
+              <div className="mt-5">
+                <DemoDashboardButton className="inline-flex min-h-11 items-center justify-center rounded-control bg-white px-5 py-2.5 text-base font-semibold text-navy-900 transition-colors duration-150 hover:bg-teal-50" />
+              </div>
+            ) : null}
           </div>
 
           <nav aria-label="Quick links">

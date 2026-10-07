@@ -56,7 +56,7 @@ export function AppShell({ viewer, clinicName, serverNow, children }: { viewer: 
           <MobileTopBar clinicName={clinicName} />
           {viewer.kind === "demo" ? <DemoRibbon /> : null}
           <main id="main-content" tabIndex={-1} className="content">
-            <StatusBar serverNow={serverNow} timeZone={viewer.timezone} demoDate={viewer.kind === "demo" ? viewer.clinicToday : undefined} />
+            <StatusBar serverNow={serverNow} timeZone={viewer.timezone} demoDate={viewer.kind === "demo" ? viewer.clinicToday : undefined} typicalDay={viewer.typicalDay === true} />
             {children}
           </main>
           <footer className="foot">

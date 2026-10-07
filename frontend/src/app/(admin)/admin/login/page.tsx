@@ -9,6 +9,7 @@ import { getViewer } from "@/admin/lib/server";
 import { Brand } from "@/admin/shell/Brand";
 import { DemoDashboardButton } from "@/components/demo/DemoDashboardButton";
 import { getSiteConfig } from "@/lib/content";
+import { isDemoEnabled } from "@/lib/demo";
 import { CREDIT } from "@/lib/honesty";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -41,19 +42,21 @@ export default async function LoginPage({ searchParams }: PageProps<"/admin/logi
         <h1>Sign in</h1>
         <p className="lead">Staff only. Use the email and password your administrator gave you.</p>
         <LoginPanel next={next} />
-        <div className="auth-demo">
-          <span className="auth-or">or</span>
-          {demoEnded && !demoNote ? <p className="auth-demo-note">Your demo has ended. Start a fresh one to keep exploring.</p> : null}
-          {demoNote ? (
-            <p className="auth-demo-note" role="status">
-              {demoNote}
-            </p>
-          ) : null}
-          <DemoDashboardButton className={demoEnded ? "btn btn-primary btn-block" : "btn btn-quiet btn-block"}>
-            {demoEnded ? "Start a fresh demo" : "View Demo Dashboard"}
-          </DemoDashboardButton>
-          <p className="auth-demo-help">A read-only tour with sample data. No password needed.</p>
-        </div>
+        {isDemoEnabled() ? (
+          <div className="auth-demo">
+            <span className="auth-or">or</span>
+            {demoEnded && !demoNote ? <p className="auth-demo-note">Your demo has ended. Start a fresh one to keep exploring.</p> : null}
+            {demoNote ? (
+              <p className="auth-demo-note" role="status">
+                {demoNote}
+              </p>
+            ) : null}
+            <DemoDashboardButton className="btn btn-gold btn-lg btn-block">
+              {demoEnded ? "Start a fresh demo" : "View Demo Dashboard"}
+            </DemoDashboardButton>
+            <p className="auth-demo-help">A read-only tour with sample data. No password needed.</p>
+          </div>
+        ) : null}
         <p className="auth-credit">
           <a href={CREDIT.href} target="_blank" rel="noopener noreferrer">
             {CREDIT.text}

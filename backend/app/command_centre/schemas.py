@@ -23,6 +23,9 @@ class ViewerOut(CamelModel):
     clinic_today: date
     timezone: str
     session_expires_at: AwareDatetime | None = None
+    # Demo only: the instant the demo treats as now, and whether it is the sample day.
+    demo_now: AwareDatetime | None = None
+    typical_day: bool | None = None
 
 
 class SignInRequest(CamelModel):

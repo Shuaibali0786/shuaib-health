@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, Path, Response
 from sqlmodel import Session
 
-from app.auth.deps import Viewer, get_source, require_viewer
+from app.auth.deps import Viewer, get_source, require_viewer, viewer_now
 from app.auth.policies import Policy
 from app.booking.clock import ClockDep
 from app.command_centre import service
@@ -27,7 +27,7 @@ from app.command_centre.schemas import (
 from app.db import SessionDep
 from app.demo import generator
 from app.demo.demo_source import DemoSource
-from app.deps import ADMIN_ERRORS_DOC
+from app.deps import ADMIN_ERRORS_DOC, SettingsDep
 from app.errors import ClinicNotConfigured
 from app.repositories import clinic as clinic_repo
 from app.schemas import ErrorResponse
@@ -69,11 +69,12 @@ def search_bookings(
     viewer: Annotated[Viewer, Depends(require_viewer(Policy.READ))],
     db: SessionDep,
     clock: ClockDep,
+    settings: SettingsDep,
     response: Response,
 ) -> BookingPage:
     response.headers.update(NO_STORE)
     source = get_source(viewer, db)
-    return source.search(body, clinic_zone(viewer, db), clock.now())
+    return source.search(body, clinic_zone(viewer, db), viewer_now(viewer, settings, clock.now()))
 
 
 @router.get(
@@ -89,11 +90,14 @@ def booking_detail(
     viewer: Annotated[Viewer, Depends(require_viewer(Policy.READ))],
     db: SessionDep,
     clock: ClockDep,
+    settings: SettingsDep,
     response: Response,
 ) -> BookingDetail:
     response.headers.update(NO_STORE)
     source = get_source(viewer, db)
-    return source.detail(reference, clinic_zone(viewer, db), clock.now())
+    return source.detail(
+        reference, clinic_zone(viewer, db), viewer_now(viewer, settings, clock.now())
+    )
 
 
 @router.post(

@@ -58,6 +58,7 @@ notepad .env
 | `BOOKING_PROXY_SECRET` | **Required**, at least 32 characters. Shared with the website (its `BOOKING_PROXY_SECRET`); bookings are accepted only with it. The app refuses to start without it. |
 | `PRIVACY_HASH_KEY` | **Required**, at least 32 characters. Key for the one-way hashes of IPs, mobiles and idempotency keys. The app refuses to start without it. |
 | `DEMO_MODE` | `true` (default): bookings are labelled as samples. |
+| `DEMO_ENABLED` | `true` (default): the read-only demo dashboard. `false` for a real clinic: `POST /admin/demo/start` answers 404 and no demo session can read anything. The website reads the same name (set it before `next build`). Outside clinic hours (09:00-20:00 Karachi) the demo shows its sample day as it stands at 12:30 and labels it. |
 | `BOOKING_PURGE_AFTER_DAYS` / `AUDIT_PURGE_AFTER_DAYS` | Retention of demo bookings (default 7, 1–90) and audit rows (default 90, 7–365). |
 | `BOOKING_LIMIT_PER_IP_PER_HOUR` / `BOOKING_LIMIT_PER_PHONE_PER_DAY` / `LOOKUP_LIMIT_PER_IP_PER_MINUTE` | Booking limits (defaults 10, 5, 20). |
 

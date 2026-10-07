@@ -21,6 +21,9 @@ export const ViewerSchema = z.object({
   clinicToday: z.iso.date(),
   timezone: z.string(),
   sessionExpiresAt: z.iso.datetime().optional(),
+  /** Demo only: the instant the demo treats as now, and whether it shows the sample day (outside clinic hours). */
+  demoNow: z.iso.datetime({ offset: true }).optional(),
+  typicalDay: z.boolean().optional(),
 });
 
 export type Role = z.infer<typeof RoleSchema>;

@@ -4,7 +4,8 @@
 //
 // Test sessions (the session cookie value is the token): cs_e2e-admin, cs_e2e-receptionist,
 // cs_e2e-must-change (staff), cs_e2e-closed and cs_e2e-empty (staff whose Overview is a clinic holiday and a day with
-// no bookings), cd_e2e-demo (demo) and cd_e2e-demo-expired (a demo whose two hours are up).
+// no bookings), cd_e2e-demo (demo), cd_e2e-demo-typical (a demo outside clinic hours, "a typical clinic day")
+// and cd_e2e-demo-expired (a demo whose two hours are up).
 // Anything else is "not signed in". `POST /admin/demo/start` issues a new demo session from the committed
 // demo day (tests/fixtures/admin/demo-day.json, produced by the backend generator); a caller whose
 // X-Client-IP is 198.51.100.99 is always told the demo is busy (429).
@@ -35,6 +36,8 @@ const baseSessions = () => ({
   "cs_e2e-empty": { kind: "staff", role: "receptionist", displayName: "Sample Receptionist D", mustChangePassword: false, email: "empty@clinic.test", overview: "empty" },
   "cd_e2e-demo": { kind: "demo" },
   "cd_e2e-demo-expired": { kind: "demo", expired: true },
+  // A demo visitor outside clinic hours: the demo shows its sample day as it stands at 12:30.
+  "cd_e2e-demo-typical": { kind: "demo", typicalDay: true },
 });
 
 const baseStaff = () => [
@@ -53,7 +56,9 @@ export const csrfFor = (token) => `csrf-${token}`;
 function viewerOf(token, session, now) {
   const expires = new Date(Date.parse(now) + 30 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
   const rest = omit(session, ["email", "expired", "overview"]);
-  return { ...rest, csrfToken: csrfFor(token), clinicToday: TODAY, timezone: TIME_ZONE, sessionExpiresAt: expires };
+  // A demo viewer carries the instant the demo treats as now, as the backend's `me` does.
+  const demo = session.kind === "demo" ? { demoNow: session.typicalDay ? `${TODAY}T07:30:00Z` : now, typicalDay: session.typicalDay === true } : {};
+  return { ...rest, ...demo, csrfToken: csrfFor(token), clinicToday: TODAY, timezone: TIME_ZONE, sessionExpiresAt: expires };
 }
 
 /** The Viewer for one of the fixed test tokens, or null (kept for the unit tests). */

@@ -5,12 +5,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response
 
-from app.auth.deps import Viewer, get_source, require_viewer
+from app.auth.deps import Viewer, get_source, require_viewer, viewer_now
 from app.auth.policies import Policy
 from app.booking.clock import ClockDep
 from app.command_centre.schemas import Lookups, Overview
 from app.db import SessionDep
-from app.deps import ADMIN_ERRORS_DOC
+from app.deps import ADMIN_ERRORS_DOC, SettingsDep
 from app.routers.admin_bookings import clinic_zone
 
 router = APIRouter(prefix="/admin", tags=["command-centre"])
@@ -44,7 +44,9 @@ def overview(
     viewer: Annotated[Viewer, Depends(require_viewer(Policy.READ))],
     db: SessionDep,
     clock: ClockDep,
+    settings: SettingsDep,
     response: Response,
 ) -> Overview:
     response.headers["Cache-Control"] = "no-store"
-    return get_source(viewer, db).overview(clinic_zone(viewer, db), clock.now())
+    now = viewer_now(viewer, settings, clock.now())
+    return get_source(viewer, db).overview(clinic_zone(viewer, db), now)

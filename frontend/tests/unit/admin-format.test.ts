@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { clinicDate, formatClock, formatDayMonth, formatLongDate, formatTime, greeting } from "@/admin/lib/format";
+import { clinicDate, formatClock, formatClockShort, formatDayMonth, formatLongDate, formatTime, greeting } from "@/admin/lib/format";
 
 // The clinic is in Asia/Karachi (UTC+5, no daylight saving). The device is deliberately somewhere else.
 beforeAll(() => {
@@ -83,5 +83,13 @@ describe("greeting follows the clinic hour", () => {
 
   it("ignores the device zone: 02:20 in New York is 11:20 in Karachi", () => {
     expect(greeting(NOW)).toBe("Good morning");
+  });
+});
+
+describe("formatClockShort", () => {
+  it("shows the clinic time without seconds, as in a sign-in time", () => {
+    expect(formatClockShort("2026-10-05T02:52:41Z")).toBe("7:52 AM");
+    expect(formatClockShort("2026-10-05T12:38:00Z")).toBe("5:38 PM");
+    expect(formatClockShort("2026-10-05T07:00:00Z")).toBe("12:00 PM");
   });
 });

@@ -8,7 +8,7 @@ proxy secret and Origin (403 ``forbidden``) -> session token (401) -> CSRF on no
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Annotated, Any, Literal
 
 from fastapi import Header, Request
@@ -28,9 +28,11 @@ from app.booking.privacy import fingerprint
 from app.command_centre.real_source import RealSource
 from app.command_centre.source import CommandCentreSource
 from app.db import SessionDep
+from app.demo.clock import DemoNow, demo_now
 from app.demo.demo_source import DemoSource
 from app.deps import ClientIpDep, SettingsDep, require_proxy_secret
 from app.errors import AdminError
+from app.settings import Settings
 
 
 @dataclass(frozen=True)
@@ -95,6 +97,8 @@ def require_viewer(policy: Policy) -> Callable[..., Any]:
         if policy is Policy.PUBLIC_PROXY:
             return None
         resolved = sessions.resolve(db, settings, session_token, clock.now())
+        if resolved.kind == "demo" and not settings.demo_enabled:
+            raise AdminError("not_signed_in")  # no demo data is reachable when the demo is off
         viewer = Viewer(
             kind=resolved.kind,
             session_id=resolved.session_id,
@@ -110,6 +114,20 @@ def require_viewer(policy: Policy) -> Callable[..., Any]:
 
     dependency.policy = policy  # type: ignore[attr-defined]
     return dependency
+
+
+def demo_clock(viewer: Viewer, settings: Settings, real_now: datetime) -> DemoNow | None:
+    """What the demo treats as now for a demo viewer; ``None`` for staff (real time)."""
+    if viewer.kind != "demo" or viewer.demo_date is None:
+        return None
+    started_at = viewer.expires_at - timedelta(hours=settings.demo_session_hours)
+    return demo_now(real_now, viewer.demo_date, started_at)
+
+
+def viewer_now(viewer: Viewer, settings: Settings, real_now: datetime) -> datetime:
+    """The instant every read for this viewer is computed at (see ``app.demo.clock``)."""
+    shown = demo_clock(viewer, settings, real_now)
+    return real_now if shown is None else shown.at
 
 
 def get_source(viewer: Viewer, db: Session) -> CommandCentreSource:

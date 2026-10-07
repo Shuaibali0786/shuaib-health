@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     privacy_hash_key: SecretStr
     session_secret: SecretStr
     demo_mode: bool = True
+    demo_enabled: bool = True
     booking_purge_after_days: int = Field(7, ge=1, le=90)
     booking_limit_per_ip_per_hour: int = Field(10, ge=1, le=1000)
     booking_limit_per_phone_per_day: int = Field(5, ge=1, le=100)

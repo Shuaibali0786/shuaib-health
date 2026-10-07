@@ -35,6 +35,7 @@ import { Pagination } from "./Pagination";
 import { StickyFilters } from "./StickyFilters";
 import { UndoToast } from "./UndoToast";
 import { bookingMessage, latestFrom, messageFor, summaryOf } from "./copy";
+import { mergeIntoPage, simulatedMatching, withSimulatedCounts } from "./simulated";
 
 const SEARCH_DEBOUNCE_MS = 300;
 const DEMO_ACTOR = "You (demo)";
@@ -78,10 +79,29 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
     [demo, nowMs, overlayVersion],
   );
 
+  // The demo's simulated online bookings (they exist only in this browser) are part of the day: the list, the
+  // chips and the total count them exactly as the Overview does.
+  const departmentName = lookups?.departments.find((department) => department.id === filters.department)?.name ?? null;
+  const simulated = useMemo(
+    () =>
+      demo
+        ? simulatedMatching(demoOverlay.bookings(), filters, {
+            today: clinicToday,
+            departmentName,
+            statusOf: demoOverlay.statusOf.bind(demoOverlay),
+            nameOf: (reference) => demoOverlay.detailOf(reference)?.patientName,
+          })
+        : [],
+    // `overlayVersion` is the signal that the overlay changed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [demo, filters.q, filters.from, filters.to, filters.doctor, filters.department, clinicToday, departmentName, overlayVersion],
+  );
+
   const items = useMemo(() => {
-    const viewed = data.items.map(view);
+    const pages = Math.max(1, Math.ceil(data.total / data.pageSize));
+    const viewed = mergeIntoPage(data.items, simulated, data.page, pages).map(view);
     return demo && filters.statuses.length ? viewed.filter((b) => filters.statuses.includes(b.status)) : viewed;
-  }, [data.items, view, demo, filters.statuses]);
+  }, [data.items, data.total, data.page, data.pageSize, simulated, view, demo, filters.statuses]);
 
   const counts = useMemo<Counts>(() => {
     const base: Counts = { ...data.statusCounts };
@@ -92,9 +112,9 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
       base[booking.status] = Math.max(0, (base[booking.status] ?? 0) - 1);
       base[now] = (base[now] ?? 0) + 1;
     }
-    return base;
+    return withSimulatedCounts(base, simulated);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, demo, overlayVersion]);
+  }, [data, simulated, demo, overlayVersion]);
 
   // ----- Filters, address and search --------------------------------------------------------
 
@@ -179,6 +199,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
   const openReference = selected?.reference ?? null;
   useEffect(() => {
     if (!openReference) return;
+    if (demo && demoOverlay.detailOf(openReference)) return; // a simulated booking has no server record; its detail is in the overlay
     const controller = new AbortController();
     adminRequest({ path: `bookings/${openReference}`, signal: controller.signal }, BookingDetailSchema)
       .then((next) => {
@@ -189,6 +210,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
         if (!controller.signal.aborted && !(error instanceof DOMException)) setDetailFailed(true);
       });
     return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openReference, detailTick]);
 
   function open(booking: BookingSummary) {
@@ -206,13 +228,14 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
 
   /** The drawer's booking with the demo overlay applied, so its buttons follow the visitor's own changes. */
   const shown = selected ? view(items.find((b) => b.reference === selected.reference) ?? selected) : null;
+  const fullDetail = (demo && openReference ? demoOverlay.detailOf(openReference) : undefined) ?? detail;
   const history: HistoryItem[] = useMemo(() => {
-    if (!detail) return [];
-    if (!demo) return detail.history;
-    const own = demoOverlay.history(detail.reference).map((change): HistoryItem => ({ at: new Date(change.at).toISOString(), fromStatus: change.from, toStatus: change.to, actor: DEMO_ACTOR, isUndo: change.isUndo }));
-    return [...detail.history, ...own];
+    if (!fullDetail) return [];
+    if (!demo) return fullDetail.history;
+    const own = demoOverlay.history(fullDetail.reference).map((change): HistoryItem => ({ at: new Date(change.at).toISOString(), fromStatus: change.from, toStatus: change.to, actor: DEMO_ACTOR, isUndo: change.isUndo }));
+    return [...fullDetail.history, ...own];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [detail, demo, overlayVersion]);
+  }, [fullDetail, demo, overlayVersion]);
 
   // ----- Status changes ------------------------------------------------------------------------
 
@@ -273,7 +296,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
 
   // ----- Rendering ----------------------------------------------------------------------------
 
-  const total = demo && filters.statuses.length ? items.length : data.total;
+  const total = demo && filters.statuses.length ? items.length : data.total + simulated.length;
   const label = dateLabel(filters, clinicToday);
   const heading = label.startsWith("Today") ? "Today" : label;
   const isFiltered = Boolean(filters.q.trim() || filters.doctor || filters.department || filters.statuses.length || filters.from || filters.to);
@@ -339,7 +362,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
 
       <BookingDrawer
         summary={shown}
-        detail={detail}
+        detail={fullDetail}
         history={history}
         failed={detailFailed}
         message={message}

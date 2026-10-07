@@ -32,9 +32,9 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
     expect(offenders(/\bfetch\s*\(/, (path) => ["lib/api/http.ts", "lib/booking/backend.ts", "lib/booking/client.ts", "admin/lib/client.ts", "admin/lib/server.ts"].includes(path))).toEqual([]);
   });
 
-  it("has no backend env names in src outside lib/api/config.ts and instrumentation.ts", () => {
+  it("has no backend env names in src outside lib/api/config.ts, lib/demo.ts and instrumentation.ts", () => {
     expect(
-      offenders(/process\.env\.(?!SITE_URL\b|NODE_ENV\b)[A-Z_]+/, (path) => path === "lib/api/config.ts" || path === "instrumentation.ts"),
+      offenders(/process\.env\.(?!SITE_URL\b|NODE_ENV\b)[A-Z_]+/, (path) => path === "lib/api/config.ts" || path === "lib/demo.ts" || path === "instrumentation.ts"),
     ).toEqual([]);
   });
 

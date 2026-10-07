@@ -761,6 +761,8 @@ components:
         clinicToday: { type: string, format: date, description: "staff: today in clinic time; demo: the session's demo date" }
         timezone: { type: string, example: Asia/Karachi }
         sessionExpiresAt: { type: string, format: date-time, description: "earlier of idle and absolute expiry" }
+        demoNow: { type: string, format: date-time, description: "demo only: the instant the demo treats as now" }
+        typicalDay: { type: boolean, description: "demo only: true when outside clinic hours, so a typical clinic day is shown" }
     SignInRequest:
       type: object
       required: [email, password]
