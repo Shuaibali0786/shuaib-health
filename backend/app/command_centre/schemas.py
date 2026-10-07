@@ -237,3 +237,93 @@ class Overview(CamelModel):
     next_up: list[BookingSummary] = Field(max_length=5)
     recent_bookings: list[RecentBooking] = Field(default_factory=list, max_length=5)
     is_sample: bool
+
+
+# ----- Insights (US6) ---------------------------------------------------------------------------
+
+InsightsRange = Literal[7, 30, 90]
+ACTIVITY_PAGE_SIZE = 25
+
+
+class DayCount(CamelModel):
+    date: date
+    count: int
+
+
+class DepartmentCount(CamelModel):
+    department_name: str
+    count: int
+    cancelled: int
+
+
+class StatusCount(CamelModel):
+    status: Status
+    count: int
+
+
+class HourCount(CamelModel):
+    hour: int = Field(ge=0, le=23)
+    count: int
+
+
+class Insights(CamelModel):
+    """Bookings of the ``range_days`` ending on ``to`` (clinic-local days). ``total`` counts every
+    booking that was not cancelled, so it equals the sum of ``per_day``, ``by_department.count`` and
+    ``by_hour``; ``by_status`` has all five statuses."""
+
+    range_days: InsightsRange
+    from_: date = Field(alias="from")
+    to: date
+    total: int
+    per_day: list[DayCount]
+    by_department: list[DepartmentCount]
+    by_status: list[StatusCount]
+    by_hour: list[HourCount]
+    is_sample: bool
+
+
+# ----- Doctors today (US7) ----------------------------------------------------------------------
+
+
+class DoctorToday(CamelModel):
+    doctor: DoctorRef
+    sessions: list[WorkHours]
+    scheduled: int
+    booked: int
+    free: int
+    free_passed: int = 0
+    utilisation_pct: int
+    next_free: str | None = None
+
+
+class DoctorsToday(CamelModel):
+    local_date: date
+    clinic_closed: str | None = None
+    working: list[DoctorToday]
+    on_leave: list[DoctorRef]
+    not_in: list[DoctorRef]
+    is_sample: bool = False
+
+
+# ----- Activity (US8) ---------------------------------------------------------------------------
+
+
+class ActivityEvent(CamelModel):
+    id: uuid.UUID
+    at: AwareDatetime
+    action: str
+    outcome: str
+    actor_name: str | None = None
+    actor_role: str | None = None
+    booking_reference: str | None = None
+    from_status: Status | None = None
+    to_status: Status | None = None
+    network_tag: str
+    is_sample: bool = False
+
+
+class ActivityPage(CamelModel):
+    items: list[ActivityEvent]
+    total: int
+    page: int
+    page_size: int = ACTIVITY_PAGE_SIZE

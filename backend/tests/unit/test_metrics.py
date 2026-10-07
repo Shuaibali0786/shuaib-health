@@ -6,6 +6,7 @@ instead of the clinic zone would disagree with these answers (SC-009). Time is a
 
 import os
 import time
+import uuid
 from collections.abc import Iterator
 from datetime import UTC, date, datetime, timedelta
 from datetime import time as clock
@@ -15,7 +16,7 @@ import pytest
 
 from app.booking.slots import Busy, SessionRule
 from app.command_centre import metrics
-from app.command_centre.schemas import BookingSummary, DoctorRef
+from app.command_centre.schemas import BookingSummary, DoctorRef, DoctorsToday
 
 KARACHI = ZoneInfo("Asia/Karachi")
 MONDAY = date(2026, 10, 5)
@@ -199,3 +200,211 @@ def test_next_up_is_confirmed_bookings_from_a_quarter_hour_ago_in_time_order() -
 
 def test_next_up_is_empty_when_nobody_is_left() -> None:
     assert metrics.next_up([summary("A", at(9, 0), "completed")], NOW) == []
+
+
+# ----- Insights (US6) --------------------------------------------------------------------------
+
+
+def row(
+    day: date, hh: int, status: str = "confirmed", dept: str = "Cardiology"
+) -> metrics.InsightRow:
+    return metrics.InsightRow(at(hh, 0, day), status, dept)
+
+
+def test_insights_zero_fill_every_day_ending_today() -> None:
+    result = metrics.build_insights(
+        range_days=7,
+        today=MONDAY,
+        tz=KARACHI,
+        rows=[row(MONDAY, 10), row(MONDAY, 10), row(MONDAY - timedelta(days=2), 9)],
+        is_sample=False,
+    )
+    assert result.from_ == MONDAY - timedelta(days=6)
+    assert result.to == MONDAY
+    assert [d.date for d in result.per_day] == [MONDAY - timedelta(days=6 - i) for i in range(7)]
+    assert [d.count for d in result.per_day] == [0, 0, 0, 0, 1, 0, 2]
+    assert result.total == 3
+
+
+def test_insights_ranges_have_that_many_days_and_ignore_bookings_outside() -> None:
+    old = row(MONDAY - timedelta(days=40), 9)
+    future = row(MONDAY + timedelta(days=1), 9)
+    for days in (7, 30, 90):
+        result = metrics.build_insights(
+            range_days=days,
+            today=MONDAY,
+            tz=KARACHI,
+            rows=[old, future, row(MONDAY, 9)],
+            is_sample=True,
+        )
+        assert len(result.per_day) == days
+        assert result.is_sample is True
+    thirty = metrics.build_insights(
+        range_days=30, today=MONDAY, tz=KARACHI, rows=[old], is_sample=False
+    )
+    ninety = metrics.build_insights(
+        range_days=90, today=MONDAY, tz=KARACHI, rows=[old], is_sample=False
+    )
+    assert (thirty.total, ninety.total) == (0, 1)
+
+
+def test_insights_by_department_counts_cancelled_in_their_own_column() -> None:
+    rows = [
+        row(MONDAY, 9, "completed", "Cardiology"),
+        row(MONDAY, 10, "confirmed", "Cardiology"),
+        row(MONDAY, 11, "cancelled", "Cardiology"),
+        row(MONDAY, 9, "no_show", "Dental"),
+        row(MONDAY, 9, "cancelled", "Pediatrics"),
+    ]
+    result = metrics.build_insights(
+        range_days=7, today=MONDAY, tz=KARACHI, rows=rows, is_sample=False
+    )
+    assert [(d.department_name, d.count, d.cancelled) for d in result.by_department] == [
+        ("Cardiology", 2, 1),
+        ("Dental", 1, 0),
+        ("Pediatrics", 0, 1),
+    ]
+    assert sum(d.count for d in result.by_department) == result.total == 3
+
+
+def test_insights_by_status_lists_all_five_statuses() -> None:
+    rows = [row(MONDAY, 9, "completed"), row(MONDAY, 9, "completed"), row(MONDAY, 9, "cancelled")]
+    result = metrics.build_insights(
+        range_days=7, today=MONDAY, tz=KARACHI, rows=rows, is_sample=False
+    )
+    assert [(s.status, s.count) for s in result.by_status] == [
+        ("confirmed", 0),
+        ("arrived", 0),
+        ("completed", 2),
+        ("no_show", 0),
+        ("cancelled", 1),
+    ]
+
+
+def test_insights_busiest_hours_are_clinic_hours_and_skip_cancelled() -> None:
+    # 23:30 in Karachi is 18:30 UTC (14:30 in New York): the hour must be the clinic's.
+    late = metrics.InsightRow(at(23, 30), "confirmed", "Dental")
+    rows = [late, row(MONDAY, 9), row(MONDAY, 9), row(MONDAY, 9, "cancelled")]
+    result = metrics.build_insights(
+        range_days=7, today=MONDAY, tz=KARACHI, rows=rows, is_sample=False
+    )
+    assert len(result.by_hour) == 24
+    counts = {h.hour: h.count for h in result.by_hour}
+    assert counts[23] == 1 and counts[9] == 2 and sum(counts.values()) == 3
+
+
+def test_a_late_evening_booking_belongs_to_its_clinic_day() -> None:
+    late = metrics.InsightRow(at(23, 45), "confirmed", "Dental")
+    result = metrics.build_insights(
+        range_days=7, today=MONDAY, tz=KARACHI, rows=[late], is_sample=False
+    )
+    assert result.per_day[-1].count == 1
+
+
+def test_too_little_data_threshold_is_five() -> None:
+    assert metrics.INSIGHTS_MIN_BOOKINGS == 5
+
+
+# ----- Doctors today (US7) ---------------------------------------------------------------------
+
+
+def doctor_ref(name: str, n: int) -> DoctorRef:
+    return DoctorRef(
+        id=f"00000000-0000-4000-8000-00000000000{n}", name=name, department_name="General Medicine"
+    )
+
+
+def plan(
+    name: str, n: int, sessions: list[SessionRule] | None, leave: list[Busy] | None = None
+) -> metrics.DoctorPlan:
+    return metrics.DoctorPlan(
+        doctor=doctor_ref(name, n), sessions=sessions or [], leave=leave or []
+    )
+
+
+MON_MORNING = SessionRule("mon", clock(9, 0), clock(11, 0), 15)  # 8 slots
+MON_AFTERNOON = SessionRule("mon", clock(16, 0), clock(17, 0), 15)  # 4 slots
+
+
+def today_for(
+    plans: list[metrics.DoctorPlan],
+    booked: dict[uuid.UUID, list[datetime]],
+    now: datetime,
+    holiday: str | None = None,
+) -> DoctorsToday:
+    return metrics.build_doctors_today(
+        day=MONDAY,
+        now=now,
+        tz=KARACHI,
+        plans=plans,
+        booked_starts=booked,
+        holiday=holiday,
+        is_sample=False,
+    )
+
+
+def test_free_is_scheduled_minus_booked_with_utilisation() -> None:
+    p = plan("Dr. Omar Sheikh", 1, [MON_MORNING])
+    booked = {p.doctor.id: [at(9, 0), at(9, 15), at(10, 0)]}
+    only = today_for([p], booked, at(8, 0)).working[0]
+    assert (only.scheduled, only.booked, only.free) == (8, 3, 5)
+    assert only.utilisation_pct == 38  # 3 / 8 = 37.5 rounds up
+    assert [(s.start, s.end) for s in only.sessions] == [("09:00", "11:00")]
+
+
+def test_free_slots_already_passed_are_flagged_and_next_free_is_not_in_the_past() -> None:
+    p = plan("Dr. Omar Sheikh", 1, [MON_MORNING])
+    booked = {p.doctor.id: [at(9, 0), at(9, 15), at(10, 0)]}
+    only = today_for([p], booked, at(9, 40)).working[0]
+    # Free: 9:30 (passed), 9:45, 10:15, 10:30, 10:45.
+    assert only.free == 5
+    assert only.free_passed == 1
+    assert only.next_free == "09:45"
+    full = today_for([p], {p.doctor.id: [at(9, 0)]}, at(11, 30)).working[0]
+    assert full.next_free is None and full.free_passed == 7
+
+
+def test_a_fully_booked_doctor_has_no_next_free_slot() -> None:
+    p = plan("Dr. A", 1, [MON_AFTERNOON])
+    booked = {p.doctor.id: [at(16, 0), at(16, 15), at(16, 30), at(16, 45)]}
+    only = today_for([p], booked, at(8, 0)).working[0]
+    assert (only.free, only.next_free, only.utilisation_pct) == (0, None, 100)
+
+
+def test_working_doctors_are_ordered_by_next_free_slot_then_name() -> None:
+    early = plan("Dr. Zed", 1, [MON_MORNING])
+    late = plan("Dr. Amir", 2, [MON_AFTERNOON])
+    busy = plan("Dr. Bee", 3, [MON_MORNING])
+    booked = {busy.doctor.id: [at(9, 0), at(9, 15), at(9, 30), at(9, 45)]}
+    names = [d.doctor.name for d in today_for([late, early, busy], booked, at(9, 0)).working]
+    assert names == ["Dr. Zed", "Dr. Bee", "Dr. Amir"]  # Zed 09:00, Bee 10:00, Amir 16:00
+    full = {late.doctor.id: [at(16, 0), at(16, 15), at(16, 30), at(16, 45)]}
+    order = [d.doctor.name for d in today_for([late, early], full, at(9, 0)).working]
+    assert order == ["Dr. Zed", "Dr. Amir"]  # nobody free sorts last
+
+
+def test_leave_over_the_whole_day_is_on_leave_and_partial_leave_reduces_slots() -> None:
+    away = plan("Dr. Away", 1, [MON_MORNING], [Busy(at(0, 0), at(23, 59))])
+    part = plan("Dr. Part", 2, [MON_MORNING], [Busy(at(9, 0), at(10, 0))])
+    result = today_for([away, part], {}, at(8, 0))
+    assert [d.name for d in result.on_leave] == ["Dr. Away"]
+    assert [(d.doctor.name, d.scheduled) for d in result.working] == [("Dr. Part", 4)]
+
+
+def test_a_doctor_with_no_session_today_is_not_in() -> None:
+    tuesday_only = plan("Dr. Tue", 1, [SessionRule("tue", clock(9, 0), clock(10, 0), 15)])
+    result = today_for([tuesday_only, plan("Dr. None", 2, None)], {}, at(8, 0))
+    assert result.working == [] and result.on_leave == []
+    assert [d.name for d in result.not_in] == ["Dr. None", "Dr. Tue"]
+
+
+def test_a_holiday_closes_the_clinic_and_names_it() -> None:
+    plans = [plan("Dr. A", 1, [MON_MORNING])]
+    result = today_for(plans, {}, at(8, 0), holiday="Clinic closed (sample)")
+    assert result.clinic_closed == "Clinic closed (sample)"
+    assert result.working == [] and result.on_leave == [] and result.not_in == []
+
+
+def test_cancelled_bookings_are_not_passed_in_so_they_free_their_slot() -> None:
+    p = plan("Dr. A", 1, [MON_AFTERNOON])
+    assert today_for([p], {}, at(8, 0)).working[0].free == 4

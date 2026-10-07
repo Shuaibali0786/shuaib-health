@@ -23,13 +23,7 @@ HTTP_METHODS = {"get", "post", "put", "patch", "delete"}
 ADMIN_PREFIX = "/api/v1/admin/"
 
 # operationId values whose routes do not exist yet. Remove an entry when its route lands.
-PENDING_ADMIN_OPERATIONS: frozenset[str] = frozenset(
-    {
-        "adminInsights",
-        "adminDoctorsToday",
-        "adminActivity",
-    }
-)
+PENDING_ADMIN_OPERATIONS: frozenset[str] = frozenset()
 
 
 def _load_contract() -> dict[str, Any]:

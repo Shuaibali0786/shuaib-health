@@ -11,14 +11,20 @@ from app.command_centre import status as rules
 from app.command_centre.common import day_bounds, format_phone, resolve_range
 from app.command_centre.masking import mask_email, mask_mobile, short_name
 from app.command_centre.schemas import (
+    ACTIVITY_PAGE_SIZE,
     PAGE_SIZE,
+    ActivityEvent,
+    ActivityPage,
     BookingDetail,
     BookingPage,
     BookingSearchRequest,
     BookingSummary,
     DepartmentRef,
     DoctorRef,
+    DoctorsToday,
     HistoryItem,
+    Insights,
+    InsightsRange,
     Lookups,
     Overview,
     PhoneReveal,
@@ -238,4 +244,68 @@ class DemoSource:
             holiday_last_week=earlier in dataset.holidays,
             recent=[],
             is_sample=True,
+        )
+
+    # ----- insights, doctors today, activity (US6-US8) ----------------------------------
+
+    def insights(self, range_days: InsightsRange, tz: ZoneInfo, now: datetime) -> Insights:
+        rows = [
+            metrics.InsightRow(b.starts_at, b.status_at(now), b.department)
+            for b in self.dataset.bookings
+        ]
+        return metrics.build_insights(
+            range_days=range_days, today=self.demo_date, tz=tz, rows=rows, is_sample=True
+        )
+
+    def doctors_today(self, tz: ZoneInfo, now: datetime) -> DoctorsToday:
+        today = self.demo_date
+        booked: dict[uuid.UUID, list[datetime]] = {}
+        for b in self.dataset.bookings:
+            if b.starts_at.astimezone(tz).date() == today and b.status_at(now) != "cancelled":
+                booked.setdefault(doctor_uuid(b.doctor_slug), []).append(b.starts_at)
+        return metrics.build_doctors_today(
+            day=today,
+            now=now,
+            tz=tz,
+            plans=[self._plan(d, (today,), tz) for d in self.dataset.doctors],
+            booked_starts=booked,
+            holiday=self.dataset.holidays.get(today),
+            is_sample=True,
+        )
+
+    def activity(
+        self, *, action: str | None, staff_id: uuid.UUID | None, page: int
+    ) -> ActivityPage:
+        """The synthetic feed only: nothing here comes from the database."""
+        name = None
+        if staff_id is not None:
+            name = next((m.display_name for m in self.staff() if m.id == staff_id), "")
+        hits = [
+            (index, event)
+            for index, event in enumerate(self.dataset.activity)
+            if (action is None or event.action == action)
+            and (name is None or event.staff_name == name)
+        ]
+        start = (page - 1) * ACTIVITY_PAGE_SIZE
+        return ActivityPage(
+            items=[
+                ActivityEvent(
+                    id=uuid.uuid5(
+                        uuid.NAMESPACE_URL, f"{generator.SEED_PREFIX}activity:{self.demo_date}:{i}"
+                    ),
+                    at=event.occurred_at,
+                    action=event.action,
+                    outcome="ok",
+                    actor_name=event.staff_name,
+                    actor_role=event.role,
+                    booking_reference=event.target_reference,
+                    from_status=event.from_status,
+                    to_status=event.to_status,
+                    network_tag=event.network_tag,
+                    is_sample=True,
+                )
+                for i, event in hits[start : start + ACTIVITY_PAGE_SIZE]
+            ],
+            total=len(hits),
+            page=page,
         )

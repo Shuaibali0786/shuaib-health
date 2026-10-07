@@ -268,6 +268,7 @@ components:
               nextFree: { type: [string, "null"], description: local HH:MM }
         onLeave: { type: array, items: { $ref: "#/components/schemas/DoctorRef" } }
         notIn: { type: array, items: { $ref: "#/components/schemas/DoctorRef" } }
+        isSample: { type: boolean }
     ActivityEvent:
       type: object
       required: [id, at, action, outcome]

@@ -23,14 +23,20 @@ from app.command_centre import status as rules
 from app.command_centre.common import day_bounds, format_phone, resolve_range
 from app.command_centre.masking import mask_email, mask_mobile, short_name
 from app.command_centre.schemas import (
+    ACTIVITY_PAGE_SIZE,
     PAGE_SIZE,
+    ActivityEvent,
+    ActivityPage,
     BookingDetail,
     BookingPage,
     BookingSearchRequest,
     BookingSummary,
     DepartmentRef,
     DoctorRef,
+    DoctorsToday,
     HistoryItem,
+    Insights,
+    InsightsRange,
     Lookups,
     Overview,
     PhoneReveal,
@@ -410,3 +416,87 @@ def overview(db: Session, tz: ZoneInfo, now: datetime) -> Overview:
         recent=recent,
         is_sample=False,
     )
+
+
+def _doctor_plans(
+    db: Session, leave_from: datetime, leave_before: datetime
+) -> list[metrics.DoctorPlan]:
+    leave = repo.leave_between(db, leave_from, leave_before)
+    return [
+        metrics.DoctorPlan(
+            doctor=DoctorRef(
+                id=require(w.doctor.id),
+                name=w.doctor.full_name,
+                department_name=w.department_name,
+                is_active=w.doctor.is_active,
+            ),
+            sessions=_rules_of(w),
+            leave=[Busy(a, b) for a, b in leave.get(require(w.doctor.id), [])],
+        )
+        for w in repo.weekly_plans(db)
+    ]
+
+
+def insights(db: Session, range_days: InsightsRange, tz: ZoneInfo, now: datetime) -> Insights:
+    """Charts of the ``range_days`` clinic-local days ending today, from the bookings' start, status
+    and department only (no personal data is read)."""
+    today = now.astimezone(tz).date()
+    first = today - timedelta(days=range_days - 1)
+    rows = repo.insight_rows(db, day_bounds(first, tz)[0], day_bounds(today, tz)[1])
+    return metrics.build_insights(
+        range_days=range_days,
+        today=today,
+        tz=tz,
+        rows=[metrics.InsightRow(*row) for row in rows],
+        is_sample=False,
+    )
+
+
+def doctors_today(db: Session, tz: ZoneInfo, now: datetime) -> DoctorsToday:
+    today = now.astimezone(tz).date()
+    lo, hi = day_bounds(today, tz)
+    return metrics.build_doctors_today(
+        day=today,
+        now=now,
+        tz=tz,
+        plans=_doctor_plans(db, lo, hi),
+        booked_starts=repo.booked_starts(db, lo, hi),
+        holiday=repo.holiday_names(db, [today]).get(today),
+        is_sample=False,
+    )
+
+
+def _occurred(event: m.AuditLog) -> datetime:
+    if event.occurred_at is None:
+        raise RuntimeError("audit row has no time")
+    return event.occurred_at
+
+
+def _optional_status(value: str | None) -> Status | None:
+    return None if value is None else _status(value)
+
+
+def activity(
+    db: Session, *, action: str | None, staff_id: uuid.UUID | None, page: int
+) -> ActivityPage:
+    """The audit feed, newest first. A row holds no free text, so nothing personal can appear; the
+    network tag is the first six characters of the keyed address fingerprint."""
+    rows, total = repo.activity_page(
+        db, action=action, staff_id=staff_id, page=page, page_size=ACTIVITY_PAGE_SIZE
+    )
+    items = [
+        ActivityEvent(
+            id=require(row.event.id),
+            at=_occurred(row.event),
+            action=row.event.action,
+            outcome=row.event.outcome,
+            actor_name=row.actor_name,
+            actor_role=row.event.actor_role,
+            booking_reference=row.event.target_reference,
+            from_status=_optional_status(row.event.from_status),
+            to_status=_optional_status(row.event.to_status),
+            network_tag=row.event.actor_fingerprint[:6],
+        )
+        for row in rows
+    ]
+    return ActivityPage(items=items, total=total, page=page)

@@ -1,5 +1,6 @@
 """Command Centre reads over the real database (staff sessions only)."""
 
+import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -8,9 +9,13 @@ from sqlmodel import Session
 
 from app.command_centre import service
 from app.command_centre.schemas import (
+    ActivityPage,
     BookingDetail,
     BookingPage,
     BookingSearchRequest,
+    DoctorsToday,
+    Insights,
+    InsightsRange,
     Lookups,
     Overview,
 )
@@ -39,3 +44,14 @@ class RealSource:
 
     def overview(self, tz: ZoneInfo, now: datetime) -> Overview:
         return service.overview(self.db, tz, now)
+
+    def insights(self, range_days: InsightsRange, tz: ZoneInfo, now: datetime) -> Insights:
+        return service.insights(self.db, range_days, tz, now)
+
+    def doctors_today(self, tz: ZoneInfo, now: datetime) -> DoctorsToday:
+        return service.doctors_today(self.db, tz, now)
+
+    def activity(
+        self, *, action: str | None, staff_id: uuid.UUID | None, page: int
+    ) -> ActivityPage:
+        return service.activity(self.db, action=action, staff_id=staff_id, page=page)

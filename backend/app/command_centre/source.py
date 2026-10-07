@@ -5,14 +5,19 @@ and ``DemoSource`` (a deterministic in-memory dataset). An endpoint never knows 
 ``app.auth.deps.get_source`` picks by session kind, so a demo visitor can never reach real data.
 """
 
+import uuid
 from datetime import datetime
 from typing import Protocol
 from zoneinfo import ZoneInfo
 
 from app.command_centre.schemas import (
+    ActivityPage,
     BookingDetail,
     BookingPage,
     BookingSearchRequest,
+    DoctorsToday,
+    Insights,
+    InsightsRange,
     Lookups,
     Overview,
 )
@@ -28,3 +33,11 @@ class CommandCentreSource(Protocol):
     def lookups(self) -> Lookups: ...
 
     def overview(self, tz: ZoneInfo, now: datetime) -> Overview: ...
+
+    def insights(self, range_days: InsightsRange, tz: ZoneInfo, now: datetime) -> Insights: ...
+
+    def doctors_today(self, tz: ZoneInfo, now: datetime) -> DoctorsToday: ...
+
+    def activity(
+        self, *, action: str | None, staff_id: uuid.UUID | None, page: int
+    ) -> ActivityPage: ...

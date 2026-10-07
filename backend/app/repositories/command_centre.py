@@ -247,3 +247,64 @@ def holiday_names(db: Session, days: list[date]) -> dict[date, str]:
         )
     ).all()
     return {day: name for day, name in rows}
+
+
+# ----- Insights, doctors today, activity (US6-US8) ----------------------------------------------
+
+
+def insight_rows(
+    db: Session, starts_from: datetime, starts_before: datetime
+) -> list[tuple[datetime, str, str]]:
+    """Start, status and department name of every booking starting in the window."""
+    stmt = (
+        select(m.Appointment.starts_at, m.Appointment.status, m.Department.name)
+        .join(m.Department, col(m.Department.id) == col(m.Appointment.department_id))
+        .where(col(m.Appointment.starts_at) >= starts_from)
+        .where(col(m.Appointment.starts_at) < starts_before)
+    )
+    return [(at, str(status), name) for at, status, name in db.execute(stmt).all()]
+
+
+def booked_starts(
+    db: Session, starts_from: datetime, starts_before: datetime
+) -> dict[uuid.UUID, list[datetime]]:
+    """Start of every non-cancelled booking in the window, per doctor."""
+    stmt = (
+        select(m.Appointment.doctor_id, m.Appointment.starts_at)
+        .where(col(m.Appointment.starts_at) >= starts_from)
+        .where(col(m.Appointment.starts_at) < starts_before)
+        .where(col(m.Appointment.status) != "cancelled")
+    )
+    out: dict[uuid.UUID, list[datetime]] = {}
+    for doctor_id, at in db.execute(stmt).all():
+        out.setdefault(doctor_id, []).append(at)
+    return out
+
+
+@dataclass(frozen=True)
+class ActivityRow:
+    event: m.AuditLog
+    actor_name: str | None
+
+
+def activity_page(
+    db: Session,
+    *,
+    action: str | None,
+    staff_id: uuid.UUID | None,
+    page: int,
+    page_size: int,
+) -> tuple[list[ActivityRow], int]:
+    """Audit rows newest first, with the staff member's display name (never an email)."""
+    stmt = select(m.AuditLog, m.StaffAccount.display_name).join(
+        m.StaffAccount,
+        col(m.StaffAccount.id) == col(m.AuditLog.actor_staff_id),
+        isouter=True,
+    )
+    if action is not None:
+        stmt = stmt.where(col(m.AuditLog.action) == action)
+    if staff_id is not None:
+        stmt = stmt.where(col(m.AuditLog.actor_staff_id) == staff_id)
+    stmt = stmt.order_by(col(m.AuditLog.occurred_at).desc(), col(m.AuditLog.id))
+    rows, total = paginate(db, stmt, page, page_size)
+    return [ActivityRow(event, name) for event, name in rows], total
