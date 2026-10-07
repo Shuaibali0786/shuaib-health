@@ -55,7 +55,6 @@ export function OverviewScreen({ initial, demo, firstName, timeZone, serverNow }
   // header clock, the greeting and the "Now" line agree with the status of every booking, whatever the device says.
   useEffect(() => {
     clinicClock.seed(Date.parse(serverNow), deviceReference());
-    setNowMs(clinicClock.now());
   }, [serverNow]);
 
   // The clinic minute moves the "Now" line, the greeting and what the clock allows (arrive from two hours before).

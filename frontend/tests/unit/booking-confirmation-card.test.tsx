@@ -36,12 +36,15 @@ describe("confirmation card", () => {
     expect(card).toHaveTextContent("Please arrive by 13:45");
   });
 
-  it("has the CONFIRMED seal with the booking date and a Demo label", () => {
+  it("has the double-ring CONFIRMED stamp: name on top, DEMO below, booked day and month in the middle", () => {
     render(<ConfirmationCard view={view} site={site} />);
     const seal = screen.getByTestId("confirmed-seal");
     expect(seal).toHaveTextContent("CONFIRMED");
-    expect(seal).toHaveTextContent("04 Oct 2026");
-    expect(seal).toHaveTextContent("Demo");
+    expect(seal).toHaveTextContent("BOOKED 04 OCT");
+    expect(seal).toHaveTextContent("SHUAIB HEALTH");
+    expect(seal).toHaveTextContent("• DEMO •");
+    expect(seal).toHaveAccessibleName("Confirmed, booked 04 Oct, demo booking");
+    expect(seal.querySelectorAll("circle")).toHaveLength(2);
   });
 
   it("has a QR code for the reference labelled Show at reception", () => {

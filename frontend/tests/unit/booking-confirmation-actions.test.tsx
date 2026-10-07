@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -34,10 +37,17 @@ function setShare(canShare: ((data: ShareData) => boolean) | undefined, share?: 
   Object.defineProperty(navigator, "share", { value: share, configurable: true });
 }
 
+/** The page serves the slip fonts from /fonts/slip; here they come from disk. */
+const serveFonts = (url: string | URL | Request) => {
+  const file = String(url).replace("/fonts/slip/", "");
+  return Promise.resolve(new Response(readFileSync(join(process.cwd(), "public", "fonts", "slip", file))));
+};
+
 let clicked: { download: string; href: string }[];
 
 beforeEach(() => {
   clicked = [];
+  vi.stubGlobal("fetch", vi.fn(serveFonts));
   URL.createObjectURL = vi.fn(() => "blob:slip");
   URL.revokeObjectURL = vi.fn();
   vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
@@ -49,6 +59,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   if (originalCanShare) Object.defineProperty(navigator, "canShare", originalCanShare);
   else Reflect.deleteProperty(navigator, "canShare");
   if (originalShare) Object.defineProperty(navigator, "share", originalShare);

@@ -2097,8 +2097,8 @@ svg.i-sm {
 .has-tip {
   position: relative;
   cursor: help;
-  border-bottom: 1px dotted var(--muted);
-  border-radius: 2px;
+  text-decoration: underline dotted var(--muted);
+  text-underline-offset: 3px;
 }
 .has-tip .tip {
   display: none;

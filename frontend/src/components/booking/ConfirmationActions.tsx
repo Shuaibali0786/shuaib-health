@@ -82,8 +82,9 @@ export function ConfirmationActions({ view, clinic }: { view: AppointmentView; c
     setBusy(true);
     setStatus("");
     try {
-      const { buildSlipPdf, slipFileName } = await loadSlip();
-      const outcome = await deliverPdf(buildSlipPdf(view, clinic), slipFileName(view), `Appointment ${view.reference}`);
+      const [{ buildSlipPdf, slipFileName }, { loadSlipFonts }] = await Promise.all([loadSlip(), import("@/lib/booking/slip-fonts")]);
+      const fonts = await loadSlipFonts(); // the website's own fonts, embedded so the PDF looks like this page
+      const outcome = await deliverPdf(buildSlipPdf(view, clinic, fonts), slipFileName(view), `Appointment ${view.reference}`);
       if (outcome === "downloaded") setStatus("Your slip was downloaded. Look in your Downloads or Files app.");
       else if (outcome === "shared") setStatus("Your slip is ready to save or send.");
     } catch {
