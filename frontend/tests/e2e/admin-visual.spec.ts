@@ -91,6 +91,44 @@ for (const theme of THEMES) {
       await expect(page).toHaveScreenshot(`bookings-confirm-${theme}.png`, { animations: "disabled" });
     });
 
+    test("Insights", async ({ page, isMobile }) => {
+      await pauseAtNow(page);
+      await page.goto("/admin/insights");
+      await revealStreamedContent(page);
+      await expect(page.locator("figure[data-chart]")).toHaveCount(4);
+      await settle(page, `Insights ${theme}`);
+      await expect(page).toHaveScreenshot(`insights-${theme}.png`, { fullPage: !isMobile, animations: "disabled" });
+    });
+
+    test("Insights, 7 days with a column in focus", async ({ page, isMobile }) => {
+      test.skip(isMobile, "arrow keys and focus rings are for a keyboard");
+      await pauseAtNow(page);
+      await page.goto("/admin/insights?range=7");
+      await revealStreamedContent(page);
+      await settle(page, `Insights 7 ${theme}`);
+      await page.locator('figure[data-chart="per-day"] [data-bar]').nth(4).focus();
+      await expect(page.locator('figure[data-chart="per-day"] .tip')).toBeVisible();
+      await expect(page).toHaveScreenshot(`insights-7-focus-${theme}.png`, { fullPage: true, animations: "disabled" });
+    });
+
+    test("Doctors today", async ({ page, isMobile }) => {
+      await pauseAtNow(page);
+      await page.goto("/admin/doctors");
+      await revealStreamedContent(page);
+      await expect(page.locator("article.doc-card").first()).toBeVisible();
+      await settle(page, `Doctors ${theme}`);
+      await expect(page).toHaveScreenshot(`doctors-${theme}.png`, { fullPage: !isMobile, animations: "disabled" });
+    });
+
+    test("Activity", async ({ page, isMobile }) => {
+      await pauseAtNow(page);
+      await page.goto("/admin/activity");
+      await revealStreamedContent(page);
+      await expect(page.locator(".activity-table tbody tr").first()).toBeVisible();
+      await settle(page, `Activity ${theme}`);
+      await expect(page).toHaveScreenshot(`activity-${theme}.png`, { fullPage: !isMobile, animations: "disabled" });
+    });
+
     test("a chip's tooltip", async ({ page, isMobile }) => {
       test.skip(isMobile, "the timeline and its tooltip are on wide screens");
       await pauseAtNow(page);

@@ -31,6 +31,20 @@ def _iso(moment: datetime) -> str:
     return moment.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _activity(source: DemoSource) -> list[dict[str, Any]]:
+    """Every event of the synthetic feed, newest first; the mock API pages and filters them."""
+    events: list[dict[str, Any]] = []
+    page = 1
+    while True:
+        answer = source.activity(action=None, staff_id=None, page=page)
+        events += [
+            event.model_dump(mode="json", by_alias=True, exclude_none=True) for event in answer.items
+        ]
+        if len(events) >= answer.total:
+            return events
+        page += 1
+
+
 def build_fixture(demo_date: date, clinic_time: time) -> dict[str, Any]:
     source = DemoSource(demo_date)
     local_now = datetime.combine(
@@ -79,6 +93,12 @@ def build_fixture(demo_date: date, clinic_time: time) -> dict[str, Any]:
         ],
         "lookups": source.lookups().model_dump(mode="json", by_alias=True, exclude_none=True),
         "overview": source.overview(zone, now).model_dump(mode="json", by_alias=True),
+        "insights": {
+            str(days): source.insights(days, zone, now).model_dump(mode="json", by_alias=True)
+            for days in (7, 30, 90)
+        },
+        "doctorsToday": source.doctors_today(zone, now).model_dump(mode="json", by_alias=True),
+        "activity": _activity(source),
         "details": details,
         "bookings": [
             {

@@ -120,7 +120,7 @@ export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45
   const activeAdmins = () => staff.filter((member) => member.role === "admin" && member.isActive);
 
   /** `{ entry, run }` for an admin request, or null when the path is not an admin path. */
-  function handle({ method, path, headers, bodyText = "", mode }) {
+  function handle({ method, path, query = new URLSearchParams(), headers, bodyText = "", mode }) {
     if (!path.startsWith("/api/v1/admin/")) return null;
     const entry = { method, path: path.replace("/api/v1", ""), mode };
     return {
@@ -237,6 +237,26 @@ export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45
           const result = gate(headers, mode);
           if (result.error) return result.error;
           return { status: 200, body: bookings.overview(result.session) };
+        }
+
+        if (method === "GET" && route === "/insights") {
+          const result = gate(headers, mode);
+          if (result.error) return result.error;
+          const answer = bookings.insights(query.get("range"), result.session);
+          return answer ?? refuse(422, "validation_error", "Some request parameters are invalid.", { details: [{ field: "range", issue: "must be one of 7, 30 or 90" }] });
+        }
+
+        if (method === "GET" && route === "/doctors-today") {
+          const result = gate(headers, mode);
+          if (result.error) return result.error;
+          return { status: 200, body: bookings.doctorsToday(result.session) };
+        }
+
+        if (method === "GET" && route === "/activity") {
+          // Admins only; the demo sees the synthetic feed. A receptionist gets 403.
+          const result = gate(headers, mode, { admin: true });
+          if (result.error) return result.error;
+          return bookings.activity(query);
         }
 
         const bookingRoute = /^\/(lookups|bookings\/)/.test(route) || route === "/bookings/search";

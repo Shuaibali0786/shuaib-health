@@ -240,5 +240,31 @@ export function createBookings({ fixture, now }) {
     };
   }
 
-  return { handle, reset, createFresh, overview };
+  /** `GET /admin/insights?range=`: the demo day's charts for 7, 30 or 90 days (a session marked `overview: "empty"` has no bookings); null for any other range. */
+  function insights(range, session) {
+    if (!["7", "30", "90"].includes(range ?? "")) return null;
+    const base = fixture.insights[range];
+    if (session.overview !== "empty") return { status: 200, body: { ...base, isSample: session.kind === "demo" } };
+    // A day with no bookings at all: every figure zero.
+    return { status: 200, body: { ...base, total: 0, perDay: base.perDay.map((d) => ({ ...d, count: 0 })), byDepartment: [], byStatus: base.byStatus.map((s) => ({ ...s, count: 0 })), byHour: base.byHour.map((h) => ({ ...h, count: 0 })) } };
+  }
+
+  /** `GET /admin/doctors-today`: the day's schedules from the fixture. A session marked `overview: "closed"` gets the holiday. */
+  function doctorsToday(session) {
+    const base = structuredClone(fixture.doctorsToday);
+    if (session.overview === "closed") return { ...base, clinicClosed: "Founders Day", working: [], onLeave: [], notIn: [] };
+    return { ...base, isSample: session.kind === "demo" };
+  }
+
+  /** `GET /admin/activity`: the synthetic feed, newest first, filtered by `action` and `staffId` and paged by 25. */
+  function activity(query) {
+    const size = 25;
+    const page = Math.max(1, Number(query.get("page")) || 1);
+    const action = query.get("action");
+    const staffName = query.get("staffId") ? (fixture.staff.find((member) => member.id === query.get("staffId"))?.displayName ?? "") : null;
+    const hits = fixture.activity.filter((event) => (!action || event.action === action) && (staffName === null || event.actorName === staffName));
+    return { status: 200, body: { items: hits.slice((page - 1) * size, page * size), total: hits.length, page, pageSize: size } };
+  }
+
+  return { handle, reset, createFresh, overview, insights, doctorsToday, activity };
 }

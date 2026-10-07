@@ -117,6 +117,44 @@ for (const theme of THEMES) {
         await expectAccessible(page, `Bookings undo toast, ${theme}`);
       });
 
+      test("Insights, with its data tables open", async ({ page }) => {
+        await pauseAtNow(page);
+        await page.goto("/admin/insights");
+        await revealStreamedContent(page);
+        await expect(page.locator("figure[data-chart]")).toHaveCount(4);
+        await expectAccessible(page, `Insights, ${theme}`);
+        for (const summary of await page.locator("details.chart-data > summary").all()) await summary.click();
+        await expectAccessible(page, `Insights with tables, ${theme}`);
+      });
+
+      test("Insights with a focused column and in 7 days", async ({ page, isMobile }) => {
+        test.skip(isMobile, "arrow keys need a keyboard");
+        await pauseAtNow(page);
+        await page.goto("/admin/insights?range=7");
+        await revealStreamedContent(page);
+        await page.locator('figure[data-chart="per-day"] [data-bar]').first().focus();
+        await expect(page.locator('figure[data-chart="per-day"] .tip')).toBeVisible();
+        await expectAccessible(page, `Insights focused column, ${theme}`);
+      });
+
+      test("Doctors today", async ({ page }) => {
+        await pauseAtNow(page);
+        await page.goto("/admin/doctors");
+        await revealStreamedContent(page);
+        await expect(page.locator("article.doc-card").first()).toBeVisible();
+        await expectAccessible(page, `Doctors today, ${theme}`);
+        await page.getByTestId("not-in-today").getByText("Not in today").click();
+        await expectAccessible(page, `Doctors today, not in today open, ${theme}`);
+      });
+
+      test("Activity", async ({ page }) => {
+        await pauseAtNow(page);
+        await page.goto("/admin/activity");
+        await revealStreamedContent(page);
+        await expect(page.locator(".activity-table tbody tr").first()).toBeVisible();
+        await expectAccessible(page, `Activity, ${theme}`);
+      });
+
       test("Staff", async ({ page }) => {
         await page.goto("/admin/staff");
         await expect(page.getByRole("heading", { name: "People with access" })).toBeVisible();

@@ -2628,3 +2628,425 @@ svg.i-sm {
   font-weight: 600;
   cursor: pointer;
 }
+
+/* ===== Insights, Doctors today, Activity (US6-US8) ===== */
+
+.range-switch {
+  display: flex;
+  width: fit-content;
+  margin-bottom: 18px;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+}
+.range-switch a {
+  min-height: 38px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+}
+.range-switch a[aria-current="page"] {
+  background: var(--heading);
+  color: var(--card);
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.insights-grid > .span-2 {
+  grid-column: 1 / -1;
+}
+.chart {
+  margin: 0;
+  padding: 20px 22px 8px;
+}
+.chart h2 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--heading);
+}
+.chart-summary {
+  margin: 4px 0 14px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.chart-svg {
+  display: block;
+  width: 100%;
+}
+.chart-svg .grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.chart-svg .axis {
+  fill: var(--muted);
+  font-size: 11px;
+}
+.chart-svg .bar {
+  fill: var(--accent);
+  opacity: 0.85;
+  outline: none;
+}
+.chart-svg .bar.today {
+  opacity: 1;
+}
+.chart-svg .bar:hover,
+.chart-svg .bar:focus-visible {
+  opacity: 1;
+  stroke: var(--heading);
+  stroke-width: 2px;
+  paint-order: stroke;
+}
+.chart-svg .hit {
+  fill: transparent;
+}
+.chart-svg .tip rect {
+  fill: var(--heading);
+}
+.chart-svg .tip text {
+  fill: var(--card);
+  font-size: 12px;
+  font-weight: 600;
+}
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 10px 0 4px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.chart-legend .key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.swatch.cancelled,
+.barlist .fill.cancelled {
+  background: repeating-linear-gradient(135deg, var(--st-cancelled-line) 0 3px, transparent 3px 6px);
+  border: 1px solid var(--st-cancelled-line);
+}
+.chart-data {
+  margin: 12px -22px 0;
+  padding: 0 22px;
+  border-top: 1px solid var(--border);
+}
+.chart-data summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.chart-data .table-wrap {
+  max-height: 320px;
+  overflow: auto;
+  margin-bottom: 12px;
+}
+.chart-data .num-col {
+  text-align: right;
+}
+
+/* By department */
+.barlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.barlist li {
+  display: grid;
+  grid-template-columns: minmax(96px, 150px) 1fr auto;
+  align-items: center;
+  gap: 12px;
+  font-size: 13.5px;
+}
+.barlist .name {
+  color: var(--ink);
+}
+.barlist .track {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+}
+.barlist .fill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background: var(--accent);
+  border-radius: 0 4px 4px 0;
+}
+.barlist .fill:first-child {
+  border-radius: 3px 4px 4px 3px;
+}
+.barlist .value {
+  min-width: 36px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--heading);
+}
+.barlist .value small {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* By status: the stacked bar adds a dotted pattern for cancelled to the hatch for no-show */
+.insight-bar {
+  margin-top: 4px;
+}
+.insight-bar .cancelled {
+  background: radial-gradient(circle, color-mix(in srgb, var(--st-line) 85%, transparent) 1.2px, transparent 1.6px) 0 0 / 5px 5px, color-mix(in srgb, var(--st-line) 40%, transparent);
+}
+.insight-bar .no_show {
+  background: repeating-linear-gradient(135deg, var(--st-line) 0 4px, color-mix(in srgb, var(--st-line) 45%, transparent) 4px 7px);
+}
+
+/* Busiest hours: one hue in five steps */
+.heat-cells {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+}
+.heat .cell {
+  display: grid;
+  place-items: center;
+  height: 44px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--heading);
+  background: var(--card-2);
+  outline: none;
+}
+.heat .cell.level-1,
+.swatch.level-1 {
+  background: color-mix(in srgb, var(--accent) 22%, var(--card));
+}
+.heat .cell.level-2,
+.swatch.level-2 {
+  background: color-mix(in srgb, var(--accent) 45%, var(--card));
+}
+.heat .cell.level-3,
+.swatch.level-3 {
+  background: color-mix(in srgb, var(--accent) 72%, var(--card));
+}
+.heat .cell.level-4,
+.swatch.level-4 {
+  background: var(--accent);
+  color: var(--card);
+}
+.heat .cell:hover,
+.heat .cell:focus-visible {
+  box-shadow: 0 0 0 2px var(--heading);
+}
+.heat-axis {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+.heat-readout {
+  margin: 8px 0 0;
+  min-height: 20px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.chart-legend .scale .swatch {
+  width: 18px;
+}
+
+/* Doctors today */
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.doc-card {
+  padding: 18px 20px;
+}
+.doc-card h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--heading);
+}
+.doc-card .dept,
+.doc-card .hours {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.doc-card .util {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 12px;
+}
+.doc-card .bar-track {
+  flex: 1;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--card-2);
+  overflow: hidden;
+}
+.doc-card .bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+.doc-card .pct {
+  min-width: 40px;
+  text-align: right;
+  font-weight: 700;
+  color: var(--heading);
+}
+.doc-stats {
+  display: flex;
+  gap: 22px;
+  margin: 0;
+}
+.doc-stats dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+.doc-stats dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--heading);
+}
+.doc-card .next-free {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.doc-card .next-free.full {
+  font-weight: 600;
+}
+.doc-card .passed {
+  color: var(--muted);
+  text-decoration: underline dotted;
+}
+.doc-aside {
+  margin-top: 18px;
+  padding: 16px 20px;
+}
+.doc-aside h2,
+.doc-aside summary {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--heading);
+  cursor: pointer;
+}
+.doc-aside h2 {
+  cursor: default;
+}
+.doc-aside ul {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+/* Activity */
+.activity-filters {
+  margin-bottom: 16px;
+}
+.activity-filters label {
+  white-space: nowrap;
+}
+.activity-filters .field select {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  min-width: 170px;
+}
+.activity-table .when {
+  white-space: nowrap;
+}
+.activity-table .ref {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.activity-table .tag {
+  color: var(--muted);
+}
+.activity-table .outcome {
+  margin-left: 8px;
+}
+.pager a,
+.pager .disabled,
+.pager .current {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--ink);
+  font-size: 13px;
+  display: inline-grid;
+  place-items: center;
+  text-decoration: none;
+}
+.pager .disabled {
+  opacity: 0.45;
+}
+.pager .current {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .insights-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .barlist li {
+    grid-template-columns: 1fr auto;
+  }
+  .barlist .track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .heat .cell {
+    height: 38px;
+  }
+  .range-switch {
+    width: 100%;
+  }
+  .range-switch a {
+    flex: 1;
+    justify-content: center;
+  }
+}

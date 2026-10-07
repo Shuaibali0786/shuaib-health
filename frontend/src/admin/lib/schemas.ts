@@ -143,3 +143,63 @@ export type Kpis = z.infer<typeof KpisSchema>;
 export type AgendaDoctor = z.infer<typeof AgendaDoctorSchema>;
 export type RecentBooking = z.infer<typeof RecentBookingSchema>;
 export type Overview = z.infer<typeof OverviewSchema>;
+
+// ----- Insights, Doctors today, Activity (US6-US8) ------------------------------------------
+
+export const INSIGHT_RANGES = [7, 30, 90] as const;
+export const InsightsRangeSchema = z.union([z.literal(7), z.literal(30), z.literal(90)]);
+
+export const InsightsSchema = z.object({
+  rangeDays: InsightsRangeSchema,
+  from: z.iso.date(),
+  to: z.iso.date(),
+  total: z.number().int(),
+  perDay: z.array(z.object({ date: z.iso.date(), count: z.number().int() })),
+  byDepartment: z.array(z.object({ departmentName: z.string(), count: z.number().int(), cancelled: z.number().int() })),
+  byStatus: z.array(z.object({ status: BookingStatusSchema, count: z.number().int() })),
+  byHour: z.array(z.object({ hour: z.number().int().min(0).max(23), count: z.number().int() })),
+  isSample: z.boolean(),
+});
+
+export const DoctorTodaySchema = z.object({
+  doctor: DoctorRefSchema,
+  sessions: z.array(z.object({ start: z.string().optional(), end: z.string().optional() })),
+  scheduled: z.number().int(),
+  booked: z.number().int(),
+  free: z.number().int(),
+  freePassed: z.number().int().optional(),
+  utilisationPct: z.number().int(),
+  nextFree: z.string().nullable().optional(),
+});
+
+export const DoctorsTodaySchema = z.object({
+  localDate: z.iso.date(),
+  clinicClosed: z.string().nullable().optional(),
+  working: z.array(DoctorTodaySchema),
+  onLeave: z.array(DoctorRefSchema),
+  notIn: z.array(DoctorRefSchema),
+  isSample: z.boolean().optional(),
+});
+
+export const ActivityEventSchema = z.object({
+  id: z.uuid(),
+  at: z.iso.datetime({ offset: true }),
+  action: z.string(),
+  outcome: z.string(),
+  actorName: z.string().nullable().optional(),
+  actorRole: z.string().nullable().optional(),
+  bookingReference: z.string().nullable().optional(),
+  fromStatus: z.string().nullable().optional(),
+  toStatus: z.string().nullable().optional(),
+  networkTag: z.string(),
+  isSample: z.boolean().optional(),
+});
+
+export const ActivityPageSchema = z.object({ items: z.array(ActivityEventSchema), total: z.number().int(), page: z.number().int(), pageSize: z.number().int() });
+
+export type Insights = z.infer<typeof InsightsSchema>;
+export type InsightsRange = z.infer<typeof InsightsRangeSchema>;
+export type DoctorToday = z.infer<typeof DoctorTodaySchema>;
+export type DoctorsToday = z.infer<typeof DoctorsTodaySchema>;
+export type ActivityEvent = z.infer<typeof ActivityEventSchema>;
+export type ActivityPage = z.infer<typeof ActivityPageSchema>;

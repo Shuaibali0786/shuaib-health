@@ -1592,6 +1592,2152 @@
     "recentBookings": [],
     "isSample": true
   },
+  "insights": {
+    "7": {
+      "rangeDays": 7,
+      "from": "2026-09-29",
+      "to": "2026-10-05",
+      "total": 266,
+      "perDay": [
+        {
+          "date": "2026-09-29",
+          "count": 34
+        },
+        {
+          "date": "2026-09-30",
+          "count": 34
+        },
+        {
+          "date": "2026-10-01",
+          "count": 46
+        },
+        {
+          "date": "2026-10-02",
+          "count": 40
+        },
+        {
+          "date": "2026-10-03",
+          "count": 56
+        },
+        {
+          "date": "2026-10-04",
+          "count": 0
+        },
+        {
+          "date": "2026-10-05",
+          "count": 56
+        }
+      ],
+      "byDepartment": [
+        {
+          "departmentName": "General Medicine",
+          "count": 62,
+          "cancelled": 2
+        },
+        {
+          "departmentName": "Pediatrics",
+          "count": 59,
+          "cancelled": 6
+        },
+        {
+          "departmentName": "Cardiology",
+          "count": 40,
+          "cancelled": 0
+        },
+        {
+          "departmentName": "Dental",
+          "count": 30,
+          "cancelled": 2
+        },
+        {
+          "departmentName": "Dermatology",
+          "count": 29,
+          "cancelled": 2
+        },
+        {
+          "departmentName": "Pathology Lab",
+          "count": 24,
+          "cancelled": 3
+        },
+        {
+          "departmentName": "Gynecology",
+          "count": 22,
+          "cancelled": 2
+        }
+      ],
+      "byStatus": [
+        {
+          "status": "confirmed",
+          "count": 35
+        },
+        {
+          "status": "arrived",
+          "count": 2
+        },
+        {
+          "status": "completed",
+          "count": 209
+        },
+        {
+          "status": "no_show",
+          "count": 20
+        },
+        {
+          "status": "cancelled",
+          "count": 17
+        }
+      ],
+      "byHour": [
+        {
+          "hour": 0,
+          "count": 0
+        },
+        {
+          "hour": 1,
+          "count": 0
+        },
+        {
+          "hour": 2,
+          "count": 0
+        },
+        {
+          "hour": 3,
+          "count": 0
+        },
+        {
+          "hour": 4,
+          "count": 0
+        },
+        {
+          "hour": 5,
+          "count": 0
+        },
+        {
+          "hour": 6,
+          "count": 0
+        },
+        {
+          "hour": 7,
+          "count": 0
+        },
+        {
+          "hour": 8,
+          "count": 0
+        },
+        {
+          "hour": 9,
+          "count": 14
+        },
+        {
+          "hour": 10,
+          "count": 31
+        },
+        {
+          "hour": 11,
+          "count": 37
+        },
+        {
+          "hour": 12,
+          "count": 37
+        },
+        {
+          "hour": 13,
+          "count": 24
+        },
+        {
+          "hour": 14,
+          "count": 18
+        },
+        {
+          "hour": 15,
+          "count": 16
+        },
+        {
+          "hour": 16,
+          "count": 21
+        },
+        {
+          "hour": 17,
+          "count": 26
+        },
+        {
+          "hour": 18,
+          "count": 19
+        },
+        {
+          "hour": 19,
+          "count": 21
+        },
+        {
+          "hour": 20,
+          "count": 2
+        },
+        {
+          "hour": 21,
+          "count": 0
+        },
+        {
+          "hour": 22,
+          "count": 0
+        },
+        {
+          "hour": 23,
+          "count": 0
+        }
+      ],
+      "isSample": true
+    },
+    "30": {
+      "rangeDays": 30,
+      "from": "2026-09-06",
+      "to": "2026-10-05",
+      "total": 1246,
+      "perDay": [
+        {
+          "date": "2026-09-06",
+          "count": 0
+        },
+        {
+          "date": "2026-09-07",
+          "count": 61
+        },
+        {
+          "date": "2026-09-08",
+          "count": 44
+        },
+        {
+          "date": "2026-09-09",
+          "count": 49
+        },
+        {
+          "date": "2026-09-10",
+          "count": 41
+        },
+        {
+          "date": "2026-09-11",
+          "count": 29
+        },
+        {
+          "date": "2026-09-12",
+          "count": 57
+        },
+        {
+          "date": "2026-09-13",
+          "count": 0
+        },
+        {
+          "date": "2026-09-14",
+          "count": 64
+        },
+        {
+          "date": "2026-09-15",
+          "count": 43
+        },
+        {
+          "date": "2026-09-16",
+          "count": 46
+        },
+        {
+          "date": "2026-09-17",
+          "count": 60
+        },
+        {
+          "date": "2026-09-18",
+          "count": 34
+        },
+        {
+          "date": "2026-09-19",
+          "count": 64
+        },
+        {
+          "date": "2026-09-20",
+          "count": 0
+        },
+        {
+          "date": "2026-09-21",
+          "count": 58
+        },
+        {
+          "date": "2026-09-22",
+          "count": 44
+        },
+        {
+          "date": "2026-09-23",
+          "count": 56
+        },
+        {
+          "date": "2026-09-24",
+          "count": 53
+        },
+        {
+          "date": "2026-09-25",
+          "count": 45
+        },
+        {
+          "date": "2026-09-26",
+          "count": 70
+        },
+        {
+          "date": "2026-09-27",
+          "count": 0
+        },
+        {
+          "date": "2026-09-28",
+          "count": 62
+        },
+        {
+          "date": "2026-09-29",
+          "count": 34
+        },
+        {
+          "date": "2026-09-30",
+          "count": 34
+        },
+        {
+          "date": "2026-10-01",
+          "count": 46
+        },
+        {
+          "date": "2026-10-02",
+          "count": 40
+        },
+        {
+          "date": "2026-10-03",
+          "count": 56
+        },
+        {
+          "date": "2026-10-04",
+          "count": 0
+        },
+        {
+          "date": "2026-10-05",
+          "count": 56
+        }
+      ],
+      "byDepartment": [
+        {
+          "departmentName": "General Medicine",
+          "count": 280,
+          "cancelled": 15
+        },
+        {
+          "departmentName": "Pediatrics",
+          "count": 271,
+          "cancelled": 17
+        },
+        {
+          "departmentName": "Cardiology",
+          "count": 156,
+          "cancelled": 7
+        },
+        {
+          "departmentName": "Dental",
+          "count": 155,
+          "cancelled": 11
+        },
+        {
+          "departmentName": "Dermatology",
+          "count": 151,
+          "cancelled": 9
+        },
+        {
+          "departmentName": "Gynecology",
+          "count": 132,
+          "cancelled": 9
+        },
+        {
+          "departmentName": "Pathology Lab",
+          "count": 101,
+          "cancelled": 11
+        }
+      ],
+      "byStatus": [
+        {
+          "status": "confirmed",
+          "count": 35
+        },
+        {
+          "status": "arrived",
+          "count": 2
+        },
+        {
+          "status": "completed",
+          "count": 1092
+        },
+        {
+          "status": "no_show",
+          "count": 117
+        },
+        {
+          "status": "cancelled",
+          "count": 79
+        }
+      ],
+      "byHour": [
+        {
+          "hour": 0,
+          "count": 0
+        },
+        {
+          "hour": 1,
+          "count": 0
+        },
+        {
+          "hour": 2,
+          "count": 0
+        },
+        {
+          "hour": 3,
+          "count": 0
+        },
+        {
+          "hour": 4,
+          "count": 0
+        },
+        {
+          "hour": 5,
+          "count": 0
+        },
+        {
+          "hour": 6,
+          "count": 0
+        },
+        {
+          "hour": 7,
+          "count": 0
+        },
+        {
+          "hour": 8,
+          "count": 0
+        },
+        {
+          "hour": 9,
+          "count": 61
+        },
+        {
+          "hour": 10,
+          "count": 144
+        },
+        {
+          "hour": 11,
+          "count": 180
+        },
+        {
+          "hour": 12,
+          "count": 189
+        },
+        {
+          "hour": 13,
+          "count": 114
+        },
+        {
+          "hour": 14,
+          "count": 84
+        },
+        {
+          "hour": 15,
+          "count": 90
+        },
+        {
+          "hour": 16,
+          "count": 97
+        },
+        {
+          "hour": 17,
+          "count": 100
+        },
+        {
+          "hour": 18,
+          "count": 91
+        },
+        {
+          "hour": 19,
+          "count": 84
+        },
+        {
+          "hour": 20,
+          "count": 12
+        },
+        {
+          "hour": 21,
+          "count": 0
+        },
+        {
+          "hour": 22,
+          "count": 0
+        },
+        {
+          "hour": 23,
+          "count": 0
+        }
+      ],
+      "isSample": true
+    },
+    "90": {
+      "rangeDays": 90,
+      "from": "2026-07-08",
+      "to": "2026-10-05",
+      "total": 4028,
+      "perDay": [
+        {
+          "date": "2026-07-08",
+          "count": 46
+        },
+        {
+          "date": "2026-07-09",
+          "count": 52
+        },
+        {
+          "date": "2026-07-10",
+          "count": 39
+        },
+        {
+          "date": "2026-07-11",
+          "count": 73
+        },
+        {
+          "date": "2026-07-12",
+          "count": 0
+        },
+        {
+          "date": "2026-07-13",
+          "count": 64
+        },
+        {
+          "date": "2026-07-14",
+          "count": 37
+        },
+        {
+          "date": "2026-07-15",
+          "count": 46
+        },
+        {
+          "date": "2026-07-16",
+          "count": 48
+        },
+        {
+          "date": "2026-07-17",
+          "count": 42
+        },
+        {
+          "date": "2026-07-18",
+          "count": 77
+        },
+        {
+          "date": "2026-07-19",
+          "count": 0
+        },
+        {
+          "date": "2026-07-20",
+          "count": 66
+        },
+        {
+          "date": "2026-07-21",
+          "count": 44
+        },
+        {
+          "date": "2026-07-22",
+          "count": 48
+        },
+        {
+          "date": "2026-07-23",
+          "count": 57
+        },
+        {
+          "date": "2026-07-24",
+          "count": 36
+        },
+        {
+          "date": "2026-07-25",
+          "count": 70
+        },
+        {
+          "date": "2026-07-26",
+          "count": 0
+        },
+        {
+          "date": "2026-07-27",
+          "count": 60
+        },
+        {
+          "date": "2026-07-28",
+          "count": 58
+        },
+        {
+          "date": "2026-07-29",
+          "count": 52
+        },
+        {
+          "date": "2026-07-30",
+          "count": 48
+        },
+        {
+          "date": "2026-07-31",
+          "count": 44
+        },
+        {
+          "date": "2026-08-01",
+          "count": 68
+        },
+        {
+          "date": "2026-08-02",
+          "count": 0
+        },
+        {
+          "date": "2026-08-03",
+          "count": 66
+        },
+        {
+          "date": "2026-08-04",
+          "count": 55
+        },
+        {
+          "date": "2026-08-05",
+          "count": 56
+        },
+        {
+          "date": "2026-08-06",
+          "count": 47
+        },
+        {
+          "date": "2026-08-07",
+          "count": 36
+        },
+        {
+          "date": "2026-08-08",
+          "count": 63
+        },
+        {
+          "date": "2026-08-09",
+          "count": 0
+        },
+        {
+          "date": "2026-08-10",
+          "count": 70
+        },
+        {
+          "date": "2026-08-11",
+          "count": 53
+        },
+        {
+          "date": "2026-08-12",
+          "count": 49
+        },
+        {
+          "date": "2026-08-13",
+          "count": 55
+        },
+        {
+          "date": "2026-08-14",
+          "count": 39
+        },
+        {
+          "date": "2026-08-15",
+          "count": 71
+        },
+        {
+          "date": "2026-08-16",
+          "count": 0
+        },
+        {
+          "date": "2026-08-17",
+          "count": 60
+        },
+        {
+          "date": "2026-08-18",
+          "count": 48
+        },
+        {
+          "date": "2026-08-19",
+          "count": 50
+        },
+        {
+          "date": "2026-08-20",
+          "count": 50
+        },
+        {
+          "date": "2026-08-21",
+          "count": 45
+        },
+        {
+          "date": "2026-08-22",
+          "count": 64
+        },
+        {
+          "date": "2026-08-23",
+          "count": 0
+        },
+        {
+          "date": "2026-08-24",
+          "count": 57
+        },
+        {
+          "date": "2026-08-25",
+          "count": 48
+        },
+        {
+          "date": "2026-08-26",
+          "count": 47
+        },
+        {
+          "date": "2026-08-27",
+          "count": 46
+        },
+        {
+          "date": "2026-08-28",
+          "count": 42
+        },
+        {
+          "date": "2026-08-29",
+          "count": 66
+        },
+        {
+          "date": "2026-08-30",
+          "count": 0
+        },
+        {
+          "date": "2026-08-31",
+          "count": 66
+        },
+        {
+          "date": "2026-09-01",
+          "count": 35
+        },
+        {
+          "date": "2026-09-02",
+          "count": 63
+        },
+        {
+          "date": "2026-09-03",
+          "count": 38
+        },
+        {
+          "date": "2026-09-04",
+          "count": 49
+        },
+        {
+          "date": "2026-09-05",
+          "count": 73
+        },
+        {
+          "date": "2026-09-06",
+          "count": 0
+        },
+        {
+          "date": "2026-09-07",
+          "count": 61
+        },
+        {
+          "date": "2026-09-08",
+          "count": 44
+        },
+        {
+          "date": "2026-09-09",
+          "count": 49
+        },
+        {
+          "date": "2026-09-10",
+          "count": 41
+        },
+        {
+          "date": "2026-09-11",
+          "count": 29
+        },
+        {
+          "date": "2026-09-12",
+          "count": 57
+        },
+        {
+          "date": "2026-09-13",
+          "count": 0
+        },
+        {
+          "date": "2026-09-14",
+          "count": 64
+        },
+        {
+          "date": "2026-09-15",
+          "count": 43
+        },
+        {
+          "date": "2026-09-16",
+          "count": 46
+        },
+        {
+          "date": "2026-09-17",
+          "count": 60
+        },
+        {
+          "date": "2026-09-18",
+          "count": 34
+        },
+        {
+          "date": "2026-09-19",
+          "count": 64
+        },
+        {
+          "date": "2026-09-20",
+          "count": 0
+        },
+        {
+          "date": "2026-09-21",
+          "count": 58
+        },
+        {
+          "date": "2026-09-22",
+          "count": 44
+        },
+        {
+          "date": "2026-09-23",
+          "count": 56
+        },
+        {
+          "date": "2026-09-24",
+          "count": 53
+        },
+        {
+          "date": "2026-09-25",
+          "count": 45
+        },
+        {
+          "date": "2026-09-26",
+          "count": 70
+        },
+        {
+          "date": "2026-09-27",
+          "count": 0
+        },
+        {
+          "date": "2026-09-28",
+          "count": 62
+        },
+        {
+          "date": "2026-09-29",
+          "count": 34
+        },
+        {
+          "date": "2026-09-30",
+          "count": 34
+        },
+        {
+          "date": "2026-10-01",
+          "count": 46
+        },
+        {
+          "date": "2026-10-02",
+          "count": 40
+        },
+        {
+          "date": "2026-10-03",
+          "count": 56
+        },
+        {
+          "date": "2026-10-04",
+          "count": 0
+        },
+        {
+          "date": "2026-10-05",
+          "count": 56
+        }
+      ],
+      "byDepartment": [
+        {
+          "departmentName": "General Medicine",
+          "count": 929,
+          "cancelled": 50
+        },
+        {
+          "departmentName": "Pediatrics",
+          "count": 861,
+          "cancelled": 56
+        },
+        {
+          "departmentName": "Dental",
+          "count": 544,
+          "cancelled": 31
+        },
+        {
+          "departmentName": "Cardiology",
+          "count": 488,
+          "cancelled": 30
+        },
+        {
+          "departmentName": "Gynecology",
+          "count": 460,
+          "cancelled": 27
+        },
+        {
+          "departmentName": "Dermatology",
+          "count": 427,
+          "cancelled": 22
+        },
+        {
+          "departmentName": "Pathology Lab",
+          "count": 319,
+          "cancelled": 23
+        }
+      ],
+      "byStatus": [
+        {
+          "status": "confirmed",
+          "count": 35
+        },
+        {
+          "status": "arrived",
+          "count": 2
+        },
+        {
+          "status": "completed",
+          "count": 3629
+        },
+        {
+          "status": "no_show",
+          "count": 362
+        },
+        {
+          "status": "cancelled",
+          "count": 239
+        }
+      ],
+      "byHour": [
+        {
+          "hour": 0,
+          "count": 0
+        },
+        {
+          "hour": 1,
+          "count": 0
+        },
+        {
+          "hour": 2,
+          "count": 0
+        },
+        {
+          "hour": 3,
+          "count": 0
+        },
+        {
+          "hour": 4,
+          "count": 0
+        },
+        {
+          "hour": 5,
+          "count": 0
+        },
+        {
+          "hour": 6,
+          "count": 0
+        },
+        {
+          "hour": 7,
+          "count": 0
+        },
+        {
+          "hour": 8,
+          "count": 0
+        },
+        {
+          "hour": 9,
+          "count": 199
+        },
+        {
+          "hour": 10,
+          "count": 446
+        },
+        {
+          "hour": 11,
+          "count": 575
+        },
+        {
+          "hour": 12,
+          "count": 582
+        },
+        {
+          "hour": 13,
+          "count": 343
+        },
+        {
+          "hour": 14,
+          "count": 282
+        },
+        {
+          "hour": 15,
+          "count": 318
+        },
+        {
+          "hour": 16,
+          "count": 317
+        },
+        {
+          "hour": 17,
+          "count": 342
+        },
+        {
+          "hour": 18,
+          "count": 319
+        },
+        {
+          "hour": 19,
+          "count": 270
+        },
+        {
+          "hour": 20,
+          "count": 35
+        },
+        {
+          "hour": 21,
+          "count": 0
+        },
+        {
+          "hour": 22,
+          "count": 0
+        },
+        {
+          "hour": 23,
+          "count": 0
+        }
+      ],
+      "isSample": true
+    }
+  },
+  "doctorsToday": {
+    "localDate": "2026-10-05",
+    "clinicClosed": null,
+    "working": [
+      {
+        "doctor": {
+          "id": "bb30fbe1-0f73-5333-a692-fc5ef27c43ce",
+          "name": "Dr. Zainab Memon",
+          "departmentName": "Pathology Lab",
+          "isActive": true
+        },
+        "sessions": [
+          {
+            "start": "09:00",
+            "end": "12:00"
+          }
+        ],
+        "scheduled": 12,
+        "booked": 11,
+        "free": 1,
+        "freePassed": 0,
+        "utilisationPct": 92,
+        "nextFree": "11:30"
+      },
+      {
+        "doctor": {
+          "id": "29702e54-d3e9-51de-a49e-69b10788bbd0",
+          "name": "Dr. Maryam Baloch",
+          "departmentName": "Dermatology",
+          "isActive": true
+        },
+        "sessions": [
+          {
+            "start": "12:00",
+            "end": "17:00"
+          }
+        ],
+        "scheduled": 20,
+        "booked": 12,
+        "free": 8,
+        "freePassed": 0,
+        "utilisationPct": 60,
+        "nextFree": "12:00"
+      },
+      {
+        "doctor": {
+          "id": "fd25f9d5-1689-563b-ad9c-8d6c1de2e578",
+          "name": "Dr. Sana Farooqui",
+          "departmentName": "Pediatrics",
+          "isActive": true
+        },
+        "sessions": [
+          {
+            "start": "10:00",
+            "end": "14:00"
+          }
+        ],
+        "scheduled": 16,
+        "booked": 8,
+        "free": 8,
+        "freePassed": 3,
+        "utilisationPct": 50,
+        "nextFree": "12:15"
+      },
+      {
+        "doctor": {
+          "id": "b5b9a5f9-af25-5d52-a86d-fd4ab5a9e24a",
+          "name": "Dr. Hassan Mirza",
+          "departmentName": "General Medicine",
+          "isActive": true
+        },
+        "sessions": [
+          {
+            "start": "09:00",
+            "end": "13:00"
+          }
+        ],
+        "scheduled": 16,
+        "booked": 13,
+        "free": 3,
+        "freePassed": 2,
+        "utilisationPct": 81,
+        "nextFree": "12:30"
+      },
+      {
+        "doctor": {
+          "id": "13827c7d-e67e-5d8f-8059-781b652d1886",
+          "name": "Dr. Imran Qureshi",
+          "departmentName": "Cardiology",
+          "isActive": true
+        },
+        "sessions": [
+          {
+            "start": "16:00",
+            "end": "20:00"
+          }
+        ],
+        "scheduled": 16,
+        "booked": 12,
+        "free": 4,
+        "freePassed": 0,
+        "utilisationPct": 75,
+        "nextFree": "16:00"
+      }
+    ],
+    "onLeave": [],
+    "notIn": [
+      {
+        "id": "8fe6a141-f1d9-5e46-843d-35f8d97973db",
+        "name": "Dr. Ayesha Rahman",
+        "departmentName": "Gynecology",
+        "isActive": true
+      },
+      {
+        "id": "9df72deb-8c94-5c28-8a84-3469ffcc4c47",
+        "name": "Dr. Bilal Ansari",
+        "departmentName": "Dental",
+        "isActive": true
+      },
+      {
+        "id": "46e42d11-980e-5865-8427-a3312f458714",
+        "name": "Dr. Faisal Chaudhry",
+        "departmentName": "Pediatrics",
+        "isActive": true
+      },
+      {
+        "id": "9c809090-bbfd-591a-96c7-badc7be6514d",
+        "name": "Dr. Omar Sheikh",
+        "departmentName": "General Medicine",
+        "isActive": true
+      }
+    ],
+    "isSample": true
+  },
+  "activity": [
+    {
+      "id": "8faca00d-5d59-5bbd-ac5c-611261814deb",
+      "at": "2026-10-05T04:59:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "D4SVG7CY57",
+      "networkTag": "e3cdcb",
+      "isSample": true
+    },
+    {
+      "id": "d9a3ec64-070a-53ca-b4bb-03f50b798139",
+      "at": "2026-10-05T04:52:00Z",
+      "action": "auth.sign_in",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "networkTag": "046ee5",
+      "isSample": true
+    },
+    {
+      "id": "08d59ffd-2635-5724-ba2e-97b1bc77657e",
+      "at": "2026-10-05T04:43:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DXYFFD4ZKM",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "e934e4",
+      "isSample": true
+    },
+    {
+      "id": "83ed1eef-317d-557e-8ceb-2cc9524ba876",
+      "at": "2026-10-05T04:42:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "D0DCJTJ0Z9",
+      "networkTag": "e3cdcb",
+      "isSample": true
+    },
+    {
+      "id": "b4100381-b275-5f30-ad2c-d13f25bfa159",
+      "at": "2026-10-05T04:27:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "DHKMX3YVWK",
+      "networkTag": "798ef6",
+      "isSample": true
+    },
+    {
+      "id": "be7fecfa-257f-51f1-8740-41acfdb93d10",
+      "at": "2026-10-05T04:25:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "DZK01MH9JN",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "046ee5",
+      "isSample": true
+    },
+    {
+      "id": "da6e3ea0-4ce1-5b5e-99b5-42414c35c34f",
+      "at": "2026-10-05T04:14:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "DF20ZZ7MJY",
+      "networkTag": "798ef6",
+      "isSample": true
+    },
+    {
+      "id": "7ca60ab1-2478-5882-b7f7-7e822ec11da2",
+      "at": "2026-10-05T04:04:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "D32J57R6BJ",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "e3cdcb",
+      "isSample": true
+    },
+    {
+      "id": "aa0d6e4d-6ce5-5c6d-a2c2-4858fa58cebb",
+      "at": "2026-10-05T04:03:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DJ7388PNKH",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "e934e4",
+      "isSample": true
+    },
+    {
+      "id": "4eb8d62f-9b93-51c6-bc80-bef54e63abd4",
+      "at": "2026-10-05T03:52:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "DZK01MH9JN",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "dc6e0e",
+      "isSample": true
+    },
+    {
+      "id": "76e97c20-f987-5274-9203-a3c458a2563f",
+      "at": "2026-10-05T03:43:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "DCJ1368ENK",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "798ef6",
+      "isSample": true
+    },
+    {
+      "id": "a76e577e-e100-5086-9e63-10ae23e0ef19",
+      "at": "2026-10-05T03:42:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "DTAKMJ3CC9",
+      "networkTag": "046ee5",
+      "isSample": true
+    },
+    {
+      "id": "2ca17398-7fae-5547-9d51-779e9f3b4392",
+      "at": "2026-10-05T03:42:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "DTAKMJ3CC9",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "dc6e0e",
+      "isSample": true
+    },
+    {
+      "id": "43fecee9-ea9a-5db7-9d08-b27d2e258692",
+      "at": "2026-10-05T03:02:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DCJ1368ENK",
+      "fromStatus": "confirmed",
+      "toStatus": "no_show",
+      "networkTag": "e934e4",
+      "isSample": true
+    },
+    {
+      "id": "061b6075-7f6d-5119-a6a0-dff4256db7ee",
+      "at": "2026-10-03T11:19:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "D55RHN7S37",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "2e489c",
+      "isSample": true
+    },
+    {
+      "id": "a434ae7b-4765-5f8a-954d-ec82877d6154",
+      "at": "2026-10-03T10:20:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "DNQK5F7V1T",
+      "networkTag": "2e489c",
+      "isSample": true
+    },
+    {
+      "id": "807234be-2ba2-5f06-b84b-9612abf6bf72",
+      "at": "2026-10-03T09:58:00Z",
+      "action": "auth.sign_in",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "networkTag": "cd3ffb",
+      "isSample": true
+    },
+    {
+      "id": "02205238-43f6-5270-a7bf-0a93badcd340",
+      "at": "2026-10-03T09:16:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "D8N2289THR",
+      "networkTag": "9fd4b4",
+      "isSample": true
+    },
+    {
+      "id": "849380bc-77f7-5145-bdc5-d1ed99c98548",
+      "at": "2026-10-03T08:29:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "D6AQHETJTG",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "cd3ffb",
+      "isSample": true
+    },
+    {
+      "id": "69e64206-907c-5bea-8ae5-8cfe9f76cf16",
+      "at": "2026-10-03T08:10:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DZJ8EW5JV0",
+      "networkTag": "108524",
+      "isSample": true
+    },
+    {
+      "id": "ab41ae63-5985-56f3-a41d-275a69925ce3",
+      "at": "2026-10-03T05:57:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "D04QKP77BH",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "cd3ffb",
+      "isSample": true
+    },
+    {
+      "id": "571ee56a-c2bb-51d2-a585-6b9dc7b9c846",
+      "at": "2026-10-03T05:41:00Z",
+      "action": "auth.sign_in",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "networkTag": "cd3ffb",
+      "isSample": true
+    },
+    {
+      "id": "a00e1a22-5e1b-53c9-b385-04864e22c336",
+      "at": "2026-10-03T05:18:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "D4F2DQTX0P",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "aba9ec",
+      "isSample": true
+    },
+    {
+      "id": "a643c888-1db1-5c3d-ab4c-65a92d6b8e72",
+      "at": "2026-10-03T04:55:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "D5B0N7YCP5",
+      "networkTag": "cd3ffb",
+      "isSample": true
+    },
+    {
+      "id": "1460f643-7ae1-5919-90d0-2efa9f889442",
+      "at": "2026-10-03T04:48:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "D55RHN7S37",
+      "networkTag": "cd3ffb",
+      "isSample": true
+    },
+    {
+      "id": "60cf167a-848f-5f65-a104-43fc015f7282",
+      "at": "2026-10-03T04:25:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "D0EY4CTWXT",
+      "networkTag": "2e489c",
+      "isSample": true
+    },
+    {
+      "id": "cb0d6ddf-f92e-59ad-b127-58c8c1b143ee",
+      "at": "2026-10-03T04:18:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "DZFNYQ1K3K",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "9fd4b4",
+      "isSample": true
+    },
+    {
+      "id": "9897c95e-1067-5098-944a-2e54e0ade906",
+      "at": "2026-10-03T03:04:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DMXX5J1HNS",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "108524",
+      "isSample": true
+    },
+    {
+      "id": "3d945cd1-72e6-51f1-94f8-73d371141da4",
+      "at": "2026-10-02T13:38:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "DEFZ9EKYCR",
+      "networkTag": "43faf3",
+      "isSample": true
+    },
+    {
+      "id": "1c891879-7c01-5f52-9bff-987fee825b59",
+      "at": "2026-10-02T12:14:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "DQW0QV2XC8",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "e5bc71",
+      "isSample": true
+    },
+    {
+      "id": "0acf4101-20a1-5216-890b-cb5954c5f395",
+      "at": "2026-10-02T11:22:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DHXT20C8M6",
+      "networkTag": "72496c",
+      "isSample": true
+    },
+    {
+      "id": "78cac3df-ea63-5315-9fef-85e106a49b15",
+      "at": "2026-10-02T10:58:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "DW55AA4PW5",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "e5e400",
+      "isSample": true
+    },
+    {
+      "id": "0fb03c6d-b4b4-5c06-a1f2-dfcb76c5b939",
+      "at": "2026-10-02T10:36:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "D32X00KJXP",
+      "networkTag": "d7bf57",
+      "isSample": true
+    },
+    {
+      "id": "e23f0cdb-4e7e-5c77-9168-378faaab04ca",
+      "at": "2026-10-02T10:32:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "DFHN6CH9CC",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "43faf3",
+      "isSample": true
+    },
+    {
+      "id": "f94c886f-a505-5678-97a4-617c84ae503f",
+      "at": "2026-10-02T08:02:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "D4DS9HMQB7",
+      "fromStatus": "confirmed",
+      "toStatus": "no_show",
+      "networkTag": "72496c",
+      "isSample": true
+    },
+    {
+      "id": "38e00f8c-60bc-5e4a-8d25-efd4a339d326",
+      "at": "2026-10-02T07:53:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "DW904GFWMA",
+      "networkTag": "43faf3",
+      "isSample": true
+    },
+    {
+      "id": "95b26c58-a8a2-528b-bd11-2f0757cb452a",
+      "at": "2026-10-02T07:17:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "D1K7PF9WJD",
+      "networkTag": "e5e400",
+      "isSample": true
+    },
+    {
+      "id": "ecadeada-acac-50a2-b111-981592a21dce",
+      "at": "2026-10-02T06:45:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "DW55AA4PW5",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "e5e400",
+      "isSample": true
+    },
+    {
+      "id": "42eadff8-8919-5ad8-ad70-0359d82a487d",
+      "at": "2026-10-02T06:29:00Z",
+      "action": "auth.sign_in",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "networkTag": "43faf3",
+      "isSample": true
+    },
+    {
+      "id": "7c8e8e93-1975-5be6-9306-a87416b23c23",
+      "at": "2026-10-02T04:24:00Z",
+      "action": "auth.sign_in",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "networkTag": "43faf3",
+      "isSample": true
+    },
+    {
+      "id": "8b5049f3-848d-5708-af7d-fed379ad503c",
+      "at": "2026-10-02T03:30:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "D45BPPCXYT",
+      "networkTag": "43faf3",
+      "isSample": true
+    },
+    {
+      "id": "809dda9f-e80a-5750-be03-4a29a498bb25",
+      "at": "2026-10-02T03:18:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "DR1TJAWH5S",
+      "networkTag": "e5e400",
+      "isSample": true
+    },
+    {
+      "id": "7e1977bd-0a1e-5aab-b61c-e8ba5cf5d5ae",
+      "at": "2026-10-01T13:46:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DE2CAXF628",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "ebd3b0",
+      "isSample": true
+    },
+    {
+      "id": "7621d7f6-fdae-5345-bca5-58cbf194fb10",
+      "at": "2026-10-01T13:37:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "D5SC9AVH3T",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "ebd3b0",
+      "isSample": true
+    },
+    {
+      "id": "3b95bb7c-4006-51b1-b1d2-33d5f80ca935",
+      "at": "2026-10-01T12:59:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "D2WPD1K0WG",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "2bbdfe",
+      "isSample": true
+    },
+    {
+      "id": "c86d30df-1ee1-5674-8724-1289b1aacadb",
+      "at": "2026-10-01T10:24:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "D07QG033N3",
+      "networkTag": "2bbdfe",
+      "isSample": true
+    },
+    {
+      "id": "73d90e7a-eb4a-5c21-9182-a6ed2e3224ad",
+      "at": "2026-10-01T09:29:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "DEW7RNM9NF",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "28097d",
+      "isSample": true
+    },
+    {
+      "id": "d071b8c8-251d-5659-a332-9321b6274493",
+      "at": "2026-10-01T09:21:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "D9S2SMS3XZ",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "2bbdfe",
+      "isSample": true
+    },
+    {
+      "id": "e80da98b-ce83-59af-b02d-b627d1c65a74",
+      "at": "2026-10-01T09:08:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "DB90MVE2DH",
+      "networkTag": "07c2cd",
+      "isSample": true
+    },
+    {
+      "id": "9d382a20-4d8a-56d9-9ca5-0584a8e91551",
+      "at": "2026-10-01T08:42:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DRSJ2X6NJC",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "ebd3b0",
+      "isSample": true
+    },
+    {
+      "id": "b8264e33-874a-5a02-b906-00dbb2416a90",
+      "at": "2026-10-01T08:21:00Z",
+      "action": "auth.sign_in",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "networkTag": "ebd3b0",
+      "isSample": true
+    },
+    {
+      "id": "eb5f8030-768b-53e7-b7fd-d86914f4f137",
+      "at": "2026-10-01T08:00:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "D2WPD1K0WG",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "28097d",
+      "isSample": true
+    },
+    {
+      "id": "dacc19a3-410e-56fe-ad54-99bb91ec4ad2",
+      "at": "2026-10-01T05:58:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "DR5DMXBTT2",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "2bbdfe",
+      "isSample": true
+    },
+    {
+      "id": "9f79d1bc-5ace-5be5-9496-4701fb2e1d9a",
+      "at": "2026-10-01T04:28:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "D07QG033N3",
+      "networkTag": "28097d",
+      "isSample": true
+    },
+    {
+      "id": "b1a590ec-8d73-5132-8b69-a2b6f4938583",
+      "at": "2026-10-01T04:27:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "D61DPW93E2",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "07c2cd",
+      "isSample": true
+    },
+    {
+      "id": "a182a8c3-5191-529a-a97b-6a477dfcfda4",
+      "at": "2026-10-01T03:30:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "DHYZ2WVS8H",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "55a186",
+      "isSample": true
+    },
+    {
+      "id": "9c67bef1-8d7e-5c53-8641-989fa93e9d45",
+      "at": "2026-09-30T10:07:00Z",
+      "action": "auth.sign_in",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "networkTag": "8a4d2d",
+      "isSample": true
+    },
+    {
+      "id": "d3e250e2-2f3d-5d14-bf90-0053be31805d",
+      "at": "2026-09-30T10:00:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "DDDPT37KNS",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "8a4d2d",
+      "isSample": true
+    },
+    {
+      "id": "574fe19f-f5e5-5ac2-8abf-deb72ca086f9",
+      "at": "2026-09-30T09:41:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DATBXF6Q4R",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "f0c372",
+      "isSample": true
+    },
+    {
+      "id": "232a805d-eb17-58b1-b155-7f33a74abdf2",
+      "at": "2026-09-30T09:33:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "DW5DK3NM1Q",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "8775a7",
+      "isSample": true
+    },
+    {
+      "id": "f68c9d74-532c-57ad-ab43-19c6c7ece4d5",
+      "at": "2026-09-30T09:03:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DEARFHMWHQ",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "f0c372",
+      "isSample": true
+    },
+    {
+      "id": "a7c6fc59-2da2-59e1-89d2-23270ccaebfd",
+      "at": "2026-09-30T08:09:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "DQ2TC2VHXR",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "2d970b",
+      "isSample": true
+    },
+    {
+      "id": "157e1b01-425b-5e22-8348-5b0c1381a178",
+      "at": "2026-09-30T05:41:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "DDDWKYDF9Z",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "be71e3",
+      "isSample": true
+    },
+    {
+      "id": "2404753b-16c0-5afd-8b86-7fd1db3dff2b",
+      "at": "2026-09-30T05:33:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DDDWKYDF9Z",
+      "networkTag": "f0c372",
+      "isSample": true
+    },
+    {
+      "id": "850c3cfc-d7b6-5648-a62f-867647c6bda4",
+      "at": "2026-09-30T05:28:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "DDVY6W6TV5",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "8775a7",
+      "isSample": true
+    },
+    {
+      "id": "400af3e5-799f-5345-ac95-411f9d5b269e",
+      "at": "2026-09-30T05:17:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "D1HSHSRMG7",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "2d970b",
+      "isSample": true
+    },
+    {
+      "id": "7a38862e-921e-549a-bd09-d630fc89c1f0",
+      "at": "2026-09-30T05:04:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "D6271DZR81",
+      "networkTag": "2d970b",
+      "isSample": true
+    },
+    {
+      "id": "636c4a19-b333-51e5-8c97-2b6d455bdca2",
+      "at": "2026-09-30T04:25:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "bookingReference": "DJ4KWWMEF1",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "2d970b",
+      "isSample": true
+    },
+    {
+      "id": "31eda816-49ce-5cb8-a8b0-5388c730ae37",
+      "at": "2026-09-30T04:14:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "DTQ6D52HZS",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "8a4d2d",
+      "isSample": true
+    },
+    {
+      "id": "40133ae6-29fd-51e3-b662-fe5a37037013",
+      "at": "2026-09-30T03:24:00Z",
+      "action": "auth.sign_in",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "networkTag": "be71e3",
+      "isSample": true
+    },
+    {
+      "id": "8759e698-9fcf-5f3f-b852-0248b7b97e6b",
+      "at": "2026-09-29T13:36:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "D68KEBR0J7",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "921350",
+      "isSample": true
+    },
+    {
+      "id": "a4b9ce9c-820b-5a39-aeb9-ea9f1b1a7721",
+      "at": "2026-09-29T10:05:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "DK1WDAAQDK",
+      "networkTag": "7b0b70",
+      "isSample": true
+    },
+    {
+      "id": "cc71c853-c66f-5628-9629-1f9359b85696",
+      "at": "2026-09-29T10:05:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "DBDDW5ZBCR",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "4b1044",
+      "isSample": true
+    },
+    {
+      "id": "eacd4c8c-9507-50b4-ac7a-54f6b6de7c42",
+      "at": "2026-09-29T09:57:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "DXJM0SP8SE",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "4b1044",
+      "isSample": true
+    },
+    {
+      "id": "2fc1cc2a-ab36-5592-9a48-8b6ab5b246ae",
+      "at": "2026-09-29T08:21:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "bookingReference": "DYPV7D3Q56",
+      "networkTag": "4b1044",
+      "isSample": true
+    },
+    {
+      "id": "dde8afdf-f96c-5cca-ae5e-4136fd6780aa",
+      "at": "2026-09-29T07:56:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "DK32X3A5XQ",
+      "networkTag": "921350",
+      "isSample": true
+    },
+    {
+      "id": "848b9555-7f48-565e-98c3-6aafb604355b",
+      "at": "2026-09-29T06:58:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "DJ6MD2FXGD",
+      "fromStatus": "confirmed",
+      "toStatus": "arrived",
+      "networkTag": "6b52d9",
+      "isSample": true
+    },
+    {
+      "id": "b8f13be0-b5b2-53da-8548-7e232aa6e95d",
+      "at": "2026-09-29T06:30:00Z",
+      "action": "auth.sign_in",
+      "outcome": "ok",
+      "actorName": "Omar Farooq",
+      "actorRole": "admin",
+      "networkTag": "4b1044",
+      "isSample": true
+    },
+    {
+      "id": "4ff0d016-f4e5-55c3-9170-4f42a0518652",
+      "at": "2026-09-29T06:09:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Ayesha Khan",
+      "actorRole": "admin",
+      "bookingReference": "D1NGBS1EF9",
+      "networkTag": "921350",
+      "isSample": true
+    },
+    {
+      "id": "1abb0336-2310-5022-b469-32570a8121bf",
+      "at": "2026-09-29T04:43:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Hina Siddiqui",
+      "actorRole": "receptionist",
+      "bookingReference": "D0WFSW8WHX",
+      "networkTag": "6b52d9",
+      "isSample": true
+    },
+    {
+      "id": "627b765e-8f30-5b1e-8520-b7150f5aee0a",
+      "at": "2026-09-29T03:38:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "DFT50F6A4K",
+      "networkTag": "7b0b70",
+      "isSample": true
+    },
+    {
+      "id": "a75543af-e413-55c3-b074-0f7b1ba8c8b1",
+      "at": "2026-09-29T03:28:00Z",
+      "action": "booking.phone_revealed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "D68KEBR0J7",
+      "networkTag": "7b0b70",
+      "isSample": true
+    },
+    {
+      "id": "7cda4437-9b7b-5555-b3e4-3bccae896124",
+      "at": "2026-09-29T03:01:00Z",
+      "action": "booking.status_changed",
+      "outcome": "ok",
+      "actorName": "Sana Malik",
+      "actorRole": "receptionist",
+      "bookingReference": "DYPV7D3Q56",
+      "fromStatus": "confirmed",
+      "toStatus": "completed",
+      "networkTag": "7b0b70",
+      "isSample": true
+    },
+    {
+      "id": "02815dd8-b09f-5eeb-bb6d-6c3094fec116",
+      "at": "2026-09-29T03:00:00Z",
+      "action": "auth.sign_in",
+      "outcome": "ok",
+      "actorName": "Bilal Raza",
+      "actorRole": "receptionist",
+      "networkTag": "ae0e6f",
+      "isSample": true
+    }
+  ],
   "details": [
     {
       "reference": "D6X0A10GGY",

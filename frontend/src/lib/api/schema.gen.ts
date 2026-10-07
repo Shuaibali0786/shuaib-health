@@ -1524,6 +1524,7 @@ export interface components {
             }[];
             onLeave: components["schemas"]["DoctorRef"][];
             notIn: components["schemas"]["DoctorRef"][];
+            isSample?: boolean;
         };
         ActivityEvent: {
             /** Format: uuid */
