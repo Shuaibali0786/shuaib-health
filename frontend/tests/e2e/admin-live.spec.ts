@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
-import { signIn } from "./admin-helpers";
+import { revealStreamedContent, signIn } from "./admin-helpers";
 
 // The live parts of the Overview (Feature 006, US3, FR-040 to FR-042) against the mock API, with the clock
 // paused at Mon 5 Oct 2026, 11:20:45 in the clinic: the header clock, the greeting, the moving "Now" line,
@@ -17,6 +17,7 @@ async function openOverview(page: Page, path = "/admin") {
   // The Bookings screen learns what is already booked from this answer; a booking made before it would not be new.
   const baseline = path === "/admin" ? null : page.waitForResponse((r) => r.url().includes("/api/admin/overview"));
   await page.goto(path);
+  await revealStreamedContent(page); // the page asks for the baseline once it has hydrated
   if (baseline) await baseline;
   else await expect(page.getByTestId("status-mix")).toBeVisible();
 }
@@ -37,9 +38,17 @@ test.describe("the clock and the greeting", () => {
 
   test("the header clock shows the clinic time and moves by the second", async ({ page }) => {
     await openOverview(page);
-    await expect(clock(page)).toHaveText("11:20:45 AM");
-    await page.clock.runFor(1000);
-    await expect(clock(page)).toHaveText("11:20:46 AM");
+    // The page hydrates a few frames after the clock was paused at 11:20:45, and the header clock follows the
+    // server's reading from then on, so it is within a second of 11:20:45 rather than exactly on it.
+    await expect(clock(page)).toHaveText(/^11:20:4[56] AM$/);
+    const seconds = (text: string) => {
+      const [h = 0, m = 0, sec = 0] = text.replace(/ [AP]M$/, "").split(":").map(Number);
+      return h * 3600 + m * 60 + sec;
+    };
+    const before = seconds(await clock(page).innerText());
+    await page.clock.runFor(2000);
+    await expect.poll(async () => seconds(await clock(page).innerText()) - before).toBeGreaterThanOrEqual(1);
+    await expect.poll(async () => seconds(await clock(page).innerText()) - before).toBeLessThanOrEqual(3);
   });
 
   test("the greeting follows the clinic hour: morning at 11:20, afternoon at 13:05, evening at 19:40", async ({ page }) => {
@@ -71,8 +80,8 @@ test.describe("the 30 second refresh", () => {
   test("the updated label counts up and resets when the data is refreshed", async ({ page }) => {
     await openOverview(page);
     await expect(updated(page)).toContainText("just now");
-    await page.clock.runFor(20_000);
-    await expect(updated(page)).toContainText("20 s ago");
+    await page.clock.runFor(20_100); // counted from the first refresh, which came a few frames after 11:20:45
+    await expect(updated(page)).toContainText(/(19|20)\s+s\s+ago/);
     await page.clock.runFor(10_500);
     await expect(updated(page)).toContainText("just now", { timeout: 10_000 });
   });

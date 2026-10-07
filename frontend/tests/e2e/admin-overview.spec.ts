@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
-import { signIn, wcagViolations } from "./admin-helpers";
+import { revealStreamedContent, signIn, wcagViolations } from "./admin-helpers";
 
 // The Overview against the mock API (Feature 006, US3), with the clock paused at Mon 5 Oct 2026, 11:20:45
 // in the clinic. The numbers come from the demo day the backend generator produced
@@ -25,6 +25,7 @@ async function openOverview(page: Page) {
   await page.clock.install({ time: new Date(NOW.getTime() - 1000) });
   await page.clock.pauseAt(NOW);
   await page.goto("/admin");
+  await revealStreamedContent(page);
   await expect(page.getByTestId("status-mix")).toBeVisible();
 }
 

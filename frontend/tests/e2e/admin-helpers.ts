@@ -24,6 +24,48 @@ export async function signIn(context: BrowserContext, who: keyof typeof SESSIONS
   ]);
 }
 
+/**
+ * With the page clock paused, React reveals streamed content (a screen that has a loading skeleton) and hydrates it on
+ * animation frames and timers that a paused clock never delivers. So it moves the clock on by a few 20 ms steps, which
+ * moves nothing that a test looks at (the clock text, the count-up's final number, the Now line), until the page has
+ * hydrated. React marks a DOM node it has hydrated with a `__reactFiber$` property; the page's heading block is
+ * checked. (Polled from the test, not with `waitForFunction`, which polls on the page's own frames.)
+ */
+export async function revealStreamedContent(page: Page): Promise<void> {
+  await page.waitForLoadState("networkidle"); // the scripts arrive in real time
+  let steps = 0;
+  await expect
+    .poll(
+      async () => {
+        // At most five steps of 20 ms: hydration needs a frame or two, then goes on in real time, and a busy machine
+        // must not push the paused clock (and so what the tests read from it) on by whole seconds.
+        if (steps < 5) {
+          steps += 1;
+          await page.clock.runFor(20);
+        }
+        return page.evaluate(() => {
+          const block = document.querySelector("#main-content .page-head");
+          return block === null || Object.keys(block).some((key) => key.startsWith("__reactFiber$"));
+        });
+      },
+      { timeout: 15_000, intervals: [50, 100, 200] },
+    )
+    .toBe(true);
+}
+
+/**
+ * Moves a paused clock on until the demo has simulated its first online booking (50 s after the Overview opened)
+ * and its "New booking" toast is on screen. The demo's timer starts when the page hydrates, which can be a moment
+ * after the test starts moving the clock, so it steps on in seconds instead of guessing one exact distance.
+ */
+export async function runUntilNewBookingToast(page: Page): Promise<void> {
+  await page.clock.runFor(50_000);
+  await expect(async () => {
+    await page.clock.runFor(1_000);
+    await expect(page.getByTestId("new-booking-toast").first()).toBeVisible({ timeout: 300 });
+  }).toPass({ timeout: 15_000 });
+}
+
 export async function setTheme(context: BrowserContext, theme: "light" | "dark" | "system", baseURL: string): Promise<void> {
   const url = new URL(baseURL);
   await context.addCookies([{ name: "cc_theme", value: theme, domain: url.hostname, path: "/admin", sameSite: "Lax" }]);

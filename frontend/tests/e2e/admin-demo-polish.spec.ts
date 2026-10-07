@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
-import { signIn } from "./admin-helpers";
+import { revealStreamedContent, runUntilNewBookingToast, signIn } from "./admin-helpers";
 
 // Demo polish (Feature 006, after Phase 6): the typical clinic day, one-line KPI trends, the gold demo button,
 // one set of booking counts, sample sign-ins, the View button and the same content width on every page.
@@ -103,14 +103,14 @@ test.describe("one set of numbers", () => {
     await page.clock.install({ time: new Date(NOW.getTime() - 1000) });
     await page.clock.pauseAt(NOW);
     await page.goto("/admin");
+    await revealStreamedContent(page);
     await expect(page.getByTestId("status-mix")).toBeVisible();
     const before = await mixTotal(page);
     expect(before).toBe(fixture.overview.agenda.flatMap((row: { items: unknown[] }) => row.items).length);
 
     // 50 s later the demo simulates an online booking; every number on the Overview moves together.
-    await page.clock.runFor(51_000);
+    await runUntilNewBookingToast(page);
     await page.clock.resume();
-    await expect(page.getByTestId("new-booking-toast").first()).toBeVisible();
     await expect.poll(() => mixTotal(page)).toBe(before + 1);
     if (!isMobile) await expect(page.locator("#ag-meta")).toContainText(`${before + 1} bookings`);
     const cancelled = Number(await page.locator('[data-testid="status-mix"] li[data-status="cancelled"] .n').innerText());

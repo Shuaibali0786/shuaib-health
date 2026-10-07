@@ -19,6 +19,7 @@ for (const theme of ["light", "dark"] as const) {
     });
 
     test("Staff screen has no axe violations, with its dialogs open", async ({ page, context, baseURL, request }, testInfo) => {
+      test.slow(); // three axe passes (the list and two dialogs), each several seconds on a busy machine
       await signIn(context, "admin", baseURL!);
       await setTheme(context, theme, baseURL!);
       const email = uniqueEmail(testInfo, `axe${theme}`);
