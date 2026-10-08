@@ -14,7 +14,7 @@ links:
   spec: specs/006-clinic-command-centre/spec.md
   ticket: null
   adr: null
-  pr: null
+  pr: https://github.com/Shuaibali0786/shuaib-health/pull/4
 files:
  - backend/app/demo/generator.py
  - backend/app/demo/demo_source.py

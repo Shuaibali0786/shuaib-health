@@ -1,5 +1,21 @@
 <!--
 Sync Impact Report
+- Version change: 1.0.1 → 1.1.0 (MINOR: new principle XI added)
+- Added principles: XI. Safe Change — every change follows docs/SAFE-CHANGE-PLAYBOOK.md (own
+  branch, additive reversible migrations, feature flags, no deleted/loosened tests, PR review,
+  rollback plan). Rationale: the product is moving toward live deployment and real clinics; the
+  playbook is the single operating procedure for changing it without breaking what works.
+- Modified principles: none
+- Removed sections: none
+- Templates requiring updates:
+  - ⚠ .specify/templates/plan-template.md (Constitution Check should gain a Safe Change gate; not
+    edited in this change)
+  - ✅ CLAUDE.md (one-line rule added)
+  - ✅ .github/pull_request_template.md (new; playbook section 7 checklist)
+- Follow-up TODOs: add the Safe Change gate to plan-template.md.
+-->
+<!--
+Sync Impact Report (previous, 1.0.1)
 - Version change: 1.0.0 → 1.0.1 (PATCH: wording clarification, no principle added or removed)
 - Modified principles: VI. Security (title unchanged) — session bullet now allows "a JWT or an
   opaque server-side session token"; opaque tokens must be high-entropy and stored only as a hash.
@@ -155,6 +171,19 @@ checks pass, except for explicitly approved spikes.
 Test: each phase has a checklist in its spec/plan; `tasks.md` items carry a phase label and
 cannot reference a later phase's deliverables.
 
+### XI. Safe Change
+Every change MUST follow `docs/SAFE-CHANGE-PLAYBOOK.md`.
+- Work happens on its own branch, never directly on `main`; merging requires an owner-approved PR.
+- Database migrations are additive and reversible, with a tested downgrade.
+- New behaviour ships behind a feature flag that defaults to OFF.
+- Existing tests MUST NOT be deleted or loosened; visual baselines change only with a pixel-diff
+  report.
+- Full suites run green, one at a time, before merge; secrets never enter code or logs; every
+  release has a known rollback plan.
+
+Test: the PR template carries the playbook's pre-release checklist, and reviewers reject a change
+that skips it.
+
 ## Technology Stack & Deployment Constraints
 
 - Monorepo with `frontend/` and `backend/`.
@@ -186,4 +215,4 @@ reviewed at each plan (Constitution Check) and each merge; reviewers MUST reject
 violate a principle unless an approved amendment or documented exception exists. Runtime agent
 guidance lives in `CLAUDE.md`.
 
-**Version**: 1.0.1 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-05
+**Version**: 1.1.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-08
