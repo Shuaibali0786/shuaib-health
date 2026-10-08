@@ -20,6 +20,7 @@ test.describe("offline behaviour: nothing needs another site", () => {
     });
 
     await page.goto("/lab-tests");
+    await page.locator("[data-filters-ready]").waitFor(); // typed before hydration, the filter would miss it
     await page.getByLabel("Search tests").fill("HbA1c");
     await expect(page.getByRole("article").first()).toContainText("HbA1c");
 

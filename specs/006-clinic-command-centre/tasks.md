@@ -338,15 +338,15 @@ description: "Task list for Feature 006 — Clinic Command Centre (staff dashboa
 
 **Purpose**: cross-cutting gates and evidence for SC-001…SC-010.
 
-- [ ] T148 [P] Extend `backend/tests/api/test_log_safety.py`: run the whole admin API suite and assert no patient name, phone, email, reason, search term, password or token appears in captured logs (SC-008)
-- [ ] T149 [P] Extend `backend/app/booking/retention.py` to purge `staff_session` ended/expired > 30 days and `demo_session` expired > 1 day; tests in `backend/tests/api/test_retention.py`; audit purge stays demo-mode only (FR-031, R17)
-- [ ] T150 [P] Extend `frontend/tests/e2e/honesty.spec.ts` to every admin route (disclaimer, credit on login, Sample cues, ribbon in demo)
-- [ ] T151 [P] Extend the offline/slow/expired e2e (`frontend/tests/e2e/offline.spec.ts` and mock API modes) to `/admin/login`, the demo entry, Overview polling (last data kept, calm error, backoff) and a timed-out status change (re-fetched, never auto-retried). NFR-002: with the mock API in `admin-down` and `admin-slow` modes and the demo-start limit exhausted, the existing public booking e2e still passes
-- [ ] T152 Run the full auth matrix and separation suites and confirm every row of `contracts/auth-matrix.md` is exercised (SC-004, SC-005); record counts in `specs/006-clinic-command-centre/results.md`
-- [ ] T153 Re-measure Lighthouse on the 005 page set and public bundle sizes, run `node scripts/check-admin-isolation.mjs` and the isolation e2e, and record the results against T001 in `results.md` (SC-007); check the Overview route's first-load JS ≤ 120 KB gzip
-- [ ] T154 Measure SC-001 (demo → Overview readable ≤ 2.5 s on throttled mobile / ≤ 1.5 s desktop) and SC-003 (< 15 s journey) and record them in `results.md`
-- [ ] T155 [P] Update `backend/README.md` and `frontend/README.md` (create_admin CLI, SESSION_SECRET, demo, admin tests and visual baselines) and keep `specs/006-clinic-command-centre/quickstart.md` in sync
-- [ ] T156 Run `/security-review` on the branch and gitleaks; fix findings
+- [X] T148 [P] Extend `backend/tests/api/test_log_safety.py`: run the whole admin API suite and assert no patient name, phone, email, reason, search term, password or token appears in captured logs (SC-008)
+- [X] T149 [P] Extend `backend/app/booking/retention.py` to purge `staff_session` ended/expired > 30 days and `demo_session` expired > 1 day; tests in `backend/tests/api/test_retention.py`; audit purge stays demo-mode only (FR-031, R17)
+- [X] T150 [P] Extend `frontend/tests/e2e/honesty.spec.ts` to every admin route (disclaimer, credit on login, Sample cues, ribbon in demo)
+- [X] T151 [P] Extend the offline/slow/expired e2e (`frontend/tests/e2e/offline.spec.ts` and mock API modes) to `/admin/login`, the demo entry, Overview polling (last data kept, calm error, backoff) and a timed-out status change (re-fetched, never auto-retried). NFR-002: with the mock API in `admin-down` and `admin-slow` modes and the demo-start limit exhausted, the existing public booking e2e still passes
+- [X] T152 Run the full auth matrix and separation suites and confirm every row of `contracts/auth-matrix.md` is exercised (SC-004, SC-005); record counts in `specs/006-clinic-command-centre/results.md`
+- [X] T153 Re-measure Lighthouse on the 005 page set and public bundle sizes, run `node scripts/check-admin-isolation.mjs` and the isolation e2e, and record the results against T001 in `results.md` (SC-007); check the Overview route's first-load JS ≤ 120 KB gzip
+- [X] T154 Measure SC-001 (demo → Overview readable ≤ 2.5 s on throttled mobile / ≤ 1.5 s desktop) and SC-003 (< 15 s journey) and record them in `results.md`
+- [X] T155 [P] Update `backend/README.md` and `frontend/README.md` (create_admin CLI, SESSION_SECRET, demo, admin tests and visual baselines) and keep `specs/006-clinic-command-centre/quickstart.md` in sync
+- [X] T156 Run `/security-review` on the branch and gitleaks; fix findings
 - [ ] T157 Run `specs/006-clinic-command-centre/quickstart.md` §2–§4 end to end on a clean checkout and fill the SC-001…SC-010 evidence table in `results.md`, including the SC-002 informal review (≥ 3 viewers incl. Shuaib: their words, and the unaided find-next-patient-and-mark-arrived time)
 
 **CHECKPOINT 11 (final)**: every command in quickstart §4 green; all SCs evidenced in `results.md`; visual baselines match the approved preview.
