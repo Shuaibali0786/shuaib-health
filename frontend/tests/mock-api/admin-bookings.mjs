@@ -24,7 +24,7 @@ export function allowedNext(status, startsAtMs, nowMs) {
 
 const minutesOf = (hhmm) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
 
-const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+const ALPHABET = "23456789ABCDEFGHJKMNPQRSTVWXYZ"; // new references skip 0/O and 1/I/L
 const randomCode = (length) => Array.from({ length }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join("");
 
 const errorBody = (code, message, extra = {}) => ({ error: { code, message, requestId: "mock" }, ...extra });

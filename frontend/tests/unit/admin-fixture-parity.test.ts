@@ -37,16 +37,36 @@ describe("demo-day.json", () => {
     }
   });
 
-  it("splits the day by the fixed clock (11:20:45 in the clinic): confirmed after it, resolved before it", () => {
+  it("splits the day by the fixed clock (11:20:45 in the clinic): confirmed ahead, resolved after, a few minutes of give around each slot", () => {
     const now = Date.parse(fixture.meta.now);
+    const minute = 60_000;
     expect(fixture.meta.now).toBe("2026-10-05T06:20:45Z");
     for (const booking of fixture.bookings) {
       const start = Date.parse(booking.startsAt);
       const end = Date.parse(booking.endsAt);
       if (booking.status === "cancelled") continue;
-      if (end <= now) expect(["completed", "no_show"]).toContain(booking.status);
-      else if (start <= now) expect(booking.status).toBe("arrived");
-      else expect(booking.status).toBe("confirmed");
+      if (now >= end + 10 * minute) expect(["completed", "no_show"]).toContain(booking.status);
+      else if (now < start - 15 * minute) expect(booking.status).toBe("confirmed"); // arrival is 5-15 minutes before the slot
+      else if (now < end) expect(["confirmed", "arrived"]).toContain(booking.status);
+      else expect(["arrived", "completed", "no_show"]).toContain(booking.status);
     }
+  });
+
+  it("keeps the activity feed and the staff list in step with the day", () => {
+    const now = Date.parse(fixture.meta.now);
+    const opening = Date.parse("2026-10-05T04:00:00Z"); // 09:00 in the clinic
+    const events = fixture.activity as { at: string; action: string; actorName: string }[];
+    expect(events.length).toBeGreaterThan(0);
+    for (const event of events) {
+      const at = Date.parse(event.at);
+      expect(at).toBeLessThanOrEqual(now); // nothing is in the future
+      const sinceMidnight = (at + 5 * 3_600_000) % 86_400_000; // the clinic is UTC+5 all year
+      expect(sinceMidnight).toBeGreaterThanOrEqual(9 * 3_600_000); // nor before opening, on any day
+    }
+    for (const member of fixture.staff as { displayName: string; lastSignInAt: string }[]) {
+      const signIns = events.filter((e) => e.action === "auth.sign_in" && e.actorName === member.displayName).map((e) => Date.parse(e.at));
+      expect(Date.parse(member.lastSignInAt)).toBe(Math.max(...signIns));
+    }
+    expect(opening).toBeLessThan(now);
   });
 });

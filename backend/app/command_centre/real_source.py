@@ -52,6 +52,6 @@ class RealSource:
         return service.doctors_today(self.db, tz, now)
 
     def activity(
-        self, *, action: str | None, staff_id: uuid.UUID | None, page: int
+        self, *, action: str | None, staff_id: uuid.UUID | None, page: int, now: datetime
     ) -> ActivityPage:
         return service.activity(self.db, action=action, staff_id=staff_id, page=page)

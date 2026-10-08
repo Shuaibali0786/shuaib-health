@@ -15,6 +15,12 @@ describe("parseReference", () => {
   );
 });
 
+describe("references issued before the look-alike rule", () => {
+  it.each(["0123456789", "ABCD0E1FGH", "abcd0e1fgh", "ABCD0-E1FGH"])("stay valid and case-insensitive: %s", (text) => {
+    expect(parseReference(text)).toBe(text.replace("-", "").toUpperCase());
+  });
+});
+
 describe("displayReference", () => {
   it("groups in fives", () => {
     expect(displayReference("ABCDEFGHJK")).toBe("ABCDE-FGHJK");

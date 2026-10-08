@@ -2,6 +2,7 @@
 any repository (SC-005; guarded by a test); the dataset is built in memory from a seeded PRNG."""
 
 import uuid
+from dataclasses import replace
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
@@ -52,8 +53,18 @@ class DemoSource:
     def dataset(self) -> DemoDataset:
         return generator.get_dataset(self.demo_date)
 
-    def staff(self) -> tuple[DemoStaff, ...]:
-        return self.dataset.staff
+    def staff(self, now: datetime | None = None) -> tuple[DemoStaff, ...]:
+        """The sample staff; with ``now``, each person's last sign-in is their latest "Signed in"
+        event in the feed that has happened by then."""
+        if now is None:
+            return self.dataset.staff
+        fallback = generator.never_signed_in(self.demo_date)
+        return tuple(
+            replace(
+                m, last_sign_in_at=generator.last_sign_in(self.dataset.activity, m, fallback, now)
+            )
+            for m in self.dataset.staff
+        )
 
     # ----- bookings (US4) ---------------------------------------------------------------
 
@@ -98,9 +109,23 @@ class DemoSource:
         names = [member.display_name for member in self.staff()]
         who = names[sum(map(ord, booking.reference)) % len(names)]
 
+        # Who did it comes from the feed where it holds the event (the last week); older visits
+        # are credited to someone stable. The times are the booking's own, as in the feed.
+        actors = {
+            (e.target_reference, e.to_status): e.staff_name
+            for e in self.dataset.activity
+            if e.action == "booking.status_changed" and e.target_reference == booking.reference
+        }
+
         def step(at: datetime, before: rules.Status, after: rules.Status) -> None:
             items.append(
-                HistoryItem(at=at, from_status=before, to_status=after, actor=who, is_undo=False)
+                HistoryItem(
+                    at=at,
+                    from_status=before,
+                    to_status=after,
+                    actor=actors.get((booking.reference, after), who),
+                    is_undo=False,
+                )
             )
 
         status = booking.status_at(now)
@@ -110,11 +135,11 @@ class DemoSource:
             )
             step(max(cancelled_at, booking.created_at), "confirmed", "cancelled")
         elif status == "no_show":
-            step(booking.starts_at + timedelta(minutes=15), "confirmed", "no_show")
+            step(booking.closed_at, "confirmed", "no_show")
         elif status in ("arrived", "completed"):
-            step(booking.starts_at - timedelta(minutes=5), "confirmed", "arrived")
+            step(booking.arrived_at, "confirmed", "arrived")
             if status == "completed":
-                step(booking.ends_at, "arrived", "completed")
+                step(booking.closed_at, "arrived", "completed")
         return items
 
     def _detail_of(self, booking: DemoBooking, tz: ZoneInfo, now: datetime) -> BookingDetail:
@@ -274,16 +299,18 @@ class DemoSource:
         )
 
     def activity(
-        self, *, action: str | None, staff_id: uuid.UUID | None, page: int
+        self, *, action: str | None, staff_id: uuid.UUID | None, page: int, now: datetime
     ) -> ActivityPage:
-        """The synthetic feed only: nothing here comes from the database."""
+        """The synthetic feed only, as far as it has happened by ``now``: nothing here comes from
+        the database, and nothing is in the future."""
         name = None
         if staff_id is not None:
             name = next((m.display_name for m in self.staff() if m.id == staff_id), "")
         hits = [
             (index, event)
             for index, event in enumerate(self.dataset.activity)
-            if (action is None or event.action == action)
+            if event.occurred_at <= now
+            and (action is None or event.action == action)
             and (name is None or event.staff_name == name)
         ]
         start = (page - 1) * ACTIVITY_PAGE_SIZE

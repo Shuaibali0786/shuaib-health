@@ -125,10 +125,13 @@ def doctors_today(
 def activity(
     viewer: Annotated[Viewer, Depends(require_viewer(Policy.READ_ADMIN))],
     db: SessionDep,
+    clock: ClockDep,
+    settings: SettingsDep,
     response: Response,
     action: Annotated[AuthAction | None, Query()] = None,
     staff_id: Annotated[uuid.UUID | None, Query(alias="staffId")] = None,
     page: Annotated[int, Query(ge=1, le=10_000)] = 1,
 ) -> ActivityPage:
     response.headers["Cache-Control"] = "no-store"
-    return get_source(viewer, db).activity(action=action, staff_id=staff_id, page=page)
+    now = viewer_now(viewer, settings, clock.now())
+    return get_source(viewer, db).activity(action=action, staff_id=staff_id, page=page, now=now)

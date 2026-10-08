@@ -31,7 +31,7 @@ const PROFILES: Record<string, { who: Who; age: [number, number]; reasons: strin
 const FALLBACK = PROFILES["General Medicine"]!;
 /** The sample catalogue's fees by department, for the drawer of a simulated booking. */
 const FEES: Record<string, number> = { "General Medicine": 2000, Cardiology: 3500, Pediatrics: 2500, Gynecology: 3000, Dermatology: 2200, Dental: 2000, "Pathology Lab": 1500 };
-const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+const SAFE_CHARACTERS = "23456789ABCDEFGHJKMNPQRSTVWXYZ"; // no 0/O, 1/I/L
 
 export type SimulatedBooking = { summary: BookingSummary; detail: BookingDetail };
 
@@ -100,7 +100,7 @@ export function simulateBooking({ date, timeZone, agenda, nowMs, serial }: Simul
   const age = profile.age[0] + Math.floor(random() * (profile.age[1] - profile.age[0] + 1));
   const bookedBy = profile.who === "child" ? (random() < 0.7 ? "mother" : "father") : undefined;
   const reason = pick(random, profile.reasons);
-  const code = Array.from({ length: 8 }, () => pick(random, [...CROCKFORD])).join("");
+  const code = Array.from({ length: 8 }, () => pick(random, [...SAFE_CHARACTERS])).join("");
   const reference = `DX${code}`;
   const phoneTail = String(Math.floor(random() * 1000)).padStart(3, "0");
 

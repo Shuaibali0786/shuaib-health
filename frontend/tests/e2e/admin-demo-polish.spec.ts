@@ -9,6 +9,15 @@ import { revealStreamedContent, runUntilNewBookingToast, signIn } from "./admin-
 const fixture = JSON.parse(readFileSync("tests/fixtures/admin/demo-day.json", "utf8"));
 const NOW = new Date(fixture.meta.now); // Mon 5 Oct 2026, 11:20:45 in the clinic
 
+/** The clinic-local calendar day of a moment, e.g. "2026-10-05". */
+const clinicDay = (at: Date) => at.toLocaleDateString("en-CA", { timeZone: fixture.meta.timezone });
+/** The Staff page's text for a sign-in, e.g. "Mon 5 Oct, 9:00 AM". */
+function clinicStamp(at: Date): string {
+  const part = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("en-GB", { timeZone: fixture.meta.timezone, ...options }).format(at);
+  const clock = new Intl.DateTimeFormat("en-US", { timeZone: fixture.meta.timezone, hour: "numeric", minute: "2-digit", hour12: true }).format(at).replace(/ /g, " ");
+  return `${part({ weekday: "short" })} ${part({ day: "numeric" })} ${part({ month: "short" })}, ${clock}`;
+}
+
 test.describe("the typical clinic day", () => {
   test("a demo outside clinic hours says so next to the clock", async ({ page, context, baseURL }) => {
     await signIn(context, "demoTypical", baseURL!);
@@ -89,7 +98,16 @@ test.describe("staff page", () => {
     const texts = await cells.allInnerTexts();
     expect(texts.length).toBeGreaterThan(0);
     for (const text of texts) expect(text, text).toMatch(/^[A-Z][a-z]{2} \d{1,2} [A-Z][a-z]{2}, \d{1,2}:\d{2} [AP]M$/);
-    expect(texts[0]).toBe("Mon 5 Oct, 7:52 AM"); // the clinic manager, before the 11:20 "now"
+    // The clinic manager (first row) signed in this morning, after opening and before "now";
+    // the expected text comes from the fixture, so a regenerated day cannot break it.
+    const [manager] = fixture.staff;
+    expect(manager.jobTitle).toBe("Clinic Manager");
+    const signedIn = new Date(manager.lastSignInAt);
+    expect(signedIn.getTime()).toBeLessThanOrEqual(NOW.getTime());
+    expect(clinicDay(signedIn)).toBe(clinicDay(NOW));
+    expect(texts[0]).toBe(clinicStamp(signedIn));
+    // Someone else last signed in on an earlier day, so the page shows variety.
+    expect(fixture.staff.some((s: { lastSignInAt: string }) => clinicDay(new Date(s.lastSignInAt)) !== clinicDay(NOW))).toBe(true);
   });
 });
 

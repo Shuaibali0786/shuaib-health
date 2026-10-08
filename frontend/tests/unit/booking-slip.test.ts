@@ -38,6 +38,14 @@ const clinic: SlipClinic = {
 /** The font files the page serves from /fonts/slip, read from disk. */
 const fonts = Object.fromEntries(SLIP_FONT_KEYS.map((key) => [key, new Uint8Array(readFileSync(join(process.cwd(), "public", "fonts", "slip", SLIP_FONT_METRICS[key].file)))])) as SlipFonts;
 
+// The slip's page geometry (points): 420 wide, 595 + the 40 the appointment box gained, 30 margins.
+const PAGE_WIDTH = 420;
+const PAGE_HEIGHT = 635;
+const MARGIN = 30;
+const DETAILS_TOP = 242; // "VISIT DETAILS" heading
+const DETAILS_BOTTOM = 414; // top of the "Before you come" box
+const QR_FRAME_TOP = 501; // perforation at 492, QR frame 9 below it
+
 const FORBIDDEN = /Ali Khan|03001234567|0300 ?1234567|ali@example\.com|chest pain/i;
 
 function pdfText(bytes: Uint8Array): string {
@@ -223,6 +231,26 @@ describe("slip PDF fonts and stamp (the page and the PDF match)", () => {
     expect(pdf).toMatch(/\/ExtGState << \/GS1 \d+ 0 R >>/);
     expect(pdf).toContain("/ca 0.04");
     expect(ops[ops.indexOf("q /GS1 gs") + 1]).toMatch(/ rg /);
+  });
+
+  it("keeps the watermark centred inside the visit-details band, clear of the header, stamp, QR and text blocks", () => {
+    const start = ops.indexOf("q /GS1 gs");
+    const fill = ops[start + 1] ?? ""; // the mark's filled outline (the stroke on top of it sits inside it)
+    const numbers = fill
+      .replace(/^.* rg /, "")
+      .split(" ")
+      .filter((token) => /^-?\d+(\.\d+)?$/.test(token))
+      .map(Number);
+    const xs = numbers.filter((_, i) => i % 2 === 0);
+    const tops = numbers.filter((_, i) => i % 2 === 1).map((y) => PAGE_HEIGHT - y); // measured down from the top edge
+    expect(xs.length).toBeGreaterThan(10);
+    const [left, right, top, bottom] = [Math.min(...xs), Math.max(...xs), Math.min(...tops), Math.max(...tops)];
+    expect((left + right) / 2).toBeCloseTo(PAGE_WIDTH / 2, 0); // centred across the page
+    expect(left).toBeGreaterThan(MARGIN);
+    expect(right).toBeLessThan(PAGE_WIDTH - MARGIN);
+    expect(top).toBeGreaterThanOrEqual(DETAILS_TOP); // below the date box and its stamp and pill
+    expect(bottom).toBeLessThanOrEqual(DETAILS_BOTTOM); // above "Before you come", the perforation and the QR
+    expect(bottom).toBeLessThan(QR_FRAME_TOP);
   });
 
   it("keeps every character of the stamp inside its rings: arcs between them, the centre inside the inner ring", () => {

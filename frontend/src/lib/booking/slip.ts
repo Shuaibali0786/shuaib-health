@@ -281,10 +281,13 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic, fonts: S
   const right = PAGE_W - MARGIN;
   const innerW = PAGE_W - 2 * MARGIN;
 
-  // Faint logo watermark behind everything, as on the page: the mark at 4 % in the bottom-right corner. Then a fine gold frame.
-  const markSize = (200 / 448) * PAGE_W;
+  // Faint logo watermark behind everything, at the page's 4 %: centred on the visit details, wholly inside that band, so it
+  // can never reach the header, the stamp, the QR or the page edge. Then a fine gold frame.
+  const detailsTop = 202 + X;
+  const detailsBottom = 374 + X; // where the "Before you come" box starts
+  const markSize = 140;
   ops.push("q /GS1 gs");
-  logoMark(ops, PAGE_W - markSize + (12 / 448) * PAGE_W, PAGE_H - markSize + (16 / 448) * PAGE_W, markSize, TEAL_BRAND, WHITE);
+  logoMark(ops, (PAGE_W - markSize) / 2, (detailsTop + detailsBottom - markSize) / 2, markSize, TEAL_BRAND, WHITE);
   ops.push("Q");
   frame(12, 12, PAGE_W - 24, PAGE_H - 24, GOLD, 0.7);
 

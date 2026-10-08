@@ -1,7 +1,6 @@
 """Staff administration (admins only; Feature 006). A demo viewer sees the sample staff."""
 
 import uuid
-from datetime import datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Response, status
@@ -27,13 +26,6 @@ WRITE_ERRORS: dict[int | str, dict[str, object]] = {
 }
 StaffId = Annotated[uuid.UUID, Path(alias="staffId")]
 NO_STORE = {"Cache-Control": "no-store"}
-
-
-def past_sign_in(at: datetime, now: datetime) -> datetime:
-    """A sample sign-in is never later than now: if it would be, it goes back whole days."""
-    while at > now:
-        at -= timedelta(days=1)
-    return at
 
 
 def staff_out(staff: m.StaffAccount) -> StaffOut:
@@ -76,10 +68,10 @@ def list_staff(
                 job_title=member.job_title,
                 role=member.role,
                 is_active=True,
-                last_sign_in_at=past_sign_in(member.last_sign_in_at, now),
+                last_sign_in_at=member.last_sign_in_at,
                 is_sample=True,
             )
-            for member in DemoSource(viewer.demo_date).staff()
+            for member in DemoSource(viewer.demo_date).staff(now)
         ]
     return [staff_out(s) for s in service.list_staff(db)]
 

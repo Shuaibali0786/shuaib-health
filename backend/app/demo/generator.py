@@ -12,18 +12,25 @@ import hashlib
 import json
 import random
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, time, timedelta
 from functools import cache, lru_cache
 from pathlib import Path
 from typing import Any, Final, Literal
 from zoneinfo import ZoneInfo
 
+from app.booking.reference import SAFE_ALPHABET
 from app.demo import names
 
 SEED_DATA = Path(__file__).resolve().parent.parent / "seed" / "data"
 SEED_PREFIX = "shuaib-health-demo:v1:"
-CROCKFORD: Final = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+CROCKFORD: Final = SAFE_ALPHABET  # demo references use unambiguous characters only
+OPENING_MINUTE = 9 * 60  # the desk opens at 09:00 (demo clock); nothing is recorded before it
+FIRST_ARRIVAL_MINUTES = 3  # the first arrival is after the first person has signed in
+SIGN_IN_SPREAD_MINUTES = 40  # everyone else signs in within this many minutes of opening
+ACTIVITY_DAYS = 7
+MANAGER_TITLE = "Clinic Manager"  # always signed in on the latest day of the feed
+PART_TIME_TITLE = "Receptionist"  # never on the latest day, so one sign-in is older
 DAYS_BACK = 90
 DAYS_FORWARD = 14
 WEEKDAYS: Final = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
@@ -86,6 +93,10 @@ class DemoBooking:
     reason: str
     fee_pkr: int
     created_at: datetime
+    #: When the patient is marked arrived: 5-15 minutes before the slot, once the desk is open.
+    arrived_at: datetime
+    #: When the visit is closed (completed or no-show): a few minutes after the slot ends.
+    closed_at: datetime
     is_sample: bool = True
 
     @property
@@ -93,12 +104,16 @@ class DemoBooking:
         return self.starts_at + timedelta(minutes=SLOT_MINUTES)
 
     def status_at(self, now: datetime) -> Status:
-        """Cancelled stays cancelled; otherwise the booking moves with the clock."""
+        """Cancelled stays cancelled; otherwise the booking moves with the clock.
+
+        These are the instants the activity feed records the changes, so the two always agree. A
+        no-show never arrives: it stays confirmed until the desk marks it.
+        """
         if self.outcome == "cancelled":
             return "cancelled"
-        if self.ends_at <= now:
+        if self.closed_at <= now:
             return self.outcome
-        if self.starts_at <= now:
+        if self.outcome != "no_show" and self.arrived_at <= now:
             return "arrived"
         return "confirmed"
 
@@ -171,9 +186,12 @@ def _pick[T](rnd: random.Random, items: tuple[T, ...]) -> T:
     return items[int(rnd.random() * len(items))]
 
 
+_RANK: Final = {c: i for i, c in enumerate(CROCKFORD)}
+
+
 def _reference(rnd: random.Random, taken: set[str]) -> str:
     while True:
-        ref = "D" + "".join(CROCKFORD[int(rnd.random() * 32)] for _ in range(9))
+        ref = "D" + "".join(CROCKFORD[int(rnd.random() * len(CROCKFORD))] for _ in range(9))
         if ref not in taken:
             taken.add(ref)
             return ref
@@ -228,6 +246,15 @@ def _phone(serial: int) -> str:
     return f"+923{OPERATOR_CODES[serial % len(OPERATOR_CODES)]}000{serial:04d}"
 
 
+def _opening(day: date) -> datetime:
+    return _local_midnight(day) + timedelta(minutes=OPENING_MINUTE)
+
+
+def never_signed_in(today: date) -> datetime:
+    """Where a sign-in sits when the feed holds none for a person: the opening a week ago."""
+    return _opening(today - timedelta(days=ACTIVITY_DAYS + 1))
+
+
 def _staff(today: date) -> tuple[DemoStaff, ...]:
     return tuple(
         DemoStaff(
@@ -236,9 +263,25 @@ def _staff(today: date) -> tuple[DemoStaff, ...]:
             role,  # type: ignore[arg-type]
             email,
             job_title,
-            _local_midnight(today - timedelta(days=days_back)) + timedelta(minutes=minute),
+            never_signed_in(today),
         )
-        for name, role, email, job_title, days_back, minute in names.STAFF
+        for name, role, email, job_title in names.STAFF
+    )
+
+
+def last_sign_in(
+    activity: tuple[DemoActivity, ...], member: DemoStaff, fallback: datetime, now: datetime | None
+) -> datetime:
+    """The latest "Signed in" event of ``member`` by ``now`` (ever, if None), else ``fallback``."""
+    return max(
+        (
+            e.occurred_at
+            for e in activity
+            if e.action == "auth.sign_in"
+            and e.staff_name == member.display_name
+            and (now is None or e.occurred_at <= now)
+        ),
+        default=fallback,
     )
 
 
@@ -275,9 +318,13 @@ def _bookings(
                 created_at = min(
                     starts_at - lead, today_start - timedelta(minutes=int(rnd.random() * 2880))
                 )
+                reference = _reference(rnd, taken)
+                # The visit's own timeline comes from its reference, so it needs no extra draws.
+                arrives_early = 5 + _RANK[reference[1]] % 11
+                closes_after = 1 + _RANK[reference[2]] % 10
                 out.append(
                     DemoBooking(
-                        reference=_reference(rnd, taken),
+                        reference=reference,
                         doctor_slug=doctor.slug,
                         doctor_name=doctor.name,
                         department=doctor.department,
@@ -293,59 +340,134 @@ def _bookings(
                         reason=_pick(rnd, names.REASONS[doctor.department]),
                         fee_pkr=doctor.fee_pkr,
                         created_at=created_at,
+                        arrived_at=max(
+                            starts_at - timedelta(minutes=arrives_early),
+                            midnight + timedelta(minutes=OPENING_MINUTE + FIRST_ARRIVAL_MINUTES),
+                        ),
+                        closed_at=starts_at + timedelta(minutes=SLOT_MINUTES + closes_after),
                     )
                 )
     return out
 
 
+def _roster(
+    rnd: random.Random, staff: tuple[DemoStaff, ...], days: list[date]
+) -> dict[date, dict[int, datetime]]:
+    """Who works each day and when they sign in: the first at the desk within two minutes of
+    opening, the rest within ``SIGN_IN_SPREAD_MINUTES``."""
+    duty: dict[date, set[int]] = {}
+    for day in days:
+        chosen = {i for i in range(len(staff)) if rnd.random() < 0.6}
+        while len(chosen) < 2:
+            chosen.add(int(rnd.random() * len(staff)))
+        duty[day] = chosen
+    # The clinic manager is in on the latest (busy) day so the Staff page never shows them idle;
+    # the part-time receptionist is off that day, so the page still shows an older sign-in.
+    if len(days) > 1:
+        latest = duty[days[0]]
+        for i, member in enumerate(staff):
+            if member.job_title == MANAGER_TITLE:
+                latest.add(i)
+            elif member.job_title == PART_TIME_TITLE:
+                latest.discard(i)
+        while len(latest) < 2:
+            latest.add(int(rnd.random() * len(staff)))
+            latest.difference_update(
+                i for i, m in enumerate(staff) if m.job_title == PART_TIME_TITLE
+            )
+    # Everyone signed in on some day before the latest one, so a last sign-in is always known,
+    # whatever time of day the demo is shown.
+    earlier = days[1:] or days
+    for i in range(len(staff)):
+        if not any(i in duty[day] for day in earlier):
+            duty[earlier[i % len(earlier)]].add(i)
+    roster: dict[date, dict[int, datetime]] = {}
+    for day in days:
+        opening = _opening(day)
+        order = sorted(duty[day])
+        rnd.shuffle(order)
+        signed: dict[int, datetime] = {}
+        for rank, i in enumerate(order):
+            seconds = (
+                int(rnd.random() * 120)
+                if rank == 0
+                else FIRST_ARRIVAL_MINUTES * 60 + int(rnd.random() * SIGN_IN_SPREAD_MINUTES * 60)
+            )
+            signed[i] = opening + timedelta(seconds=seconds)
+        roster[day] = signed
+    return roster
+
+
 def _activity(
     rnd: random.Random, today: date, staff: tuple[DemoStaff, ...], bookings: list[DemoBooking]
 ) -> tuple[DemoActivity, ...]:
+    """The last week of the desk's log, built from the visits themselves.
+
+    Every status change is stamped with the booking's own ``arrived_at`` / ``closed_at``; nobody
+    acts before they have signed in, and nothing is stamped before the desk opens. The whole of
+    today is generated; the demo shows only what has happened by its own "now".
+    """
     by_day: dict[date, list[DemoBooking]] = {}
     for booking in bookings:
-        by_day.setdefault(booking.starts_at.astimezone(CLINIC_ZONE).date(), []).append(booking)
+        if booking.outcome != "cancelled":
+            by_day.setdefault(booking.starts_at.astimezone(CLINIC_ZONE).date(), []).append(booking)
+    days = [
+        d for d in (today - timedelta(days=back) for back in range(ACTIVITY_DAYS)) if by_day.get(d)
+    ]
+    if not days:
+        return ()
+    roster = _roster(rnd, staff, days)
     events: list[DemoActivity] = []
-    for back in range(7):
-        day = today - timedelta(days=back)
-        pool = [b for b in by_day.get(day, []) if b.outcome != "cancelled"]
-        last_hour = 10 if back == 0 else 19  # today's feed stops before a typical "now"
-        for _ in range(14 if pool else 0):
-            who = _pick(rnd, staff)
-            at = _local_midnight(day) + timedelta(
-                minutes=8 * 60 + int(rnd.random() * (last_hour - 8) * 60)
+    for day in days:
+        signed = roster[day]
+
+        def tag(who: DemoStaff, day: date = day) -> str:
+            return hashlib.sha256(f"{who.email}:{day}".encode()).hexdigest()[:6]
+
+        def actor(at: datetime, signed: dict[int, datetime] = signed) -> DemoStaff:
+            ready = [i for i, since in sorted(signed.items()) if since < at]
+            return staff[_pick(rnd, tuple(ready or [min(signed, key=signed.__getitem__)]))]
+
+        for i, at in signed.items():
+            who = staff[i]
+            events.append(
+                DemoActivity(at, who.display_name, who.role, "auth.sign_in", network_tag=tag(who))
             )
-            roll = rnd.random()
-            tag = hashlib.sha256(f"{who.email}:{day}".encode()).hexdigest()[:6]
-            if roll < 0.2:
-                events.append(
-                    DemoActivity(at, who.display_name, who.role, "auth.sign_in", network_tag=tag)
-                )
-                continue
-            target = _pick(rnd, tuple(pool))
-            if roll < 0.5:
-                events.append(
-                    DemoActivity(
-                        at,
-                        who.display_name,
-                        who.role,
-                        "booking.phone_revealed",
-                        target.reference,
-                        network_tag=tag,
-                    )
-                )
+        first_arrival = _opening(day) + timedelta(minutes=FIRST_ARRIVAL_MINUTES)
+        for booking in by_day[day]:
+            changes: list[tuple[datetime, Status, Status]] = []
+            if booking.outcome == "completed":
+                changes.append((booking.arrived_at, "confirmed", "arrived"))
+                changes.append((booking.closed_at, "arrived", "completed"))
             else:
-                before: Status = "confirmed"
-                after: Status = "arrived" if roll < 0.8 else target.outcome
+                changes.append((booking.closed_at, "confirmed", booking.outcome))
+            for at, before, after in changes:
+                who = actor(at)
                 events.append(
                     DemoActivity(
                         at,
                         who.display_name,
                         who.role,
                         "booking.status_changed",
-                        target.reference,
+                        booking.reference,
                         before,
                         after,
-                        tag,
+                        tag(who),
+                    )
+                )
+            if rnd.random() < 0.3:  # the desk rings the patient before the visit
+                at = max(
+                    first_arrival, booking.starts_at - timedelta(minutes=int(rnd.random() * 180))
+                )
+                who = actor(at)
+                events.append(
+                    DemoActivity(
+                        at,
+                        who.display_name,
+                        who.role,
+                        "booking.phone_revealed",
+                        booking.reference,
+                        network_tag=tag(who),
                     )
                 )
     events.sort(key=lambda e: e.occurred_at, reverse=True)
@@ -359,7 +481,13 @@ def build_dataset(demo_date: date) -> DemoDataset:
     leave: set[tuple[str, date]] = set()
     holidays = {demo_date + timedelta(days=6): "Clinic closed (sample holiday)"}
     bookings = _bookings(rnd, demo_date, doctors, leave, holidays)
-    staff = _staff(demo_date)
+    activity = _activity(rnd, demo_date, _staff(demo_date), bookings)
+    staff = tuple(
+        replace(
+            member, last_sign_in_at=last_sign_in(activity, member, member.last_sign_in_at, None)
+        )
+        for member in _staff(demo_date)
+    )
     return DemoDataset(
         demo_date=demo_date,
         catalog_etag=catalog_etag(),
@@ -368,7 +496,7 @@ def build_dataset(demo_date: date) -> DemoDataset:
         leave=frozenset(leave),
         holidays=holidays,
         staff=staff,
-        activity=_activity(rnd, demo_date, staff, bookings),
+        activity=activity,
     )
 
 

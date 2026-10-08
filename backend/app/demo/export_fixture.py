@@ -31,12 +31,12 @@ def _iso(moment: datetime) -> str:
     return moment.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _activity(source: DemoSource) -> list[dict[str, Any]]:
-    """Every event of the synthetic feed, newest first; the mock API pages and filters them."""
+def _activity(source: DemoSource, now: datetime) -> list[dict[str, Any]]:
+    """Every event of the feed that has happened by ``now``, newest first."""
     events: list[dict[str, Any]] = []
     page = 1
     while True:
-        answer = source.activity(action=None, staff_id=None, page=page)
+        answer = source.activity(action=None, staff_id=None, page=page, now=now)
         events += [
             event.model_dump(mode="json", by_alias=True, exclude_none=True)
             for event in answer.items
@@ -90,7 +90,7 @@ def build_fixture(demo_date: date, clinic_time: time) -> dict[str, Any]:
                 "lastSignInAt": _iso(member.last_sign_in_at),
                 "isSample": True,
             }
-            for member in source.staff()
+            for member in source.staff(now)
         ],
         "lookups": source.lookups().model_dump(mode="json", by_alias=True, exclude_none=True),
         "overview": source.overview(zone, now).model_dump(mode="json", by_alias=True),
@@ -99,7 +99,7 @@ def build_fixture(demo_date: date, clinic_time: time) -> dict[str, Any]:
             for days in (7, 30, 90)
         },
         "doctorsToday": source.doctors_today(zone, now).model_dump(mode="json", by_alias=True),
-        "activity": _activity(source),
+        "activity": _activity(source, now),
         "details": details,
         "bookings": [
             {

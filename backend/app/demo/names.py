@@ -88,11 +88,12 @@ REASONS: Final[dict[str, tuple[str, ...]]] = {
         "Diabetes screening",
     ),
 }
-# (name, role, email, job title, days before today of the last sign-in, minute of that day)
+# (name, role, email, job title). When each person signs in comes from the activity feed
+# (generator._activity), so "last sign-in" can never disagree with it.
 STAFF: Final = (
-    ("Ayesha Khan", "admin", "ayesha.khan@example.com", "Clinic Manager", 0, 7 * 60 + 52),
-    ("Bilal Raza", "receptionist", "bilal.raza@example.com", "Front Desk Lead", 0, 8 * 60 + 14),
-    ("Hina Siddiqui", "receptionist", "hina.siddiqui@example.com", "Receptionist", 1, 17 * 60 + 38),
-    ("Omar Farooq", "admin", "omar.farooq@example.com", "Operations Coordinator", 2, 9 * 60 + 6),
-    ("Sana Malik", "receptionist", "sana.malik@example.com", "Appointments Lead", 4, 16 * 60 + 21),
+    ("Ayesha Khan", "admin", "ayesha.khan@example.com", "Clinic Manager"),
+    ("Bilal Raza", "receptionist", "bilal.raza@example.com", "Front Desk Lead"),
+    ("Hina Siddiqui", "receptionist", "hina.siddiqui@example.com", "Receptionist"),
+    ("Omar Farooq", "admin", "omar.farooq@example.com", "Operations Coordinator"),
+    ("Sana Malik", "receptionist", "sana.malik@example.com", "Appointments Lead"),
 )

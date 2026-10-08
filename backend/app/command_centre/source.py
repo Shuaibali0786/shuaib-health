@@ -39,5 +39,5 @@ class CommandCentreSource(Protocol):
     def doctors_today(self, tz: ZoneInfo, now: datetime) -> DoctorsToday: ...
 
     def activity(
-        self, *, action: str | None, staff_id: uuid.UUID | None, page: int
+        self, *, action: str | None, staff_id: uuid.UUID | None, page: int, now: datetime
     ) -> ActivityPage: ...

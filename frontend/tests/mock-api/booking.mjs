@@ -14,7 +14,7 @@ const OFFSET_MS = 5 * 60 * 60 * 1000; // Asia/Karachi
 const LEAD_MS = 2 * 60 * 60 * 1000;
 const WINDOW_DAYS = 14;
 const WEEKDAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+const CROCKFORD = "23456789ABCDEFGHJKMNPQRSTVWXYZ"; // new references skip 0/O and 1/I/L
 export const BOOKING_SLOW_MS = 20_000;
 
 const fixture = (name) => JSON.parse(readFileSync(`${FIXTURES}${name}.json`, "utf8"));
