@@ -300,3 +300,62 @@ Notes: T126 says "5 items" in the bottom nav; the app has 4 (receptionist) or 6 
 Known limit: with a nearby database the Overview budget holds as measured net of round trips; against the remote dev database its raw p95 is about 1 s.
 
 Backend pytest, full: 1002 passed in the single full run; the 19 failures and 7 errors in that run came from a second full run sharing the dev database at the same time (committing tests, rate-limit counters). The five affected files re-run alone: 72 passed (2 errors only because that run switched off the logging plugin, which `caplog` needs).
+
+## Phase 10 — final polish and release checks (2026-10-08)
+
+Suites run one after another, each alone; every number below is a single clean run.
+
+| Suite | Result | Duration |
+|-------|--------|----------|
+| Backend `uv run pytest` (final, after the code changes below) | **1025 passed**, 1 skipped (`time.tzset` not on Windows), 4 deselected (perf) | 21 m 51 s |
+| Playwright `npm run test:e2e` (all projects: public + admin-desktop/1366/1280/mobile) | **1888 passed**, 201 skipped (viewport-specific and the 11 known), 0 failed | 20.9 min |
+| Vitest `npm test` | **1355 passed** (101 files) | 122 s |
+| ruff / ruff format / mypy (`app`, `tests`, `migrations`: 167 files) / tsc / eslint | pass | – |
+| Perf test (`-m perf`, 30 000 bookings) | pass | 3 min |
+
+Honest history: a first full backend run (before the changes below) passed with the same numbers. The second one, with my new test lock, ended with 1 teardown error: the lock's connection sat "idle in transaction" for 22 minutes and the server ended it. Fixed (AUTOCOMMIT lock connection), the lock proved by hand (a second pytest printed "Waiting: another pytest run is using the test database" while a script held it), then the full run above was repeated from scratch.
+
+### Tests that cannot collide
+
+Playwright and Vitest never touch a database (mock API on 4010, production build on 3100). The only shared resource was the Neon **test** database, which the pytest session drops and re-migrates, and that is what broke the earlier "two full runs at once" attempt. Choice: a **Postgres advisory lock** taken by `tests/conftest.py` for the whole session on its own AUTOCOMMIT connection. A second run waits (prints why, gives up after 15 min) instead of corrupting the first. Chosen over a schema per run because the migrations, the exclusion constraint and the extension are written for the default schema, and over a file lock because the lock lives with the database, so it also holds across machines. Playwright's shared ports/`.next` are documented in the quickstart, not locked.
+
+### mypy
+
+The 6 remaining errors (reported earlier as 7) were `list[sa.Column[object]]` in `0002_booking.py` and `0003_command_centre.py` (now `Column[Any]`). `migrations` is now in mypy's `files`, so plain `uv run mypy` covers it: **0 errors in 167 files**. One line-length error in `app/demo/export_fixture.py` was formatted.
+
+### Overview performance (30 000 bookings, remote dev DB, 82 ms per round trip)
+
+`weekly_plans` (2 queries) is one LEFT JOIN, and `leave` + `holidays` is one UNION ALL. Overview: **10 → 8 statements** (session lookup, clinic settings, 5 data reads).
+
+| Read | Statements | Median | p95 raw | p95 net of round trips |
+|------|-----------|--------|---------|------------------------|
+| Overview | 8 (was 10) | 784 ms | **841 ms** (was 1032) | **183 ms** (was 208, budget 300) |
+| Doctors today | 7 | 614 ms | 620 ms (was 717) | 45 ms |
+| Search 30 d / 90 d p3 | 5 | 484 / 499 ms | 502 / 504 ms | 91 / 93 ms |
+| Insights 7 / 30 / 90 | 4 | 372 / 418 / 632 ms | 450 / 527 / 711 ms | 121 / 198 / 382 ms |
+
+Not done: running the reads concurrently. Each would need its own connection, and the tests keep all data in one rolled-back transaction, so concurrent connections would not see it. Raw Overview p95 is still dominated by round trips to the remote database.
+
+### Release checks
+
+| Check | Result |
+|-------|--------|
+| gitleaks (110 commits) | 2 findings, both fake test passwords in `backend/tests/api/admin_support.py` and `frontend/tests/unit/mock-api-admin-staff.test.ts`; listed in `.gitleaksignore`; rescan: **no leaks**. Working-tree scan hits only git-ignored files (`.env`, `.next*`, `.venv`); no `.env` is tracked. |
+| `npm audit` | 7 high, none fixed (report only): `next` 16.0.0–16.3.7 (installed 16.3.7; fix is 16.4.0, outside the range, needs a deliberate upgrade + full re-test), `eslint-config-next` chain (`@next/eslint-plugin-next`, `fast-glob`, `micromatch`, `braces`: dev tooling only), `source-map-js` (non-breaking `npm audit fix` exists). |
+| `pip-audit` (backend lockfile) | **No known vulnerabilities** |
+| Admin isolation (`check-admin-isolation.mjs`) | OK: 18 public routes, 67 prerendered pages, 22 manifests clean; admin code in 1 script and 1 stylesheet chunk. `admin-isolation.spec.ts` green in the full Playwright run. |
+| `DEMO_ENABLED` on / off | `test_demo_switch.py` + `test_demo_separation.py` 21 passed; `demo-enabled*.test.tsx` 23 passed; both in the full runs. |
+
+### Lighthouse, mobile, perf preset, simulated throttling, 3 runs, production build on the mock API
+
+| Page | Performance (3 runs) | A11y | Best practices | LCP | TBT | CLS |
+|------|----------------------|------|----------------|-----|-----|-----|
+| `/` Home | 40 / 40 / 39 | 100 | 100 | 5.2 s | 1.9–3.5 s | 0 |
+| `/book-appointment` | 57 / 54 / 54 | 100 | 100 | 3.3–3.4 s | 1.8–3.0 s | 0 |
+| `/admin` (demo session) | 38 / 41 (third run failed to complete) | 100 | 100 | 5.7–7.1 s | 4.7–5.1 s | 0.001 |
+
+Book appointment is at its earlier baseline (61 median then, 54 now, same run-to-run spread; machine was also idle this time). Same caveat as Features 004/005: this laptop is CPU-bound, so absolute scores are low and only comparable on this machine. Home and `/admin` have no earlier Lighthouse figure on this machine. SEO scored 66–69 because the mock/`next start` build sends the non-production robots setting; not investigated.
+
+### Tasks T148–T157
+
+Not completed here and left unticked: T148–T151 (log-safety/retention/honesty/offline extensions), T152, T154, T155 (READMEs: only the test-lock note was added), T156 (`/security-review` not run; gitleaks done), T157 (clean-checkout run and the SC-002 viewer review). T153 is done for Lighthouse and isolation, not for the Overview ≤ 120 KB gzip check. SC-001/SC-003 timing is not measured.

@@ -151,6 +151,12 @@ uv run pytest -m perf -s
 - `pytest -m perf -s` prints server-side latency per endpoint (budget: p95 under 200 ms). Most of
   the time is the network round trip to the database, so results depend on how far you are
   from the Neon region.
+- **One pytest run at a time.** The suite drops and re-creates every table in the test database, so
+  two runs at once would wreck each other. Each run takes a Postgres advisory lock on the test
+  database for its whole session; a second run prints "Waiting: another pytest run is using the
+  test database" and starts when the first ends (it gives up after 15 minutes). The Playwright
+  and Vitest suites use a mock API and never touch the database, so they are not affected.
+- `mypy` also checks `migrations/` (configured in `pyproject.toml`).
 
 ## 7. Regenerate the seed data (only when the frontend mock data changes)
 

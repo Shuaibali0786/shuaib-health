@@ -382,8 +382,7 @@ def overview(db: Session, tz: ZoneInfo, now: datetime) -> Overview:
         doctor_id=None,
         department_id=None,
     )
-    leave = repo.leave_between(db, earlier_lo, hi)
-    holidays = repo.holiday_names(db, [today, earlier])
+    leave, holidays = repo.leave_and_holidays(db, earlier_lo, hi, [today, earlier])
     plans = [
         metrics.DoctorPlan(
             doctor=DoctorRef(

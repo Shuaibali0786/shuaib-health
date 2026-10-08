@@ -6,6 +6,7 @@ configured. The test database is migrated from scratch and seeded once per sessi
 runs inside a transaction that is rolled back.
 """
 
+import time
 from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -99,6 +100,24 @@ def run_alembic(engine: Engine, action: Callable[[Config], None]) -> None:
         action(alembic_config(conn))
 
 
+SUITE_LOCK_KEY = 0x5348_4C54  # arbitrary, shared by every pytest run on the test database
+SUITE_LOCK_WAIT_SECONDS = 15 * 60
+
+
+def _acquire_suite_lock(conn: Connection) -> None:
+    deadline = time.monotonic() + SUITE_LOCK_WAIT_SECONDS
+    announced = False
+    while not conn.execute(
+        text("SELECT pg_try_advisory_lock(:key)"), {"key": SUITE_LOCK_KEY}
+    ).scalar():
+        if time.monotonic() > deadline:
+            pytest.exit("another pytest run has held the test database for 15 minutes", 3)
+        if not announced:
+            print("\nWaiting: another pytest run is using the test database ...", flush=True)
+            announced = True
+        time.sleep(5)
+
+
 @pytest.fixture(scope="session")
 def test_engine() -> Iterator[Engine]:
     try:
@@ -110,7 +129,17 @@ def test_engine() -> Iterator[Engine]:
         pytest.skip("TEST_DATABASE_URL not set")
     # Settings validation already refuses a test URL equal to a dev URL.
     engine = make_engine(settings.test_database_url)
-    yield engine
+    # The suite downgrades and re-migrates the test database, so two pytest runs at once would
+    # wreck each other. A Postgres advisory lock, held on its own connection for the whole
+    # session, makes the second run wait (and name why) instead of colliding.
+    # AUTOCOMMIT: the connection idles for the whole run and must never sit "idle in transaction"
+    # (the server terminates such sessions, which would drop the lock).
+    with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as lock_conn:
+        _acquire_suite_lock(lock_conn)
+        try:
+            yield engine
+        finally:
+            lock_conn.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": SUITE_LOCK_KEY})
     engine.dispose()
 
 

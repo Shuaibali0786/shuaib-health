@@ -52,7 +52,7 @@ cd backend
 uv run pytest tests/unit tests/api -q                        # incl. test_auth_matrix.py, test_route_policies.py
 uv run pytest tests/migrations -q                            # 0003 up/down, refusal on lossy downgrade
 uv run pytest tests/perf/test_command_centre_latency.py -q   # 30k bookings: search + insights p95 < 1 s
-uv run mypy app && uv run ruff check .
+uv run mypy && uv run ruff check .
 
 # frontend
 cd frontend
@@ -62,6 +62,19 @@ npm run test:e2e -- --project=admin-desktop --project=admin-mobile
 npm run test:e2e -- tests/e2e/admin-isolation.spec.ts tests/e2e/admin-a11y.spec.ts
 npm run test:e2e -- tests/e2e/admin-visual.spec.ts            # baselines (approved at the design gate)
 ```
+
+Run the suites one after another (backend, then Playwright, then Vitest). A second pytest run waits for the first (advisory lock on the test database, see `backend/README.md` §6); Playwright and Vitest use the mock API and need no database, but share ports 3100/4010 and the `.next` build, so do not start two Playwright runs at once either.
+
+Release checks (Phase 10):
+
+```bash
+gitleaks detect --source . --redact --no-banner               # fake test credentials are listed in .gitleaksignore
+cd frontend && npm audit                                       # report only; do not use --force
+cd backend && uv export --no-hashes --no-emit-project -o req.txt && uvx pip-audit -r req.txt --no-deps --disable-pip
+cd frontend && npx lighthouse http://localhost:3150/ --preset=perf --form-factor=mobile   # after next build + next start --port 3150 on the mock API
+```
+
+For `/admin` in demo mode pass `--extra-headers headers.json` with `{"Cookie":"__Host-cc_session=cd_e2e-demo"}` (the mock API's demo session).
 
 ## 5. Known limits
 

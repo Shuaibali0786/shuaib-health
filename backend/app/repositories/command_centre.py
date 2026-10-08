@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, TypedDict
 
-from sqlalchemy import Select, or_
+from sqlalchemy import Date, DateTime, Select, String, Uuid, cast, literal, null, or_, union_all
+from sqlalchemy import select as sa_select
 from sqlmodel import Session, col, func, select
 
 from app import models as m
@@ -213,16 +214,55 @@ class WeeklyPlan:
 
 
 def weekly_plans(db: Session) -> list[WeeklyPlan]:
-    """Active doctors of active departments with their weekly sessions."""
-    doctors = db.exec(
-        select(m.Doctor, m.Department.name)
+    """Active doctors of active departments with their weekly sessions (one round trip)."""
+    rows = db.exec(
+        select(m.Doctor, m.Department.name, m.DoctorWeeklySchedule)
         .join(m.Department, col(m.Department.id) == col(m.Doctor.department_id))
+        .join(
+            m.DoctorWeeklySchedule,
+            col(m.DoctorWeeklySchedule.doctor_id) == col(m.Doctor.id),
+            isouter=True,
+        )
         .where(col(m.Doctor.is_active), col(m.Department.is_active))
     ).all()
-    sessions: dict[uuid.UUID, list[m.DoctorWeeklySchedule]] = {}
-    for row in db.exec(select(m.DoctorWeeklySchedule)).all():
-        sessions.setdefault(row.doctor_id, []).append(row)
-    return [WeeklyPlan(d, name, sessions.get(require_id(d.id), [])) for d, name in doctors]
+    plans: dict[uuid.UUID, WeeklyPlan] = {}
+    for doctor, name, session in rows:
+        plan = plans.setdefault(require_id(doctor.id), WeeklyPlan(doctor, name, []))
+        if session is not None:
+            plan.sessions.append(session)
+    return list(plans.values())
+
+
+def leave_and_holidays(
+    db: Session, starts_from: datetime, starts_before: datetime, days: list[date]
+) -> tuple[dict[uuid.UUID, list[tuple[datetime, datetime]]], dict[date, str]]:
+    """``leave_between`` and ``holiday_names`` in one round trip (a UNION ALL of the two)."""
+    leave_stmt: Select[Any] = sa_select(
+        literal("leave").label("kind"),
+        col(m.DoctorLeave.doctor_id).label("doctor_id"),
+        col(m.DoctorLeave.starts_at).label("starts_at"),
+        col(m.DoctorLeave.ends_at).label("ends_at"),
+        cast(null(), Date).label("day"),
+        cast(null(), String).label("name"),
+    ).where(col(m.DoctorLeave.starts_at) < starts_before, col(m.DoctorLeave.ends_at) > starts_from)
+    holiday_stmt: Select[Any] = sa_select(
+        literal("holiday"),
+        cast(null(), Uuid),
+        cast(null(), DateTime(timezone=True)),
+        cast(null(), DateTime(timezone=True)),
+        col(m.ClinicHoliday.holiday_date),
+        col(m.ClinicHoliday.name),
+    ).where(col(m.ClinicHoliday.holiday_date).in_(days))
+    leave: dict[uuid.UUID, list[tuple[datetime, datetime]]] = {}
+    holidays: dict[date, str] = {}
+    for kind, doctor_id, start, end, day, name in db.execute(
+        union_all(leave_stmt, holiday_stmt)
+    ).all():
+        if kind == "leave":
+            leave.setdefault(doctor_id, []).append((start, end))
+        else:
+            holidays[day] = name
+    return leave, holidays
 
 
 def leave_between(

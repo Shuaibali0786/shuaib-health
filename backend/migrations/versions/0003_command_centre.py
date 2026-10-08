@@ -11,6 +11,7 @@ Create Date: 2026-10-06 09:00:00.000000
 """
 
 from collections.abc import Sequence
+from typing import Any
 
 import sqlalchemy as sa
 from alembic import op
@@ -43,7 +44,7 @@ END_REASONS = (
 )
 
 
-def _id_and_timestamps() -> list[sa.Column[object]]:
+def _id_and_timestamps() -> list[sa.Column[Any]]:
     return [
         sa.Column("id", sa.UUID(), server_default=sa.text("gen_random_uuid()"), nullable=False),
         sa.Column(

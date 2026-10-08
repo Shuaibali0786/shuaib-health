@@ -38,7 +38,8 @@ def _activity(source: DemoSource) -> list[dict[str, Any]]:
     while True:
         answer = source.activity(action=None, staff_id=None, page=page)
         events += [
-            event.model_dump(mode="json", by_alias=True, exclude_none=True) for event in answer.items
+            event.model_dump(mode="json", by_alias=True, exclude_none=True)
+            for event in answer.items
         ]
         if len(events) >= answer.total:
             return events
