@@ -11,7 +11,8 @@ export const revalidate = 300;
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const { indexable } = await getSiteConfig();
   return {
-    rules: indexable ? { userAgent: "*", allow: "/" } : { userAgent: "*", disallow: "/" },
+    // The staff app is never crawlable, whatever the public site decides.
+    rules: indexable ? { userAgent: "*", allow: "/", disallow: "/admin" } : { userAgent: "*", disallow: "/" },
     sitemap: `${siteUrl()}/sitemap.xml`,
   };
 }

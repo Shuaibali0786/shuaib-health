@@ -12,7 +12,7 @@ import { NavLinks } from "./NavLinks";
 /**
  * Sticky header (at least 4 rem tall on phones, 4.5 rem from md; if text is enlarged or spaced out
  * so the items no longer fit one row, the right-hand group wraps to a second row instead of
- * overflowing off screen; globals.css uses 4.5 rem
+ * overflowing off screen; site.css uses 4.5 rem
  * as scroll-padding-top so focused elements are never hidden under it).
  * - below 768 px: logo, call icon, compact "Book" button (from 375 px), menu button
  * - 768 to 1279 px: logo, emergency phone, Book Appointment, menu button

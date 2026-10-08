@@ -12,7 +12,7 @@ export const REVEAL_STAGGER = 0.06;
 /** No reveal waits longer than this, in seconds. */
 export const REVEAL_MAX_DELAY = 0.3;
 
-/** Same curve as the --ease-soft token in globals.css. */
+/** Same curve as the --ease-soft token in tokens.css. */
 export const EASE_SOFT: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 /** Booking step change: a short fade and 8 px rise, skipped under reduced motion. */

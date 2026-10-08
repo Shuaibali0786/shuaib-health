@@ -51,3 +51,8 @@ LIST_ERRORS: dict[int | str, dict[str, object]] = {
     429: {"model": ErrorResponse},
 }
 DETAIL_ERRORS: dict[int | str, dict[str, object]] = {404: {"model": ErrorResponse}, **LIST_ERRORS}
+
+ADMIN_ERRORS_DOC: dict[int | str, dict[str, object]] = {
+    401: {"model": ErrorResponse},
+    403: {"model": ErrorResponse},
+}

@@ -14,6 +14,7 @@ POOLED = f"postgresql+psycopg://u:{SECRET}@ep-a-pooler.x.aws.neon.tech/db?sslmod
 DIRECT = f"postgresql+psycopg://u:{SECRET}@ep-a.x.aws.neon.tech/db?sslmode=require"
 PROXY_SECRET = "p" * 32
 HASH_KEY = "h" * 32
+SESSION_KEY = "s" * 32
 TEST = f"postgresql+psycopg://u:{SECRET}@ep-b.x.aws.neon.tech/db_test?sslmode=require"
 
 
@@ -26,6 +27,7 @@ def make(**overrides: Any) -> Settings:
         "cors_origins": "http://localhost:3000, https://example.org",
         "booking_proxy_secret": PROXY_SECRET,
         "privacy_hash_key": HASH_KEY,
+        "session_secret": SESSION_KEY,
     }
     values.update(overrides)
     return Settings(_env_file=None, **values)
@@ -183,3 +185,38 @@ def test_seed_cli_exits_non_zero_without_the_proxy_secret() -> None:
     )
     assert result.returncode != 0
     assert "BOOKING_PROXY_SECRET" in result.stderr
+
+
+def test_session_secret_is_required() -> None:
+    values: dict[str, Any] = {
+        "app_env": "test",
+        "database_url": POOLED,
+        "direct_database_url": DIRECT,
+        "booking_proxy_secret": PROXY_SECRET,
+        "privacy_hash_key": HASH_KEY,
+    }
+    with pytest.raises(ValidationError) as info:
+        Settings(_env_file=None, **values)
+    assert "session_secret" in str(info.value).lower()
+
+
+@pytest.mark.parametrize("value", ["", "x" * 31])
+def test_short_session_secret_is_rejected(value: str) -> None:
+    with pytest.raises(ValidationError) as info:
+        make(session_secret=value)
+    assert "SESSION_SECRET" in str(info.value)
+    if value:
+        assert value not in str(info.value)
+
+
+def test_session_secret_is_masked() -> None:
+    assert SESSION_KEY not in repr(make())
+
+
+def test_command_centre_tunables_default_to_the_quickstart_values() -> None:
+    s = make()
+    assert (s.staff_idle_minutes, s.staff_absolute_hours, s.staff_max_sessions) == (30, 12, 3)
+    assert (s.login_lock_failures, s.login_lock_minutes) == (5, 15)
+    assert s.login_limit_per_ip_per_15min == 20
+    assert (s.demo_limit_per_ip_per_hour, s.demo_session_hours) == (10, 2)
+    assert s.status_undo_seconds == 10

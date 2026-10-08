@@ -280,6 +280,7 @@ describe("mock API: booking", () => {
       isSample: true,
     });
     expect(view.reference).toMatch(/^[0-9A-HJKMNP-TV-Z]{5}-[0-9A-HJKMNP-TV-Z]{5}$/);
+    expect(view.reference).not.toMatch(/[01OIL]/); // new references avoid look-alike characters
     expect(await slotTimes()).not.toContain(FIRST_SLOT);
   });
 

@@ -24,6 +24,19 @@ test.describe("seo", () => {
     await expect(page.locator("meta[name='robots']")).toHaveAttribute("content", /noindex/);
   });
 
+  test("public pages never get the staff app's private headers; staff pages do", async ({ request }) => {
+    // The demo's noindex comes from the clinic's indexable flag (meta tag + robots.txt), never from these headers,
+    // so a real (indexable) clinic's public pages are crawlable.
+    for (const path of ["/", "/doctors", "/doctors/dr-ayesha-rahman", "/lab-tests", "/book-appointment", "/robots.txt", "/sitemap.xml"]) {
+      const headers = (await request.get(path)).headers();
+      expect(headers["x-robots-tag"], path).toBeUndefined();
+      expect(headers["cache-control"] ?? "", path).not.toContain("no-store");
+    }
+    const staff = (await request.get("/admin/login", { maxRedirects: 0 })).headers();
+    expect(staff["x-robots-tag"]).toContain("noindex");
+    expect(staff["cache-control"]).toContain("no-store");
+  });
+
   test("generated Open Graph images return a PNG", async ({ page, request }) => {
     for (const path of ["/", "/health-tips/staying-hydrated"]) {
       await page.goto(path);

@@ -37,4 +37,19 @@ describe("server-only boundary", () => {
     const readers = files.filter((f) => names.test(f.code)).map((f) => f.path);
     expect(readers).toEqual(["lib/api/config.ts"]);
   });
+
+  it("keeps the staff app's backend caller server-only and out of every browser file", () => {
+    const server = files.find((f) => f.path === "admin/lib/server.ts");
+    expect(server?.text).toMatch(/^\s*import\s+["']server-only["']/);
+    const clients = files.filter((f) => isClientFile(f.text));
+    const offenders = clients.filter((f) => importsOf(f.code, /^@\/admin\/lib\/server$|^\.\/server$|^@\/lib\/(api|booking\/backend)(\/|$)/).length > 0);
+    expect(offenders.map((f) => f.path)).toEqual([]);
+  });
+
+  it("has no file under src/admin importing next/headers or the backend config outside server.ts", () => {
+    const offenders = files
+      .filter((f) => f.path.startsWith("admin/") && f.path !== "admin/lib/server.ts")
+      .filter((f) => importsOf(f.code, /^next\/headers$|^@\/lib\/api(\/|$)/).length > 0);
+    expect(offenders.map((f) => f.path)).toEqual([]);
+  });
 });

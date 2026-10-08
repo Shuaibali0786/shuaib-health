@@ -28,13 +28,13 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
   // Features 004 and 005: the catalog reader, the booking proxy and the booking flow's browser client are the only places that may call fetch;
   // the API settings are read in lib/api/config.ts, and the start-up check in instrumentation.ts reads
   // the framework's own NEXT_RUNTIME / NEXT_PHASE.
-  it("has no fetch( in src outside lib/api/http.ts, lib/booking/backend.ts and lib/booking/client.ts", () => {
-    expect(offenders(/\bfetch\s*\(/, (path) => ["lib/api/http.ts", "lib/booking/backend.ts", "lib/booking/client.ts"].includes(path))).toEqual([]);
+  it("has no fetch( in src outside the catalog, booking and staff-app call sites", () => {
+    expect(offenders(/\bfetch\s*\(/, (path) => ["lib/api/http.ts", "lib/booking/backend.ts", "lib/booking/client.ts", "admin/lib/client.ts", "admin/lib/server.ts"].includes(path))).toEqual([]);
   });
 
-  it("has no backend env names in src outside lib/api/config.ts and instrumentation.ts", () => {
+  it("has no backend env names in src outside lib/api/config.ts, lib/demo.ts and instrumentation.ts", () => {
     expect(
-      offenders(/process\.env\.(?!SITE_URL\b|NODE_ENV\b)[A-Z_]+/, (path) => path === "lib/api/config.ts" || path === "instrumentation.ts"),
+      offenders(/process\.env\.(?!SITE_URL\b|NODE_ENV\b)[A-Z_]+/, (path) => path === "lib/api/config.ts" || path === "lib/demo.ts" || path === "instrumentation.ts"),
     ).toEqual([]);
   });
 
@@ -44,15 +44,17 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
     ["sessionStorage", /\bsessionStorage\b/],
     ["document.cookie", /document\.cookie/],
     ["raw <img", /<img[\s>]/],
-  ])("has no %s in src", (_name, pattern) => {
-    expect(offenders(pattern)).toEqual([]);
+  ])("has no %s in src", (name, pattern) => {
+    // The one exception: the staff app's theme choice (Light, Night, Auto) is written to its own `cc_theme`
+    // cookie from the browser, so it applies at once. It is a display preference, not personal data.
+    expect(offenders(pattern, (path) => name === "document.cookie" && path === "admin/state/theme.ts")).toEqual([]);
   });
 
   it("has no dangerouslySetInnerHTML in src outside the JSON-LD component", () => {
     expect(offenders(/dangerouslySetInnerHTML/, (path) => path === "components/seo/JsonLd.tsx")).toEqual([]);
   });
 
-  it("has no hex colour literal in components or pages (tokens live in globals.css)", () => {
+  it("has no hex colour literal in components or pages (tokens live in tokens.css)", () => {
     const hex = /#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b(?![\w-])/;
     const inScope = (path: string) => !(path.startsWith("components/") || path.startsWith("app/"));
     // Icon and image generators and the theme-color constant need literal colours (tokens.test.ts checks the constant).

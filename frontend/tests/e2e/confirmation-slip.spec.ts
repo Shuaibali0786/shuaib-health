@@ -55,13 +55,23 @@ test.describe("confirmation slip", () => {
       await expect(card).toContainText(/\b20\d\d\b/); // the date carries its year
       await expect(card).toContainText(/Please arrive by \d\d:\d\d/);
       await expect(card.getByTestId("confirmed-seal")).toContainText("CONFIRMED");
-      await expect(card.getByTestId("confirmed-seal")).toContainText("Demo");
+      await expect(card.getByTestId("confirmed-seal")).toContainText("DEMO");
       await expect(card.getByRole("img", { name: `QR code for booking reference ${reference}` })).toBeVisible();
       await expect(card.getByText("Show at reception")).toBeVisible();
       await expect(card.getByRole("heading", { name: "Before you come" })).toBeVisible();
       await expect(card).toContainText("Bring your CNIC and any previous reports.");
       await expect(card).toContainText(/Booked on \d{1,2} \w{3} 20\d\d, \d\d:\d\d PKT/);
       await expect(card).toContainText("Demo booking, no one will contact you");
+    });
+
+    await test.step("the stamp sits fully inside the appointment box, clear of its border", async () => {
+      const box = (await card.getByRole("region", { name: "Your appointment" }).boundingBox())!;
+      const seal = (await card.getByTestId("confirmed-seal").boundingBox())!;
+      expect(seal.x).toBeGreaterThanOrEqual(box.x + 8);
+      expect(seal.y).toBeGreaterThanOrEqual(box.y + 8);
+      expect(seal.x + seal.width).toBeLessThanOrEqual(box.x + box.width - 8);
+      expect(seal.y + seal.height).toBeLessThanOrEqual(box.y + box.height - 8);
+      expect(seal.width).toBeGreaterThanOrEqual(100);
     });
 
     await test.step("layout follows the screen", async () => {
@@ -73,6 +83,8 @@ test.describe("confirmation slip", () => {
         expect(d!.x).toBeGreaterThanOrEqual(c!.x + c!.width);
         expect(d!.y).toBeLessThan(c!.y + 200);
         expect(a!.x).toBeGreaterThanOrEqual(c!.x + c!.width);
+        // The buttons sit beside the slip, not at the far edge of the page: a gap of a few rems at most.
+        expect(d!.x - (c!.x + c!.width), "gap between the slip and the buttons").toBeLessThan(48);
         // No big gap between Download and the secondary buttons.
         expect(p!.y - (d!.y + d!.height)).toBeLessThan(60);
       } else {

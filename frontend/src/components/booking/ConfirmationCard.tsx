@@ -1,9 +1,10 @@
+import { ConfirmedSeal } from "@/components/booking/ConfirmedSeal";
 import { LogoMark } from "@/components/brand/LogoMark";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { arriveByTime, formatLocalDateWithYear, timeZoneLabel } from "@/lib/booking/labels";
 import { qrModules, qrPath } from "@/lib/booking/qr";
 import type { AppointmentView } from "@/lib/booking/schemas";
-import { ARRIVE_EARLY_MINUTES, SLIP_BRING, SLIP_DEMO_FOOTER, formatBookedOn, formatSealDate, zoneLabel } from "@/lib/booking/slip";
+import { ARRIVE_EARLY_MINUTES, SLIP_BRING, SLIP_DEMO_FOOTER, formatBookedOn, zoneLabel } from "@/lib/booking/slip";
 import { formatPkr } from "@/lib/format";
 import type { SiteConfig } from "@/types/content";
 
@@ -60,17 +61,7 @@ export function ConfirmationCard({ view, site }: { view: AppointmentView; site: 
               </p>
               <p className="text-xs text-muted">{timeZoneLabel(view.timeZone, new Date(view.startsAt))}</p>
             </div>
-            <div
-              className="grid size-28 -rotate-12 place-items-center rounded-full border-2 border-teal-700 bg-white text-center text-teal-700"
-              data-testid="confirmed-seal"
-            >
-              <div className="grid size-[6.1rem] place-content-center rounded-full border border-teal-700 px-1.5 leading-tight">
-                <span className="line-clamp-1 text-[0.65rem] font-bold uppercase tracking-wide">{site.name}</span>
-                <span className="text-base font-extrabold tracking-wide">CONFIRMED</span>
-                <span className="text-xs font-semibold text-gold-700">{formatSealDate(view.bookedAt, view.timeZone)}</span>
-                {view.isSample ? <span className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-muted">Demo</span> : null}
-              </div>
-            </div>
+            <ConfirmedSeal clinicName={site.name} bookedAt={view.bookedAt} timeZone={view.timeZone} sample={view.isSample} className="size-28 shrink-0 sm:size-32" />
           </div>
           <p className="mt-3 rounded-control bg-navy-900 px-3 py-2 text-sm font-semibold text-white">
             Please arrive by <span className="text-teal-300">{arriveByTime(view.localTime)}</span>

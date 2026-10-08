@@ -3,13 +3,16 @@
 import re
 import secrets
 
-ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"  # no I, L, O or U
+ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"  # what a stored reference may contain (no I, L, O, U)
+# New references use only characters that cannot be misread: no 0/O, no 1/I/L (and no U, as in
+# Crockford). Existing references containing 0 or 1 stay valid, so `parse` accepts all of ALPHABET.
+SAFE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTVWXYZ"
 LENGTH = 10
 _VALID = re.compile(f"[{ALPHABET}]{{{LENGTH}}}")
 
 
 def new_reference() -> str:
-    return "".join(secrets.choice(ALPHABET) for _ in range(LENGTH))
+    return "".join(secrets.choice(SAFE_ALPHABET) for _ in range(LENGTH))
 
 
 def display(reference: str) -> str:

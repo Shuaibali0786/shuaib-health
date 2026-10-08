@@ -198,3 +198,88 @@ describe("booking contract drift is detected", () => {
     expect(await generateTypes(doc)).not.toBe(readCommittedTypes());
   });
 });
+
+/**
+ * Same idea for the Command Centre admin contract (Feature 006). No zod schemas exist yet for these shapes
+ * (they arrive with each story), so only check (1) applies: the committed types must follow the contract.
+ */
+type AdminDoc = {
+  paths: Record<string, Record<string, { operationId?: string }>>;
+  components: { schemas: Record<string, { required?: string[]; properties: Record<string, unknown> }> };
+};
+
+const HTTP_METHODS = ["get", "post", "put", "patch", "delete"];
+
+function adminOperations(): { path: string; method: string; operationId: string }[] {
+  const doc = parse(readContract()) as AdminDoc;
+  return Object.entries(doc.paths)
+    .filter(([path]) => path.startsWith("/api/v1/admin/"))
+    .flatMap(([path, item]) =>
+      Object.entries(item)
+        .filter(([method]) => HTTP_METHODS.includes(method))
+        .map(([method, op]) => ({ path, method, operationId: op.operationId ?? "" })),
+    );
+}
+
+function adminDrifted(schema: string, change: (s: AdminDoc["components"]["schemas"][string]) => void): AdminDoc {
+  const doc = parse(readContract()) as AdminDoc;
+  change(doc.components.schemas[schema]!);
+  return doc;
+}
+
+describe("admin contract drift is detected (Feature 006)", () => {
+  it("the contract declares the admin operations", () => {
+    const operations = adminOperations();
+    expect(operations.length).toBeGreaterThanOrEqual(19);
+    for (const op of operations) expect(op.operationId, `${op.method} ${op.path}`).not.toBe("");
+  });
+
+  it("every admin operation is in the committed generated types", () => {
+    const committed = readCommittedTypes();
+    for (const { path, operationId } of adminOperations()) {
+      expect(committed, path).toContain(`"${path}": {`);
+      expect(committed, operationId).toContain(`${operationId}: {`);
+    }
+  });
+
+  const adminSchemas = ["Viewer", "Overview", "BookingSummary", "Lookups", "StatusChangeResult", "DoctorsToday"];
+  const adminFields: Record<string, string> = {
+    Viewer: "csrfToken",
+    Overview: "kpis",
+    BookingSummary: "allowedNext",
+    Lookups: "doctors",
+    StatusChangeResult: "undoExpiresAt",
+    DoctorsToday: "working",
+  };
+
+  it.each(adminSchemas)("%s: removed field", async (schema) => {
+    const field = adminFields[schema]!;
+    const doc = adminDrifted(schema, (s) => {
+      delete s.properties[field];
+      s.required = s.required?.filter((k) => k !== field);
+    });
+    expect(await generateTypes(doc)).not.toBe(readCommittedTypes());
+  });
+
+  it.each(adminSchemas)("%s: changed type", async (schema) => {
+    const field = adminFields[schema]!;
+    const doc = adminDrifted(schema, (s) => {
+      s.properties[field] = { type: "boolean" };
+    });
+    expect(await generateTypes(doc)).not.toBe(readCommittedTypes());
+  });
+
+  it.each(adminSchemas)("%s: newly required field", async (schema) => {
+    const doc = adminDrifted(schema, (s) => {
+      s.properties.rating = { type: "number" };
+      s.required = [...(s.required ?? []), "rating"];
+    });
+    expect(await generateTypes(doc)).not.toBe(readCommittedTypes());
+  });
+
+  it("a removed admin operation is detected", async () => {
+    const doc = parse(readContract()) as AdminDoc;
+    delete doc.paths["/api/v1/admin/overview"];
+    expect(await generateTypes(doc)).not.toBe(readCommittedTypes());
+  });
+});

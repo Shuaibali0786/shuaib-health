@@ -4,6 +4,8 @@
 import { formatPkr } from "@/lib/format";
 import { arriveByTime, formatLocalDateWithYear, zoneLabel } from "./labels";
 import { qrModules } from "./qr";
+import { SEAL, sealContent } from "./seal";
+import { SLIP_FONT_KEYS, SLIP_FONT_METRICS, advance, winAnsiCode, type SlipFontKey, type SlipFonts } from "./slip-fonts";
 import type { AppointmentView } from "./schemas";
 
 export { zoneLabel } from "./labels";
@@ -24,13 +26,6 @@ export function formatBookedOn(bookedAt: string, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(bookedAt));
   const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
   return `${pick("day")} ${pick("month")} ${pick("year")}, ${pick("hour")}:${pick("minute")} ${zoneLabel(timeZone)}`;
-}
-
-/** "04 Oct 2026": the booking date on the CONFIRMED seal. */
-export function formatSealDate(bookedAt: string, timeZone: string): string {
-  const parts = new Intl.DateTimeFormat("en-GB", { timeZone, day: "2-digit", month: "short", year: "numeric" }).formatToParts(new Date(bookedAt));
-  const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-  return `${pick("day")} ${pick("month")} ${pick("year")}`;
 }
 
 export const ARRIVE_EARLY_MINUTES = 15;
@@ -121,49 +116,41 @@ export function buildCalendarIcs(view: AppointmentView, clinic: SlipClinic, now:
   return `${lines.map(fold).join("\r\n")}\r\n`;
 }
 
-// ---------------------------------------------------------------------------------------------
-// PDF: a one-page slip written by hand (standard fonts, vector logo), so no library ships to phones.
+// PDF: a one-page slip written by hand (vector logo and stamp, the website's fonts embedded), so no PDF
+// library ships to phones. The fonts come in as bytes (see slip-fonts.ts); text is in WinAnsi, one byte a character.
 // ---------------------------------------------------------------------------------------------
 
 const PAGE_W = 420;
-const PAGE_H = 595;
+const PAGE_H = 595 + 40; // the first design's page, plus the room the appointment box gained
 const MARGIN = 30;
+/** Height the appointment box gained: it now holds the arrive-by pill and the whole stamp inside its border. */
+const BOX_EXTRA = 40;
+/** Diameter of the CONFIRMED stamp on the page, in points. */
+const SEAL_PT = 76;
 
-type Font = "F1" | "F2" | "F3"; // Helvetica, Helvetica-Bold, Times-Bold
+/** The day and month the stamp shows: "07 Oct". */
+export function formatSealBooked(bookedAt: string, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone, day: "2-digit", month: "short" }).formatToParts(new Date(bookedAt));
+  const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${pick("day")} ${pick("month")}`;
+}
 
-/** Escapes text for a PDF string and maps anything outside Latin-1 to "?" (standard fonts). */
+/** Escapes text for a PDF string; characters the fonts do not hold become "?". */
 function pdfText(text: string): string {
   let out = "";
   for (const char of text.normalize("NFC")) {
-    const code = char.codePointAt(0) ?? 63;
-    const safe = code >= 32 && code <= 255 ? char : "?";
+    const safe = String.fromCharCode(winAnsiCode(char));
     out += safe === "(" || safe === ")" || safe === "\\" ? `\\${safe}` : safe;
   }
   return out;
 }
 
-/** Rough width of a standard-font string, from glyph classes. Good enough to centre and right-align. */
-function textWidth(text: string, font: Font, size: number, spacing = 0): number {
-  let em = 0;
-  for (const char of text) {
-    if ("iljt.,:;!|'".includes(char)) em += 0.28;
-    else if (char === " ") em += 0.28;
-    else if ("fr".includes(char)) em += 0.34;
-    else if ("mwMW".includes(char)) em += 0.84;
-    else if (/[0-9]/.test(char)) em += 0.556;
-    else if (/[A-Z]/.test(char)) em += 0.68;
-    else em += 0.52;
-  }
-  return em * size * (font === "F1" ? 1 : 1.06) + spacing * text.length;
-}
-
-/** Greedy wrap by an average Helvetica glyph width of 0.5 em. */
-function wrap(text: string, size: number, width: number): string[] {
-  const maxChars = Math.max(8, Math.floor(width / (size * 0.5)));
+/** Greedy wrap by the measured width of the words. */
+function wrap(text: string, font: SlipFontKey, size: number, width: number): string[] {
   const lines: string[] = [];
   let line = "";
   for (const word of text.split(/\s+/)) {
-    if (line !== "" && line.length + 1 + word.length > maxChars) {
+    if (line !== "" && advance(`${line} ${word}`, font, size) > width) {
       lines.push(line);
       line = word;
     } else {
@@ -172,6 +159,20 @@ function wrap(text: string, size: number, width: number): string[] {
   }
   if (line !== "") lines.push(line);
   return lines;
+}
+
+/** The largest size, down to `min`, at which `text` fits in `width`. */
+function fitSize(text: string, font: SlipFontKey, size: number, width: number, min: number): number {
+  let fitted = size;
+  while (fitted > min && advance(text, font, fitted) > width) fitted -= 0.5;
+  return fitted;
+}
+
+/** Raw bytes as a string of Latin-1 characters, for writing into the PDF. */
+function binary(bytes: Uint8Array): string {
+  let out = "";
+  for (let i = 0; i < bytes.length; i += 8192) out += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return out;
 }
 
 const num = (n: number): string => String(Math.round(n * 100) / 100);
@@ -223,12 +224,13 @@ function logoMark(ops: string[], x: number, top: number, size: number, fill: str
   );
 }
 
-export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic): Uint8Array<ArrayBuffer> {
+
+export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic, fonts: SlipFonts): Uint8Array<ArrayBuffer> {
   const ops: string[] = [];
   const rgb = (r: number, g: number, b: number) => `${num(r / 255)} ${num(g / 255)} ${num(b / 255)}`;
   const NAVY = rgb(11, 37, 69);
   const TEAL = rgb(15, 118, 110);
-  const TEAL_BRAND = rgb(20, 184, 166);
+  const TEAL_BRAND = rgb(14, 108, 118);
   const TEAL_LIGHT = rgb(94, 234, 212);
   const TEAL_TINT = rgb(240, 253, 250);
   const GOLD = rgb(184, 146, 58);
@@ -238,18 +240,29 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic): Uint8Ar
   const RULE = rgb(220, 230, 238);
   const WHITE = "1 1 1";
   const Y = (top: number) => PAGE_H - top; // measure down from the top edge
+  const X = BOX_EXTRA;
 
   type TextOptions = { spacing?: number; align?: "left" | "center" | "right" };
-  const text = (value: string, x: number, top: number, font: Font, size: number, color: string, { spacing = 0, align = "left" }: TextOptions = {}) => {
-    const width = textWidth(value, font, size, spacing);
+  const text = (value: string, x: number, top: number, font: SlipFontKey, size: number, color: string, { spacing = 0, align = "left" }: TextOptions = {}) => {
+    const width = advance(value, font, size, spacing);
     const left = align === "center" ? x - width / 2 : align === "right" ? x - width : x;
-    ops.push(`BT /${font} ${size} Tf ${color} rg ${num(spacing)} Tc ${num(left)} ${num(Y(top))} Td (${pdfText(value)}) Tj ET`);
+    ops.push(`BT /${font} ${num(size)} Tf ${color} rg ${num(spacing)} Tc ${num(left)} ${num(Y(top))} Td (${pdfText(value)}) Tj ET`);
   };
   const rect = (x: number, top: number, w: number, h: number, color: string) => {
     ops.push(`${color} rg ${num(x)} ${num(Y(top + h))} ${num(w)} ${num(h)} re f`);
   };
   const frame = (x: number, top: number, w: number, h: number, color: string, width = 0.8, fill?: string) => {
     ops.push(`${fill ? `${fill} rg ` : ""}${color} RG ${num(width)} w ${num(x)} ${num(Y(top + h))} ${num(w)} ${num(h)} re ${fill ? "B" : "S"}`);
+  };
+  const roundRect = (x: number, top: number, w: number, h: number, r: number, color: string) => {
+    const k = r * 0.5523;
+    const y = Y(top + h);
+    ops.push(
+      `${color} rg ${num(x + r)} ${num(y)} m ${num(x + w - r)} ${num(y)} l ${num(x + w - r + k)} ${num(y)} ${num(x + w)} ${num(y + r - k)} ${num(x + w)} ${num(y + r)} c ` +
+        `${num(x + w)} ${num(y + h - r)} l ${num(x + w)} ${num(y + h - r + k)} ${num(x + w - r + k)} ${num(y + h)} ${num(x + w - r)} ${num(y + h)} c ` +
+        `${num(x + r)} ${num(y + h)} l ${num(x + r - k)} ${num(y + h)} ${num(x)} ${num(y + h - r + k)} ${num(x)} ${num(y + h - r)} c ` +
+        `${num(x)} ${num(y + r)} l ${num(x)} ${num(y + r - k)} ${num(x + r - k)} ${num(y)} ${num(x + r)} ${num(y)} c f`,
+    );
   };
   const hairline = (x1: number, x2: number, top: number, color: string, dash = "") => {
     ops.push(`${color} RG 0.8 w ${dash ? `[${dash}] 0 d ` : ""}${num(x1)} ${num(Y(top))} m ${num(x2)} ${num(Y(top))} l S${dash ? " [] 0 d" : ""}`);
@@ -268,8 +281,14 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic): Uint8Ar
   const right = PAGE_W - MARGIN;
   const innerW = PAGE_W - 2 * MARGIN;
 
-  // Faint logo watermark behind everything, then a fine gold frame.
-  logoMark(ops, PAGE_W / 2 - 130, 190, 260, rgb(244, 250, 249), WHITE);
+  // Faint logo watermark behind everything, at the page's 4 %: centred on the visit details, wholly inside that band, so it
+  // can never reach the header, the stamp, the QR or the page edge. Then a fine gold frame.
+  const detailsTop = 202 + X;
+  const detailsBottom = 374 + X; // where the "Before you come" box starts
+  const markSize = 140;
+  ops.push("q /GS1 gs");
+  logoMark(ops, (PAGE_W - markSize) / 2, (detailsTop + detailsBottom - markSize) / 2, markSize, TEAL_BRAND, WHITE);
+  ops.push("Q");
   frame(12, 12, PAGE_W - 24, PAGE_H - 24, GOLD, 0.7);
 
   // Header: navy band, logo, clinic name, gold rule.
@@ -279,29 +298,49 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic): Uint8Ar
   text("APPOINTMENT SLIP", MARGIN + 60, 68, "F2", 8, TEAL_LIGHT, { spacing: 2 });
   hairline(12.4, PAGE_W - 12.4, 88.4, GOLD);
 
-  // Highlight box: date with year, time, arrive-by.
+  // Highlight box: date with year, time, the CONFIRMED stamp inside it, and the arrive-by pill across the foot.
   const boxTop = 102;
-  frame(MARGIN, boxTop, innerW, 80, GOLD, 0.9, TEAL_TINT);
+  const boxHeight = 80 + X;
+  frame(MARGIN, boxTop, innerW, boxHeight, GOLD, 0.9, TEAL_TINT);
+  const sealCx = right - 14 - SEAL_PT / 2;
+  const sealTop = boxTop + 8;
+  const textWidthMax = sealCx - SEAL_PT / 2 - 10 - (MARGIN + 16);
   text("YOUR APPOINTMENT", MARGIN + 16, boxTop + 18, "F2", 7.5, GOLD_TEXT, { spacing: 1.6 });
-  text(formatLocalDateWithYear(view.localDate), MARGIN + 16, boxTop + 40, "F3", 22, NAVY);
-  text(`${view.localTime} (${zoneLabel(view.timeZone)})`, MARGIN + 16, boxTop + 60, "F3", 17, TEAL);
-  text(`Please arrive by ${arriveByTime(view.localTime)}`, MARGIN + 16, boxTop + 73, "F2", 9.5, NAVY);
+  const dateText = formatLocalDateWithYear(view.localDate);
+  text(dateText, MARGIN + 16, boxTop + 40, "F3", fitSize(dateText, "F3", 22, textWidthMax, 14), NAVY);
+  const timeText = `${view.localTime} (${zoneLabel(view.timeZone)})`;
+  text(timeText, MARGIN + 16, boxTop + 60, "F3", fitSize(timeText, "F3", 17, textWidthMax, 12), TEAL);
 
-  // CONFIRMED seal, slightly rotated, inside the box's right side.
-  const sealDate = formatSealDate(view.bookedAt, view.timeZone);
-  const angle = (-12 * Math.PI) / 180;
-  ops.push(`q ${num(Math.cos(angle))} ${num(Math.sin(angle))} ${num(-Math.sin(angle))} ${num(Math.cos(angle))} ${num(right - 52)} ${num(Y(boxTop + 44))} cm`);
-  circle(0, 0, 40, TEAL, 1.6, WHITE);
-  circle(0, 0, 35, TEAL, 0.6);
-  const sealName = wrap(clinic.name || "Clinic", 6, 54).slice(0, 2);
-  sealName.forEach((line, index) => ops.push(`BT /F2 6 Tf ${TEAL} rg ${num(-textWidth(line.toUpperCase(), "F2", 6) / 2)} ${num(23 - index * 7)} Td (${pdfText(line.toUpperCase())}) Tj ET`));
-  ops.push(`BT /F2 11 Tf ${TEAL} rg 0.6 Tc ${num(-textWidth("CONFIRMED", "F2", 11, 0.6) / 2)} 2 Td (CONFIRMED) Tj ET`);
-  ops.push(`BT /F1 6 Tf ${GOLD_TEXT} rg 0 Tc ${num(-textWidth(sealDate, "F1", 6) / 2)} -11 Td (${pdfText(sealDate)}) Tj ET`);
-  if (view.isSample) ops.push(`BT /F2 5.5 Tf ${MUTED} rg 0.8 Tc ${num(-textWidth("DEMO", "F2", 5.5, 0.8) / 2)} -22 Td (DEMO) Tj ET`);
-  ops.push("Q");
+  // Stamp: the page's SVG, drawn from the same layout (seal.ts). Y runs up here, so every y is flipped.
+  const k = SEAL_PT / SEAL.box;
+  const sealCy = Y(sealTop + SEAL_PT / 2);
+  const content = sealContent({ clinicName: clinic.name, booked: formatSealBooked(view.bookedAt, view.timeZone), sample: view.isSample });
+  circle(sealCx, sealCy, SEAL.outerRadius * k, TEAL, SEAL.outerStroke * k, WHITE);
+  circle(sealCx, sealCy, SEAL.innerRadius * k, TEAL, SEAL.innerStroke * k);
+  const place = (font: SlipFontKey, size: number, color: string, spacing: number, turnDeg: number, x: number, y: number, value: string) => {
+    const a = (turnDeg * Math.PI) / 180;
+    ops.push(`BT /${font} ${num(size * k)} Tf ${color} rg ${num(spacing * k)} Tc ${num(Math.cos(a))} ${num(-Math.sin(a))} ${num(Math.sin(a))} ${num(Math.cos(a))} ${num(sealCx + x * k)} ${num(sealCy - y * k)} Tm (${pdfText(value)}) Tj ET`);
+  };
+  for (const glyph of [...content.top, ...content.bottom]) place(glyph.font, glyph.size, TEAL, 0, glyph.rotateDeg, glyph.x, glyph.y, glyph.char);
+  const tilt = (SEAL.tiltDeg * Math.PI) / 180;
+  const tilted = (x: number, y: number): [number, number] => [x * Math.cos(tilt) - y * Math.sin(tilt), x * Math.sin(tilt) + y * Math.cos(tilt)];
+  content.centre.lines.forEach((line, index) => {
+    const [x, y] = tilted(line.x, line.y);
+    place(line.font, line.size, index === 0 ? TEAL : GOLD_TEXT, line.spacing, SEAL.tiltDeg, x, y, line.text);
+  });
+  const [c0, c1, c2] = content.centre.check.map(([x, y]) => tilted(x, y));
+  const at = (p: [number, number] | undefined) => `${num(sealCx + (p?.[0] ?? 0) * k)} ${num(sealCy - (p?.[1] ?? 0) * k)}`;
+  ops.push(`${TEAL} RG ${num(content.centre.checkStroke * k)} w 1 J 1 j ${at(c0)} m ${at(c1)} l ${at(c2)} l S`);
+
+  // Arrive-by pill, navy as on the page.
+  const pillTop = boxTop + boxHeight - 8 - 22;
+  roundRect(MARGIN + 12, pillTop, innerW - 24, 22, 6, NAVY);
+  const arrive = "Please arrive by ";
+  text(arrive, MARGIN + 24, pillTop + 14.6, "F2", 9.5, WHITE);
+  text(arriveByTime(view.localTime), MARGIN + 24 + advance(arrive, "F2", 9.5), pillTop + 14.6, "F2", 9.5, TEAL_LIGHT);
 
   // Visit details.
-  let top = 202;
+  let top = 202 + X;
   text("VISIT DETAILS", MARGIN, top, "F2", 7.5, GOLD_TEXT, { spacing: 1.6 });
   hairline(MARGIN, right, top + 6, RULE);
   top += 22;
@@ -309,7 +348,7 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic): Uint8Ar
   const valueWidth = right - valueX;
   const row = (label: string, value: string, sub?: string) => {
     text(label, MARGIN, top, "F1", 9, MUTED);
-    const lines = wrap(value, 11, valueWidth);
+    const lines = wrap(value, "F2", 11, valueWidth);
     lines.forEach((line, index) => text(line, valueX, top + index * 13, "F2", 11, INK));
     top += (lines.length - 1) * 13;
     if (sub) {
@@ -325,12 +364,12 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic): Uint8Ar
   row("Fee", `${formatPkr(view.feePkr)} (sample)`);
   if (clinic.address.length > 0 || clinic.phoneDisplay !== "") {
     text("Clinic", MARGIN, top, "F1", 9, MUTED);
-    const lines = [...clinic.address.flatMap((line) => wrap(line, 10, valueWidth)), ...(clinic.phoneDisplay !== "" ? [clinic.phoneDisplay] : [])];
+    const lines = [...clinic.address.flatMap((line) => wrap(line, "F1", 10, valueWidth)), ...(clinic.phoneDisplay !== "" ? [clinic.phoneDisplay] : [])];
     lines.forEach((line, index) => text(line, valueX, top + index * 12, index === lines.length - 1 && clinic.phoneDisplay !== "" ? "F2" : "F1", 10, INK));
   }
 
   // Before you come.
-  const tipsTop = 374;
+  const tipsTop = 374 + X;
   const tips = [`Arrive ${ARRIVE_EARLY_MINUTES} minutes early.`, SLIP_BRING, ...(clinic.emergencyDisplay ? [`Emergency? Call ${clinic.emergencyDisplay}.`] : [])];
   frame(MARGIN, tipsTop, innerW, 22 + tips.length * 14, GOLD, 0.7);
   text("Before you come", MARGIN + 14, tipsTop + 17, "F3", 11.5, NAVY);
@@ -340,7 +379,7 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic): Uint8Ar
   });
 
   // Perforated divider with a notch at each edge, then the stub: reference and QR.
-  const perfTop = 452;
+  const perfTop = 452 + X;
   hairline(MARGIN + 6, right - 6, perfTop, GOLD, "3 3");
   circle(12, Y(perfTop), 8, GOLD, 0.7, WHITE);
   circle(PAGE_W - 12, Y(perfTop), 8, GOLD, 0.7, WHITE);
@@ -371,19 +410,30 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic): Uint8Ar
   text("Show at reception", qrX + qrSize / 2, qrTop + qrSize + 14, "F2", 8, NAVY, { align: "center" });
 
   // Footer.
-  hairline(MARGIN, right, 542, RULE);
-  text(`Booked on ${formatBookedOn(view.bookedAt, view.timeZone)}`, MARGIN, 557, "F1", 8.5, MUTED);
-  text(SLIP_DEMO_FOOTER, MARGIN, 570, "F1", 8.5, MUTED);
+  hairline(MARGIN, right, 542 + X, RULE);
+  text(`Booked on ${formatBookedOn(view.bookedAt, view.timeZone)}`, MARGIN, 557 + X, "F1", 8.5, MUTED);
+  text(SLIP_DEMO_FOOTER, MARGIN, 570 + X, "F1", 8.5, MUTED);
 
-  const content = ops.join("\n");
+  // Objects: 1 catalog, 2 pages, 3 page, 4 content, 5-7 fonts, 8-10 font descriptors, 11-13 font files, 14 the watermark's transparency.
+  const stream = ops.join("\n");
+  const fontObjects = SLIP_FONT_KEYS.map((key, i) => {
+    const m = SLIP_FONT_METRICS[key];
+    return `<< /Type /Font /Subtype /TrueType /BaseFont /${m.name} /FirstChar ${m.firstChar} /LastChar 255 /Widths [${m.widths.join(" ")}] /FontDescriptor ${8 + i} 0 R /Encoding /WinAnsiEncoding >>`;
+  });
+  const descriptors = SLIP_FONT_KEYS.map((key, i) => {
+    const m = SLIP_FONT_METRICS[key];
+    return `<< /Type /FontDescriptor /FontName /${m.name} /Flags 32 /FontBBox [${m.bbox.join(" ")}] /ItalicAngle 0 /Ascent ${m.ascent} /Descent ${m.descent} /CapHeight ${m.capHeight} /StemV 80 /FontFile2 ${11 + i} 0 R >>`;
+  });
+  const fontFiles = SLIP_FONT_KEYS.map((key) => `<< /Length ${fonts[key].length} /Length1 ${fonts[key].length} >>\nstream\n${binary(fonts[key])}\nendstream`);
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] /Resources << /Font << /F1 5 0 R /F2 6 0 R /F3 7 0 R >> >> /Contents 4 0 R >>`,
-    `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Bold /Encoding /WinAnsiEncoding >>",
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] /Resources << /Font << /F1 5 0 R /F2 6 0 R /F3 7 0 R >> /ExtGState << /GS1 14 0 R >> >> /Contents 4 0 R >>`,
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+    ...fontObjects,
+    ...descriptors,
+    ...fontFiles,
+    "<< /Type /ExtGState /ca 0.04 /CA 0.04 >>",
   ];
 
   // Every character is Latin-1, so string length equals byte length and the xref offsets are exact.

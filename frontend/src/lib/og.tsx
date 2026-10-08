@@ -14,7 +14,7 @@ interface OgCardOptions {
 /**
  * The social-sharing card: brand mark, optional eyebrow, a title, a subtitle and the demo notice.
  * Image generation cannot read CSS variables, so the brand colours are written out here
- * (navy-900, teal-500 and teal-700 from globals.css); tests/unit/tokens.test.ts checks they match.
+ * (navy-900, teal-500 and teal-700 from tokens.css); tests/unit/tokens.test.ts checks they match.
  */
 export function ogCard({ eyebrow, title, subtitle }: OgCardOptions): ImageResponse {
   return new ImageResponse(

@@ -95,6 +95,7 @@ test.describe("motion on the new pages", () => {
     await expect(first).toHaveAttribute("open", "");
 
     await page.goto("/lab-tests");
+    await page.locator("[data-filters-ready]").waitFor(); // typed before hydration, the filter would miss it
     await page.getByLabel("Search tests").fill("HbA1c");
     await expect(page.getByRole("article").first()).toContainText("HbA1c");
 

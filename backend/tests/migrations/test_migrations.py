@@ -33,6 +33,11 @@ TABLES = {
     "idempotency_key",
     "rate_limit_counter",
     "audit_log",
+    "staff_account",
+    "staff_session",
+    "demo_session",
+    "login_throttle",
+    "appointment_status_change",
 }
 BOOKING_TABLES = {
     "doctor_leave",
@@ -216,3 +221,163 @@ def test_stored_instant_is_independent_of_the_session_time_zone(seeded_engine: E
         assert to_utc(stored) == START
         assert to_utc(stored).utcoffset() == timedelta(0)
         trans.rollback()
+
+
+COMMAND_CENTRE_TABLES = {
+    "staff_account",
+    "staff_session",
+    "demo_session",
+    "login_throttle",
+    "appointment_status_change",
+}
+
+
+def _constraint_names(engine: Engine, table: str) -> set[str]:
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("SELECT conname FROM pg_constraint WHERE conrelid = to_regclass(:t)"), {"t": table}
+        )
+        return {row[0] for row in rows}
+
+
+def _index_names(engine: Engine, table: str) -> set[str]:
+    with engine.connect() as conn:
+        return {i["name"] for i in inspect(conn).get_indexes(table) if i["name"]}
+
+
+def _columns(engine: Engine, table: str) -> set[str]:
+    with engine.connect() as conn:
+        return {c["name"] for c in inspect(conn).get_columns(table)}
+
+
+def test_0003_creates_tables_columns_checks_and_indexes(migrated_engine: Engine) -> None:
+    assert table_names(migrated_engine) >= COMMAND_CENTRE_TABLES
+    assert _columns(migrated_engine, "staff_account") >= {
+        "email",
+        "display_name",
+        "role",
+        "is_active",
+        "password_hash",
+        "must_change_password",
+        "password_changed_at",
+        "last_sign_in_at",
+        "created_by_id",
+    }
+    assert _columns(migrated_engine, "staff_session") >= {
+        "staff_id",
+        "token_hash",
+        "last_seen_at",
+        "idle_expires_at",
+        "absolute_expires_at",
+        "ended_at",
+        "end_reason",
+        "ip_fingerprint",
+    }
+    assert _columns(migrated_engine, "demo_session") >= {"token_hash", "demo_date", "expires_at"}
+    assert _columns(migrated_engine, "login_throttle") >= {
+        "subject_hash",
+        "failed_count",
+        "window_started_at",
+        "locked_until",
+        "expires_at",
+    }
+    assert "version" in _columns(migrated_engine, "appointment")
+    assert _columns(migrated_engine, "audit_log") >= {
+        "actor_staff_id",
+        "actor_role",
+        "target_reference",
+        "from_status",
+        "to_status",
+    }
+    assert _constraint_names(migrated_engine, "staff_account") >= {
+        "ck_staff_account_role_valid",
+        "ck_staff_account_password_hash_argon2id",
+        "uq_staff_account_email",
+    }
+    assert _constraint_names(migrated_engine, "staff_session") >= {
+        "ck_staff_session_absolute_after_created",
+        "ck_staff_session_end_reason_valid",
+        "uq_staff_session_token_hash",
+    }
+    assert _constraint_names(migrated_engine, "appointment_status_change") >= {
+        "ck_appointment_status_change_status_differs",
+        "ck_appointment_status_change_undo_consistent",
+    }
+    assert "ck_appointment_version_positive" in _constraint_names(migrated_engine, "appointment")
+    assert _constraint_names(migrated_engine, "audit_log") >= {
+        "ck_audit_log_actor_type_valid",
+        "ck_audit_log_actor_role_valid",
+    }
+    assert "ix_staff_session_staff_id_active" in _index_names(migrated_engine, "staff_session")
+    assert "ix_appointment_starts_at" in _index_names(migrated_engine, "appointment")
+    assert _index_names(migrated_engine, "audit_log") >= {
+        "ix_audit_log_actor_staff_id_occurred_at",
+        "ix_audit_log_action_occurred_at",
+    }
+    assert "ix_appointment_status_change_appointment_id_occurred_at" in _index_names(
+        migrated_engine, "appointment_status_change"
+    )
+
+
+def test_exclusion_constraint_is_widened_to_every_status_but_cancelled(
+    seeded_engine: Engine,
+) -> None:
+    with seeded_engine.connect() as conn:
+        definition = conn.execute(
+            text(
+                "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+                "WHERE conname = 'ex_appointment_no_overlap'"
+            )
+        ).scalar_one()
+    assert "cancelled" in definition
+    assert "confirmed" not in definition
+
+
+@pytest.mark.parametrize("status", ["arrived", "completed", "no_show"])
+def test_non_cancelled_statuses_still_hold_the_slot(seeded_engine: Engine, status: str) -> None:
+    with seeded_engine.connect() as conn, conn.begin() as trans:
+        doctor, department = _doctor_and_department(conn)
+        _insert_appointment(conn, doctor, department, START, status=status)
+        with pytest.raises(IntegrityError, match="ex_appointment_no_overlap"), conn.begin_nested():
+            _insert_appointment(conn, doctor, department, START)
+        trans.rollback()
+
+
+def test_downgrade_to_0002_restores_the_old_schema_and_upgrades_again(
+    migrated_engine: Engine,
+) -> None:
+    try:
+        run_alembic(migrated_engine, lambda cfg: command.downgrade(cfg, "0002_booking"))
+        assert not COMMAND_CENTRE_TABLES & table_names(migrated_engine)
+        assert "version" not in _columns(migrated_engine, "appointment")
+        assert "actor_staff_id" not in _columns(migrated_engine, "audit_log")
+        with migrated_engine.connect() as conn:
+            definition = conn.execute(
+                text(
+                    "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+                    "WHERE conname = 'ex_appointment_no_overlap'"
+                )
+            ).scalar_one()
+        assert "confirmed" in definition
+        run_alembic(migrated_engine, lambda cfg: command.upgrade(cfg, "head"))
+        run_alembic(migrated_engine, command.check)
+    finally:
+        run_alembic(migrated_engine, lambda cfg: command.upgrade(cfg, "head"))
+        run_seed(migrated_engine)
+
+
+@pytest.mark.parametrize("status", ["arrived", "no_show"])
+def test_downgrade_refuses_while_unrepresentable_bookings_exist(
+    migrated_engine: Engine, status: str
+) -> None:
+    run_seed(migrated_engine)
+    with migrated_engine.begin() as conn:
+        doctor, department = _doctor_and_department(conn)
+        _insert_appointment(conn, doctor, department, START, status=status, reference="RFSAB00001")
+    try:
+        with pytest.raises(RuntimeError, match="0003_command_centre"):
+            run_alembic(migrated_engine, lambda cfg: command.downgrade(cfg, "0002_booking"))
+        assert table_names(migrated_engine) >= COMMAND_CENTRE_TABLES
+    finally:
+        with migrated_engine.begin() as conn:
+            conn.execute(text("DELETE FROM appointment WHERE reference = 'RFSAB00001'"))

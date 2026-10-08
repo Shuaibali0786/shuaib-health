@@ -11,7 +11,7 @@ booking flow, staff app and AI agent, through one versioned API.
 Nothing about the clinic is hard-coded: name, logo, colours, phones, hours, the demo notice and
 the clinic rules all come from the database. One database serves one clinic.
 
-The catalog endpoints are read-only. Feature 005 adds online appointment booking (slots, create, lookup), described below.
+The catalog endpoints are read-only. Feature 005 adds online appointment booking (slots, create, lookup) and Feature 006 the staff Command Centre API, both described below.
 See [`specs/003-catalog-api/`](../specs/003-catalog-api/) and [`specs/005-appointment-booking/`](../specs/005-appointment-booking/) for the specs, plans, data models and the
 OpenAPI contract, and [`history/adr/`](../history/adr/) for the architecture decisions.
 
@@ -58,6 +58,7 @@ notepad .env
 | `BOOKING_PROXY_SECRET` | **Required**, at least 32 characters. Shared with the website (its `BOOKING_PROXY_SECRET`); bookings are accepted only with it. The app refuses to start without it. |
 | `PRIVACY_HASH_KEY` | **Required**, at least 32 characters. Key for the one-way hashes of IPs, mobiles and idempotency keys. The app refuses to start without it. |
 | `DEMO_MODE` | `true` (default): bookings are labelled as samples. |
+| `DEMO_ENABLED` | `true` (default): the read-only demo dashboard. `false` for a real clinic: `POST /admin/demo/start` answers 404 and no demo session can read anything. The website reads the same name (set it before `next build`). Outside clinic hours (09:00-20:00 Karachi) the demo shows its sample day as it stands at 12:30 and labels it. |
 | `BOOKING_PURGE_AFTER_DAYS` / `AUDIT_PURGE_AFTER_DAYS` | Retention of demo bookings (default 7, 1–90) and audit rows (default 90, 7–365). |
 | `BOOKING_LIMIT_PER_IP_PER_HOUR` / `BOOKING_LIMIT_PER_PHONE_PER_DAY` / `LOOKUP_LIMIT_PER_IP_PER_MINUTE` | Booking limits (defaults 10, 5, 20). |
 
@@ -131,8 +132,32 @@ carry `ETag` and `Cache-Control`; send `If-None-Match` to get `304`.
 
 - **Fail fast.** The app (and `python -m app.seed`) refuses to start without `BOOKING_PROXY_SECRET` and `PRIVACY_HASH_KEY`, each at least 32 characters. Generate one with `python -c "import secrets; print(secrets.token_urlsafe(32))"`. The value is never printed.
 - **No double booking.** A Postgres exclusion constraint (`ex_appointment_no_overlap`, ADR-0005) is the final guard; the loser of a race gets `409 slot_taken` with up to 5 alternatives.
-- **Retention (demo).** Bookings are deleted 7 days after the appointment ended and audit rows after 90 days, at startup and on the next booking. Run it by hand with `uv run python -m app.booking.purge` (refuses when `DEMO_MODE` is false).
+- **Retention (demo).** Bookings are deleted 7 days after the appointment ended and audit rows after 90 days, at startup and on the next booking. Run it by hand with `uv run python -m app.booking.purge` (refuses when `DEMO_MODE` is false). Old sign-in sessions are purged in every mode (see Command Centre below).
 - **Concurrency proof.** `uv run pytest -k concurrency` runs the 20-thread race. `uv run pytest -m perf tests/perf/test_booking_concurrency_repeat.py -s` repeats it 100 times (SC-002); it needs `TEST_DATABASE_URL` and took about 13 minutes against the remote test database.
+
+### Command Centre (Feature 006)
+
+The staff dashboard's API lives under `/api/v1/admin/*` (19 operations, OpenAPI 1.2.0). Spec, plan, auth matrix and quickstart: [`specs/006-clinic-command-centre/`](../specs/006-clinic-command-centre/).
+
+| Variable | Meaning |
+|----------|---------|
+| `SESSION_SECRET` | **Required**, at least 32 characters. Keys the session-token and CSRF HMACs; rotating it signs everyone out. The app refuses to start without it. |
+| `STAFF_IDLE_MINUTES` / `STAFF_ABSOLUTE_HOURS` / `STAFF_MAX_SESSIONS` | Staff session limits (defaults 30, 12, 3; the oldest session ends when a 4th starts). |
+| `LOGIN_LOCK_FAILURES` / `LOGIN_LOCK_MINUTES` / `LOGIN_LIMIT_PER_IP_PER_15MIN` | Sign-in lockout and throttling (defaults 5, 15, 20). |
+| `DEMO_LIMIT_PER_IP_PER_HOUR` / `DEMO_SESSION_HOURS` | Demo starts per IP and demo length (defaults 10, 2). |
+| `STATUS_UNDO_SECONDS` | Undo window for a status change (default 10). |
+
+- **First admin.** There is no default account; the seed never creates one. The operator creates the first admin on the server:
+
+  ```bat
+  uv run alembic upgrade head
+  uv run python -m app.auth.create_admin --email owner@example.com --name "Clinic Owner"
+  ```
+
+  It prompts twice for the password (at least 12 characters, not a common one) and prints only "Admin account created." (`--password-stdin` reads it from standard input for scripts.) Further staff are added by an admin in the dashboard.
+- **Demo.** With `DEMO_ENABLED=true`, `POST /admin/demo/start` issues a read-only demo session that only ever sees synthetic data generated for today's Karachi date (`app/demo/`); every write is refused with `403 demo_read_only`. Real staff never see demo data.
+- **Retention.** Staff sessions are deleted 30 days after they ended or expired, demo sessions 1 day after they expired, at startup in every mode (and with each demo purge). Bookings and audit rows are purged only when `DEMO_MODE=true`; outside it audit rows are kept (at least 1 year, FR-031).
+- **Tests.** `uv run pytest tests/api/test_auth_matrix.py` checks every row of `contracts/auth-matrix.md` for every kind of viewer and session state (243 cases); `test_demo_separation.py` proves demo and real data never mix; `test_log_safety.py` proves no patient data, search term, password or token reaches the logs. `uv run pytest -m perf tests/perf/test_command_centre_latency.py -s` measures the dashboard reads against 30 000 bookings.
 
 ## 6. Quality checks
 
@@ -150,6 +175,12 @@ uv run pytest -m perf -s
 - `pytest -m perf -s` prints server-side latency per endpoint (budget: p95 under 200 ms). Most of
   the time is the network round trip to the database, so results depend on how far you are
   from the Neon region.
+- **One pytest run at a time.** The suite drops and re-creates every table in the test database, so
+  two runs at once would wreck each other. Each run takes a Postgres advisory lock on the test
+  database for its whole session; a second run prints "Waiting: another pytest run is using the
+  test database" and starts when the first ends (it gives up after 15 minutes). The Playwright
+  and Vitest suites use a mock API and never touch the database, so they are not affected.
+- `mypy` also checks `migrations/` (configured in `pyproject.toml`).
 
 ## 7. Regenerate the seed data (only when the frontend mock data changes)
 

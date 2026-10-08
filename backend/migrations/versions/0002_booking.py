@@ -10,6 +10,7 @@ Create Date: 2026-10-04 13:30:00.000000
 """
 
 from collections.abc import Sequence
+from typing import Any
 
 import sqlalchemy as sa
 from alembic import op
@@ -20,7 +21,7 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
-def _id_and_timestamps() -> list[sa.Column[object]]:
+def _id_and_timestamps() -> list[sa.Column[Any]]:
     return [
         sa.Column("id", sa.UUID(), server_default=sa.text("gen_random_uuid()"), nullable=False),
         sa.Column(

@@ -97,17 +97,17 @@ describe("no third-party brands", () => {
 });
 
 describe("no backend dependency (constitution V)", () => {
-  it("src contains no fetch() call except the catalog API client, the booking proxy and the booking flow's browser client", () => {
+  it("src contains no fetch() call except the catalog API client, the booking proxy, the booking flow's browser client and the staff app's two call sites", () => {
     const offenders = codeFiles
-      .filter((file) => !["/src/lib/api/http.ts", "/src/lib/booking/backend.ts", "/src/lib/booking/client.ts"].includes(file.path))
+      .filter((file) => !["/src/lib/api/http.ts", "/src/lib/booking/backend.ts", "/src/lib/booking/client.ts", "/src/admin/lib/client.ts", "/src/admin/lib/server.ts"].includes(file.path))
       .filter((file) => /\bfetch\s*\(/.test(file.code))
       .map((file) => file.path);
     expect(offenders).toEqual([]);
   });
 
-  it("src reads no environment variables except SITE_URL in lib/seo.ts, the API settings in lib/api/config.ts and the start-up check in instrumentation.ts", () => {
+  it("src reads no environment variables except SITE_URL in lib/seo.ts, DEMO_ENABLED in lib/demo.ts, the API settings in lib/api/config.ts and the start-up check in instrumentation.ts", () => {
     const offenders = codeFiles
-      .filter((file) => !["/src/lib/seo.ts", "/src/lib/api/config.ts", "/src/instrumentation.ts"].includes(file.path))
+      .filter((file) => !["/src/lib/seo.ts", "/src/lib/demo.ts", "/src/lib/api/config.ts", "/src/instrumentation.ts"].includes(file.path))
       .filter((file) => /\bprocess\.env\b/.test(file.code))
       .map((file) => file.path);
     expect(offenders).toEqual([]);
@@ -138,7 +138,7 @@ describe("the checks themselves", () => {
 
 describe("the About page makes no invented claims (FR-061)", () => {
   const aboutText = stringValues(aboutContent);
-  const aboutSource = codeFiles.filter((file) => file.path === "/src/app/about/page.tsx" || file.path.startsWith("/src/components/about/"));
+  const aboutSource = codeFiles.filter((file) => file.path === "/src/app/(site)/about/page.tsx" || file.path.startsWith("/src/components/about/"));
 
   it("has the page and its component to scan", () => {
     expect(aboutSource.length).toBeGreaterThanOrEqual(2);

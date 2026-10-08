@@ -91,6 +91,22 @@ describe("sitemap and robots", () => {
     expect(result.rules).toEqual({ userAgent: "*", disallow: "/" });
     expect(result.sitemap).toBe(`${siteUrl()}/sitemap.xml`);
   });
+
+  it("keeps the staff app out of crawlers' reach, also when the public site is indexable", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/content", () => ({ getSiteConfig: async () => ({ ...siteConfig, indexable: true }) }));
+    const { default: indexableRobots } = await import("@/app/robots");
+    const rules = (await indexableRobots()).rules as { allow?: string; disallow?: string | string[] };
+    vi.doUnmock("@/lib/content");
+    vi.resetModules();
+    expect(rules.allow).toBe("/");
+    expect([rules.disallow].flat()).toContain("/admin");
+  });
+
+  it("never lists a staff page in the sitemap", async () => {
+    const urls = (await sitemap()).map((entry) => entry.url);
+    expect(urls.filter((url) => /\/admin(\/|$)/.test(url))).toEqual([]);
+  });
 });
 
 describe("organizationJsonLd", () => {

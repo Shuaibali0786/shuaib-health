@@ -15,6 +15,8 @@ from app.booking.privacy import hmac_hex
 BOOKING_IP_WINDOW = timedelta(hours=1)
 BOOKING_PHONE_WINDOW = timedelta(hours=24)  # aligned to UTC midnight
 LOOKUP_IP_WINDOW = timedelta(minutes=1)
+LOGIN_IP_WINDOW = timedelta(minutes=15)
+DEMO_IP_WINDOW = timedelta(hours=1)
 CLEANUP_LIMIT = 200
 
 HIT = text(
@@ -63,3 +65,11 @@ def booking_phone_bucket(key: SecretStr, phone: str) -> str:
 
 def lookup_ip_bucket(key: SecretStr, ip: str) -> str:
     return f"lookup:ip:{hmac_hex(key, 'lookup-ip', ip)}"
+
+
+def login_ip_bucket(key: SecretStr, ip: str) -> str:
+    return f"login:ip:{hmac_hex(key, 'login-ip', ip)}"
+
+
+def demo_ip_bucket(key: SecretStr, ip: str) -> str:
+    return f"demo:ip:{hmac_hex(key, 'demo-ip', ip)}"

@@ -6,6 +6,18 @@ import time
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 logger = logging.getLogger("app.access")
+ADMIN_PREFIX = "/api/v1/admin/"
+
+
+def outcome_of(status: int) -> str:
+    """A coarse, countable result for the operator (NFR-003)."""
+    if status < 400:
+        return "ok"
+    if status in (401, 403):
+        return "refused"
+    if status == 429:
+        return "rate_limited"
+    return "invalid" if status < 500 else "error"
 
 
 class AccessLogMiddleware:
@@ -30,14 +42,25 @@ class AccessLogMiddleware:
             await self.app(scope, receive, capture_status)
         finally:
             route = scope.get("route")
-            logger.info(
-                "request",
-                extra={
-                    "event": "request",
-                    "method": scope.get("method"),
-                    "path": scope.get("path"),
-                    "route": getattr(route, "path", None),
-                    "status": status,
-                    "durationMs": round((time.perf_counter() - started) * 1000, 1),
-                },
-            )
+            fields = {
+                "event": "request",
+                "method": scope.get("method"),
+                "path": scope.get("path"),
+                "route": getattr(route, "path", None),
+                "status": status,
+                "durationMs": round((time.perf_counter() - started) * 1000, 1),
+            }
+            if str(scope.get("path", "")).startswith(ADMIN_PREFIX):
+                state = scope.get("state") or {}
+                fields["role"] = state.get("cc_role", "none")
+                fields["outcome"] = outcome_of(status)
+                logger.info("request", extra=fields)
+                if fields["outcome"] == "refused":
+                    # Refusals are counted separately; only the code, never who or what.
+                    refused = {k: fields[k] for k in ("method", "route", "status", "role")}
+                    logger.info(
+                        "request.refused",
+                        extra={"event": "request.refused", "code": state.get("cc_code"), **refused},
+                    )
+            else:
+                logger.info("request", extra=fields)

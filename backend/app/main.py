@@ -14,7 +14,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.booking.clock import SystemClock
-from app.booking.retention import purge_demo_bookings
+from app.booking.retention import purge_demo_bookings, purge_old_sessions
 from app.db import get_engine, make_engine
 from app.errors import UnhandledErrorMiddleware, register_exception_handlers
 from app.logging_config import configure_logging
@@ -23,6 +23,10 @@ from app.middleware.rate_limit import InMemoryFixedWindowLimiter, RateLimitMiddl
 from app.middleware.request_id import RequestIdMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.routers import (
+    admin_auth,
+    admin_bookings,
+    admin_dashboard,
+    admin_staff,
     appointments,
     clinic,
     departments,
@@ -40,20 +44,26 @@ logger = logging.getLogger("app.booking")
 
 
 def _startup_purge(app: FastAPI, settings: Settings) -> None:
-    """Remove expired demo data once at startup. Any failure is logged by type only."""
+    """Remove old sessions, and in demo mode expired demo data, once at startup.
+
+    Any failure is logged by type only.
+    """
     try:
         override = app.dependency_overrides.get(get_engine)
         # The app's own settings decide which database this is, not the process-wide cache.
         engine = override() if override else make_engine(settings.database_url, pool_size=1)
         try:
             with engine.begin() as conn:
-                purge_demo_bookings(
-                    conn,
-                    now=SystemClock().now(),
-                    after_days=settings.booking_purge_after_days,
-                    audit_after_days=settings.audit_purge_after_days,
-                    limit=None,
-                )
+                if settings.demo_mode:  # purges old sessions too
+                    purge_demo_bookings(
+                        conn,
+                        now=SystemClock().now(),
+                        after_days=settings.booking_purge_after_days,
+                        audit_after_days=settings.audit_purge_after_days,
+                        limit=None,
+                    )
+                else:
+                    purge_old_sessions(conn, now=SystemClock().now(), limit=None)
         finally:
             if not override:
                 engine.dispose()
@@ -63,14 +73,11 @@ def _startup_purge(app: FastAPI, settings: Settings) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    task = None
     settings: Settings = app.state.settings
-    if settings.demo_mode:
-        # Not awaited before serving: a slow or unreachable database must not delay startup.
-        task = asyncio.create_task(asyncio.to_thread(_startup_purge, app, settings))
+    # Not awaited before serving: a slow or unreachable database must not delay startup.
+    task = asyncio.create_task(asyncio.to_thread(_startup_purge, app, settings))
     yield
-    if task is not None:
-        await task
+    await task
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -99,6 +106,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(packages.router)
     api.include_router(slots.router)
     api.include_router(appointments.router)
+    api.include_router(admin_auth.router)
+    api.include_router(admin_staff.router)
+    api.include_router(admin_bookings.router)
+    api.include_router(admin_dashboard.router)
     app.include_router(api)
 
     # add_middleware wraps the current stack, so the LAST one added is the OUTERMOST.

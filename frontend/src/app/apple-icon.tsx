@@ -7,7 +7,7 @@ export const contentType = "image/png";
 /**
  * iOS home-screen icon, drawn from the same mark geometry as the logo.
  * Image generation cannot read CSS variables, so the two brand colours are
- * written out here (navy-900 and teal-500 from globals.css);
+ * written out here (navy-900 and teal-500 from tokens.css);
  * tests/unit/tokens.test.ts checks that they match.
  */
 export default function AppleIcon() {

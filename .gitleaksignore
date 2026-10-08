@@ -1,0 +1,3 @@
+# Fake credentials used only by tests (not real secrets). Reviewed in Feature 006 release checks.
+488d8dc88affb2c69869032f81bfec95118836f4:frontend/tests/unit/mock-api-admin-staff.test.ts:generic-api-key:119
+75a678bef3acc25d3d3e10c25824d2d81e2382b9:backend/tests/api/admin_support.py:generic-api-key:16
