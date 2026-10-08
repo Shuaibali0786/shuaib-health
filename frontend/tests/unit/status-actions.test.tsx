@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ConfirmDialog, confirmTitle, type ChangeRequest } from "@/admin/bookings/ConfirmDialog";
 import { StatusActions, quickAction } from "@/admin/bookings/StatusActions";
-import { bookingMessage, latestFrom } from "@/admin/bookings/copy";
+import { bookingMessage, latestFrom, outcomeUnknown } from "@/admin/bookings/copy";
 import { AdminApiError } from "@/admin/lib/client";
 import type { BookingSummary } from "@/admin/lib/schemas";
 import { allowedNext, timeHint } from "@/admin/lib/statusRules";
@@ -89,6 +89,18 @@ describe("a booking changed by someone else (409)", () => {
   it("never shows a status code or a stack for any other failure", () => {
     expect(bookingMessage(new Error("boom"))).toBe("Something went wrong. Please try again.");
     expect(bookingMessage(new AdminApiError(0, "network"))).toMatch(/could not reach/);
+  });
+});
+
+describe("a change whose outcome is unknown (no answer, timeout, server error)", () => {
+  it("is re-read, never retried: only network, timeout and 5xx count, not a refusal", () => {
+    for (const error of [new AdminApiError(0, "network"), new AdminApiError(0, "timeout"), new AdminApiError(504, "upstream_error"), new AdminApiError(503, "upstream_error")]) {
+      expect(outcomeUnknown(error), `${error.status} ${error.code}`).toBe(true);
+      expect(bookingMessage(error)).toMatch(/may not have been saved.*latest status has been loaded/);
+    }
+    for (const error of [new AdminApiError(409, "booking_changed"), new AdminApiError(403, "demo_read_only"), new AdminApiError(422, "transition_not_allowed"), new Error("boom")]) {
+      expect(outcomeUnknown(error)).toBe(false);
+    }
   });
 });
 

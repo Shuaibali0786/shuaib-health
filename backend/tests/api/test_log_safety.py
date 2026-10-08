@@ -2,14 +2,18 @@ import json
 import logging
 import uuid
 from collections.abc import Callable
+from datetime import timedelta
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
-from sqlmodel import Session
+from sqlmodel import Session, col, select
 
+from app import models as m
 from app.main import create_app
+from app.settings import Settings
+from tests.api.admin_support import API, PASSWORD, make_staff, sign_in, staff_session
 from tests.conftest import FrozenClock, SettingsFactory, override_clock
 
 SECRET_URL = "postgresql+psycopg://appuser:SECRETPW@ep-x.example.neon.tech/db?sslmode=require"
@@ -157,3 +161,102 @@ def test_booking_traffic_leaves_no_personal_data_in_logs_errors_or_rows(
     for label, value in PERSONAL.items():
         assert value not in stored, f"{label} found in audit/idempotency rows"
         assert value not in counters, f"{label} found in rate-limit rows"
+
+
+# ---- Command Centre (Feature 006, SC-008): no patient data, search term, password or token ----
+
+
+@pytest.mark.db
+def test_command_centre_traffic_leaves_no_personal_data_passwords_or_tokens_in_logs(
+    cc_client: TestClient,
+    cc_settings: Settings,
+    cc_clock: FrozenClock,
+    db_session: Session,
+    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    admin = make_staff(db_session, "owner.logcheck@example.org", "admin", "Owner Logcheck")
+    hdrs, token, _ = staff_session(db_session, cc_settings, admin, cc_clock.now())
+    doc = db_session.exec(select(m.Doctor).where(col(m.Doctor.slug) == "dr-omar-sheikh")).one()
+    starts = cc_clock.now() + timedelta(hours=1, minutes=30)
+    db_session.add(
+        m.Appointment(
+            reference="ZZZZZKK001",
+            doctor_id=doc.id,  # type: ignore[arg-type]
+            department_id=doc.department_id,
+            starts_at=starts,
+            ends_at=starts + timedelta(minutes=15),
+            status="confirmed",
+            fee_pkr=doc.fee_pkr,
+            patient_name=PERSONAL["name"],
+            patient_phone=PERSONAL["mobile_e164"],
+            patient_email=PERSONAL["email"],
+            reason=PERSONAL["reason"],
+            rules_accepted_at=cc_clock.now(),
+            rules_version="0" * 16,
+        )
+    )
+    db_session.commit()
+    temporary = "Temporary-Pass-Phrase-42"
+    new_password = "Brand-New-Passphrase-99"
+    wrong = "Wrong-Guess-Password-1"
+    searched = ["Zubair Test", "3123456789", "zubair.testcase"]
+
+    with caplog.at_level(logging.DEBUG):
+        assert sign_in(cc_client, admin.email, wrong).status_code == 401
+        assert sign_in(cc_client, admin.email).status_code == 200
+        for term in searched:
+            found = cc_client.post(f"{API}/bookings/search", json={"q": term}, headers=hdrs)
+            assert found.status_code == 200
+        assert cc_client.get(f"{API}/bookings/ZZZZZKK001", headers=hdrs).status_code == 200
+        reveal = cc_client.post(f"{API}/bookings/ZZZZZKK001/reveal-phone", headers=hdrs)
+        assert reveal.status_code == 200
+        arrived = cc_client.post(
+            f"{API}/bookings/ZZZZZKK001/status",
+            json={"to": "arrived", "expectedVersion": 1},
+            headers=hdrs,
+        )
+        assert arrived.status_code == 200
+        created = cc_client.post(
+            f"{API}/staff",
+            json={
+                "email": "new.desk@example.org",
+                "displayName": "New Desk",
+                "role": "receptionist",
+                "temporaryPassword": temporary,
+            },
+            headers=hdrs,
+        )
+        assert created.status_code == 201
+        reset = cc_client.post(
+            f"{API}/staff/{created.json()['id']}/reset-password",
+            json={"temporaryPassword": temporary + "x"},
+            headers=hdrs,
+        )
+        assert reset.status_code in (200, 204)
+        changed = cc_client.post(
+            f"{API}/auth/change-password",
+            json={"currentPassword": PASSWORD, "newPassword": new_password},
+            headers=hdrs,
+        )
+        assert changed.status_code in (200, 204)
+        # Refused requests (no proxy secret; malformed body or ended session) are logged too.
+        no_secret = cc_client.get(f"{API}/bookings/ZZZZZKK001", headers={"X-Session-Token": token})
+        assert 400 <= no_secret.status_code < 500
+        malformed = cc_client.post(f"{API}/bookings/search", json={"q": 5}, headers=hdrs)
+        assert 400 <= malformed.status_code < 500
+
+    logged = json.dumps(log_records(capsys)) + "\n".join(r.getMessage() for r in caplog.records)
+    assert logged  # the requests really were logged
+    secrets_and_terms = {
+        **PERSONAL,
+        "token": token,
+        "csrf": hdrs["X-CSRF-Token"],
+        "password": PASSWORD,
+        "wrong password": wrong,
+        "new password": new_password,
+        "temporary password": temporary,
+        **{f"search term {i}": term for i, term in enumerate(searched)},
+    }
+    for label, value in secrets_and_terms.items():
+        assert value not in logged, f"{label} found in logs"

@@ -16,6 +16,7 @@ npm run build
 npm run test:e2e
 npm run test:e2e:stateful
 npm run test:e2e:offline
+node scripts/check-admin-isolation.mjs
 npm run images:placeholders
 ```
 
@@ -60,3 +61,15 @@ Spec, plan and quickstart: `../specs/005-appointment-booking/`. Evidence for eve
 - **Safe retries.** One `Idempotency-Key` per attempt; a double click or a retry after a timeout never books twice.
 - **Mock API booking support** (`tests/mock-api`): `MOCK_NOW`, `MOCK_PROXY_SECRET`, and the modes `booking-down`, `booking-slow` (20 s), `slot-taken` and `rate-limited`. `/__log` lists booking calls (method, path, mode, idempotency key) and never a body.
 - **Offline.** With the API dead or unset, the build passes and the booking page shows "Online booking is temporarily unavailable. Please call the clinic." with the clinic phone when known.
+
+## Feature 006 (Clinic Command Centre)
+
+Spec, plan, contracts and quickstart: `../specs/006-clinic-command-centre/`. Evidence for every success criterion: `results.md` there.
+
+- **Routes.** `/admin/login`, `/admin` (Overview), `/admin/bookings`, `/admin/doctors`, `/admin/insights`, `/admin/activity` and `/admin/staff` (admins only), `/admin/account/password`. Public pages live in `src/app/(site)/`, the staff app in `src/app/(admin)/admin/` with its own root layout, CSS and fonts; staff code is in `src/admin/` and a lint rule stops public code importing it.
+- **Isolation.** `npm run build && node scripts/check-admin-isolation.mjs` fails if any admin script, style or font is in a public page's bundle; `tests/e2e/admin-isolation.spec.ts` checks the same at runtime.
+- **BFF.** The browser only calls `/api/admin/*` on this site. The server routes check origin and size, put the session token in a `__Host-` cookie (Secure, HttpOnly, SameSite=Strict) and call the backend with `BOOKING_PROXY_SECRET`; no new variable is needed. Every staff response sends `no-store`, `X-Robots-Tag: noindex`, `no-referrer` and `frame-ancestors 'none'` (`next.config.ts`); public pages never get these headers (`tests/unit/seo-indexing.test.ts`, `tests/e2e/seo.spec.ts`).
+- **Demo.** `DEMO_ENABLED` (default `true`, read at build time, same name as the backend): the gold top bar, the demo buttons and `/admin/demo/start`. `false` removes them for a real clinic.
+- **Search engines.** Public pages follow the clinic's `indexable` flag only (meta robots and `robots.txt`). The demo clinic is fictional, so it stays `noindex`; a real clinic sets `indexable` to true and its public pages become indexable, while `/admin` stays `noindex` and disallowed.
+- **Tests.** Staff specs are `tests/e2e/admin-*.spec.ts` and run only in the projects `admin-desktop` (1440), `admin-laptop-1366`, `admin-laptop-1280` and `admin-mobile` (Pixel 7): `npm run test:e2e -- --project=admin-desktop`. `tests/e2e/stateful/admin-resilience.spec.ts` (`npm run test:e2e:stateful`) covers the staff backend down or slow. The mock API serves the staff API too (`tests/mock-api/admin.mjs`: test sessions such as `cs_e2e-admin`, `cd_e2e-demo`, and the modes `admin-down`, `admin-slow`, `session-expired`, `booking-changed`).
+- **Visual baselines.** `tests/e2e/admin-visual.spec.ts` compares every screen in both themes with the approved design (`admin-visual.spec.ts-snapshots/`, Windows renders, clock frozen). After an intended design change, review the diff and update with `npm run test:e2e -- tests/e2e/admin-visual.spec.ts --update-snapshots`.

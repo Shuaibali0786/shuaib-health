@@ -12,10 +12,12 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, text
+from sqlalchemy import Connection, Engine, text
+from sqlmodel import Session
 
-from app.booking.retention import purge_demo_bookings
+from app.booking.retention import purge_demo_bookings, purge_old_sessions
 from app.main import create_app
+from tests.api.admin_support import make_staff
 from tests.conftest import FROZEN_NOW, FrozenClock, SettingsFactory
 
 pytestmark = pytest.mark.db
@@ -161,8 +163,8 @@ def test_the_purge_logs_only_a_count(
     with caplog.at_level(logging.DEBUG):
         purge(committing_engine)
     records = [r for r in caplog.records if r.name == "app.booking"]
-    assert [r.getMessage() for r in records] == ["purge"]
-    assert [r.__dict__.get("deleted") for r in records] == [1]
+    assert [r.getMessage() for r in records] == ["purge", "purge_sessions"]
+    assert [r.__dict__.get("deleted") for r in records] == [1, 0]
 
 
 def run_cli(demo_mode: str) -> subprocess.CompletedProcess[str]:
@@ -220,6 +222,146 @@ def test_startup_purges_in_the_background(
     with make_committing_client():  # entering the context runs the lifespan
         pass
     assert count(committing_engine, "appointment") == 1
+
+
+# ----- sign-in sessions (Feature 006, T149 / R17): any mode ------------------------------------
+
+
+def insert_staff_session(
+    conn: Connection,
+    staff_id: uuid.UUID,
+    *,
+    ended_days_ago: float | None = None,
+    idle_days_ago: float = -1,
+    absolute_days_ago: float = -1,
+) -> uuid.UUID:
+    """A staff session created 60 days before the frozen now; negative 'ago' means in the future."""
+
+    def at(days_ago: float) -> datetime:
+        return FROZEN_NOW - timedelta(days=days_ago)
+
+    row = conn.execute(
+        text(
+            "INSERT INTO staff_session (staff_id, token_hash, created_at, last_seen_at, "
+            "idle_expires_at, absolute_expires_at, ended_at, end_reason, ip_fingerprint) "
+            "VALUES (:staff, :hash, :created, :created, :idle, :absolute, :ended, :reason, :fp) "
+            "RETURNING id"
+        ),
+        {
+            "staff": staff_id,
+            "hash": uuid.uuid4().hex * 2,
+            "created": at(60),
+            "idle": at(idle_days_ago),
+            "absolute": at(absolute_days_ago),
+            "ended": None if ended_days_ago is None else at(ended_days_ago),
+            "reason": None if ended_days_ago is None else "sign_out",
+            "fp": "0" * 16,
+        },
+    ).one()
+    inserted: uuid.UUID = row.id
+    return inserted
+
+
+def insert_demo_session(conn: Connection, expired_hours_ago: float) -> uuid.UUID:
+    expires = FROZEN_NOW - timedelta(hours=expired_hours_ago)
+    row = conn.execute(
+        text(
+            "INSERT INTO demo_session (token_hash, demo_date, created_at, expires_at, "
+            "ip_fingerprint) VALUES (:hash, :day, :created, :expires, :fp) RETURNING id"
+        ),
+        {
+            "hash": uuid.uuid4().hex * 2,
+            "day": expires.date(),
+            "created": expires - timedelta(hours=2),
+            "expires": expires,
+            "fp": "0" * 16,
+        },
+    ).one()
+    inserted: uuid.UUID = row.id
+    return inserted
+
+
+def remaining(conn: Connection, table: str, ids: list[uuid.UUID]) -> set[uuid.UUID]:
+    rows = conn.execute(text(f"SELECT id FROM {table} WHERE id = ANY(:ids)"), {"ids": ids})
+    return {r.id for r in rows}
+
+
+def test_staff_sessions_go_30_days_after_they_ended_or_expired(db_session: Session) -> None:
+    conn = db_session.connection()
+    staff = make_staff(db_session, "retention@example.org")
+    assert staff.id is not None
+    signed_out_long_ago = insert_staff_session(conn, staff.id, ended_days_ago=31)
+    idle_long_ago = insert_staff_session(conn, staff.id, idle_days_ago=31)
+    absolute_long_ago = insert_staff_session(conn, staff.id, absolute_days_ago=31, idle_days_ago=-1)
+    signed_out_recently = insert_staff_session(conn, staff.id, ended_days_ago=29)
+    idle_recently = insert_staff_session(conn, staff.id, idle_days_ago=29)
+    active = insert_staff_session(conn, staff.id)
+    ids = [
+        signed_out_long_ago,
+        idle_long_ago,
+        absolute_long_ago,
+        signed_out_recently,
+        idle_recently,
+        active,
+    ]
+
+    assert purge_old_sessions(conn, now=FROZEN_NOW, limit=None) == 3
+    assert remaining(conn, "staff_session", ids) == {signed_out_recently, idle_recently, active}
+
+
+def test_demo_sessions_go_1_day_after_they_expired(db_session: Session) -> None:
+    conn = db_session.connection()
+    old = insert_demo_session(conn, expired_hours_ago=25)
+    recent = insert_demo_session(conn, expired_hours_ago=23)
+    live = insert_demo_session(conn, expired_hours_ago=-1)
+
+    assert purge_old_sessions(conn, now=FROZEN_NOW, limit=None) == 1
+    assert remaining(conn, "demo_session", [old, recent, live]) == {recent, live}
+
+
+def test_the_demo_purge_also_removes_old_sessions(db_session: Session) -> None:
+    conn = db_session.connection()
+    old = insert_demo_session(conn, expired_hours_ago=48)
+    purge_demo_bookings(conn, now=FROZEN_NOW, after_days=7, audit_after_days=90, limit=None)
+    assert remaining(conn, "demo_session", [old]) == set()
+
+
+def test_outside_demo_mode_startup_purges_old_sessions_but_keeps_bookings_and_audit(
+    make_committing_client: Callable[..., TestClient], committing_engine: Engine
+) -> None:
+    now = datetime.now(UTC)
+    insert_appointment(committing_engine, 0, now - timedelta(days=8))
+    with committing_engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO audit_log (id, occurred_at, actor_fingerprint, action, outcome) "
+                "VALUES (gen_random_uuid(), :t, '0123456789abcdef', 'appointment.created', 'ok')"
+            ),
+            {"t": now - timedelta(days=400)},
+        )
+        old = conn.execute(
+            text(
+                "INSERT INTO demo_session (token_hash, demo_date, created_at, expires_at, "
+                "ip_fingerprint) VALUES (:hash, :day, :created, :expires, :fp) RETURNING id"
+            ),
+            {
+                "hash": uuid.uuid4().hex * 2,
+                "day": (now - timedelta(days=3)).date(),
+                "created": now - timedelta(days=3, hours=2),
+                "expires": now - timedelta(days=3),
+                "fp": "0" * 16,
+            },
+        ).scalar_one()
+    try:
+        with make_committing_client(demo_mode=False):  # entering the context runs the lifespan
+            pass
+        assert count(committing_engine, "appointment") == 1  # bookings: demo mode only
+        assert count(committing_engine, "audit_log") == 1  # audit: kept outside demo mode (FR-031)
+        with committing_engine.connect() as conn:
+            assert remaining(conn, "demo_session", [old]) == set()
+    finally:
+        with committing_engine.begin() as conn:
+            conn.execute(text("DELETE FROM demo_session WHERE id = :id"), {"id": old})
 
 
 def test_the_app_starts_when_the_database_is_down(

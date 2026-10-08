@@ -5,8 +5,17 @@ import { STATUS_LABEL } from "@/admin/lib/statusRules";
 
 import type { ChangeRequest } from "./ConfirmDialog";
 
+/**
+ * A write whose outcome is unknown: no answer, a timeout or a server error. It may have been applied, so
+ * the screen re-reads the booking instead of retrying (a second change could be applied twice).
+ */
+export function outcomeUnknown(error: unknown): boolean {
+  return error instanceof AdminApiError && (error.status === 0 || error.status >= 500);
+}
+
 export function bookingMessage(error: unknown): string {
   if (!(error instanceof AdminApiError)) return "Something went wrong. Please try again.";
+  if (outcomeUnknown(error)) return "We could not reach the service, so the change may not have been saved. The latest status has been loaded; check it before trying again.";
   switch (error.code) {
     case "booking_changed":
       return "This booking was changed by someone else. It has been refreshed.";
@@ -20,9 +29,6 @@ export function bookingMessage(error: unknown): string {
       return "The demo is read-only.";
     case "forbidden":
       return "You do not have access to this.";
-    case "network":
-    case "timeout":
-      return "We could not reach the service. Please try again.";
     default:
       return "Something went wrong. Please try again.";
   }

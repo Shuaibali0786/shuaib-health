@@ -22,6 +22,8 @@ function reasonOf(error: AdminApiError): string | undefined {
 
 export function signInMessage(error: unknown): string {
   if (!(error instanceof AdminApiError)) return "Something went wrong. Please try again.";
+  // The website's own answer when the service is down or too slow (502/503/504).
+  if (error.status >= 500) return "We could not reach the service. Check your connection and try again.";
   switch (error.code) {
     case "sign_in_failed":
       return "Email or password is incorrect.";

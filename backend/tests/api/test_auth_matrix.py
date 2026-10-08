@@ -124,6 +124,9 @@ def make_viewer(
 
 def test_the_matrix_covers_at_least_the_built_rows() -> None:
     assert len(ENDPOINT_POLICIES) == 19
+    # Every row of contracts/auth-matrix.md is built, so every row is exercised (T152, SC-004).
+    assert PENDING == set() and len(ROWS) == 19
+    assert (len(PUBLIC_ROWS), len(SESSION_ROWS)) == (2, 17)
     assert {r[1] for r in ROWS} >= {
         "/admin/auth/sign-in",
         "/admin/auth/me",

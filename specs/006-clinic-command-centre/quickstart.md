@@ -61,6 +61,8 @@ npm run build && node scripts/check-admin-isolation.mjs       # no admin code in
 npm run test:e2e -- --project=admin-desktop --project=admin-mobile
 npm run test:e2e -- tests/e2e/admin-isolation.spec.ts tests/e2e/admin-a11y.spec.ts
 npm run test:e2e -- tests/e2e/admin-visual.spec.ts            # baselines (approved at the design gate)
+npm run test:e2e -- tests/e2e/admin-honesty.spec.ts tests/e2e/seo.spec.ts   # disclaimer/credit/ribbon; noindex only on /admin
+npm run test:e2e:stateful -- tests/e2e/stateful/admin-resilience.spec.ts   # staff backend down/slow, public booking unaffected
 ```
 
 Run the suites one after another (backend, then Playwright, then Vitest). A second pytest run waits for the first (advisory lock on the test database, see `backend/README.md` §6); Playwright and Vitest use the mock API and need no database, but share ports 3100/4010 and the `.next` build, so do not start two Playwright runs at once either.
@@ -75,6 +77,10 @@ cd frontend && npx lighthouse http://localhost:3150/ --preset=perf --form-factor
 ```
 
 For `/admin` in demo mode pass `--extra-headers headers.json` with `{"Cookie":"__Host-cc_session=cd_e2e-demo"}` (the mock API's demo session).
+
+Measure Lighthouse with nothing else running (no test suite, no dev server): Lighthouse's simulated throttling multiplies whatever CPU contention there is, and a parallel pytest or Playwright run halves the scores (see `results.md`, "Lighthouse regression"). Take the median of 3 runs.
+
+SEO: the demo clinic is `indexable: false` on purpose (fictional clinic, honesty), so Lighthouse SEO scores it about 66–69 (`is-crawlable`). To check a real clinic's SEO, build once with the clinic's `indexable` set to true (test only, e.g. a proxy in front of the mock API; never change the seed) and run `npx lighthouse <url> --only-categories=seo`: every public page scores 100.
 
 ## 5. Known limits
 

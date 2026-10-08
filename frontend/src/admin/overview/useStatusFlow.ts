@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { AdminApiError, adminRequest } from "@/admin/lib/client";
 import { BookingDetailSchema, StatusChangeResultSchema, type BookingDetail, type BookingStatus, type BookingSummary } from "@/admin/lib/schemas";
-import { bookingMessage, latestFrom, messageFor } from "@/admin/bookings/copy";
+import { bookingMessage, latestFrom, messageFor, outcomeUnknown } from "@/admin/bookings/copy";
 import type { ChangeRequest } from "@/admin/bookings/ConfirmDialog";
 import { demoOverlay } from "@/admin/state/demoOverlay";
 import { undoStore } from "@/admin/state/undo";
@@ -32,6 +32,7 @@ export function useStatusFlow({ demo, onApplied, onStale }: { demo: boolean; onA
       setMessage(bookingMessage(error));
       const latest = latestFrom(error);
       if (latest) onApplied(latest);
+      else if (outcomeUnknown(error)) onStale();
     }
   }
 
@@ -53,7 +54,7 @@ export function useStatusFlow({ demo, onApplied, onStale }: { demo: boolean; onA
       setMessage(bookingMessage(error));
       const latest = latestFrom(error);
       if (latest) onApplied(latest);
-      else if (error instanceof AdminApiError && error.status === 409) onStale();
+      else if ((error instanceof AdminApiError && error.status === 409) || outcomeUnknown(error)) onStale(); // never retried
     } finally {
       setBusy(false);
       setRequest(null);

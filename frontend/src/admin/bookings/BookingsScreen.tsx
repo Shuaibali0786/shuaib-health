@@ -34,7 +34,7 @@ import { FilterBar, dateLabel, type FilterChange } from "./FilterBar";
 import { Pagination } from "./Pagination";
 import { StickyFilters } from "./StickyFilters";
 import { UndoToast } from "./UndoToast";
-import { bookingMessage, latestFrom, messageFor, summaryOf } from "./copy";
+import { bookingMessage, latestFrom, messageFor, outcomeUnknown, summaryOf } from "./copy";
 import { mergeIntoPage, simulatedMatching, withSimulatedCounts } from "./simulated";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -262,6 +262,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
       setMessage(bookingMessage(error));
       const latest = latestFrom(error);
       if (latest) apply(latest);
+      else if (outcomeUnknown(error)) refresh();
     }
   }
 
@@ -283,7 +284,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
       setMessage(bookingMessage(error));
       const latest = latestFrom(error);
       if (latest) apply(latest);
-      else if (error instanceof AdminApiError && error.status === 409) refresh();
+      else if ((error instanceof AdminApiError && error.status === 409) || outcomeUnknown(error)) refresh(); // never retried
     } finally {
       setBusy(false);
       setRequest(null);
