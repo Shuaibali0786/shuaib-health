@@ -30,8 +30,8 @@ If a feature does not meet the bar, it does not ship — we fix it first. *Jo ch
 3. **Tests before merge.** Backend (pytest), frontend (Vitest), browser (Playwright), types/lint — all green, each full suite in one clean run, suites never run in parallel on the same database.
 4. **Old tests must stay green.** A new feature may add tests, never silently delete or loosen old ones. *Purane tests = purane kaam ki hifazat.*
 5. **Screenshots are guards.** Visual baselines change only with a pixel-diff report showing exactly what changed and why.
-6. **Pull Request → review → merge.** Shuaib approves every merge. CI on GitHub runs all checks automatically on every PR.
-7. **New features behind a switch (feature flag).** OFF by default → test → ON. If anything goes wrong, switch OFF — no redeploy needed. *Masla ho to button band karo.*
+6. **Pull Request → review → merge.** Shuaib approves every merge. CI on GitHub runs all checks automatically on every PR. *(Note, 2026-10-09: PRs are opened from Shuaib's own GitHub account, and GitHub doesn't allow approving your own PR. So `main` requires 0 approving reviews, but all 4 checks — backend, frontend, secrets, e2e — must pass, administrators get no bypass, and force-push is blocked. **Shuaib's merge click is the approval.**)*
+7. **New features behind a switch (feature flag).** OFF by default → test → ON. If anything goes wrong, switch OFF — no redeploy needed. *Masla ho to button band karo.* *(Note, 2026-10-09: **infrastructure flags on Vercel** — e.g. `RATE_LIMIT_STORE`, `TRUSTED_SERVER_EXEMPT`, `MAINTENANCE_VIA_CRON`, `SITE_SECURITY_HEADERS` from 007 — are environment variables, which take effect only on a new deployment. Switch one OFF by changing the value and redeploying (~1–2 min), or by using Vercel **Instant Rollback** to an earlier deployment where the flag was off. **Product feature flags** in later features keep the "no redeploy" promise.)*
 8. **Database changes are additive and reversible.** Migrations only add (new table/column, nullable or defaulted); never drop or rename in the same release; every migration has a tested downgrade; take a backup before running on production.
 9. **Secrets never in code.** Only in env vars; `.env` gitignored; new keys added to `.env.example` with placeholders and to the deploy checklist.
 10. **Shared contracts are versioned.** The API contract (OpenAPI) is updated with the change; frontend types are regenerated; contract tests must pass.
@@ -50,11 +50,11 @@ Never test on production. Never copy real patient data to dev.
 3. Merge to `main` → deploy to **our demo first**
 4. Smoke test on live (home, booking, slip, dashboard, phone) — 5 minutes
 5. Then roll out to **one client** → watch 24 h → then **all clients**
-6. If anything is wrong: switch the feature flag OFF, or roll back to the previous version (one click on Vercel/Render), then fix calmly
+6. If anything is wrong: switch the feature flag OFF, or roll back to the previous version (one click on Vercel: website and API projects), then fix calmly
 
 ## 4. Rollback plan (agar kuch toot jaye)
 - Frontend (Vercel): "Promote previous deployment" — instant
-- Backend (Render): redeploy previous commit — ~2 min
+- Backend (Vercel API project): "Instant Rollback" to the previous deployment — instant (migrations are additive, so the old code still works)
 - Database: run the migration's downgrade, or restore last backup
 - Feature flag: OFF
 Write a short incident note: what broke, why, fix, how we prevent it (and add a test).
@@ -75,7 +75,7 @@ Write a short incident note: what broke, why, fix, how we prevent it (and add a 
 - [ ] Visual diffs reviewed
 - [ ] gitleaks clean · audits reviewed
 - [ ] Migration up/down tested · backup taken
-- [ ] Env vars set on Vercel/Render for any new key
+- [ ] Env vars set on both Vercel projects (website, API) for any new key
 - [ ] Feature flag default decided
 - [ ] Lighthouse mobile ≥ 90 · API p95 < 1 s
 - [ ] Demo smoke test on live + phone test
