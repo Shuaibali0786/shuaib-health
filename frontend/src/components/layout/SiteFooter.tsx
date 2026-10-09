@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
+import { PoweredBy } from "@/components/brand/PoweredBy";
 import { Container } from "@/components/layout/Container";
 import { footerQuickLinks, legalLinks } from "@/data/navigation";
 import { getDepartments, getSiteConfig } from "@/lib/content";
@@ -27,7 +28,7 @@ export async function SiteFooter() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link href="/" aria-label={`${site.name} home`} className="inline-block rounded-control">
-              <Logo size="md" onDark />
+              <Logo size="md" variant="night" />
             </Link>
             <p className="mt-4 max-w-xs text-base">
               A calm, modern clinic and diagnostic lab website for Karachi. This is a portfolio demo and not a real
@@ -109,6 +110,9 @@ export async function SiteFooter() {
             ))}
           </ul>
           <p>{DEMO_NOTICE}</p>
+          <p>
+            <PoweredBy tone="night" />
+          </p>
           <p>
             <a
               href={CREDIT.href}

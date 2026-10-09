@@ -15,7 +15,12 @@ const SRC = join(process.cwd(), "src");
  * place the sample clinic's name may remain: the About and legal text say "Shuaib Health is a
  * portfolio demo", which is part of the honesty statement (constitution I), not clinic settings.
  */
-const EDITORIAL_ALLOWLIST = ["/src/data/aboutContent.ts", "/src/data/legalContent.ts"];
+const EDITORIAL_ALLOWLIST = [
+  "/src/data/aboutContent.ts",
+  "/src/data/legalContent.ts",
+  // "Powered by Shuaib Health" names the platform (the product brand, the same for every clinic), not the clinic's own name.
+  "/src/components/brand/PoweredBy.tsx",
+];
 
 function filesUnder(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {

@@ -43,7 +43,7 @@ export function ConfirmationCard({ view, site }: { view: AppointmentView; site: 
       <LogoMark size={200} className="pointer-events-none absolute -bottom-16 -right-12 opacity-[0.04]" />
 
       <header className="relative flex items-center gap-4 border-b-2 border-gold-500 bg-navy-900 px-6 py-5">
-        <LogoMark size={44} />
+        <LogoMark size={44} tone="night" />
         <div className="min-w-0">
           <p className="font-heading text-xl font-bold leading-tight text-white">{site.name}</p>
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-teal-300">Appointment slip</p>

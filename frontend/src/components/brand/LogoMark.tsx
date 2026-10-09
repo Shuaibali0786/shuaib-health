@@ -1,45 +1,48 @@
-import { useId } from "react";
-import { LOGO_VIEWBOX, PLUS_PATH, PULSE_PATH, PULSE_STROKE_WIDTH } from "./logo-paths";
+import {
+  MARK_COLOURS,
+  MARK_LARGE,
+  MARK_SMALL,
+  MARK_VIEWBOX,
+  SMALL_MARK_MAX_PX,
+  type MarkPart,
+  type MarkTone,
+} from "@/lib/brand-marks";
+
+/** "auto" reads --logo-body / --logo-rings / --logo-plus from CSS, so a stylesheet (the Command Centre's Night theme) can recolour it. */
+export type LogoMarkTone = MarkTone | "auto";
 
 interface LogoMarkProps {
-  /** Rendered width and height in pixels. */
+  /** Rendered width and height in pixels. At 32 px and below the sturdier SMALL drawing is used. */
   size?: number;
+  tone?: LogoMarkTone;
+  /** Force the SMALL (true) or the default (false) drawing; by default it follows `size`. */
+  small?: boolean;
   className?: string;
 }
 
+/** The fill of one part: a colour, or for "auto" a CSS variable that falls back to the light colour. */
+function fillOf(part: MarkPart, tone: LogoMarkTone): string {
+  return tone === "auto" ? `var(--logo-${part}, ${MARK_COLOURS.light[part]})` : MARK_COLOURS[tone][part];
+}
+
 /**
- * The Shuaib Health mark as inline SVG. Decorative: it is hidden from
- * assistive technology, and the surrounding link or wordmark carries the name.
- * Gradient colours come from the CSS tokens, so there are no hex values here.
- * Each instance gets its own gradient id, so the header and footer logos
- * never share an id.
+ * The Booking Plus mark as inline SVG. Decorative: it is hidden from assistive technology, and the
+ * surrounding link (aria-label "Shuaib Health home") or heading carries the name.
  */
-export function LogoMark({ size = 36, className }: LogoMarkProps) {
-  const gradientId = useId();
+export function LogoMark({ size = 36, tone = "light", small, className }: LogoMarkProps) {
+  const rects = (small ?? size <= SMALL_MARK_MAX_PX) ? MARK_SMALL : MARK_LARGE;
   return (
     <svg
-      viewBox={`0 0 ${LOGO_VIEWBOX} ${LOGO_VIEWBOX}`}
+      viewBox={`0 0 ${MARK_VIEWBOX} ${MARK_VIEWBOX}`}
       width={size}
       height={size}
       aria-hidden="true"
       focusable="false"
       className={className}
     >
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" style={{ stopColor: "var(--color-teal-500)" }} />
-          <stop offset="1" style={{ stopColor: "var(--color-navy-900)" }} />
-        </linearGradient>
-      </defs>
-      <path d={PLUS_PATH} fill={`url(#${gradientId})`} />
-      <path
-        d={PULSE_PATH}
-        fill="none"
-        stroke="white"
-        strokeWidth={PULSE_STROKE_WIDTH}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {rects.map((r) => (
+        <rect key={`${r.part}-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.width} height={r.height} rx={r.rx} style={{ fill: fillOf(r.part, tone) }} />
+      ))}
     </svg>
   );
 }

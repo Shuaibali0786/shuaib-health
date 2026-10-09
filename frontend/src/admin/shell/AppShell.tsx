@@ -6,6 +6,7 @@ import { SignOutButton } from "@/admin/auth/SignOutButton";
 import type { Viewer } from "@/admin/lib/schemas";
 import { LiveStatusProvider } from "@/admin/state/liveStatus";
 import type { ThemePreference } from "@/admin/state/themeCore";
+import { PoweredBy } from "@/components/brand/PoweredBy";
 import { CREDIT } from "@/lib/honesty";
 
 import { BottomNav } from "./BottomNav";
@@ -67,6 +68,9 @@ export function AppShell({ viewer, clinicName, serverNow, theme = "light", child
               <a href={CREDIT.href} target="_blank" rel="noopener noreferrer">
                 {CREDIT.text}
               </a>
+            </span>
+            <span className="powered">
+              <PoweredBy tone="auto" />
             </span>
           </footer>
         </div>

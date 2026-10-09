@@ -19,6 +19,16 @@
   --color-navy-900: #0b2545;
   --color-navy-800: #123a6b;
 
+  /* The Booking Plus brand mark and wordmark (chore/brand-logo). Standalone files (icon.svg, apple-icon,
+     the slip PDF) cannot read these, so lib/brand-marks.ts repeats them; tokens.test.ts keeps them in sync. */
+  --color-brand-ink: #0b1f3a;
+  --color-brand-gold: #c9a24a;
+  --color-brand-teal: #2bb5a8;
+  --color-brand-cream: #f7f5ef;
+  --color-brand-teal-deep: #1e8f84;
+  --color-brand-word-teal: #1e7f76;
+  --color-brand-word-teal-night: #5fd0c5;
+
   --color-teal-50: #f0fdfa;
   --color-teal-100: #ccfbf1;
   --color-teal-300: #5eead4;
