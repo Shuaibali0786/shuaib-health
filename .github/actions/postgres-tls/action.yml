@@ -1,0 +1,48 @@
+name: Postgres 16 with TLS
+description: >
+  Starts a throwaway Postgres 16 container for this job only (never shared with another job) and creates
+  the databases the app needs. TLS is on because the app requires sslmode=require in every database URL.
+  The password is a throwaway for a container that exists only for the job.
+
+inputs:
+  databases:
+    description: Space-separated database names to create (the first is created at start-up)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Start Postgres 16 (TLS)
+      shell: bash
+      env:
+        DATABASES: ${{ inputs.databases }}
+      run: |
+        set -euo pipefail
+        certs="$RUNNER_TEMP/pgcerts"
+        mkdir -p "$certs"
+        openssl req -new -x509 -days 1 -nodes -subj "/CN=localhost" \
+          -keyout "$certs/server.key" -out "$certs/server.crt" 2>/dev/null
+        # The postgres user in the image is uid 999 and refuses a key it cannot own with mode 600.
+        sudo chown 999:999 "$certs/server.key" "$certs/server.crt"
+        sudo chmod 600 "$certs/server.key"
+        first="${DATABASES%% *}"
+        docker run -d --name ci-postgres -p 5432:5432 \
+          -e POSTGRES_USER=ci -e POSTGRES_PASSWORD=ci -e POSTGRES_DB="$first" \
+          -v "$certs:/certs:ro" \
+          postgres:16 -c ssl=on -c ssl_cert_file=/certs/server.crt -c ssl_key_file=/certs/server.key
+        for _ in $(seq 1 60); do
+          # The image first starts a temporary server on the unix socket only, then restarts it. Waiting on
+          # the TCP address (-h 127.0.0.1) means the real server is up, not the temporary one.
+          if docker exec ci-postgres pg_isready -h 127.0.0.1 -U ci -d "$first" >/dev/null 2>&1; then break; fi
+          sleep 1
+        done
+        docker exec ci-postgres pg_isready -h 127.0.0.1 -U ci -d "$first"
+        for db in $DATABASES; do
+          if [ "$db" != "$first" ]; then
+            for attempt in 1 2 3 4 5; do
+              if docker exec ci-postgres createdb -h 127.0.0.1 -U ci "$db"; then break; fi
+              if [ "$attempt" = "5" ]; then exit 1; fi
+              sleep 2
+            done
+          fi
+        done

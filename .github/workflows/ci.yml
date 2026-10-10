@@ -1,0 +1,382 @@
+name: CI
+
+# Four required checks (branch protection on main): backend, frontend, secrets, e2e.
+# See specs/007-launch-ready/contracts/ci-checks.md. No production secrets are used anywhere here:
+# every database is a throwaway container and every key is generated fresh for the run.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Postgres 16 container
+        uses: ./.github/actions/postgres-tls
+        with:
+          databases: ci_dev ci_test
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      # A git-ignored .env, not job-wide variables: some unit tests check what happens when a setting is
+      # missing, and they would never see that if the variables were already set.
+      - name: Write the test settings file (throwaway keys, throwaway database)
+        run: |
+          {
+            echo "APP_ENV=test"
+            echo "DATABASE_URL=postgresql+psycopg://ci:ci@localhost:5432/ci_dev?sslmode=require"
+            echo "DIRECT_DATABASE_URL=postgresql+psycopg://ci:ci@localhost:5432/ci_dev?sslmode=require"
+            echo "TEST_DATABASE_URL=postgresql+psycopg://ci:ci@localhost:5432/ci_test?sslmode=require"
+            for name in BOOKING_PROXY_SECRET PRIVACY_HASH_KEY SESSION_SECRET; do
+              echo "$name=$(openssl rand -hex 32)"
+            done
+          } > .env
+
+      - name: Install (frozen lockfile)
+        run: uv sync --frozen
+
+      - name: ruff check
+        run: uv run ruff check .
+
+      - name: ruff format --check
+        run: uv run ruff format --check .
+
+      - name: mypy
+        run: uv run mypy
+
+      # The dev database must be migrated before the tests (one test runs the purge command on it).
+      - name: Migrate the dev database
+        run: uv run alembic upgrade head
+
+      - name: pytest
+        run: uv run pytest -q
+
+      # Existing-test guard (H6): the same file must also pass with the shared limiter switched on.
+      - name: pytest test_rate_limit_api.py with RATE_LIMIT_STORE=postgres
+        env:
+          RATE_LIMIT_STORE: postgres
+        run: uv run pytest tests/api/test_rate_limit_api.py -q
+
+      - name: Migrations down one step, then up again
+        run: |
+          uv run alembic downgrade -1
+          uv run alembic upgrade head
+
+      - name: pip-audit
+        run: |
+          uv export --frozen --no-dev --no-hashes -o "$RUNNER_TEMP/requirements.txt"
+          args=()
+          if [ -f audit-allowlist.txt ]; then
+            while read -r id _; do
+              case "$id" in ""|"#"*) continue ;; esac
+              args+=(--ignore-vuln "$id")
+            done < audit-allowlist.txt
+          fi
+          uvx pip-audit -r "$RUNNER_TEMP/requirements.txt" --no-deps --disable-pip "${args[@]}"
+
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: eslint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests (Vitest)
+        run: npx vitest run
+
+      - name: next build
+        run: npm run build
+
+      - name: next build with the API unreachable
+        env:
+          CATALOG_API_URL: http://127.0.0.1:9
+          NEXT_DIST_DIR: .next-dead-api
+        run: npm run build
+
+      - name: npm audit (high and critical, minus the approved allow-list)
+        run: node scripts/check-audit.mjs
+
+  secrets:
+    name: secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks (pinned)
+        run: |
+          version=8.30.1
+          curl -sSfL -o "$RUNNER_TEMP/gitleaks.tgz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${version}/gitleaks_${version}_linux_x64.tar.gz"
+          tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
+          sudo mv "$RUNNER_TEMP/gitleaks" /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: gitleaks on the commits of this change (redacted)
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "pull_request" ]; then
+            range="$BASE_SHA..$HEAD_SHA"
+          elif echo "$BEFORE_SHA" | grep -qE '^0+$'; then
+            range="$AFTER_SHA"
+          else
+            range="$BEFORE_SHA..$AFTER_SHA"
+          fi
+          # --redact keeps secret values out of the log; the path, line and rule still show.
+          gitleaks detect --source . --config .gitleaks.toml --redact --no-banner \
+            --log-opts="$range" --verbose
+
+      - name: .gitignore keeps env files out (Constitution VI)
+        # Runs even if gitleaks found something, so both problems show in one run.
+        if: always()
+        run: |
+          set -euo pipefail
+          for path in .env backend/.env frontend/.env frontend/.env.local frontend/.env.production; do
+            if ! git check-ignore --no-index -q "$path"; then
+              echo "::error::$path is not ignored by .gitignore"
+              exit 1
+            fi
+          done
+          tracked="$(git ls-files | grep -E '(^|/)\.env(\..*)?$' | grep -v -E '\.env\.example$' || true)"
+          if [ -n "$tracked" ]; then
+            echo "::error::A .env file is tracked by git: $tracked"
+            exit 1
+          fi
+          echo "env files are ignored and none is tracked"
+
+  # e2e is one required check made of parallel parts. The whole suite does not fit in one 20-minute job
+  # (the main Playwright config alone needs about 19 minutes on a 4-core runner), so it is split:
+  # a Lighthouse job (own Postgres container, real API with demo data), the main Playwright config in
+  # 3 shards, and the offline and stateful configs. The Playwright configs run against the recorded mock
+  # API and share no database, so running them on separate runners is safe. The final job named `e2e`
+  # passes only if every part passed. There is no optional part and no fallback.
+
+  e2e-lighthouse:
+    name: e2e-lighthouse
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Postgres 16 container (this job only)
+        uses: ./.github/actions/postgres-tls
+        with:
+          databases: ci_e2e
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - uses: ./.github/actions/frontend-e2e-setup
+
+      # The website server and the API must share this key (the website refuses to start without it).
+      - name: Generate a throwaway proxy key for this run
+        run: echo "BOOKING_PROXY_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+
+      - name: Backend - install, migrate, seed the demo data, start
+        working-directory: backend
+        run: |
+          set -euo pipefail
+          {
+            echo "APP_ENV=development"
+            echo "DATABASE_URL=postgresql+psycopg://ci:ci@localhost:5432/ci_e2e?sslmode=require"
+            echo "DIRECT_DATABASE_URL=postgresql+psycopg://ci:ci@localhost:5432/ci_e2e?sslmode=require"
+            echo "BOOKING_PROXY_SECRET=$BOOKING_PROXY_SECRET"
+            echo "PRIVACY_HASH_KEY=$(openssl rand -hex 32)"
+            echo "SESSION_SECRET=$(openssl rand -hex 32)"
+          } > .env
+          uv sync --frozen
+          uv run alembic upgrade head
+          uv run python -m app.seed
+          nohup uv run uvicorn app.main:app --port 8000 --no-access-log > "$RUNNER_TEMP/backend.log" 2>&1 &
+          curl -sf --retry 40 --retry-delay 2 --retry-connrefused http://127.0.0.1:8000/ready
+
+      - name: Lighthouse CI (mobile, real API with demo data)
+        working-directory: frontend
+        env:
+          CATALOG_API_URL: http://127.0.0.1:8000
+          NEXT_DIST_DIR: .next-lh
+        run: |
+          set -euo pipefail
+          npm run build
+          export CHROME_PATH="$(node -e "console.log(require('@playwright/test').chromium.executablePath())")"
+          npx lhci collect --config=lighthouserc.json
+          npx lhci assert --config=lighthouserc.json
+          # Budgets cannot share a config with other assertions, so they have their own file.
+          npx lhci assert --config=lighthouserc.budget.json
+
+      - name: Upload reports (only on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-lighthouse-failure
+          path: frontend/.lighthouseci-reports/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Backend log (only on failure; the logs hold no personal data or URLs)
+        if: failure()
+        run: tail -n 100 "$RUNNER_TEMP/backend.log" || true
+
+  e2e-main:
+    name: e2e-main (shard ${{ matrix.shard }}/3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The same image that produced the Linux visual baselines, so fonts and rendering match.
+    # Keep this tag equal to the installed @playwright/test version (frontend/package-lock.json).
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    env:
+      HOME: /root
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/frontend-e2e-setup
+        with:
+          system-deps: "false"
+
+      # The 2-worker limit is for the owner's laptop. A CI runner has its own cores, so use them all.
+      - name: Playwright - main config
+        working-directory: frontend
+        run: |
+          echo "runner cores: $(nproc)"
+          npx playwright test --workers=100% --shard=${{ matrix.shard }}/3
+
+      - name: Upload traces and reports (only on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-main-failure-${{ matrix.shard }}
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  e2e-offline:
+    name: e2e-offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The same image that produced the Linux visual baselines, so fonts and rendering match.
+    # Keep this tag equal to the installed @playwright/test version (frontend/package-lock.json).
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/frontend-e2e-setup
+        with:
+          system-deps: "false"
+
+      - name: Playwright - offline config
+        working-directory: frontend
+        run: npx playwright test -c playwright.offline.config.ts --workers=100%
+
+      - name: Upload traces and reports (only on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-offline-failure
+          path: frontend/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  e2e-stateful:
+    name: e2e-stateful
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The same image that produced the Linux visual baselines, so fonts and rendering match.
+    # Keep this tag equal to the installed @playwright/test version (frontend/package-lock.json).
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/frontend-e2e-setup
+        with:
+          system-deps: "false"
+
+      - name: Playwright - stateful config
+        working-directory: frontend
+        run: npx playwright test -c playwright.stateful.config.ts
+
+      - name: Upload traces and reports (only on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-stateful-failure
+          path: frontend/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [e2e-lighthouse, e2e-main, e2e-offline, e2e-stateful]
+    # always(): a failed, cancelled or skipped part must turn this required check red, not leave it pending.
+    if: always()
+    steps:
+      - name: Every e2e part must have passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "part results: $RESULTS"
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "::error::An e2e part did not pass ($result)"
+              exit 1
+            fi
+          done

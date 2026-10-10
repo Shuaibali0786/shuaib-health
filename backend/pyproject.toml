@@ -55,3 +55,11 @@ markers = [
     "perf: performance check, run on demand",
 ]
 addopts = "-m 'not perf' -ra"
+
+# Vercel (ADR-0011): the FastAPI app is the function; migrations run in the build for
+# production and preview only (scripts/vercel_build.py checks VERCEL_ENV).
+[tool.vercel]
+entrypoint = "app.asgi:app"
+
+[tool.vercel.scripts]
+build = "python scripts/vercel_build.py"

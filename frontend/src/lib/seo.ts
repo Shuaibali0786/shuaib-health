@@ -1,15 +1,42 @@
 import type { Metadata } from "next";
 import type { PageManifestEntry, SiteConfig } from "@/types/content";
 
+const HTTPS = "https:";
+
 /**
- * Base URL for canonical links, Open Graph and the sitemap. Reads the optional public variable
- * SITE_URL (documented in frontend/.env.example). It has a default, so the build never needs it.
- * This is the only place in src that reads the environment.
+ * Base URL for canonical links, Open Graph and the sitemap, resolved in this order:
+ *   1. SITE_URL (documented in frontend/.env.example);
+ *   2. on Vercel, https://${VERCEL_PROJECT_PRODUCTION_URL} (production) or https://${VERCEL_URL} (preview);
+ *   3. off Vercel (local, tests, CI), http://localhost:3000.
+ * On Vercel the site never emits an http:// or localhost address: a production build with nothing to
+ * resolve fails, and so does a SITE_URL that is not https or points at localhost.
+ * This is the only place in src that reads the environment for the site address.
  */
 export function siteUrl(): string {
+  const vercelEnv = process.env.VERCEL_ENV;
+  const onVercel = vercelEnv === "production" || vercelEnv === "preview";
   const configured = process.env.SITE_URL?.trim();
-  const base = configured && configured.length > 0 ? configured : "http://localhost:3000";
-  return base.replace(/\/+$/, "");
+
+  let base: string | undefined;
+  if (configured) {
+    base = configured;
+  } else if (onVercel) {
+    const host = (vercelEnv === "production" ? process.env.VERCEL_PROJECT_PRODUCTION_URL : process.env.VERCEL_URL)
+      ?.trim()
+      .replace(/^https?:\/\//, "");
+    base = host ? `${HTTPS}//${host}` : undefined;
+  } else {
+    base = "http://localhost:3000";
+  }
+
+  if (!base) {
+    throw new Error("SITE_URL is not set and Vercel provided no URL to use instead.");
+  }
+  base = base.replace(/\/+$/, "");
+  if (onVercel && (!base.startsWith("https://") || /\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(base))) {
+    throw new Error("SITE_URL must be an https address that is not localhost on Vercel.");
+  }
+  return base;
 }
 
 /**

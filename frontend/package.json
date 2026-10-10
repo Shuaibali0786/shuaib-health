@@ -36,10 +36,15 @@
   "overrides": {
     "openapi-typescript": {
       "typescript": "$typescript"
-    }
+    },
+    "basic-ftp": "^6.2.3",
+    "tmp": "^0.2.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@emnapi/core": "^1.11.3",
+    "@emnapi/runtime": "^1.11.3",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",

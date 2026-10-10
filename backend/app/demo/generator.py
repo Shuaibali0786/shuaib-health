@@ -52,7 +52,8 @@ def _catalog() -> tuple[dict[str, Any], int, str]:
     slot = int(str(extras["defaultSlotMinutes"]))
     digest = hashlib.sha256()
     for name in ("catalog.json", "extras.json"):
-        digest.update((SEED_DATA / name).read_bytes())
+        # Line endings differ between a Windows and a Linux checkout; the hash must not.
+        digest.update((SEED_DATA / name).read_bytes().replace(b"\r\n", b"\n"))
     return catalog, slot, digest.hexdigest()[:16]
 
 

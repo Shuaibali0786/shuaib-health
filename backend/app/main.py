@@ -13,13 +13,17 @@ from functools import lru_cache
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.booking.clock import SystemClock
-from app.booking.retention import purge_demo_bookings, purge_old_sessions
+from app.booking.maintenance import run_purge
 from app.db import get_engine, make_engine
 from app.errors import UnhandledErrorMiddleware, register_exception_handlers
 from app.logging_config import configure_logging
 from app.middleware.access_log import AccessLogMiddleware
-from app.middleware.rate_limit import InMemoryFixedWindowLimiter, RateLimitMiddleware
+from app.middleware.rate_limit import (
+    InMemoryFixedWindowLimiter,
+    PostgresFixedWindowLimiter,
+    RateLimiter,
+    RateLimitMiddleware,
+)
 from app.middleware.request_id import RequestIdMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.routers import (
@@ -33,6 +37,7 @@ from app.routers import (
     doctors,
     health,
     lab_tests,
+    maintenance,
     packages,
     slots,
 )
@@ -53,17 +58,7 @@ def _startup_purge(app: FastAPI, settings: Settings) -> None:
         # The app's own settings decide which database this is, not the process-wide cache.
         engine = override() if override else make_engine(settings.database_url, pool_size=1)
         try:
-            with engine.begin() as conn:
-                if settings.demo_mode:  # purges old sessions too
-                    purge_demo_bookings(
-                        conn,
-                        now=SystemClock().now(),
-                        after_days=settings.booking_purge_after_days,
-                        audit_after_days=settings.audit_purge_after_days,
-                        limit=None,
-                    )
-                else:
-                    purge_old_sessions(conn, now=SystemClock().now(), limit=None)
+            run_purge(engine, settings)
         finally:
             if not override:
                 engine.dispose()
@@ -74,10 +69,26 @@ def _startup_purge(app: FastAPI, settings: Settings) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings: Settings = app.state.settings
+    if settings.maintenance_via_cron:
+        # Serverless: no background task or thread. Vercel Cron calls the maintenance route.
+        yield
+        return
     # Not awaited before serving: a slow or unreachable database must not delay startup.
     task = asyncio.create_task(asyncio.to_thread(_startup_purge, app, settings))
     yield
     await task
+
+
+def _make_limiter(app: FastAPI, settings: Settings) -> RateLimiter:
+    """The general per-IP limiter: shared in Postgres in production, in memory otherwise."""
+    if settings.rate_limit_store == "postgres":
+        return PostgresFixedWindowLimiter(
+            # Looked up per call so tests (and tooling) can swap the engine on the app.
+            lambda: app.dependency_overrides.get(get_engine, get_engine)(),
+            settings.privacy_hash_key,
+            settings.rate_limit_per_minute,
+        )
+    return InMemoryFixedWindowLimiter(settings.rate_limit_per_minute)
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -92,7 +103,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
         docs_url="/docs" if docs_enabled else None,
         redoc_url="/redoc" if docs_enabled else None,
-        openapi_url="/openapi.json",
+        openapi_url=None if settings.app_env == "production" else "/openapi.json",
     )
     app.state.settings = settings
     register_exception_handlers(app)
@@ -111,6 +122,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(admin_bookings.router)
     api.include_router(admin_dashboard.router)
     app.include_router(api)
+    cron_secret = settings.cron_secret.get_secret_value() if settings.cron_secret else None
+    if settings.maintenance_via_cron and cron_secret:
+        app.include_router(maintenance.router)
 
     # add_middleware wraps the current stack, so the LAST one added is the OUTERMOST.
     # Effective order, outermost first: RequestId -> AccessLog -> SecurityHeaders -> CORS
@@ -119,9 +133,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(UnhandledErrorMiddleware)
     app.add_middleware(
         RateLimitMiddleware,
-        limiter=InMemoryFixedWindowLimiter(settings.rate_limit_per_minute),
+        limiter=_make_limiter(app, settings),
         trusted_proxy_hops=settings.trusted_proxy_hops,
         proxy_secret=settings.booking_proxy_secret.get_secret_value(),
+        cron_secret=cron_secret if settings.maintenance_via_cron else None,
     )
     app.add_middleware(
         CORSMiddleware,

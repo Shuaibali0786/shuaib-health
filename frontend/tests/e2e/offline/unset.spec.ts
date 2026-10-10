@@ -26,7 +26,11 @@ test("shows a neutral identity with no tel: links", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("a[href^='tel:']")).toHaveCount(0);
   await expect(page.getByRole("banner").getByRole("link", { name: "Clinic home" })).toBeVisible();
-  await expect(page.getByText("Shuaib Health")).toHaveCount(0);
+  // "Shuaib Health" is the platform credit's name ("Powered by Shuaib Health"), never the clinic's. Only that
+  // one element, found by its test id, may carry it; the same words anywhere else on the page still fail.
+  const NOT_THE_CREDIT = "*:not([data-testid='powered-by']):not([data-testid='powered-by'] *)";
+  await expect(page.getByText("Shuaib Health").and(page.locator(NOT_THE_CREDIT))).toHaveCount(0);
+  await expect(page.getByTestId("powered-by")).toHaveText("Powered by Shuaib Health");
   await expect(page.getByText("+92 21")).toHaveCount(0);
 });
 

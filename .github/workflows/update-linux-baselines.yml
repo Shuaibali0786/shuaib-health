@@ -1,0 +1,62 @@
+name: Linux visual baselines
+
+# Generates the Linux (-linux.png) visual baselines inside the official Playwright image, next to the
+# existing Windows (-win32.png) ones, which are never touched. CI runs on Linux, so it needs its own.
+# Run from the Actions tab, or push to the branch ci/linux-baselines. The result is an artifact to review
+# (playbook rule 5: a baseline changes only with a pixel-diff report the owner has seen).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci/linux-baselines]
+
+permissions:
+  contents: read
+
+jobs:
+  baselines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      # Keep this tag equal to the installed @playwright/test version (frontend/package-lock.json).
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      CI: "true"
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install
+        run: npm ci
+
+      - name: Create the missing Linux baselines
+        # "missing" writes only files that do not exist, so the -win32 baselines are never rewritten.
+        # Missing baselines make the run fail by design; the files are still written.
+        continue-on-error: true
+        run: >
+          npx playwright test
+          tests/e2e/admin-visual.spec.ts tests/e2e/visual-baseline.spec.ts tests/e2e/confirmation-slip-pdf.spec.ts
+          --update-snapshots=missing --workers=4 --retries=0
+
+      - name: Second run must match the first (the baselines are stable)
+        run: >
+          npx playwright test
+          tests/e2e/admin-visual.spec.ts tests/e2e/visual-baseline.spec.ts tests/e2e/confirmation-slip-pdf.spec.ts
+          --workers=4 --retries=0
+
+      - name: Collect the new files
+        if: always()
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/linux-baselines"
+          find tests -name '*-linux.png' -print0 | xargs -0 -I{} cp --parents {} "$GITHUB_WORKSPACE/linux-baselines/"
+          echo "new Linux baselines: $(find "$GITHUB_WORKSPACE/linux-baselines" -name '*-linux.png' | wc -l)"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-baselines
+          path: linux-baselines/
+          retention-days: 14

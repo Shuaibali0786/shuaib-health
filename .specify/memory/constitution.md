@@ -1,5 +1,33 @@
 <!--
 Sync Impact Report
+- Version change: 1.1.0 → 1.2.0 (MINOR: materially changed deployment guidance)
+- Modified sections:
+  - Technology Stack & Deployment Constraints: backend host changes from Render to Vercel
+    Functions (Python, `sin1`, a separate Vercel project). Added stateless-function rules: no
+    background threads or long tasks, shared state in Postgres, scheduled work through the host
+    cron and an authenticated endpoint. Render is kept only for legacy and other projects.
+  - X. Build Order: Phase 4 wording changes from "(Vercel + Render)" to "(Vercel website + Vercel
+    Python Functions API + Neon)".
+- Rationale: owner-approved ADR-0011 (2026-10-09). Render's free hours are per workspace, and the
+  owner's workspace is already used by another always-on service. Vercel keeps the demo at $0 in
+  one region, without sleep-induced cold starts.
+- Added principles/sections: none · Removed: none
+- Templates requiring updates:
+  - ✅ .specify/templates/plan-template.md (reviewed; no host-specific text)
+  - ✅ .specify/templates/spec-template.md (reviewed; no change needed)
+  - ✅ .specify/templates/tasks-template.md (reviewed; no change needed)
+  - ✅ docs/SAFE-CHANGE-PLAYBOOK.md (rollback and checklist lines now name Vercel for the API;
+    rule 6 note: the owner's merge click is the approval, with 0 required reviews, 4 required checks
+    and no admin bypass; rule 7 note: infrastructure flags on Vercel switch OFF by changing the
+    value and redeploying (~1–2 min) or by Instant Rollback, while product feature flags keep the
+    "no redeploy" promise. Owner-approved 2026-10-09; no principle text changed, so no version
+    bump.)
+  - ✅ CLAUDE.md (agent context updated for 007)
+  - ⚠ .specify/templates/plan-template.md Safe Change gate (carried over from 1.1.0; still pending)
+- Follow-up TODOs: none new.
+-->
+<!--
+Sync Impact Report (previous, 1.1.0)
 - Version change: 1.0.1 → 1.1.0 (MINOR: new principle XI added)
 - Added principles: XI. Safe Change — every change follows docs/SAFE-CHANGE-PLAYBOOK.md (own
   branch, additive reversible migrations, feature flags, no deleted/loosened tests, PR review,
@@ -164,7 +192,7 @@ checks pass, except for explicitly approved spikes.
 1. **Phase 1** — Frontend with mock data (clearly labelled).
 2. **Phase 2** — Backend (FastAPI, database, auth, booking APIs).
 3. **Phase 3** — Staff app.
-4. **Phase 4** — Deploy (Vercel + Render) and polish.
+4. **Phase 4** — Deploy (Vercel website + Vercel Python Functions API + Neon) and polish.
 5. **Phase 5** — AI chatbot agent with tool calling, using only the public APIs from Principle IV
    and bound by Principles I, II, and III (no medical advice, no cross-patient data).
 
@@ -189,7 +217,12 @@ that skips it.
 - Monorepo with `frontend/` and `backend/`.
 - Frontend: Next.js (App Router), TypeScript strict, Tailwind CSS v4, Framer Motion, Zustand,
   React Hook Form + Zod, lucide-react, `next/font`, `next/image`. Hosted on Vercel.
-- Backend: FastAPI, SQLModel, Alembic, psycopg 3, managed and run with `uv`. Hosted on Render.
+- Backend: FastAPI, SQLModel, Alembic, psycopg 3, managed and run with `uv`. Hosted on Vercel
+  Functions (Python runtime) in the same region as the database (`sin1`), as a separate Vercel
+  project from the website. Functions MUST be stateless: no background threads or long-running
+  tasks, and shared state (rate limits, lockouts) lives in Postgres. Scheduled work runs through
+  the host's cron calling an authenticated endpoint. Render is used only for legacy and other
+  projects, not for Shuaib Health.
 - Database: Neon Postgres (Principle VII).
 - New runtime dependencies beyond this list require justification in the plan (Complexity
   Tracking). Configuration comes from environment variables documented in `.env.example`.
@@ -215,4 +248,4 @@ reviewed at each plan (Constitution Check) and each merge; reviewers MUST reject
 violate a principle unless an approved amendment or documented exception exists. Runtime agent
 guidance lives in `CLAUDE.md`.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-08
+**Version**: 1.2.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-09

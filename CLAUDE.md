@@ -209,3 +209,17 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- Python 3.12 (`requires-python >=3.12,<3.13`) · FastAPI, SQLModel, Alembic, psycopg 3, uv (backend)
+- TypeScript strict · Node 24.x · Next.js 16.4 App Router, Tailwind CSS v4 (frontend)
+- Neon Postgres (Singapore, `aws-ap-southeast-1`): pooled URL at runtime, direct URL for migrations; prod project with `main` + `preview` branches; dev in a separate project
+- Hosting (007, ADR-0011): two Vercel Hobby projects in `sin1`, website (`frontend/`) and API as Python Functions (`backend/`). Render is NOT used for Shuaib Health
+- Serverless rules (constitution 1.2.0): no background threads or long tasks in functions; rate limits and lockouts in Postgres; daily maintenance via Vercel Cron → `CRON_SECRET`-protected endpoint
+- Ops (007): GitHub Actions CI (backend, frontend, secrets, e2e) with branch protection; UptimeRobot; Sentry Free (scrubbed); gitleaks; pip-audit; daily `age`-encrypted backups in the private repo `shuaib-health-backups` (14 days)
+- Money rule: free tiers only; never enable billing; non-commercial demo on Vercel Hobby
+
+## Recent Changes
+- 007-launch-ready: first public demo deployment (spec, plan, ADR-0011, constitution 1.2.0)
+- 006-clinic-command-centre: staff dashboard + public one-click demo
+- 005-appointment-booking: online booking with Postgres rate limits and BFF proxy
