@@ -78,6 +78,7 @@ description: "Task list for 007-launch-ready"
   - a DB failure lets the general check through but booking, login and demo limits still refuse.
   Add counter-table cleanup to the shared test fixture in backend/tests/conftest.py (add-only; no assertion changed).
 - [ ] T107 **Existing-test guard (H6):** run backend/tests/api/test_rate_limit_api.py **unchanged**, once with the default (`memory`) and once with `RATE_LIMIT_STORE=postgres` set through the environment for the whole run (no edit to the file). If any assertion fails in either mode, **stop** and list the failing assertions and their cause for owner approval; never edit or loosen them to pass.
+  - **Status (2026-10-10):** STOPPED for owner approval. `memory` mode 7/7 pass; `postgres` mode 5 pass, 2 fail (test isolation, each passes alone). Nothing edited. See results/existing-test-guards.md.
 
 ### Fail-closed production settings (B4, B5)
 - [X] T016 Make `DEMO_MODE` and `DEMO_ENABLED` required (no default) when `APP_ENV=production`, with an error naming the setting, in backend/app/settings.py
@@ -125,15 +126,18 @@ description: "Task list for 007-launch-ready"
   - add the `@lhci/cli` devDependency in frontend/package.json;
   - frontend/lighthouserc.json: mobile preset, 3 runs on `/` and one catalog page against `next start`; Accessibility and Best Practices ≥ 0.90 as **error**, Performance ≥ 0.90 as **warn**, SEO not asserted;
   - frontend/lighthouse-budget.json: script, style, image and total byte budgets set to today's measured build sizes + 10% (record the baseline in specs/007-launch-ready/results/lighthouse/ci-budget-baseline.md).
-- [ ] T115 [US2] **Linux visual baselines (playbook rule 5):** all 139 visual baselines under frontend/tests/**/*-snapshots/ (admin visual, confirmation slip and others) are `-win32` only, so the Linux CI `e2e` job has none to compare against. Generate the **Linux** baselines inside the official Playwright Docker image matching the installed `@playwright/test` version, **adding** `-linux.png` files and leaving every `-win32.png` untouched. Produce a cross-platform pixel-diff report (win32 vs linux, per snapshot, with the max diff) in specs/007-launch-ready/results/visual-linux-baselines.md.
+- [X] T115 [US2] **Linux visual baselines (playbook rule 5):** all 139 visual baselines under frontend/tests/**/*-snapshots/ (admin visual, confirmation slip and others) are `-win32` only, so the Linux CI `e2e` job has none to compare against. Generate the **Linux** baselines inside the official Playwright Docker image matching the installed `@playwright/test` version, **adding** `-linux.png` files and leaving every `-win32.png` untouched. Produce a cross-platform pixel-diff report (win32 vs linux, per snapshot, with the max diff) in specs/007-launch-ready/results/visual-linux-baselines.md.
 - [ ] T116 [US2] 🔑 OWNER ACTION: review the visual-linux-baselines report and approve the new Linux baselines in the PR (rule 5: baselines change only with a pixel-diff report the owner has seen)
 - [X] T032 [US2] Add the `e2e` job to .github/workflows/ci.yml as an **always-required** check (K1; Constitution IX): backend + `next start` against **its own** service container with demo seed (never shared with the `backend` job; playbook rule 3); the existing Playwright configs run **one after another**, never in parallel on the same database; 20 min timeout; traces uploaded only on failure. There is no optional fallback. If it is flaky, fix the spec; quarantine only with the owner's written approval in the PR.
+  - **Status (2026-10-10):** implemented as one required check `e2e` (an aggregator over parallel parts, each under 20 min). The check is currently RED because of 2 failing offline-config assertions that already failed before this feature (see results/baseline.md). Not quarantined.
 - [X] T033 [US2] Fix the npm high findings without `--force` (FR-061):
   - run `npm audit fix`;
   - add an `overrides` entry for `braces`/`micromatch` in frontend/package.json if a patched version exists;
   - rerun eslint and all frontend suites.
 - [X] T034 [US2] If any high finding remains, add frontend/audit-allowlist.json (advisory id, package, reason "dev-only lint tooling", review date) and frontend/scripts/check-audit.mjs that fails only on highs not listed. Flag the list for owner approval in the PR.
-- [ ] T035 [P] [US2] Add a pip-audit allow-list file only if needed, at backend/audit-allowlist.txt, with reason and review date
+  - **Status (2026-10-10):** allow-list holds 3 advisories (braces; extract-zip x2), all dev-only with no patched release. Owner to approve the list in the PR.
+- [X] T035 [P] [US2] Add a pip-audit allow-list file only if needed, at backend/audit-allowlist.txt, with reason and review date
+  - **Status (2026-10-10):** not needed. pip-audit reports no known vulnerabilities, so no `backend/audit-allowlist.txt` was created.
 - [X] T036 [P] [US2] Update .github/pull_request_template.md:
   - links to the runbooks;
   - "migration present → Neon restore point taken" item;
@@ -141,6 +145,7 @@ description: "Task list for 007-launch-ready"
   - "e2e is a required check; any quarantine needs owner approval";
   - "owner's merge click is the approval".
 - [ ] T037 [US2] Open PR-1 as a draft, then open a throwaway PR containing a deliberate lint error and a fake secret-shaped string. Confirm the checks fail and the log shows path and line without the value. Also confirm (after T038) that merge is blocked for the admin account while a check is red. Record in specs/007-launch-ready/results/ci-proof.md, then close the throwaway PR.
+  - **Status (2026-10-10):** throwaway PR proof done (results/ci-proof.md). Still to confirm after T038: the Merge button is blocked for the admin account while a check is red.
 - [ ] T038 [US2] 🔑 OWNER ACTION: enable branch protection on `main` (GitHub → Settings → Branches) exactly per contracts/ci-checks.md:
   - required checks `backend`, `frontend`, `secrets`, `e2e`;
   - branches up to date;
