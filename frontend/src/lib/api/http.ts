@@ -2,7 +2,7 @@ import "server-only";
 
 import type { z } from "zod";
 
-import { getApiBase } from "./config";
+import { getApiBase, getProxySecret, protectionBypassHeaders } from "./config";
 
 export type ApiErrorKind = "unconfigured" | "network" | "timeout" | "status" | "invalid";
 
@@ -24,6 +24,16 @@ export class ApiError extends Error {
 
 const DEFAULT_TIMEOUT_MS = 3000;
 
+function serverHeaders(clientIp: string | undefined): Record<string, string> {
+  const headers: Record<string, string> = { accept: "application/json", ...protectionBypassHeaders() };
+  const secret = getProxySecret();
+  if (secret) {
+    headers["x-proxy-secret"] = secret;
+    if (clientIp) headers["x-client-ip"] = clientIp;
+  }
+  return headers;
+}
+
 function isAbort(error: unknown): boolean {
   return error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
 }
@@ -31,8 +41,17 @@ function isAbort(error: unknown): boolean {
 /**
  * GET `${CATALOG_API_URL}/api/v1${path}` and validate the body. This is the only `fetch` call in
  * `src/`. Callers that fetch several pages pass one shared `signal` so a whole list has one 3 s budget.
+ *
+ * When `BOOKING_PROXY_SECRET` is set the request proves it comes from this website's server, so the API
+ * does not count builds and ISR against one shared bucket. `clientIp` is for a caller that has a visitor
+ * (it is never read here: `headers()` would make cached pages dynamic); without it the call is a server call.
  */
-export async function getJson<T>(path: `/${string}`, schema: z.ZodType<T>, signal?: AbortSignal): Promise<T> {
+export async function getJson<T>(
+  path: `/${string}`,
+  schema: z.ZodType<T>,
+  signal?: AbortSignal,
+  clientIp?: string,
+): Promise<T> {
   const base = getApiBase();
   if (!base) throw new ApiError("unconfigured");
 
@@ -42,7 +61,7 @@ export async function getJson<T>(path: `/${string}`, schema: z.ZodType<T>, signa
     const res = await fetch(`${base}/api/v1${path}`, {
       cache: "no-store",
       signal: signal ?? AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
-      headers: { accept: "application/json" },
+      headers: serverHeaders(clientIp),
     });
     requestId = res.headers.get("x-request-id") ?? undefined;
     if (!res.ok) throw new ApiError("status", { status: res.status, requestId });

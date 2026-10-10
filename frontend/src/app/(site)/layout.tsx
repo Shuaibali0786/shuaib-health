@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { NoticeBar } from "@/components/layout/NoticeBar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -10,15 +10,19 @@ import { siteUrl } from "@/lib/seo";
 import { THEME_COLOR } from "../theme-color";
 import "./site.css";
 
-const jakarta = Plus_Jakarta_Sans({
+// Self-hosted copies of the Google Fonts files (latin subset, variable), so a build never downloads fonts.
+// Same bytes the old next/font/google setup served; see src/fonts/README.md.
+const jakarta = localFont({
+  src: "../../fonts/plus-jakarta-sans-latin-variable.woff2",
   variable: "--font-jakarta",
-  subsets: ["latin"],
+  weight: "200 800",
   display: "swap",
 });
 
-const inter = Inter({
+const inter = localFont({
+  src: "../../fonts/inter-latin-variable.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
+  weight: "100 900",
   display: "swap",
 });
 

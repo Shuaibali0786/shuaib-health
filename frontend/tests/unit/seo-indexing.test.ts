@@ -5,10 +5,9 @@ import { siteConfig } from "../fixtures/catalog/siteConfig";
 // The `indexable` flag of each clinic is the only switch for search engines. The fictional demo clinic keeps it
 // false (honesty); a real clinic sets it true. Staff pages are noindex whatever the flag says.
 
-vi.mock("next/font/google", () => ({
-  Inter: () => ({ variable: "inter", className: "inter" }),
-  Plus_Jakarta_Sans: () => ({ variable: "jakarta", className: "jakarta" }),
-  Cormorant_Garamond: () => ({ variable: "cormorant", className: "cormorant" }),
+// The fonts are self-hosted (next/font/local), so that is what the layouts import now.
+vi.mock("next/font/local", () => ({
+  default: () => ({ variable: "font", className: "font" }),
 }));
 
 async function siteRobots(indexable: boolean) {

@@ -15,6 +15,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.logging_config import request_id_var
+from app.observability import report_unhandled
 from app.schemas import AlternativeSlot, ErrorDetail, ErrorInfo, ErrorResponse
 
 logger = logging.getLogger("app.errors")
@@ -307,6 +308,7 @@ class UnhandledErrorMiddleware:
             await self.app(scope, receive, track)
         except Exception as exc:
             logger.error("unhandled error: %s", type(exc).__name__, exc_info=exc)
+            report_unhandled(exc)
             if started:
                 raise
             response = error_response(500, "internal_error", "Something went wrong.")

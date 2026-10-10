@@ -74,6 +74,7 @@ class Settings(BaseSettings):
     trusted_server_exempt: bool = False
     maintenance_via_cron: bool = False
     cron_secret: SecretStr | None = None
+    sentry_dsn: SecretStr | None = None
     db_pool_size: int = Field(1, ge=1, le=10)
     db_max_overflow: int = Field(1, ge=0, le=10)
     db_pool_timeout: int = Field(5, ge=1, le=30)
@@ -109,6 +110,13 @@ class Settings(BaseSettings):
         raw = value.get_secret_value() if isinstance(value, SecretStr) else value
         if not isinstance(raw, str) or len(raw) < _MIN_SECRET_LENGTH:
             raise ValueError(f"CRON_SECRET must be at least {_MIN_SECRET_LENGTH} characters")
+        return value
+
+    @field_validator("sentry_dsn", mode="before")
+    @classmethod
+    def _blank_sentry_dsn_means_off(cls, value: object) -> object:
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return None
         return value
 
     @field_validator("test_database_url", mode="before")

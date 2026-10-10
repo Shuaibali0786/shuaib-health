@@ -16,6 +16,7 @@ from sqlmodel import Session, col, func, select
 from app import models as m
 from app.auth import audit, passwords
 from app.db import get_engine
+from app.ops.target_guard import GuardRefusal, add_guard_arguments, confirm_target
 from app.settings import get_settings
 
 SUCCESS = "Admin account created."
@@ -82,17 +83,34 @@ def main(
     parser.add_argument("--email", required=True)
     parser.add_argument("--name", default="")
     parser.add_argument("--password-stdin", action="store_true")
+    add_guard_arguments(parser)
     args = parser.parse_args(argv)
     try:
+        if session_factory is None:
+            _guard_target(args.expect_host, from_stdin=args.password_stdin)
         password = _read_password(stdin or sys.stdin, args.password_stdin, prompt)
         factory = session_factory or _default_session
         with factory() as db:
             create_admin(db, email=args.email, name=args.name, password=password)
-    except CreateAdminError as error:
+    except (CreateAdminError, GuardRefusal) as error:
         print(str(error), file=sys.stderr)
         return 1
     print(SUCCESS)
     return 0
+
+
+def _guard_target(expect_hosts: list[str], *, from_stdin: bool) -> None:
+    """Production, or a run given ``--expect-host``, writes only where the operator confirms."""
+    settings = get_settings()
+    if settings.app_env != "production" and not expect_hosts:
+        return
+    if from_stdin:
+        raise GuardRefusal(
+            "Refusing: a guarded run asks for the password at the prompt, not on stdin."
+        )
+    confirm_target(
+        settings.database_url.get_secret_value(), expect_hosts=expect_hosts, out=sys.stdout
+    )
 
 
 def _default_session() -> Session:

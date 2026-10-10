@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { NoticeBar } from "@/components/layout/NoticeBar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -13,8 +13,19 @@ import "./(site)/site.css";
  * layout to render it in, so it carries the public site's chrome itself. A notFound() thrown inside
  * a public page still renders (site)/not-found.tsx inside the site layout.
  */
-const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin"], display: "swap" });
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
+// Self-hosted, as in the site layout (src/fonts/README.md).
+const jakarta = localFont({
+  src: "../fonts/plus-jakarta-sans-latin-variable.woff2",
+  variable: "--font-jakarta",
+  weight: "200 800",
+  display: "swap",
+});
+const inter = localFont({
+  src: "../fonts/inter-latin-variable.woff2",
+  variable: "--font-inter",
+  weight: "100 900",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Page not found",

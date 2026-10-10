@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import { parsePreference } from "@/admin/state/themeCore";
 import { AdminMarker } from "@/admin/ui/AdminMarker";
@@ -7,16 +7,22 @@ import { DEMO_NOTICE } from "@/lib/honesty";
 import { THEME_COLOR } from "../../theme-color";
 import "./admin.css";
 
-const cormorant = Cormorant_Garamond({
+// Self-hosted copies of the Google Fonts files (latin subset, variable); see src/fonts/README.md.
+const cormorant = localFont({
+  src: "../../../fonts/cormorant-garamond-latin-variable.woff2",
   variable: "--font-cormorant",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: "500 700",
   display: "swap",
 });
 
 // A different font module from the public site Inter (own variable and weights), so the bundler cannot
 // share one stylesheet of font faces between the two root layouts (that would put Cormorant in public pages).
-const inter = Inter({ variable: "--font-admin-inter", subsets: ["latin"], weight: ["400", "500", "600"], display: "swap" });
+const inter = localFont({
+  src: "../../../fonts/inter-latin-variable.woff2",
+  variable: "--font-admin-inter",
+  weight: "400 600",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: "Command Centre", template: "%s | Command Centre" },

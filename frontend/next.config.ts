@@ -1,5 +1,12 @@
 import type { NextConfig } from "next";
 
+import {
+  PUBLIC_SITE_SOURCE,
+  commonSecurityHeaders,
+  publicSiteHeaders,
+  securityHeadersMode,
+} from "./src/lib/security-headers";
+
 // Staff pages and their BFF are private: never cached, never indexed, never leaked through a referrer
 // and never framed (FR-037). Applies to redirects and error responses too.
 const PRIVATE_HEADERS = [
@@ -8,6 +15,9 @@ const PRIVATE_HEADERS = [
   { key: "Referrer-Policy", value: "no-referrer" },
   { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
 ];
+
+// Read once per build; throws on Vercel when SITE_SECURITY_HEADERS is unset or invalid.
+const securityMode = securityHeadersMode(process.env);
 
 const nextConfig: NextConfig = {
   // Each e2e server builds into its own folder (NEXT_DIST_DIR) so builds never collide. Unset means .next.
@@ -19,6 +29,12 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      ...(securityMode === "off"
+        ? []
+        : [
+            { source: "/:path*", headers: commonSecurityHeaders(securityMode) },
+            { source: PUBLIC_SITE_SOURCE, headers: publicSiteHeaders(securityMode) },
+          ]),
       { source: "/admin", headers: PRIVATE_HEADERS },
       { source: "/admin/:path*", headers: PRIVATE_HEADERS },
       { source: "/api/admin/:path*", headers: PRIVATE_HEADERS },
