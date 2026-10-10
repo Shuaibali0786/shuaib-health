@@ -15,7 +15,49 @@ Note: for a file that is already tracked, plain `git check-ignore` says "not ign
 
 The e2e parts of that run were cancelled on purpose (they would have passed and only cost minutes).
 
-## Still to prove after the owner enables branch protection (T038)
+## Branch protection on `main` and the merge block (T038, T037 second half)
 
-- [ ] With a required check red, GitHub's **Merge** button is disabled **for the owner's administrator account too** (no bypass). This can only be checked after branch protection is on; Claude cannot turn it on. Steps for the owner are in the PR description.
-- [ ] Repository settings show 0 required approvals, administrators included, force-push and deletion blocked.
+Date: 2026-10-10. Branch protection was switched on by Claude through the GitHub API, on the owner's explicit instruction. Settings read back from the API afterwards:
+
+| Setting | Value |
+|---|---|
+| Required status checks | `backend`, `frontend`, `secrets`, `e2e` |
+| Branch must be up to date before merging | yes (`strict: true`) |
+| Pull request required before merging | yes |
+| Required approving reviews | 0 (the owner's merge click is the approval) |
+| Force pushes | blocked |
+| Branch deletion | blocked |
+| Include administrators (no bypass) | yes (`enforce_admins: true`) |
+| Push restrictions / bypass list | none |
+
+Before the change `main` had no protection and no rulesets, and the owner was the only collaborator.
+
+### Proof that a red check blocks the merge, for the owner's admin account too
+
+A throwaway PR (#10, branch `throwaway/ci-proof-2`, now closed and the branch deleted) added one unused import to `backend/app/ci_proof2.py`. Run `38048608733`.
+
+| What | Result (read from the API while `backend` was red) |
+|---|---|
+| `backend` check | **failed** (ruff F401) |
+| `secrets` check | passed |
+| `frontend` and the `e2e` parts | still running |
+| REST `mergeable_state` | **`blocked`** |
+| GraphQL `mergeStateStatus` | **`BLOCKED`** |
+| GraphQL `viewerCanMergeAsAdmin` (the owner's own account) | **`false`** |
+| GraphQL `viewerCanEnableAutoMerge` | `false` |
+
+So with a required check red the PR cannot be merged by the owner's administrator account: there is no bypass. The e2e parts of that run were cancelled on purpose. No merge was attempted on the throwaway PR (it would have been unsafe to try).
+
+### Direct push to `main`
+
+Not tried, on purpose. From the rules: a pull request is required, administrators are included, force pushes and deletion are blocked, and the four checks must pass on an up-to-date branch, so a direct push would be rejected.
+
+### Contract acceptance checks (ci-checks.md)
+
+- [x] A PR with a lint error: `frontend` or `backend` fails, merge blocked (PR #9 and PR #10).
+- [x] A PR adding a fake AWS-key-shaped string: `secrets` fails; the log shows the path and line, not the value (PR #9).
+- [x] A PR with any required check failing or pending: merge blocked, also for the owner as administrator (PR #10: `BLOCKED`, `viewerCanMergeAsAdmin: false`).
+- [x] Repository settings: 0 required approvals, administrators included, force-push and deletion blocked, and no collaborator with write access other than the owner.
+- [x] A PR that commits a `.env` file: `secrets` fails on the `.gitignore` check (PR #9).
+- [x] CI logs contain no value from any `*_SECRET`, `*_KEY` or `*_URL` setting (the only keys are random per run and never echoed).
+- [ ] A PR that adds a JS bundle over the budget: `e2e` fails on the Lighthouse budget. Proven locally (a lowered budget made `lhci assert` fail with `resource-summary.script.size`), not yet as a PR.

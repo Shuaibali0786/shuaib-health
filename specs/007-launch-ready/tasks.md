@@ -127,7 +127,8 @@ description: "Task list for 007-launch-ready"
   - frontend/lighthouserc.json: mobile preset, 3 runs on `/` and one catalog page against `next start`; Accessibility and Best Practices ≥ 0.90 as **error**, Performance ≥ 0.90 as **warn**, SEO not asserted;
   - frontend/lighthouse-budget.json: script, style, image and total byte budgets set to today's measured build sizes + 10% (record the baseline in specs/007-launch-ready/results/lighthouse/ci-budget-baseline.md).
 - [X] T115 [US2] **Linux visual baselines (playbook rule 5):** all 139 visual baselines under frontend/tests/**/*-snapshots/ (admin visual, confirmation slip and others) are `-win32` only, so the Linux CI `e2e` job has none to compare against. Generate the **Linux** baselines inside the official Playwright Docker image matching the installed `@playwright/test` version, **adding** `-linux.png` files and leaving every `-win32.png` untouched. Produce a cross-platform pixel-diff report (win32 vs linux, per snapshot, with the max diff) in specs/007-launch-ready/results/visual-linux-baselines.md.
-- [ ] T116 [US2] 🔑 OWNER ACTION: review the visual-linux-baselines report and approve the new Linux baselines in the PR (rule 5: baselines change only with a pixel-diff report the owner has seen)
+- [X] T116 [US2] 🔑 OWNER ACTION: review the visual-linux-baselines report and approve the new Linux baselines in the PR (rule 5: baselines change only with a pixel-diff report the owner has seen)
+  - **Status (2026-10-10):** approved by the owner on PR #8 (comment "Linux baselines approved (T116)").
 - [X] T032 [US2] Add the `e2e` job to .github/workflows/ci.yml as an **always-required** check (K1; Constitution IX): backend + `next start` against **its own** service container with demo seed (never shared with the `backend` job; playbook rule 3); the existing Playwright configs run **one after another**, never in parallel on the same database; 20 min timeout; traces uploaded only on failure. There is no optional fallback. If it is flaky, fix the spec; quarantine only with the owner's written approval in the PR.
   - **Status (2026-10-10):** implemented as one required check `e2e` (an aggregator over parallel parts, each under 20 min). The two offline assertions that failed before this feature now pass: the owner approved a strict, precise exception for the platform credit only (`data-testid=powered-by`). Nothing is quarantined.
 - [X] T033 [US2] Fix the npm high findings without `--force` (FR-061):
@@ -144,9 +145,10 @@ description: "Task list for 007-launch-ready"
   - "no prices / sales pitch / hire-us (Vercel Hobby)" item;
   - "e2e is a required check; any quarantine needs owner approval";
   - "owner's merge click is the approval".
-- [ ] T037 [US2] Open PR-1 as a draft, then open a throwaway PR containing a deliberate lint error and a fake secret-shaped string. Confirm the checks fail and the log shows path and line without the value. Also confirm (after T038) that merge is blocked for the admin account while a check is red. Record in specs/007-launch-ready/results/ci-proof.md, then close the throwaway PR.
-  - **Status (2026-10-10):** throwaway PR proof done (results/ci-proof.md). Still to confirm after T038: the Merge button is blocked for the admin account while a check is red.
-- [ ] T038 [US2] 🔑 OWNER ACTION: enable branch protection on `main` (GitHub → Settings → Branches) exactly per contracts/ci-checks.md:
+- [X] T037 [US2] Open PR-1 as a draft, then open a throwaway PR containing a deliberate lint error and a fake secret-shaped string. Confirm the checks fail and the log shows path and line without the value. Also confirm (after T038) that merge is blocked for the admin account while a check is red. Record in specs/007-launch-ready/results/ci-proof.md, then close the throwaway PR.
+  - **Status (2026-10-10):** done. PR #9 (lint error, fake secret, committed .env) and PR #10 (red check: `mergeStateStatus` BLOCKED, `viewerCanMergeAsAdmin` false). See results/ci-proof.md.
+- [X] T038 [US2] 🔑 OWNER ACTION: enable branch protection on `main` (GitHub → Settings → Branches) exactly per contracts/ci-checks.md:
+  - **Status (2026-10-10):** applied by Claude through the GitHub API on the owner's explicit instruction; settings read back in results/ci-proof.md.
   - required checks `backend`, `frontend`, `secrets`, `e2e`;
   - branches up to date;
   - **0 required approvals** (your merge click is the approval);
