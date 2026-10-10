@@ -25,11 +25,6 @@ jobs:
     defaults:
       run:
         working-directory: backend
-    env:
-      APP_ENV: test
-      DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/ci_dev?sslmode=require
-      DIRECT_DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/ci_dev?sslmode=require
-      TEST_DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/ci_test?sslmode=require
     steps:
       - uses: actions/checkout@v4
 
@@ -43,11 +38,19 @@ jobs:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
 
-      - name: Generate throwaway keys for this run
+      # A git-ignored .env, not job-wide variables: some unit tests check what happens when a setting is
+      # missing, and they would never see that if the variables were already set.
+      - name: Write the test settings file (throwaway keys, throwaway database)
         run: |
-          for name in BOOKING_PROXY_SECRET PRIVACY_HASH_KEY SESSION_SECRET; do
-            echo "$name=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
-          done
+          {
+            echo "APP_ENV=test"
+            echo "DATABASE_URL=postgresql+psycopg://ci:ci@localhost:5432/ci_dev?sslmode=require"
+            echo "DIRECT_DATABASE_URL=postgresql+psycopg://ci:ci@localhost:5432/ci_dev?sslmode=require"
+            echo "TEST_DATABASE_URL=postgresql+psycopg://ci:ci@localhost:5432/ci_test?sslmode=require"
+            for name in BOOKING_PROXY_SECRET PRIVACY_HASH_KEY SESSION_SECRET; do
+              echo "$name=$(openssl rand -hex 32)"
+            done
+          } > .env
 
       - name: Install (frozen lockfile)
         run: uv sync --frozen
@@ -61,12 +64,15 @@ jobs:
       - name: mypy
         run: uv run mypy
 
+      # The dev database must be migrated before the tests (one test runs the purge command on it).
+      - name: Migrate the dev database
+        run: uv run alembic upgrade head
+
       - name: pytest
         run: uv run pytest -q
 
-      - name: Migrations up, down, up
+      - name: Migrations down one step, then up again
         run: |
-          uv run alembic upgrade head
           uv run alembic downgrade -1
           uv run alembic upgrade head
 
@@ -180,11 +186,6 @@ jobs:
     name: e2e
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      APP_ENV: development
-      DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/ci_e2e?sslmode=require
-      DIRECT_DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/ci_e2e?sslmode=require
-      CORS_ORIGINS: http://localhost:3200
     steps:
       - uses: actions/checkout@v4
 
@@ -204,16 +205,22 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Generate throwaway keys for this run
-        run: |
-          for name in BOOKING_PROXY_SECRET PRIVACY_HASH_KEY SESSION_SECRET; do
-            echo "$name=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
-          done
+      # The website server and the API must share this key (the website refuses to start without it).
+      - name: Generate a throwaway proxy key for this run
+        run: echo "BOOKING_PROXY_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
 
       - name: Backend - install, migrate, seed the demo data, start
         working-directory: backend
         run: |
           set -euo pipefail
+          {
+            echo "APP_ENV=development"
+            echo "DATABASE_URL=postgresql+psycopg://ci:ci@localhost:5432/ci_e2e?sslmode=require"
+            echo "DIRECT_DATABASE_URL=postgresql+psycopg://ci:ci@localhost:5432/ci_e2e?sslmode=require"
+            echo "BOOKING_PROXY_SECRET=$BOOKING_PROXY_SECRET"
+            echo "PRIVACY_HASH_KEY=$(openssl rand -hex 32)"
+            echo "SESSION_SECRET=$(openssl rand -hex 32)"
+          } > .env
           uv sync --frozen
           uv run alembic upgrade head
           uv run python -m app.seed
