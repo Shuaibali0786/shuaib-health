@@ -182,8 +182,15 @@ jobs:
           fi
           echo "env files are ignored and none is tracked"
 
-  e2e:
-    name: e2e
+  # e2e is one required check made of parallel parts. The whole suite does not fit in one 20-minute job
+  # (the main Playwright config alone needs about 19 minutes on a 4-core runner), so it is split:
+  # a Lighthouse job (own Postgres container, real API with demo data), the main Playwright config in
+  # 3 shards, and the offline and stateful configs. The Playwright configs run against the recorded mock
+  # API and share no database, so running them on separate runners is safe. The final job named `e2e`
+  # passes only if every part passed. There is no optional part and no fallback.
+
+  e2e-lighthouse:
+    name: e2e-lighthouse
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -199,11 +206,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+      - uses: ./.github/actions/frontend-e2e-setup
 
       # The website server and the API must share this key (the website refuses to start without it).
       - name: Generate a throwaway proxy key for this run
@@ -227,12 +230,6 @@ jobs:
           nohup uv run uvicorn app.main:app --port 8000 --no-access-log > "$RUNNER_TEMP/backend.log" 2>&1 &
           curl -sf --retry 40 --retry-delay 2 --retry-connrefused http://127.0.0.1:8000/ready
 
-      - name: Frontend - install
-        working-directory: frontend
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium webkit
-
       - name: Lighthouse CI (mobile, real API with demo data)
         working-directory: frontend
         env:
@@ -247,16 +244,77 @@ jobs:
           # Budgets cannot share a config with other assertions, so they have their own file.
           npx lhci assert --config=lighthouserc.budget.json
 
+      - name: Upload reports (only on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-lighthouse-failure
+          path: frontend/.lighthouseci-reports/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Backend log (only on failure; the logs hold no personal data or URLs)
+        if: failure()
+        run: tail -n 100 "$RUNNER_TEMP/backend.log" || true
+
+  e2e-main:
+    name: e2e-main (shard ${{ matrix.shard }}/3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/frontend-e2e-setup
+
       # The 2-worker limit is for the owner's laptop. A CI runner has its own cores, so use them all.
       - name: Playwright - main config
         working-directory: frontend
         run: |
           echo "runner cores: $(nproc)"
-          npx playwright test --workers=100%
+          npx playwright test --workers=100% --shard=${{ matrix.shard }}/3
+
+      - name: Upload traces and reports (only on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-main-failure-${{ matrix.shard }}
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  e2e-offline:
+    name: e2e-offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/frontend-e2e-setup
 
       - name: Playwright - offline config
         working-directory: frontend
         run: npx playwright test -c playwright.offline.config.ts --workers=100%
+
+      - name: Upload traces and reports (only on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-offline-failure
+          path: frontend/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  e2e-stateful:
+    name: e2e-stateful
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/frontend-e2e-setup
 
       - name: Playwright - stateful config
         working-directory: frontend
@@ -266,14 +324,27 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-failure-artifacts
-          path: |
-            frontend/test-results/
-            frontend/playwright-report/
-            frontend/.lighthouseci-reports/
+          name: e2e-stateful-failure
+          path: frontend/test-results/
           retention-days: 7
           if-no-files-found: ignore
 
-      - name: Backend log (only on failure; the logs hold no personal data or URLs)
-        if: failure()
-        run: tail -n 100 "$RUNNER_TEMP/backend.log" || true
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [e2e-lighthouse, e2e-main, e2e-offline, e2e-stateful]
+    # always(): a failed, cancelled or skipped part must turn this required check red, not leave it pending.
+    if: always()
+    steps:
+      - name: Every e2e part must have passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "part results: $RESULTS"
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "::error::An e2e part did not pass ($result)"
+              exit 1
+            fi
+          done
