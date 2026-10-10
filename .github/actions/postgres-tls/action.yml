@@ -31,10 +31,18 @@ runs:
           -v "$certs:/certs:ro" \
           postgres:16 -c ssl=on -c ssl_cert_file=/certs/server.crt -c ssl_key_file=/certs/server.key
         for _ in $(seq 1 60); do
-          if docker exec ci-postgres pg_isready -U ci -d "$first" >/dev/null 2>&1; then break; fi
+          # The image first starts a temporary server on the unix socket only, then restarts it. Waiting on
+          # the TCP address (-h 127.0.0.1) means the real server is up, not the temporary one.
+          if docker exec ci-postgres pg_isready -h 127.0.0.1 -U ci -d "$first" >/dev/null 2>&1; then break; fi
           sleep 1
         done
-        docker exec ci-postgres pg_isready -U ci -d "$first"
+        docker exec ci-postgres pg_isready -h 127.0.0.1 -U ci -d "$first"
         for db in $DATABASES; do
-          if [ "$db" != "$first" ]; then docker exec ci-postgres createdb -U ci "$db"; fi
+          if [ "$db" != "$first" ]; then
+            for attempt in 1 2 3 4 5; do
+              if docker exec ci-postgres createdb -h 127.0.0.1 -U ci "$db"; then break; fi
+              if [ "$attempt" = "5" ]; then exit 1; fi
+              sleep 2
+            done
+          fi
         done
