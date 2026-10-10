@@ -43,6 +43,17 @@ export function getDataRevalidateSeconds(): number {
   return 300;
 }
 
+/**
+ * Headers that let this website's server through the API project's Vercel Deployment Protection on
+ * Preview (`API_PROTECTION_BYPASS`, server-only, set in the Preview environment only). Empty when the
+ * variable is unset, and always empty in Production. The value is never logged.
+ */
+export function protectionBypassHeaders(): Record<string, string> {
+  const value = process.env.API_PROTECTION_BYPASS?.trim();
+  if (!value || process.env.VERCEL_ENV === "production") return {};
+  return { "x-vercel-protection-bypass": value };
+}
+
 const MIN_PROXY_SECRET_LENGTH = 32;
 
 /**

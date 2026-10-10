@@ -1,7 +1,7 @@
 import "server-only";
 
 import { ApiError } from "@/lib/api/http";
-import { getApiBase, getProxySecret } from "@/lib/api/config";
+import { getApiBase, getProxySecret, protectionBypassHeaders } from "@/lib/api/config";
 
 // The only module besides `lib/api/http.ts` that calls `fetch`. It speaks to the booking endpoints of
 // the backend as the website server: it adds the proxy secret and the visitor's address, never logs
@@ -47,6 +47,7 @@ export async function callBooking(call: BackendCall): Promise<BackendResult> {
 
   const headers: Record<string, string> = {
     accept: "application/json",
+    ...protectionBypassHeaders(),
     "x-proxy-secret": secret,
     "x-client-ip": call.clientIp,
     "x-request-id": call.requestId,
@@ -88,9 +89,16 @@ export async function callBooking(call: BackendCall): Promise<BackendResult> {
   return { status: res.status, body, retryAfter, requestId };
 }
 
-/** The visitor's address as seen by the platform: first valid `x-forwarded-for` entry, else `x-real-ip`. */
+/**
+ * The visitor's address as seen by the platform: `x-vercel-forwarded-for` (set by Vercel, not by the
+ * visitor), then `x-real-ip`, then the first valid `x-forwarded-for` entry.
+ */
 export function clientIpFrom(headers: Headers): string {
-  const candidates = [...(headers.get("x-forwarded-for") ?? "").split(","), headers.get("x-real-ip") ?? ""];
+  const candidates = [
+    headers.get("x-vercel-forwarded-for") ?? "",
+    headers.get("x-real-ip") ?? "",
+    ...(headers.get("x-forwarded-for") ?? "").split(","),
+  ];
   for (const raw of candidates) {
     const value = raw.trim();
     if (isIp(value)) return value;

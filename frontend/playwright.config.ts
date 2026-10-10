@@ -80,6 +80,9 @@ export default defineConfig({
         CATALOG_API_URL: `http://127.0.0.1:${MOCK_PORT}`,
         CLINIC_FALLBACK_JSON: clinicFallback,
         BOOKING_PROXY_SECRET: PROXY_SECRET,
+        // An https address, so a localhost or http self-link in the HTML would fail no-localhost.spec.ts.
+        SITE_URL: "https://demo.example.test",
+        SITE_SECURITY_HEADERS: "report",
       },
     },
   ],

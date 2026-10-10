@@ -3,7 +3,7 @@ import "server-only";
 import { cookies, headers } from "next/headers";
 import { cache } from "react";
 
-import { getApiBase, getProxySecret } from "@/lib/api/config";
+import { getApiBase, getProxySecret, protectionBypassHeaders } from "@/lib/api/config";
 import { ApiError } from "@/lib/api/http";
 import { clientIpFrom } from "@/lib/booking/backend";
 import { matchAdminRoute } from "./bffRoutes";
@@ -47,6 +47,7 @@ export async function callAdminBackend(call: AdminBackendCall): Promise<AdminBac
 
   const headers: Record<string, string> = {
     accept: "application/json",
+    ...protectionBypassHeaders(),
     "x-proxy-secret": secret,
     "x-client-ip": call.clientIp,
     "x-request-id": call.requestId,

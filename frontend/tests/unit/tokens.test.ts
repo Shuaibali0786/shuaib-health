@@ -83,9 +83,10 @@ describe("brand tokens", () => {
 
   it("maps both fonts through next/font variables", () => {
     const layout = read("src/app/(site)/layout.tsx");
-    expect(layout).toMatch(/Plus_Jakarta_Sans/);
+    // Self-hosted files (next/font/local), the same fonts as before.
+    expect(layout).toMatch(/plus-jakarta-sans-latin-variable\.woff2/);
     expect(layout).toMatch(/--font-jakarta/);
-    expect(layout).toMatch(/Inter\(/);
+    expect(layout).toMatch(/inter-latin-variable\.woff2/);
     expect(layout).toMatch(/--font-inter/);
     expect(site).toMatch(/--font-heading:\s*var\(--font-jakarta\)/);
     expect(site).toMatch(/--font-sans:\s*var\(--font-inter\)/);
