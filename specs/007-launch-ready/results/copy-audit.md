@@ -23,3 +23,8 @@ These are the demo clinic's own sample fees and test prices, each marked "Sample
 - `src/components/brand/PoweredBy.tsx:11` — "Powered by Shuaib Health", and the footer credit "Designed & built by Shuaib Ali" (a credit line, not an offer)
 
 **Question for the owner:** is the "Designed & built by …" credit acceptable, or should it go?
+
+## Owner decisions (2026-10-10)
+- **Sample prices and fees:** keep them. They are the demo clinic's content and stay labelled "Sample".
+- **"Designed & built by Shuaib Ali" credit:** keep it.
+No copy changes follow from this audit.
