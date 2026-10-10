@@ -1,6 +1,7 @@
 // The confirmation slip the visitor keeps: a PDF, a calendar file and a WhatsApp message.
 // All three are built from the masked AppointmentView only (FR-051, FR-057): the full name, full
 // mobile number, email and reason are never available here, so they can never leak into a file.
+import { MARK_COLOURS, MARK_LARGE, MARK_SMALL, MARK_VIEWBOX, SMALL_MARK_MAX_PX, WATERMARK_COLOURS } from "@/lib/brand-marks";
 import { formatPkr } from "@/lib/format";
 import { arriveByTime, formatLocalDateWithYear, zoneLabel } from "./labels";
 import { qrModules } from "./qr";
@@ -177,60 +178,40 @@ function binary(bytes: Uint8Array): string {
 
 const num = (n: number): string => String(Math.round(n * 100) / 100);
 
-/** The logo mark (public/images/brand/logo-mark.svg), 64 x 64 units: a rounded plus with a pulse line. */
-function logoMark(ops: string[], x: number, top: number, size: number, fill: string, line: string): void {
-  const k = size / 64;
-  const px = (u: number) => num(x + u * k);
-  const py = (u: number) => num(PAGE_H - top - u * k);
-  const KAPPA = 0.5523;
-  let cur: [number, number] = [29, 4];
-  const path = [`${px(29)} ${py(4)} m`];
-  const lineTo = (ux: number, uy: number) => {
-    path.push(`${px(ux)} ${py(uy)} l`);
-    cur = [ux, uy];
-  };
-  // A quarter circle about (cx, cy) from the current point to (ex, ey).
-  const arc = (cx: number, cy: number, ex: number, ey: number) => {
-    const c1: [number, number] = [cur[0] + KAPPA * (ex - cx), cur[1] + KAPPA * (ey - cy)];
-    const c2: [number, number] = [ex + KAPPA * (cur[0] - cx), ey + KAPPA * (cur[1] - cy)];
-    path.push(`${px(c1[0])} ${py(c1[1])} ${px(c2[0])} ${py(c2[1])} ${px(ex)} ${py(ey)} c`);
-    cur = [ex, ey];
-  };
-  lineTo(35, 4);
-  arc(35, 12, 43, 12);
-  lineTo(43, 21);
-  lineTo(52, 21);
-  arc(52, 29, 60, 29);
-  lineTo(60, 35);
-  arc(52, 35, 52, 43);
-  lineTo(43, 43);
-  lineTo(43, 52);
-  arc(35, 52, 35, 60);
-  lineTo(29, 60);
-  arc(29, 52, 21, 52);
-  lineTo(21, 43);
-  lineTo(12, 43);
-  arc(12, 35, 4, 35);
-  lineTo(4, 29);
-  arc(12, 29, 12, 21);
-  lineTo(21, 21);
-  lineTo(21, 12);
-  arc(29, 12, 29, 4);
-  ops.push(`${fill} rg ${path.join(" ")} f`);
+/** "#RRGGBB" as PDF colour operands: "0.04 0.12 0.23". */
+function hexRgb(hex: string): string {
+  return [1, 3, 5].map((i) => num(parseInt(hex.slice(i, i + 2), 16) / 255)).join(" ");
+}
+
+/** A filled rounded rectangle, x and top measured from the page's top-left, in points. */
+function roundedRect(ops: string[], x: number, top: number, w: number, h: number, r: number, color: string): void {
+  const k = r * 0.5523;
+  const y = PAGE_H - top - h; // PDF y runs up
   ops.push(
-    `${line} RG ${num(3.5 * k)} w 1 J 1 j ${px(6)} ${py(32)} m ${px(16)} ${py(32)} l ` +
-      `${px(21)} ${py(32)} ${px(22)} ${py(24)} ${px(31)} ${py(24)} c ${px(38)} ${py(24)} ${px(39)} ${py(29.5)} ${px(32)} ${py(32)} c ` +
-      `${px(25)} ${py(34.5)} ${px(26)} ${py(40)} ${px(33)} ${py(40)} c ${px(42)} ${py(40)} ${px(43)} ${py(32)} ${px(48)} ${py(32)} c ${px(58)} ${py(32)} l S`,
+    `${color} rg ${num(x + r)} ${num(y)} m ${num(x + w - r)} ${num(y)} l ${num(x + w - r + k)} ${num(y)} ${num(x + w)} ${num(y + r - k)} ${num(x + w)} ${num(y + r)} c ` +
+      `${num(x + w)} ${num(y + h - r)} l ${num(x + w)} ${num(y + h - r + k)} ${num(x + w - r + k)} ${num(y + h)} ${num(x + w - r)} ${num(y + h)} c ` +
+      `${num(x + r)} ${num(y + h)} l ${num(x + r - k)} ${num(y + h)} ${num(x)} ${num(y + h - r + k)} ${num(x)} ${num(y + h - r)} c ` +
+      `${num(x)} ${num(y + r)} l ${num(x)} ${num(y + r - k)} ${num(x + r - k)} ${num(y)} ${num(x + r)} ${num(y)} c f`,
   );
 }
 
+/**
+ * The Booking Plus mark (lib/brand-marks.ts), drawn as vector rectangles: a calendar body, two
+ * binder rings and a plus. `tone` "night" suits the navy header band, "watermark" the faint mark on white (rings in the body colour).
+ */
+function logoMark(ops: string[], x: number, top: number, size: number, tone: "watermark" | "night"): void {
+  const k = size / MARK_VIEWBOX;
+  const colours = tone === "watermark" ? WATERMARK_COLOURS : MARK_COLOURS[tone];
+  for (const r of size <= SMALL_MARK_MAX_PX ? MARK_SMALL : MARK_LARGE) {
+    roundedRect(ops, x + r.x * k, top + r.y * k, r.width * k, r.height * k, r.rx * k, hexRgb(colours[r.part]));
+  }
+}
 
 export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic, fonts: SlipFonts): Uint8Array<ArrayBuffer> {
   const ops: string[] = [];
   const rgb = (r: number, g: number, b: number) => `${num(r / 255)} ${num(g / 255)} ${num(b / 255)}`;
   const NAVY = rgb(11, 37, 69);
   const TEAL = rgb(15, 118, 110);
-  const TEAL_BRAND = rgb(14, 108, 118);
   const TEAL_LIGHT = rgb(94, 234, 212);
   const TEAL_TINT = rgb(240, 253, 250);
   const GOLD = rgb(184, 146, 58);
@@ -281,19 +262,19 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic, fonts: S
   const right = PAGE_W - MARGIN;
   const innerW = PAGE_W - 2 * MARGIN;
 
-  // Faint logo watermark behind everything, at the page's 4 %: centred on the visit details, wholly inside that band, so it
+  // Faint logo watermark behind everything, at the page's 2 %: centred on the visit details, wholly inside that band, so it
   // can never reach the header, the stamp, the QR or the page edge. Then a fine gold frame.
   const detailsTop = 202 + X;
   const detailsBottom = 374 + X; // where the "Before you come" box starts
   const markSize = 140;
   ops.push("q /GS1 gs");
-  logoMark(ops, (PAGE_W - markSize) / 2, (detailsTop + detailsBottom - markSize) / 2, markSize, TEAL_BRAND, WHITE);
+  logoMark(ops, (PAGE_W - markSize) / 2, (detailsTop + detailsBottom - markSize) / 2, markSize, "watermark");
   ops.push("Q");
   frame(12, 12, PAGE_W - 24, PAGE_H - 24, GOLD, 0.7);
 
   // Header: navy band, logo, clinic name, gold rule.
   rect(12.4, 12.4, PAGE_W - 24.8, 76, NAVY);
-  logoMark(ops, MARGIN, 26, 46, TEAL_BRAND, WHITE);
+  logoMark(ops, MARGIN, 26, 46, "night");
   text(clinic.name || "Clinic", MARGIN + 60, 52, "F3", 19, WHITE);
   text("APPOINTMENT SLIP", MARGIN + 60, 68, "F2", 8, TEAL_LIGHT, { spacing: 2 });
   hairline(12.4, PAGE_W - 12.4, 88.4, GOLD);
@@ -433,7 +414,7 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic, fonts: S
     ...fontObjects,
     ...descriptors,
     ...fontFiles,
-    "<< /Type /ExtGState /ca 0.04 /CA 0.04 >>",
+    "<< /Type /ExtGState /ca 0.02 /CA 0.02 >>",
   ];
 
   // Every character is Latin-1, so string length equals byte length and the xref offsets are exact.

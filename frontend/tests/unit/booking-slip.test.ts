@@ -227,9 +227,9 @@ describe("slip PDF fonts and stamp (the page and the PDF match)", () => {
     expect(ops[pillAt + 2]).toContain("(13:45)");
   });
 
-  it("draws the watermark at the page's 4 % opacity", () => {
+  it("draws the watermark at the page's 2 % opacity", () => {
     expect(pdf).toMatch(/\/ExtGState << \/GS1 \d+ 0 R >>/);
-    expect(pdf).toContain("/ca 0.04");
+    expect(pdf).toContain("/ca 0.02");
     expect(ops[ops.indexOf("q /GS1 gs") + 1]).toMatch(/ rg /);
   });
 

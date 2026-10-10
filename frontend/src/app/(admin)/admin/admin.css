@@ -115,6 +115,9 @@
   --st-cancelled-line: var(--color-night-st-cancelled-line);
   --shadow-soft-cc: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 22%);
   --shadow-lift-cc: 0 2px 4px rgb(0 0 0 / 35%), 0 18px 48px rgb(0 0 0 / 45%);
+  /* The Booking Plus mark on the dark card: Night colours (Brand tone="auto"). */
+  --logo-body: var(--color-brand-cream);
+  --logo-plus: var(--color-brand-teal-deep);
   color-scheme: dark;
 }
 
@@ -161,6 +164,8 @@
     --st-cancelled-line: var(--color-night-st-cancelled-line);
     --shadow-soft-cc: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 22%);
     --shadow-lift-cc: 0 2px 4px rgb(0 0 0 / 35%), 0 18px 48px rgb(0 0 0 / 45%);
+    --logo-body: var(--color-brand-cream);
+    --logo-plus: var(--color-brand-teal-deep);
     color-scheme: dark;
   }
 }
@@ -274,18 +279,11 @@ svg.i-sm {
   padding: 0 8px 26px;
   border-bottom: 1px solid color-mix(in srgb, var(--color-white) 8%, transparent);
 }
-.mono {
+/* The Booking Plus mark beside the clinic name (the sidebar and top bars use its Night colours). */
+.brand-mark {
+  flex: none;
   width: 42px;
   height: 42px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--color-gold-300);
-  color: var(--color-gold-300);
-  font-family: var(--font-display);
-  font-weight: var(--display-weight);
-  font-size: calc(16px * var(--display-scale));
-  letter-spacing: 0.04em;
 }
 .brand-name {
   font-family: var(--font-display);
@@ -771,6 +769,9 @@ svg.i-sm {
 .foot .credit {
   margin-left: auto;
 }
+.foot .powered {
+  order: -1;
+}
 .disclaimer {
   margin: 0;
   padding: 10px 16px;
@@ -866,10 +867,6 @@ svg.i-sm {
   gap: 12px;
   margin-bottom: 22px;
 }
-.auth-card .brand-row .mono {
-  background: var(--side-bg);
-  color: var(--color-gold-300);
-}
 .auth-card .brand-row .brand-name {
   color: var(--heading);
 }
@@ -928,6 +925,12 @@ svg.i-sm {
 }
 .auth-credit a {
   color: inherit;
+}
+.auth-powered {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--muted);
 }
 .table-wrap {
   overflow-x: auto;
@@ -1117,10 +1120,9 @@ svg.i-sm {
     z-index: 30;
     border-bottom: 1px solid var(--hairline);
   }
-  .m-top .mono {
+  .m-top .brand-mark {
     width: 36px;
     height: 36px;
-    font-size: calc(14px * var(--display-scale));
   }
   .m-top .brand-name {
     font-size: calc(17px * var(--display-scale));

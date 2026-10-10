@@ -10,6 +10,7 @@ import { Brand } from "@/admin/shell/Brand";
 import { DemoDashboardButton } from "@/components/demo/DemoDashboardButton";
 import { getSiteConfig } from "@/lib/content";
 import { isDemoEnabled } from "@/lib/demo";
+import { PoweredBy } from "@/components/brand/PoweredBy";
 import { CREDIT } from "@/lib/honesty";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -37,7 +38,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/admin/logi
     <main id="main-content" className="auth-wrap">
       <div className="auth-card">
         <div className="brand-row">
-          <Brand clinicName={site.name} />
+          <Brand clinicName={site.name} tone="auto" />
         </div>
         <h1>Sign in</h1>
         <p className="lead">Staff only. Use the email and password your administrator gave you.</p>
@@ -61,6 +62,9 @@ export default async function LoginPage({ searchParams }: PageProps<"/admin/logi
           <a href={CREDIT.href} target="_blank" rel="noopener noreferrer">
             {CREDIT.text}
           </a>
+        </p>
+        <p className="auth-powered">
+          <PoweredBy tone="auto" />
         </p>
       </div>
     </main>

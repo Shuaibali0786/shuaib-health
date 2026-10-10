@@ -1,14 +1,13 @@
 import { ImageResponse } from "next/og";
-import { LOGO_VIEWBOX, PLUS_PATH, PULSE_PATH, PULSE_STROKE_WIDTH } from "@/components/brand/logo-paths";
+import { MARK_COLOURS, MARK_LARGE, MARK_VIEWBOX } from "@/lib/brand-marks";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
 /**
- * iOS home-screen icon, drawn from the same mark geometry as the logo.
- * Image generation cannot read CSS variables, so the two brand colours are
- * written out here (navy-900 and teal-500 from tokens.css);
- * tests/unit/tokens.test.ts checks that they match.
+ * iOS home-screen icon: the Booking Plus mark (default drawing) on white, drawn from the same shapes as
+ * the logo. Image generation cannot read CSS variables, so the colours come from brand-marks.ts;
+ * tests/unit/tokens.test.ts checks that they match the --color-brand-* tokens.
  */
 export default function AppleIcon() {
   return new ImageResponse(
@@ -23,22 +22,10 @@ export default function AppleIcon() {
           background: "#ffffff",
         }}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${LOGO_VIEWBOX} ${LOGO_VIEWBOX}`} width="140" height="140">
-          <defs>
-            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#14B8A6" />
-              <stop offset="1" stopColor="#0B2545" />
-            </linearGradient>
-          </defs>
-          <path d={PLUS_PATH} fill="url(#g)" />
-          <path
-            d={PULSE_PATH}
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth={PULSE_STROKE_WIDTH}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${MARK_VIEWBOX} ${MARK_VIEWBOX}`} width="140" height="140">
+          {MARK_LARGE.map((r) => (
+            <rect key={`${r.part}-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.width} height={r.height} rx={r.rx} fill={MARK_COLOURS.light[r.part]} />
+          ))}
         </svg>
       </div>
     ),

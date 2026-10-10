@@ -100,15 +100,22 @@ describe("brand tokens", () => {
   it("keeps the browser theme colour and the touch icon colours in sync with the tokens", () => {
     expect(read("src/app/theme-color.ts").toLowerCase()).toContain(tokens["navy-900"]);
     const apple = read("src/app/apple-icon.tsx").toLowerCase();
-    expect(apple).toContain(tokens["navy-900"]);
-    expect(apple).toContain(tokens["teal-500"]);
+    expect(apple).toContain("brand-marks"); // the mark's colours come from brand-marks.ts, checked below
     const share = read("src/lib/og.tsx").toLowerCase();
     expect(share).toContain(tokens["navy-900"]);
-    expect(share).toContain(tokens["teal-500"]);
     expect(share).toContain(tokens["teal-700"]);
     const icon = read("src/app/icon.svg").toLowerCase();
-    expect(icon).toContain(tokens["navy-900"]);
-    expect(icon).toContain(tokens["teal-500"]);
+    expect(icon).toContain(tokens["brand-ink"]);
+    expect(icon).toContain(tokens["brand-gold"]);
+    expect(icon).toContain(tokens["brand-teal"]);
+  });
+
+  it("keeps the brand mark and wordmark colours in brand-marks.ts equal to the --color-brand-* tokens", () => {
+    const marks = read("src/lib/brand-marks.ts").toLowerCase();
+    for (const name of ["brand-ink", "brand-gold", "brand-teal", "brand-cream", "brand-teal-deep", "brand-word-teal", "brand-word-teal-night"]) {
+      expect(tokens[name], name).toBeDefined();
+      expect(marks, name).toContain(`"${tokens[name]}"`);
+    }
   });
 });
 
@@ -228,6 +235,7 @@ describe("source guardrails", () => {
     "src/app/tokens.css",
     "src/app/icon.svg",
     "src/app/apple-icon.tsx",
+    "src/lib/brand-marks.ts",
     "src/lib/og.tsx",
     "src/app/theme-color.ts",
   ]);

@@ -1,12 +1,14 @@
-import { monogram } from "./nav";
+import { LogoMark, type LogoMarkTone } from "@/components/brand/LogoMark";
 
-/** The clinic monogram and name on the navy bars. The name comes from the clinic's settings, never from code. */
-export function Brand({ clinicName }: { clinicName: string }) {
+/**
+ * The Booking Plus mark and the clinic name. The name comes from the clinic's settings, never from code.
+ * `tone` "night" is for the always-navy side and top bars; the sign-in card uses "auto", which follows the
+ * Night theme through the --logo-* variables in admin.css.
+ */
+export function Brand({ clinicName, tone = "night" }: { clinicName: string; tone?: LogoMarkTone }) {
   return (
     <>
-      <div className="mono" aria-hidden="true">
-        {monogram(clinicName)}
-      </div>
+      <LogoMark size={42} tone={tone} className="brand-mark" />
       <div>
         <div className="brand-name">{clinicName}</div>
         <div className="brand-sub">Command Centre</div>

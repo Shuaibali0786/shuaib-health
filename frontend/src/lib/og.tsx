@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { LOGO_VIEWBOX, PLUS_PATH, PULSE_PATH, PULSE_STROKE_WIDTH } from "@/components/brand/logo-paths";
+import { MARK_COLOURS, MARK_LARGE, MARK_VIEWBOX } from "@/lib/brand-marks";
 import { DEMO_NOTICE } from "@/lib/honesty";
 
 export const OG_SIZE = { width: 1200, height: 630 };
@@ -14,7 +14,7 @@ interface OgCardOptions {
 /**
  * The social-sharing card: brand mark, optional eyebrow, a title, a subtitle and the demo notice.
  * Image generation cannot read CSS variables, so the brand colours are written out here
- * (navy-900, teal-500 and teal-700 from tokens.css); tests/unit/tokens.test.ts checks they match.
+ * (navy-900 and teal-700 from tokens.css; the mark's colours come from brand-marks.ts); tests/unit/tokens.test.ts checks they match.
  */
 export function ogCard({ eyebrow, title, subtitle }: OgCardOptions): ImageResponse {
   return new ImageResponse(
@@ -30,22 +30,10 @@ export function ogCard({ eyebrow, title, subtitle }: OgCardOptions): ImageRespon
           color: "#0B2545",
         }}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${LOGO_VIEWBOX} ${LOGO_VIEWBOX}`} width="200" height="200">
-          <defs>
-            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#14B8A6" />
-              <stop offset="1" stopColor="#0B2545" />
-            </linearGradient>
-          </defs>
-          <path d={PLUS_PATH} fill="url(#g)" />
-          <path
-            d={PULSE_PATH}
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth={PULSE_STROKE_WIDTH}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${MARK_VIEWBOX} ${MARK_VIEWBOX}`} width="200" height="200">
+          {MARK_LARGE.map((r) => (
+            <rect key={`${r.part}-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.width} height={r.height} rx={r.rx} fill={MARK_COLOURS.light[r.part]} />
+          ))}
         </svg>
         <div style={{ display: "flex", flexDirection: "column", marginLeft: 56, maxWidth: 800 }}>
           {eyebrow ? <div style={{ fontSize: 32, fontWeight: 700, color: "#0F766E" }}>{eyebrow}</div> : null}
