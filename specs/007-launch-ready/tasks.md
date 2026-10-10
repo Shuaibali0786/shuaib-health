@@ -31,10 +31,10 @@ description: "Task list for 007-launch-ready"
 
 **Purpose**: baseline evidence and folders; nothing changes behaviour.
 
-- [ ] T001 Run each existing suite once, sequentially and in clean runs (backend pytest, frontend Vitest, the three Playwright configs), and record pass counts as the "before" baseline in specs/007-launch-ready/results/baseline.md
-- [ ] T002 [P] Create specs/007-launch-ready/results/README.md listing every evidence file this feature must produce (baseline, gitleaks-history, cold-start, smoke, phone-qa, lighthouse, p95, alert-test, sentry-check, restore-drill, rollback-rehearsal, usage-day7, final-suites)
-- [ ] T003 [P] Create docs/runbooks/README.md as an index of the runbooks added in Phase 7–9 (links can be placeholders until written)
-- [ ] T004 [P] Run gitleaks over the full git history with redaction (FR-064) and record the result (no secret values) in specs/007-launch-ready/results/gitleaks-history.md. If anything is found, stop and report to the owner, who must rotate the secret.
+- [X] T001 Run each existing suite once, sequentially and in clean runs (backend pytest, frontend Vitest, the three Playwright configs), and record pass counts as the "before" baseline in specs/007-launch-ready/results/baseline.md
+- [X] T002 [P] Create specs/007-launch-ready/results/README.md listing every evidence file this feature must produce (baseline, gitleaks-history, cold-start, smoke, phone-qa, lighthouse, p95, alert-test, sentry-check, restore-drill, rollback-rehearsal, usage-day7, final-suites)
+- [X] T003 [P] Create docs/runbooks/README.md as an index of the runbooks added in Phase 7–9 (links can be placeholders until written)
+- [X] T004 [P] Run gitleaks over the full git history with redaction (FR-064) and record the result (no secret values) in specs/007-launch-ready/results/gitleaks-history.md. If anything is found, stop and report to the owner, who must rotate the secret.
 
 ---
 
