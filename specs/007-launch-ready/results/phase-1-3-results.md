@@ -1,13 +1,13 @@
 # PR-1 results: Phases 1-3 (before and after)
 
-Date: 2026-10-10. "Before" = `baseline.md` (laptop, Windows, branch start). "After" = CI run `38043797290` on Linux (clean runs on fresh throwaway databases), plus one local Vitest run.
+Date: 2026-10-10. "Before" = `baseline.md` (laptop, Windows, branch start). "After" = CI run `38045924723` on Linux, after the owner decisions (clean runs on fresh throwaway databases), plus one local Vitest run.
 
 | Suite | Before (laptop) | After (CI, Linux) | Notes |
 |---|---|---|---|
-| Backend pytest | 1041 passed, 1 skipped, 1 failed (1043) | **1095 passed**, 0 failed, 0 skipped (4 perf tests deselected) | +52 new tests. The race test that failed on the laptop passes on CI. The skipped test needs `tzset`, which Windows lacks. |
+| Backend pytest | 1041 passed, 1 skipped, 1 failed (1043) | **1095 passed**, 0 failed, 0 skipped (4 perf tests deselected); plus `test_rate_limit_api.py` again with `RATE_LIMIT_STORE=postgres`: **7 passed** | +52 new tests. The race test that failed on the laptop passes on CI. The skipped test needs `tzset`, which Windows lacks. |
 | Vitest | 1373 passed | **1391 passed, 1 skipped** (CI) / **1392 passed** (laptop, 50% workers) | +18 new tests; the skip is platform-conditional |
-| Playwright main | 1905 passed, 202 skipped | **1905 passed, 202 skipped** (3 shards: 691 + 689 + 525 passed; 12 + 13 + 177 skipped) | identical to before; Linux visual baselines are used |
-| Playwright offline | 256 passed, 2 failed | **256 passed, 2 failed** | the same 2 assertions; **not caused by this feature, needs an owner decision** (below) |
+| Playwright main | 1905 passed, 202 skipped | **1905 passed, 202 skipped** (3 shards: 691 + 689 + 524 passed, +1 flaky that passed on its retry; 12 + 13 + 177 skipped) | same totals as before; Linux visual baselines are used |
+| Playwright offline | 256 passed, 2 failed | **258 passed** | the 2 old failures now pass with the owner-approved strict exception for the platform credit; 256 + 2 = 258 |
 | Playwright stateful | 1 passed, 24 failed (dev server could not resolve the Google font on the laptop) | **25 passed** | the laptop failures were local |
 | Lighthouse CI (mobile, real API + demo data) | n/a | **passed** (Accessibility and Best Practices >= 0.90, budgets respected) | Performance is a warning only |
 | ruff, ruff format, mypy | clean | clean | |
@@ -16,9 +16,11 @@ Date: 2026-10-10. "Before" = `baseline.md` (laptop, Windows, branch start). "Aft
 | npm audit | 6 high | **0 outside the allow-list** (3 advisories allow-listed, dev-only) | |
 | gitleaks (history, 119 commits) | n/a | **no leaks** | |
 
-## Required checks on PR #8 right now
+## Required checks on PR #8 (run 38045924723)
 
-`backend` pass · `frontend` pass · `secrets` pass · `e2e` **fail** (only because of the offline assertions below).
+`backend` pass · `frontend` pass · `secrets` pass · `e2e` pass (all four parts: lighthouse, main x3 shards, offline, stateful).
+
+**One flaky test, reported honestly:** `tests/e2e/admin-shell.spec.ts:79` ("the navy side column reaches the bottom of the window...", project admin-laptop-1280) failed once and passed on CI's single automatic retry. It passed first time in the two earlier runs of the same shards. It is a layout-timing test, nothing in this PR touches that code, and it is not quarantined. If it flakes again it should be fixed in the spec (needs the owner's approval to change an existing test).
 
 ## Owner decisions (all settled on 2026-10-10)
 
