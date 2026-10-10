@@ -20,6 +20,14 @@ _SCHEME = "postgresql+psycopg"
 _ORIGIN_RE = re.compile(r"^https?://[A-Za-z0-9.-]+(:\d{1,5})?$")
 _DB_URL_FIELDS = ("database_url", "direct_database_url", "test_database_url")
 _MIN_SECRET_LENGTH = 32
+# Infrastructure flags (007): OFF in code, and production must set each one explicitly.
+_PRODUCTION_EXPLICIT = (
+    "rate_limit_store",
+    "trusted_server_exempt",
+    "maintenance_via_cron",
+    "demo_mode",
+    "demo_enabled",
+)
 
 
 def _host(url: str) -> str:
@@ -62,6 +70,13 @@ class Settings(BaseSettings):
     session_secret: SecretStr
     demo_mode: bool = True
     demo_enabled: bool = True
+    rate_limit_store: Literal["memory", "postgres"] = "memory"
+    trusted_server_exempt: bool = False
+    maintenance_via_cron: bool = False
+    cron_secret: SecretStr | None = None
+    db_pool_size: int = Field(1, ge=1, le=10)
+    db_max_overflow: int = Field(1, ge=0, le=10)
+    db_pool_timeout: int = Field(5, ge=1, le=30)
     booking_purge_after_days: int = Field(7, ge=1, le=90)
     booking_limit_per_ip_per_hour: int = Field(10, ge=1, le=1000)
     booking_limit_per_phone_per_day: int = Field(5, ge=1, le=100)
@@ -84,6 +99,16 @@ class Settings(BaseSettings):
         if not isinstance(raw, str) or len(raw) < _MIN_SECRET_LENGTH:
             name = str(info.field_name).upper()
             raise ValueError(f"{name} is required (at least {_MIN_SECRET_LENGTH} characters)")
+        return value
+
+    @field_validator("cron_secret", mode="before")
+    @classmethod
+    def _cron_secret_is_long_enough(cls, value: object) -> object:
+        if value is None or value == "":
+            return None
+        raw = value.get_secret_value() if isinstance(value, SecretStr) else value
+        if not isinstance(raw, str) or len(raw) < _MIN_SECRET_LENGTH:
+            raise ValueError(f"CRON_SECRET must be at least {_MIN_SECRET_LENGTH} characters")
         return value
 
     @field_validator("test_database_url", mode="before")
@@ -127,6 +152,22 @@ class Settings(BaseSettings):
             dev_ids.add((pooled_host.replace("-pooler", ""), port, db))
             if test_id in dev_ids:
                 raise ValueError("test_database_url must point at a different database than dev")
+        return self
+
+    @model_validator(mode="after")
+    def _check_production(self) -> Self:
+        """Production refuses to start when a required setting is missing (names only)."""
+        if self.app_env != "production":
+            return self
+        missing = [
+            name.upper() for name in _PRODUCTION_EXPLICIT if name not in self.model_fields_set
+        ]
+        if self.cron_secret is None:
+            missing.append("CRON_SECRET")
+        if missing:
+            raise ValueError("required in production: " + ", ".join(missing))
+        if not self.maintenance_via_cron:
+            raise ValueError("MAINTENANCE_VIA_CRON must be true in production")
         return self
 
 

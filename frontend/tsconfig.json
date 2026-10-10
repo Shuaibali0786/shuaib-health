@@ -45,7 +45,9 @@
     ".next-offline-dead/types/**/*.ts",
     ".next-offline-dead/dev/types/**/*.ts",
     ".next-offline-unset/types/**/*.ts",
-    ".next-offline-unset/dev/types/**/*.ts"
+    ".next-offline-unset/dev/types/**/*.ts",
+    ".next-lh/types/**/*.ts",
+    ".next-lh/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

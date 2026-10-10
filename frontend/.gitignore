@@ -48,3 +48,7 @@ next-env.d.ts
 
 # keep the env template committed
 !.env.example
+
+# lighthouse ci
+/.lighthouseci/
+/.lighthouseci-reports/

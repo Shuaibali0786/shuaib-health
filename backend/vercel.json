@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["sin1"],
+  "functions": {
+    "app/asgi.py": {
+      "maxDuration": 30,
+      "excludeFiles": "{tests/**,**/test_*.py,fixtures/**,scripts/**,.venv/**}"
+    }
+  },
+  "crons": [{ "path": "/internal/maintenance/purge", "schedule": "0 21 * * *" }]
+}

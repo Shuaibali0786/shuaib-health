@@ -9,6 +9,17 @@ logger = logging.getLogger("app.access")
 ADMIN_PREFIX = "/api/v1/admin/"
 
 
+def xff_hops(scope: Scope) -> int:
+    """How many addresses ``X-Forwarded-For`` lists. A count only, never the addresses.
+
+    Used to measure ``TRUSTED_PROXY_HOPS`` on the live host (FR-031).
+    """
+    for key, value in scope.get("headers", []):
+        if key == b"x-forwarded-for":
+            return len([p for p in value.decode("latin-1").split(",") if p.strip()])
+    return 0
+
+
 def outcome_of(status: int) -> str:
     """A coarse, countable result for the operator (NFR-003)."""
     if status < 400:
@@ -49,6 +60,7 @@ class AccessLogMiddleware:
                 "route": getattr(route, "path", None),
                 "status": status,
                 "durationMs": round((time.perf_counter() - started) * 1000, 1),
+                "xffHops": xff_hops(scope),
             }
             if str(scope.get("path", "")).startswith(ADMIN_PREFIX):
                 state = scope.get("state") or {}

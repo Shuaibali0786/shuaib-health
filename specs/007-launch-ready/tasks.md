@@ -43,36 +43,36 @@ description: "Task list for 007-launch-ready"
 **Purpose**: owner conditions C1–C3, and production settings that fail when missing. Every user story depends on this phase.
 
 ### Feature flags (Constitution XI, FR-079)
-- [ ] T105 Add flags to backend/app/settings.py, all **OFF in code**: `rate_limit_store: Literal["memory","postgres"] = "memory"`, `trusted_server_exempt: bool = False`, `maintenance_via_cron: bool = False`. When `APP_ENV=production`, each must be set explicitly (startup error naming the missing flag), and `maintenance_via_cron=false` is rejected in production (C3).
-- [ ] T106 [P] Add tests for defaults (OFF), the production explicit-value requirement, and the production rejection of `maintenance_via_cron=false`, in backend/tests/unit/test_feature_flags.py
+- [X] T105 Add flags to backend/app/settings.py, all **OFF in code**: `rate_limit_store: Literal["memory","postgres"] = "memory"`, `trusted_server_exempt: bool = False`, `maintenance_via_cron: bool = False`. When `APP_ENV=production`, each must be set explicitly (startup error naming the missing flag), and `maintenance_via_cron=false` is rejected in production (C3).
+- [X] T106 [P] Add tests for defaults (OFF), the production explicit-value requirement, and the production rejection of `maintenance_via_cron=false`, in backend/tests/unit/test_feature_flags.py
 
 ### C1: serverless-safe pooled database connection
-- [ ] T005 Add settings `db_pool_size` (default 1, 1–10), `db_max_overflow` (default 1, 0–10), `db_pool_timeout` (default 5 s, 1–30) in backend/app/settings.py
-- [ ] T006 Use those settings in `make_engine` / `get_engine`, keeping `pool_pre_ping`, `pool_recycle=300`, `connect_timeout=10`, `prepare_threshold=None`, in backend/app/db.py
-- [ ] T007 [P] Add tests for pool defaults and bounds, and confirm the existing pooled/direct URL validation (settings.py L117–121) also rejects a non-pooler `DATABASE_URL` when `APP_ENV=production`, in backend/tests/unit/test_db_pool_settings.py
+- [X] T005 Add settings `db_pool_size` (default 1, 1–10), `db_max_overflow` (default 1, 0–10), `db_pool_timeout` (default 5 s, 1–30) in backend/app/settings.py
+- [X] T006 Use those settings in `make_engine` / `get_engine`, keeping `pool_pre_ping`, `pool_recycle=300`, `connect_timeout=10`, `prepare_threshold=None`, in backend/app/db.py
+- [X] T007 [P] Add tests for pool defaults and bounds, and confirm the existing pooled/direct URL validation (settings.py L117–121) also rejects a non-pooler `DATABASE_URL` when `APP_ENV=production`, in backend/tests/unit/test_db_pool_settings.py
 
 ### C3: no background threads or long-running tasks
-- [ ] T008 Add the `cron_secret: SecretStr | None` setting (≥ 32 chars; **required when `APP_ENV=production`**) in backend/app/settings.py
-- [ ] T009 Create backend/app/routers/maintenance.py implementing `GET|POST /internal/maintenance/purge` per contracts/ops-endpoints.md:
+- [X] T008 Add the `cron_secret: SecretStr | None` setting (≥ 32 chars; **required when `APP_ENV=production`**) in backend/app/settings.py
+- [X] T009 Create backend/app/routers/maintenance.py implementing `GET|POST /internal/maintenance/purge` per contracts/ops-endpoints.md:
   - Bearer `CRON_SECRET` compared in constant time; 404 otherwise;
   - `include_in_schema=False`;
   - synchronous bounded purge with a < 20 s budget;
   - exempt from the per-IP limiter only when authorised;
   - mounted **only when `maintenance_via_cron=true` and `CRON_SECRET` is set**.
-- [ ] T010 In backend/app/main.py, when `maintenance_via_cron=true`: start **no** task or thread in `lifespan` and register the maintenance router. When false (code default, local and tests): keep today's startup purge unchanged. Move the shared purge logic to backend/app/booking/maintenance.py so both paths call the same function.
-- [ ] T011 (owner-approved 2026-10-09) Run backend/tests/api/test_retention.py unchanged with the flag default (startup purge). Then add the **same assertions** for the cron path (`maintenance_via_cron=true`) as new parametrised cases. Every original assertion is kept and none is loosened; the PR description lists exactly what was added or moved.
-- [ ] T012 [P] Add tests in backend/tests/api/test_maintenance_purge.py:
+- [X] T010 In backend/app/main.py, when `maintenance_via_cron=true`: start **no** task or thread in `lifespan` and register the maintenance router. When false (code default, local and tests): keep today's startup purge unchanged. Move the shared purge logic to backend/app/booking/maintenance.py so both paths call the same function.
+- [X] T011 (owner-approved 2026-10-09) Run backend/tests/api/test_retention.py unchanged with the flag default (startup purge). Then add the **same assertions** for the cron path (`maintenance_via_cron=true`) as new parametrised cases. Every original assertion is kept and none is loosened; the PR description lists exactly what was added or moved.
+- [X] T012 [P] Add tests in backend/tests/api/test_maintenance_purge.py:
   - with the flag ON: no or wrong bearer → 404; correct → 200 with `purged`; second call → `purged: 0`; route absent from OpenAPI; lifespan schedules no task or thread;
   - with the flag OFF or `CRON_SECRET` unset: route → 404.
 
 ### C2: shared-state rate limiting (no in-process memory)
-- [ ] T013 Add `PostgresFixedWindowLimiter` implementing the existing `RateLimiter` protocol in backend/app/middleware/rate_limit.py:
+- [X] T013 Add `PostgresFixedWindowLimiter` implementing the existing `RateLimiter` protocol in backend/app/middleware/rate_limit.py:
   - reuse the atomic upsert of `rate_limit_counter` from backend/app/booking/limits.py;
   - bucket key = HMAC(`PRIVACY_HASH_KEY`, ip);
   - 60 s window;
   - on a DB error, allow the request and log the error class. This fail-open applies to **this general per-IP check only** (owner decision; ADR-0011 C2). Booking, login, lookup and demo-start limits keep blocking, unchanged.
-- [ ] T014 Wire `PostgresFixedWindowLimiter` when `rate_limit_store="postgres"`, and `InMemoryFixedWindowLimiter` otherwise (code default), in backend/app/main.py. Both classes and all existing tests stay.
-- [ ] T015 [P] Add tests in backend/tests/api/test_rate_limit_shared.py:
+- [X] T014 Wire `PostgresFixedWindowLimiter` when `rate_limit_store="postgres"`, and `InMemoryFixedWindowLimiter` otherwise (code default), in backend/app/main.py. Both classes and all existing tests stay.
+- [X] T015 [P] Add tests in backend/tests/api/test_rate_limit_shared.py:
   - two app instances sharing one database share the count (61st request across both → 429);
   - `/health` never writes a counter;
   - a DB failure lets the general check through but booking, login and demo limits still refuse.
@@ -80,29 +80,29 @@ description: "Task list for 007-launch-ready"
 - [ ] T107 **Existing-test guard (H6):** run backend/tests/api/test_rate_limit_api.py **unchanged**, once with the default (`memory`) and once with `RATE_LIMIT_STORE=postgres` set through the environment for the whole run (no edit to the file). If any assertion fails in either mode, **stop** and list the failing assertions and their cause for owner approval; never edit or loosen them to pass.
 
 ### Fail-closed production settings (B4, B5)
-- [ ] T016 Make `DEMO_MODE` and `DEMO_ENABLED` required (no default) when `APP_ENV=production`, with an error naming the setting, in backend/app/settings.py
-- [ ] T017 [P] Add tests for production with the demo switches or `CRON_SECRET` missing → startup error naming the setting and never its value; development keeps today's defaults. In backend/tests/unit/test_settings_production.py
-- [ ] T018 Require an explicit `DEMO_ENABLED` at build time when `VERCEL_ENV` is `production` or `preview`, in frontend/src/lib/demo.ts
-- [ ] T019 In frontend/src/lib/seo.ts, resolve the site URL in order: `SITE_URL` → `https://${VERCEL_PROJECT_PRODUCTION_URL}` (production) or `https://${VERCEL_URL}` (preview) → fail the build when `VERCEL_ENV=production` and none is set. Never emit an `http://` or `localhost` self-URL on Vercel.
-- [ ] T020 [P] Add unit tests for the demo-flag and site-URL resolution in frontend/tests/unit/demo-flag-production.test.ts and frontend/tests/unit/site-url.test.ts
-- [ ] T021 Set `openapi_url=None` when `APP_ENV=production` (N3) in backend/app/main.py, and add a **new** test in backend/tests/api/test_openapi_production.py
+- [X] T016 Make `DEMO_MODE` and `DEMO_ENABLED` required (no default) when `APP_ENV=production`, with an error naming the setting, in backend/app/settings.py
+- [X] T017 [P] Add tests for production with the demo switches or `CRON_SECRET` missing → startup error naming the setting and never its value; development keeps today's defaults. In backend/tests/unit/test_settings_production.py
+- [X] T018 Require an explicit `DEMO_ENABLED` at build time when `VERCEL_ENV` is `production` or `preview`, in frontend/src/lib/demo.ts
+- [X] T019 In frontend/src/lib/seo.ts, resolve the site URL in order: `SITE_URL` → `https://${VERCEL_PROJECT_PRODUCTION_URL}` (production) or `https://${VERCEL_URL}` (preview) → fail the build when `VERCEL_ENV=production` and none is set. Never emit an `http://` or `localhost` self-URL on Vercel.
+- [X] T020 [P] Add unit tests for the demo-flag and site-URL resolution in frontend/tests/unit/demo-flag-production.test.ts and frontend/tests/unit/site-url.test.ts
+- [X] T021 Set `openapi_url=None` when `APP_ENV=production` (N3) in backend/app/main.py, and add a **new** test in backend/tests/api/test_openapi_production.py
 
 ### Vercel project configuration (no accounts needed)
-- [ ] T022 Create backend/vercel.json with:
+- [X] T022 Create backend/vercel.json with:
   - `regions: ["sin1"]`;
   - `functions` `maxDuration: 30`;
   - `excludeFiles` for tests and fixtures;
   - `crons: [{ path: "/internal/maintenance/purge", schedule: "0 21 * * *" }]`.
-- [ ] T023 Add `[tool.vercel] entrypoint` for the FastAPI app in backend/pyproject.toml. Vercel needs a top-level `app`, but backend/app/main.py exposes it lazily via `__getattr__`, so create backend/app/asgi.py with `app = create_app()` and point the entrypoint there; tests keep using the factory.
-- [ ] T024 Create backend/scripts/vercel_build.py and hook it via `[tool.vercel.scripts] build` in backend/pyproject.toml:
+- [X] T023 Add `[tool.vercel] entrypoint` for the FastAPI app in backend/pyproject.toml. Vercel needs a top-level `app`, but backend/app/main.py exposes it lazily via `__getattr__`, so create backend/app/asgi.py with `app = create_app()` and point the entrypoint there; tests keep using the factory.
+- [X] T024 Create backend/scripts/vercel_build.py and hook it via `[tool.vercel.scripts] build` in backend/pyproject.toml:
   - run `alembic upgrade head` with that environment's `DIRECT_DATABASE_URL` **only when `VERCEL_ENV` is `production` or `preview`** (never locally or in CI);
   - bounded retry (~30 s) while Neon wakes;
   - exit non-zero on failure;
   - print no URL.
-- [ ] T025 [P] Add tests in backend/tests/unit/test_vercel_build.py: runs for `production` and `preview`; skips when `VERCEL_ENV` is unset or `development`; retries then fails cleanly; output contains no URL.
-- [ ] T026 [P] Create frontend/vercel.json with `regions: ["sin1"]`
-- [ ] T027 Add a count-only `xffHops` field (number of `X-Forwarded-For` entries, never the addresses) to the structured access log, used to measure `TRUSTED_PROXY_HOPS` (FR-031), in backend/app/middleware/access_log.py. Add a test in backend/tests/unit/test_access_log_xff.py.
-- [ ] T028 Sync backend/.env.example and frontend/.env.example with contracts/required-settings.md (placeholders only, including `CRON_SECRET`, `DB_POOL_*`, `SENTRY_DSN`, the four flags and `API_PROTECTION_BYPASS`)
+- [X] T025 [P] Add tests in backend/tests/unit/test_vercel_build.py: runs for `production` and `preview`; skips when `VERCEL_ENV` is unset or `development`; retries then fails cleanly; output contains no URL.
+- [X] T026 [P] Create frontend/vercel.json with `regions: ["sin1"]`
+- [X] T027 Add a count-only `xffHops` field (number of `X-Forwarded-For` entries, never the addresses) to the structured access log, used to measure `TRUSTED_PROXY_HOPS` (FR-031), in backend/app/middleware/access_log.py. Add a test in backend/tests/unit/test_access_log_xff.py.
+- [X] T028 Sync backend/.env.example and frontend/.env.example with contracts/required-settings.md (placeholders only, including `CRON_SECRET`, `DB_POOL_*`, `SENTRY_DSN`, the four flags and `API_PROTECTION_BYPASS`)
 
 **Checkpoint**: full backend and frontend suites green in single sequential runs; no background task at startup; no in-memory limiter wired.
 
@@ -113,28 +113,28 @@ description: "Task list for 007-launch-ready"
 **Goal**: CI on every PR, and merging needs green checks plus owner approval.
 **Independent test**: a throwaway PR with a lint error and a fake secret fails `frontend` and `secrets`; once fixed, it is still blocked until the owner approves.
 
-- [ ] T029 [US2] Create the `backend` job in .github/workflows/ci.yml per contracts/ci-checks.md:
+- [X] T029 [US2] Create the `backend` job in .github/workflows/ci.yml per contracts/ci-checks.md:
   - uv sync --frozen, ruff check, ruff format --check, mypy;
   - pytest against a Postgres 16 service container;
   - alembic up/down/up;
   - pip-audit.
-- [ ] T030 [US2] Add the `frontend` job to .github/workflows/ci.yml: npm ci, eslint, tsc --noEmit, vitest run, `next build`, then `next build` with `CATALOG_API_URL=http://127.0.0.1:9`, then the audit check
-- [ ] T031 [P] [US2] Add the `secrets` job (gitleaks on the PR range, redacted) to .github/workflows/ci.yml, plus the config .gitleaks.toml (allow-list only for known test fixtures, each with a comment)
-- [ ] T113 [P] [US2] Add the `.gitignore` check to the `secrets` job in .github/workflows/ci.yml (Constitution VI) per contracts/ci-checks.md: `git check-ignore` for the `.env` paths, and fail if `git ls-files` lists any `.env` file other than `*.env.example`. Prove it with a throwaway commit of a dummy `.env` in T037.
-- [ ] T114 [US2] Add Lighthouse CI to the `e2e` job (Constitution VIII):
+- [X] T030 [US2] Add the `frontend` job to .github/workflows/ci.yml: npm ci, eslint, tsc --noEmit, vitest run, `next build`, then `next build` with `CATALOG_API_URL=http://127.0.0.1:9`, then the audit check
+- [X] T031 [P] [US2] Add the `secrets` job (gitleaks on the PR range, redacted) to .github/workflows/ci.yml, plus the config .gitleaks.toml (allow-list only for known test fixtures, each with a comment)
+- [X] T113 [P] [US2] Add the `.gitignore` check to the `secrets` job in .github/workflows/ci.yml (Constitution VI) per contracts/ci-checks.md: `git check-ignore` for the `.env` paths, and fail if `git ls-files` lists any `.env` file other than `*.env.example`. Prove it with a throwaway commit of a dummy `.env` in T037.
+- [X] T114 [US2] Add Lighthouse CI to the `e2e` job (Constitution VIII):
   - add the `@lhci/cli` devDependency in frontend/package.json;
   - frontend/lighthouserc.json: mobile preset, 3 runs on `/` and one catalog page against `next start`; Accessibility and Best Practices ≥ 0.90 as **error**, Performance ≥ 0.90 as **warn**, SEO not asserted;
   - frontend/lighthouse-budget.json: script, style, image and total byte budgets set to today's measured build sizes + 10% (record the baseline in specs/007-launch-ready/results/lighthouse/ci-budget-baseline.md).
 - [ ] T115 [US2] **Linux visual baselines (playbook rule 5):** all 139 visual baselines under frontend/tests/**/*-snapshots/ (admin visual, confirmation slip and others) are `-win32` only, so the Linux CI `e2e` job has none to compare against. Generate the **Linux** baselines inside the official Playwright Docker image matching the installed `@playwright/test` version, **adding** `-linux.png` files and leaving every `-win32.png` untouched. Produce a cross-platform pixel-diff report (win32 vs linux, per snapshot, with the max diff) in specs/007-launch-ready/results/visual-linux-baselines.md.
 - [ ] T116 [US2] 🔑 OWNER ACTION: review the visual-linux-baselines report and approve the new Linux baselines in the PR (rule 5: baselines change only with a pixel-diff report the owner has seen)
-- [ ] T032 [US2] Add the `e2e` job to .github/workflows/ci.yml as an **always-required** check (K1; Constitution IX): backend + `next start` against **its own** service container with demo seed (never shared with the `backend` job; playbook rule 3); the existing Playwright configs run **one after another**, never in parallel on the same database; 20 min timeout; traces uploaded only on failure. There is no optional fallback. If it is flaky, fix the spec; quarantine only with the owner's written approval in the PR.
-- [ ] T033 [US2] Fix the npm high findings without `--force` (FR-061):
+- [X] T032 [US2] Add the `e2e` job to .github/workflows/ci.yml as an **always-required** check (K1; Constitution IX): backend + `next start` against **its own** service container with demo seed (never shared with the `backend` job; playbook rule 3); the existing Playwright configs run **one after another**, never in parallel on the same database; 20 min timeout; traces uploaded only on failure. There is no optional fallback. If it is flaky, fix the spec; quarantine only with the owner's written approval in the PR.
+- [X] T033 [US2] Fix the npm high findings without `--force` (FR-061):
   - run `npm audit fix`;
   - add an `overrides` entry for `braces`/`micromatch` in frontend/package.json if a patched version exists;
   - rerun eslint and all frontend suites.
-- [ ] T034 [US2] If any high finding remains, add frontend/audit-allowlist.json (advisory id, package, reason "dev-only lint tooling", review date) and frontend/scripts/check-audit.mjs that fails only on highs not listed. Flag the list for owner approval in the PR.
+- [X] T034 [US2] If any high finding remains, add frontend/audit-allowlist.json (advisory id, package, reason "dev-only lint tooling", review date) and frontend/scripts/check-audit.mjs that fails only on highs not listed. Flag the list for owner approval in the PR.
 - [ ] T035 [P] [US2] Add a pip-audit allow-list file only if needed, at backend/audit-allowlist.txt, with reason and review date
-- [ ] T036 [P] [US2] Update .github/pull_request_template.md:
+- [X] T036 [P] [US2] Update .github/pull_request_template.md:
   - links to the runbooks;
   - "migration present → Neon restore point taken" item;
   - "no prices / sales pitch / hire-us (Vercel Hobby)" item;

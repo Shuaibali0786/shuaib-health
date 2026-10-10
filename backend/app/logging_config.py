@@ -20,6 +20,7 @@ ALLOWED_EXTRAS = (
     "route",
     "status",
     "durationMs",
+    "xffHops",
     "deleted",
     "role",
     "outcome",

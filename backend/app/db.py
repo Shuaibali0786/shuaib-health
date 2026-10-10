@@ -18,12 +18,18 @@ from app.settings import get_settings
 
 
 def make_engine(
-    url: SecretStr, *, connect_timeout: int = 10, pool_size: int = 5, max_overflow: int = 5
+    url: SecretStr,
+    *,
+    connect_timeout: int = 10,
+    pool_size: int = 5,
+    max_overflow: int = 5,
+    pool_timeout: int = 30,
 ) -> Engine:
     return create_engine(
         url.get_secret_value(),
         pool_size=pool_size,
         max_overflow=max_overflow,
+        pool_timeout=pool_timeout,
         pool_pre_ping=True,
         pool_recycle=300,
         connect_args={"prepare_threshold": None, "connect_timeout": connect_timeout},
@@ -34,7 +40,14 @@ def make_engine(
 
 @lru_cache
 def get_engine() -> Engine:
-    return make_engine(get_settings().database_url)
+    """The app engine. Small pool: each serverless instance handles few requests at a time."""
+    settings = get_settings()
+    return make_engine(
+        settings.database_url,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_max_overflow,
+        pool_timeout=settings.db_pool_timeout,
+    )
 
 
 def get_session() -> Iterator[Session]:

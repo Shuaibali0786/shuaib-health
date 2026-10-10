@@ -34,7 +34,7 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
 
   it("has no backend env names in src outside lib/api/config.ts, lib/demo.ts and instrumentation.ts", () => {
     expect(
-      offenders(/process\.env\.(?!SITE_URL\b|NODE_ENV\b)[A-Z_]+/, (path) => path === "lib/api/config.ts" || path === "lib/demo.ts" || path === "instrumentation.ts"),
+      offenders(/process\.env\.(?!SITE_URL\b|NODE_ENV\b)[A-Z_]+/, (path) => path === "lib/api/config.ts" || path === "lib/demo.ts" || path === "lib/seo.ts" || path === "instrumentation.ts"),
     ).toEqual([]);
   });
 

@@ -49,6 +49,17 @@ def settings_factory() -> SettingsFactory:
             "privacy_hash_key": "test-privacy-key-0123456789abcdefgh",
             "session_secret": "test-session-secret-0123456789abcdef",
         }
+        if overrides.get("app_env") == "production":
+            # Production refuses to start without these (007); tests that only need "a production
+            # app" get them here. Explicit overrides still win.
+            values.update(
+                rate_limit_store="memory",
+                trusted_server_exempt=False,
+                maintenance_via_cron=True,
+                demo_mode=True,
+                demo_enabled=True,
+                cron_secret="test-cron-secret-0123456789abcdefghij",
+            )
         values.update(overrides)
         return Settings(_env_file=None, **values)
 
