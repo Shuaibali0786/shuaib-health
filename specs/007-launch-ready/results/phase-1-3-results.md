@@ -20,12 +20,13 @@ Date: 2026-10-10. "Before" = `baseline.md` (laptop, Windows, branch start). "Aft
 
 `backend` pass · `frontend` pass · `secrets` pass · `e2e` **fail** (only because of the offline assertions below).
 
-## Needs the owner's decision (nothing was edited or loosened)
+## Owner decisions (all settled on 2026-10-10)
 
-1. **T107, rate-limit test guard.** `test_rate_limit_api.py` passes in `memory` mode; in `postgres` mode 2 of 7 fail because of shared counters between tests (each passes alone). See `existing-test-guards.md` for options.
-2. **Offline test `unset.spec.ts:25`** ("shows a neutral identity with no tel: links"): it expects the words "Shuaib Health" to appear nowhere on the neutral page, but the footer now shows "Powered by Shuaib Health" (added with the Booking Plus logo, PR #7). The two decisions conflict. Options: (a) the test ignores the "Powered by" platform credit (the test changes, a loosening only the owner can approve); (b) the credit is hidden when no clinic is configured (a product change); (c) leave as is and the required `e2e` check stays red. Recommended: (a).
-3. **T116, Linux visual baselines**: look at the report `visual-linux-baselines.md` and approve.
-4. **T034, npm audit allow-list** (`frontend/audit-allowlist.json`, 3 entries) and **the changes to existing tests/fixtures** listed in the PR description.
+1. **T107, rate-limit guard:** approved an add-only fixture; `test_rate_limit_api.py` unchanged, passes 7/7 in both modes (see `existing-test-guards.md`).
+2. **Offline assertion `unset.spec.ts:25`:** kept strict. Only the platform credit element (`data-testid="powered-by"`) is excluded; "Shuaib Health" anywhere else on the neutral page still fails (proved on sample pages: credit alone 0 matches, the name in a heading or paragraph 1 match). The credit is not hidden, and the test now also checks that the credit reads "Powered by Shuaib Health".
+3. **npm audit allow-list:** approved for the 3 dev-only advisories, each with a reason and a review date of 2026-11-09.
+
+Still waiting on the owner: **T116** (approve the Linux visual baselines), **T038** (branch protection), **T039** (merge click).
 
 ## Risk noticed (not fixed here)
 

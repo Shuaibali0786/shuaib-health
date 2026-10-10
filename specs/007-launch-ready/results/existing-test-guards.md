@@ -1,6 +1,6 @@
 # Existing-test guards (H6) — T107
 
-**Status: STOPPED, waiting for the owner's decision.** Per the task, no existing test has been edited or loosened.
+**Status: RESOLVED on 2026-10-10.** The owner approved option 1 (below). Per the task, no existing test was edited or loosened first; the fix is an add-only fixture.
 
 ## What was run (2026-10-10)
 
@@ -37,3 +37,9 @@ The new tests in `backend/tests/api/test_rate_limit_shared.py` (two app instance
 3. Change the two assertions. **Not recommended**; it would loosen existing tests.
 
 Nothing in production depends on this choice: it only decides how the old test file is kept honest. It blocks the merge of PR-1 until decided (tasks.md, "Existing-test guards").
+
+## Resolution (2026-10-10)
+
+- Added the autouse fixture `rate_limit_api_own_counters` to `backend/tests/api/conftest.py`. It applies only to `test_rate_limit_api.py` and only when `RATE_LIMIT_STORE=postgres`: it points the limiter at the test database and empties `rate_limit_counter` before and after each test. In `memory` mode it does nothing.
+- `backend/tests/api/test_rate_limit_api.py` is **unchanged** (git shows no diff).
+- Result: `memory` 7 passed; `postgres` 7 passed. CI now also runs this file with `RATE_LIMIT_STORE=postgres`, so the guard stays in place.

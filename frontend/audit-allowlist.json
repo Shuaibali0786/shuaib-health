@@ -1,26 +1,26 @@
 {
-  "_note": "High-severity advisories that are accepted for now. Each entry needs a reason and a review date. The owner approves this list in the pull request. Remove an entry as soon as a fix exists.",
+  "_note": "High-severity advisories that are accepted for now. Each entry needs a reason and a review date. Approved by the owner on 2026-10-10 for these 3 dev-only advisories. When a review date passes, scripts/check-audit.mjs prints REVIEW OVERDUE: look for a patched release and remove the entry.",
   "advisories": [
     {
       "id": "GHSA-vfj7-8cjw-p6xm",
       "package": "braces",
       "reason": "dev-only lint tooling: braces <- micromatch <- fast-glob <- @next/eslint-plugin-next <- eslint-config-next. Not shipped to users or run in production. No patched braces release exists (3.0.3 is the latest); the only 'fix' npm offers is downgrading eslint-config-next to 14.x, a breaking change to a major older than Next 16.",
-      "reviewDate": "2026-10-10",
-      "reviewBy": "2026-11-10"
+      "addedOn": "2026-10-10",
+      "reviewDate": "2026-11-09"
     },
     {
       "id": "GHSA-jmr9-qjv8-65gv",
       "package": "extract-zip",
       "reason": "dev-only: extract-zip <- @puppeteer/browsers <- puppeteer-core <- lighthouse <- @lhci/cli (CI Lighthouse check). It only unpacks a browser download, which CI never does (it uses the Chrome that Playwright installs). No patched extract-zip exists (2.0.1 is the latest).",
-      "reviewDate": "2026-10-10",
-      "reviewBy": "2026-11-10"
+      "addedOn": "2026-10-10",
+      "reviewDate": "2026-11-09"
     },
     {
       "id": "GHSA-7pqw-9j4j-h8q3",
       "package": "extract-zip",
       "reason": "Same package and chain as GHSA-jmr9-qjv8-65gv above: dev-only, unused in CI, no patched release.",
-      "reviewDate": "2026-10-10",
-      "reviewBy": "2026-11-10"
+      "addedOn": "2026-10-10",
+      "reviewDate": "2026-11-09"
     }
   ]
 }

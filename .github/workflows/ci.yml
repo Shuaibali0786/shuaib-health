@@ -71,6 +71,12 @@ jobs:
       - name: pytest
         run: uv run pytest -q
 
+      # Existing-test guard (H6): the same file must also pass with the shared limiter switched on.
+      - name: pytest test_rate_limit_api.py with RATE_LIMIT_STORE=postgres
+        env:
+          RATE_LIMIT_STORE: postgres
+        run: uv run pytest tests/api/test_rate_limit_api.py -q
+
       - name: Migrations down one step, then up again
         run: |
           uv run alembic downgrade -1

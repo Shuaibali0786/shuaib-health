@@ -55,8 +55,8 @@ for (const [name, entry] of Object.entries(vulnerabilities)) {
 const today = new Date().toISOString().slice(0, 10);
 for (const id of accepted) {
   const entry = allowed.get(id);
-  const overdue = entry.reviewBy && entry.reviewBy < today ? " (REVIEW OVERDUE)" : "";
-  console.log(`allow-listed: ${id} in ${entry.package}, reviewed ${entry.reviewDate}${overdue}`);
+  const overdue = entry.reviewDate < today ? " (REVIEW OVERDUE)" : "";
+  console.log(`allow-listed: ${id} in ${entry.package}, review by ${entry.reviewDate}${overdue}`);
 }
 if (failures.length > 0) {
   console.error("High or critical advisories that are not allow-listed:");
