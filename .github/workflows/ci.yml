@@ -261,6 +261,12 @@ jobs:
     name: e2e-main (shard ${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # The same image that produced the Linux visual baselines, so fonts and rendering match.
+    # Keep this tag equal to the installed @playwright/test version (frontend/package-lock.json).
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    env:
+      HOME: /root
     strategy:
       fail-fast: false
       matrix:
@@ -268,6 +274,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/frontend-e2e-setup
+        with:
+          system-deps: "false"
 
       # The 2-worker limit is for the owner's laptop. A CI runner has its own cores, so use them all.
       - name: Playwright - main config
@@ -291,9 +299,17 @@ jobs:
     name: e2e-offline
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # The same image that produced the Linux visual baselines, so fonts and rendering match.
+    # Keep this tag equal to the installed @playwright/test version (frontend/package-lock.json).
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    env:
+      HOME: /root
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/frontend-e2e-setup
+        with:
+          system-deps: "false"
 
       - name: Playwright - offline config
         working-directory: frontend
@@ -312,9 +328,17 @@ jobs:
     name: e2e-stateful
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # The same image that produced the Linux visual baselines, so fonts and rendering match.
+    # Keep this tag equal to the installed @playwright/test version (frontend/package-lock.json).
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    env:
+      HOME: /root
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/frontend-e2e-setup
+        with:
+          system-deps: "false"
 
       - name: Playwright - stateful config
         working-directory: frontend

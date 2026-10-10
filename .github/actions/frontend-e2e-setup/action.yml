@@ -1,6 +1,11 @@
 name: Frontend and browsers
 description: Node 24, npm ci, and the Playwright browsers the e2e suites use.
 
+inputs:
+  system-deps:
+    description: Install the browsers' system packages (false inside the Playwright container, which has them)
+    default: "true"
+
 runs:
   using: composite
   steps:
@@ -15,4 +20,8 @@ runs:
       working-directory: frontend
       run: |
         npm ci
-        npx playwright install --with-deps chromium webkit
+        if [ "${{ inputs.system-deps }}" = "true" ]; then
+          npx playwright install --with-deps chromium webkit
+        else
+          npx playwright install chromium webkit
+        fi
