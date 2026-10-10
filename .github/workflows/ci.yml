@@ -213,6 +213,8 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
+          # The backend started below can still hold the uv cache open at cleanup; never wait on it.
+          prune-cache: false
 
       - uses: ./.github/actions/frontend-e2e-setup
 
@@ -264,6 +266,11 @@ jobs:
       - name: Backend log (only on failure; the logs hold no personal data or URLs)
         if: failure()
         run: tail -n 100 "$RUNNER_TEMP/backend.log" || true
+
+      # Always last: stop the backend so nothing holds the uv cache when the job cleans up.
+      - name: Stop the backend server
+        if: always()
+        run: pkill -f 'uvicorn app.main:app' || true
 
   e2e-main:
     name: e2e-main (shard ${{ matrix.shard }}/3)
