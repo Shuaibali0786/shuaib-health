@@ -167,6 +167,8 @@ jobs:
             --log-opts="$range" --verbose
 
       - name: .gitignore keeps env files out (Constitution VI)
+        # Runs even if gitleaks found something, so both problems show in one run.
+        if: always()
         run: |
           set -euo pipefail
           for path in .env backend/.env frontend/.env frontend/.env.local frontend/.env.production; do
