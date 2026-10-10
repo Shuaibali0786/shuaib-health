@@ -148,6 +148,7 @@ class RateLimitMiddleware:
         trusted_proxy_hops: int = 0,
         proxy_secret: str | None = None,
         cron_secret: str | None = None,
+        trusted_server_exempt: bool = False,
         exempt_paths: frozenset[str] = EXEMPT_PATHS,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
@@ -156,6 +157,7 @@ class RateLimitMiddleware:
         self.trusted_proxy_hops = trusted_proxy_hops
         self.proxy_secret = proxy_secret
         self.cron_secret = cron_secret
+        self.trusted_server_exempt = trusted_server_exempt
         self.exempt_paths = exempt_paths
         self.clock = clock
 
@@ -168,11 +170,26 @@ class RateLimitMiddleware:
             return False
         return hmac.compare_digest(presented[7:].strip().encode(), self.cron_secret.encode())
 
+    def _is_trusted_server_call(self, scope: Scope) -> bool:
+        """Our own website server (valid proxy secret) acting without a visitor: builds and ISR.
+
+        Only when ``trusted_server_exempt`` is on. A request that names a visitor in
+        ``X-Client-IP`` is not exempt; it is counted against that visitor instead.
+        """
+        if not self.trusted_server_exempt or not self.proxy_secret:
+            return False
+        presented = _header(scope, b"x-proxy-secret")
+        if presented is None:
+            return False
+        if not hmac.compare_digest(presented.encode(), self.proxy_secret.encode()):
+            return False
+        return _header(scope, b"x-client-ip") is None
+
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http" or scope.get("path") in self.exempt_paths:
             await self.app(scope, receive, send)
             return
-        if self._is_authorised_cron(scope):
+        if self._is_authorised_cron(scope) or self._is_trusted_server_call(scope):
             await self.app(scope, receive, send)
             return
         retry_after = self.limiter.hit(

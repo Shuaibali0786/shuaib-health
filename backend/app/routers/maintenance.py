@@ -8,6 +8,7 @@ import hmac
 import logging
 from typing import Annotated
 
+import sentry_sdk
 from fastapi import APIRouter, Depends, Header, Request
 from fastapi.responses import JSONResponse, Response
 from sqlalchemy import Engine
@@ -39,6 +40,27 @@ def require_cron(request: Request, authorization: Annotated[str | None, Header()
         authorization, settings.cron_secret.get_secret_value()
     ):
         raise NotFound("route")
+
+
+class SentryCheckError(RuntimeError):
+    """Raised on purpose by the sentry-check route."""
+
+
+@router.post("/sentry-check", dependencies=[Depends(require_cron)])
+def sentry_check() -> Response:
+    """Raise one deliberate error that carries made-up personal data, to verify scrubbing live.
+
+    The caller adds fake personal data to the query string and headers too (see
+    specs/007-launch-ready/contracts/ops-endpoints.md). Nothing here is real.
+    """
+    sentry_sdk.set_tag("check", "sentry-scrub")
+    sentry_sdk.set_context(
+        "scrub_probe",
+        {"phone": "0300 1234567", "email": "fake.patient@example.org", "booking": "ABCDE-FGHJK"},
+    )
+    raise SentryCheckError(
+        "deliberate check: fake.patient@example.org rang 0300 1234567 about ABCDE-FGHJK"
+    )
 
 
 @router.api_route("/purge", methods=["GET", "POST"], dependencies=[Depends(require_cron)])

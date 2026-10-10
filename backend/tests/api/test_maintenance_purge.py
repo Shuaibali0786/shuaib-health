@@ -102,3 +102,26 @@ def test_the_route_does_not_exist_without_the_flag_or_the_secret(
     client = TestClient(create_app(settings_factory(**over)))
     assert client.get(PURGE, headers=GOOD).status_code == 404
     assert client.post(PURGE, headers=GOOD).status_code == 404
+
+
+SENTRY_CHECK = "/internal/maintenance/sentry-check"
+
+
+def test_sentry_check_is_404_without_the_bearer_and_never_in_the_schema(
+    settings_factory: SettingsFactory,
+) -> None:
+    client = TestClient(create_app(settings_factory(maintenance_via_cron=True, cron_secret=CRON)))
+    for headers in ({}, {"Authorization": "Bearer nope"}, {"Authorization": CRON}):
+        assert client.post(SENTRY_CHECK, headers=headers).status_code == 404
+    assert client.get(SENTRY_CHECK, headers=GOOD).status_code == 405  # POST only, behind the bearer
+    assert SENTRY_CHECK not in client.get("/openapi.json").text
+
+
+def test_sentry_check_with_the_bearer_fails_on_purpose_with_the_standard_500(
+    settings_factory: SettingsFactory,
+) -> None:
+    client = TestClient(create_app(settings_factory(maintenance_via_cron=True, cron_secret=CRON)))
+    response = client.post(SENTRY_CHECK, headers=GOOD)
+    assert response.status_code == 500
+    assert response.json()["error"]["code"] == "internal_error"
+    assert "fake.patient" not in response.text

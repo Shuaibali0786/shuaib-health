@@ -26,6 +26,7 @@ from app.middleware.rate_limit import (
 )
 from app.middleware.request_id import RequestIdMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.observability import init_observability
 from app.routers import (
     admin_auth,
     admin_bookings,
@@ -94,6 +95,7 @@ def _make_limiter(app: FastAPI, settings: Settings) -> RateLimiter:
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level)
+    init_observability(settings)
     docs_enabled = settings.app_env == "development"
 
     app = FastAPI(
@@ -137,6 +139,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         trusted_proxy_hops=settings.trusted_proxy_hops,
         proxy_secret=settings.booking_proxy_secret.get_secret_value(),
         cron_secret=cron_secret if settings.maintenance_via_cron else None,
+        trusted_server_exempt=settings.trusted_server_exempt,
     )
     app.add_middleware(
         CORSMiddleware,
