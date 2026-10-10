@@ -247,13 +247,16 @@ jobs:
           # Budgets cannot share a config with other assertions, so they have their own file.
           npx lhci assert --config=lighthouserc.budget.json
 
+      # The 2-worker limit is for the owner's laptop. A CI runner has its own cores, so use them all.
       - name: Playwright - main config
         working-directory: frontend
-        run: npx playwright test --workers=2
+        run: |
+          echo "runner cores: $(nproc)"
+          npx playwright test --workers=100%
 
       - name: Playwright - offline config
         working-directory: frontend
-        run: npx playwright test -c playwright.offline.config.ts --workers=2
+        run: npx playwright test -c playwright.offline.config.ts --workers=100%
 
       - name: Playwright - stateful config
         working-directory: frontend
