@@ -165,20 +165,20 @@ description: "Task list for 007-launch-ready"
 **Goal**: website server traffic never shares one bucket; visitors are limited individually; forged headers are not trusted.
 **Independent test**: 100 trusted catalog requests in a minute → zero 429s; one external client over the limit → 429; two visitors independent.
 
-- [ ] T040 [US4] In backend/app/middleware/rate_limit.py, behind `trusted_server_exempt` (OFF in code):
+- [X] T040 [US4] In backend/app/middleware/rate_limit.py, behind `trusted_server_exempt` (OFF in code):
   - a valid `X-Proxy-Secret` (constant-time) with **no** `X-Client-IP` → exempt from the per-IP bucket (builds, ISR);
   - valid secret **with** `X-Client-IP` → key on that visitor IP;
   - otherwise → today's rules with `TRUSTED_PROXY_HOPS`.
-- [ ] T041 [US4] Send `X-Proxy-Secret` (server-only env) on every catalog fetch, plus `X-Client-IP` when a request context exists, in frontend/src/lib/api/http.ts. The secret must never reach a client bundle; add or confirm the `server-only` import.
-- [ ] T042 [P] [US4] Make `clientIpFrom()` prefer `x-vercel-forwarded-for`, then `x-real-ip`, then the first `x-forwarded-for` entry (N1), in frontend/src/lib/booking/backend.ts
-- [ ] T043 [P] [US4] Add backend tests in backend/tests/api/test_rate_limit_trust.py:
+- [X] T041 [US4] Send `X-Proxy-Secret` (server-only env) on every catalog fetch, plus `X-Client-IP` when a request context exists, in frontend/src/lib/api/http.ts. The secret must never reach a client bundle; add or confirm the `server-only` import.
+- [X] T042 [P] [US4] Make `clientIpFrom()` prefer `x-vercel-forwarded-for`, then `x-real-ip`, then the first `x-forwarded-for` entry (N1), in frontend/src/lib/booking/backend.ts
+- [X] T043 [P] [US4] Add backend tests in backend/tests/api/test_rate_limit_trust.py:
   - 61st trusted catalog request → not 429;
   - 100 in a minute → zero 429s;
   - forged XFF without secret → not trusted;
   - two visitors via `X-Client-IP` → independent.
-- [ ] T044 [P] [US4] Add frontend tests for header preference order and for "secret header is added server-side only" in frontend/tests/unit/client-ip.test.ts and frontend/tests/unit/catalog-http-secret.test.ts
+- [X] T044 [P] [US4] Add frontend tests for header preference order and for "secret header is added server-side only" in frontend/tests/unit/client-ip.test.ts and frontend/tests/unit/catalog-http-secret.test.ts
 
-- [ ] T108 [US4] **Existing-test guard (H6):** after T040–T042, rerun backend/tests/api/test_rate_limit_api.py **unchanged**: flag OFF, then `TRUSTED_SERVER_EXEMPT=true` with `RATE_LIMIT_STORE=postgres` via the environment. Any failing assertion → **stop** and list it for owner approval; never edit or loosen it.
+- [X] T108 [US4] **Existing-test guard (H6):** after T040–T042, rerun backend/tests/api/test_rate_limit_api.py **unchanged**: flag OFF, then `TRUSTED_SERVER_EXEMPT=true` with `RATE_LIMIT_STORE=postgres` via the environment. Any failing assertion → **stop** and list it for owner approval; never edit or loosen it.
 
 **Checkpoint**: SC-012 passes locally; T107 and T108 are green.
 
@@ -190,23 +190,24 @@ description: "Task list for 007-launch-ready"
 **Independent test**: the live smoke checklist passes on desktop and on a real phone on mobile data; Lighthouse mobile ≥ 90; API p95 < 1 s.
 
 ### Code and docs (Claude)
-- [ ] T045 [US1] Add site-wide security headers behind `SITE_SECURITY_HEADERS` (`off` in code; `report` / `enforce`), in frontend/next.config.ts:
+- [X] T045 [US1] Add site-wide security headers behind `SITE_SECURITY_HEADERS` (`off` in code; `report` / `enforce`), in frontend/next.config.ts:
   - HSTS without preload, nosniff, Referrer-Policy, X-Frame-Options DENY, Permissions-Policy;
   - CSP as Report-Only for `report`, enforced for `enforce`;
   - the existing `PRIVATE_HEADERS` on admin routes stay unchanged in every mode;
   - a production build with the flag unset fails, naming it.
-- [ ] T046 [P] [US1] Add Playwright specs frontend/tests/e2e/security-headers.spec.ts (headers present on `/`, a catalog page and `/admin/login`) and frontend/tests/e2e/no-localhost.spec.ts (canonical, og:url, sitemap.xml and robots.txt contain no `localhost`/`http://` self-links; robots disallows all while `indexable=false`)
-- [ ] T047 [P] [US1] Search the site copy (frontend/src/data/, frontend/src/lib/content.ts, page components) for prices, sales pitch or "hire us" calls to action (FR-075). Report each hit with its path in the PR for the owner; remove nothing without approval.
-- [ ] T048 [US1] Create a shared target guard in backend/app/ops/target_guard.py:
+- [X] T046 [P] [US1] Add Playwright specs frontend/tests/e2e/security-headers.spec.ts (headers present on `/`, a catalog page and `/admin/login`) and frontend/tests/e2e/no-localhost.spec.ts (canonical, og:url, sitemap.xml and robots.txt contain no `localhost`/`http://` self-links; robots disallows all while `indexable=false`)
+- [X] T047 [P] [US1] Search the site copy (frontend/src/data/, frontend/src/lib/content.ts, page components) for prices, sales pitch or "hire us" calls to action (FR-075). Report each hit with its path in the PR for the owner; remove nothing without approval.
+- [X] T048 [US1] Create a shared target guard in backend/app/ops/target_guard.py:
   - print the masked host and DB name;
   - require typing the DB name;
   - refuse if the URL matches the dev URL in local `.env`, or if the host isn't in `--expect-host`.
-- [ ] T049 [US1] Apply the guard to the seed (with an explicit `--i-understand-this-is-production` flag; the default production refusal stays) in backend/app/seed/__main__.py, and to backend/app/auth/create_admin.py (interactive password, success line with no secret)
-- [ ] T050 [P] [US1] Add guard tests (dev URL refused; wrong typed name refused; prod path needs the flag; no secret printed) in backend/tests/unit/test_target_guard.py. Existing backend/tests/unit/test_create_admin_cli.py must stay green unchanged.
-- [ ] T111 [P] [US1] When the server-only env `API_PROTECTION_BYPASS` is set (Preview only), add `x-vercel-protection-bypass` to server-side API calls in frontend/src/lib/api/http.ts, frontend/src/lib/booking/backend.ts and frontend/src/admin/lib/server.ts. Never in client bundles; never logged. Add tests in frontend/tests/unit/protection-bypass.test.ts (present when set, absent when unset, module is `server-only`).
-- [ ] T051 [P] [US1] Create the latency script backend/scripts/measure_latency.py (cold and warm samples, p50/p95/max, configurable URL list; no auth headers or secrets logged), used for C4 and FR-068
-- [ ] T052 [US1] Write docs/runbooks/first-deploy.md from quickstart.md, with every owner step marked, including "do not touch Render / kbg-backend"
-- [ ] T053 [P] [US1] Write docs/runbooks/smoke-test.md (FR-060): home, catalog page, booking end to end with slip, demo dashboard, admin sign-in page, robots/noindex, no-localhost, website/API demo-switch agreement, security headers, `/health`, `/ready`, no sales copy
+- [X] T049 [US1] Apply the guard to the seed (with an explicit `--i-understand-this-is-production` flag; the default production refusal stays) in backend/app/seed/__main__.py, and to backend/app/auth/create_admin.py (interactive password, success line with no secret)
+- [X] T050 [P] [US1] Add guard tests (dev URL refused; wrong typed name refused; prod path needs the flag; no secret printed) in backend/tests/unit/test_target_guard.py. Existing backend/tests/unit/test_create_admin_cli.py must stay green unchanged.
+- [X] T111 [P] [US1] When the server-only env `API_PROTECTION_BYPASS` is set (Preview only), add `x-vercel-protection-bypass` to server-side API calls in frontend/src/lib/api/http.ts, frontend/src/lib/booking/backend.ts and frontend/src/admin/lib/server.ts. Never in client bundles; never logged. Add tests in frontend/tests/unit/protection-bypass.test.ts (present when set, absent when unset, module is `server-only`).
+- [X] T051 [P] [US1] Create the latency script backend/scripts/measure_latency.py (cold and warm samples, p50/p95/max, configurable URL list; no auth headers or secrets logged), used for C4 and FR-068
+- [X] T052 [US1] Write docs/runbooks/first-deploy.md from quickstart.md, with every owner step marked, including "do not touch Render / kbg-backend"
+- [X] T053 [P] [US1] Write docs/runbooks/smoke-test.md (FR-060): home, catalog page, booking end to end with slip, demo dashboard, admin sign-in page, robots/noindex, no-localhost, website/API demo-switch agreement, security headers, `/health`, `/ready`, no sales copy
+- [X] T117 [P] [US1] Self-host the Google Fonts with `next/font/local` so builds never download fonts (frontend/src/fonts/, the three layouts). Same bytes as Google served; baseline diff in specs/007-launch-ready/results/fonts-pixel-diff.md.
 - [ ] T054 [US1] 🔑 OWNER ACTION: review and approve the merge of **PR-2** (Phases 4–6 code)
 
 ### Launch (owner, guided by Claude)
@@ -238,14 +239,14 @@ description: "Task list for 007-launch-ready"
 **Goal**: phone alerts within 10 minutes; errors captured with no personal data.
 **Independent test**: a failing test monitor alerts the phone and then recovers; a test error appears in Sentry fully scrubbed.
 
-- [ ] T070 [US3] Add `sentry-sdk[fastapi]` (Complexity Tracking: justified) to backend/pyproject.toml. Create backend/app/observability.py:
+- [X] T070 [US3] Add `sentry-sdk[fastapi]` (Complexity Tracking: justified) to backend/pyproject.toml. Create backend/app/observability.py:
   - init only when `SENTRY_DSN` is set; `send_default_pii=False`;
   - a `before_send` scrubber dropping cookies, auth and proxy headers, query strings and bodies, and masking phone, email and booking-reference patterns;
   - low sample rates.
-- [ ] T071 [US3] In backend/app/errors.py (unhandled-exception handler), capture the exception, then call `sentry_sdk.flush(timeout=2)` **before returning the response** (C3: no work after the request)
-- [ ] T072 [US3] Add a `CRON_SECRET`-protected `POST /internal/maintenance/sentry-check` to backend/app/routers/maintenance.py. It raises a deliberate error carrying fake personal data in headers and query, so scrubbing can be verified on the live API; 404 without the bearer; not in the schema. Add it to specs/007-launch-ready/contracts/ops-endpoints.md.
-- [ ] T073 [P] [US3] Add `@sentry/nextjs` to frontend/package.json, with frontend/sentry.server.config.ts and init in frontend/src/instrumentation.ts (DSN-gated, same scrubber rules; relies on the platform's `waitUntil`, no custom timers)
-- [ ] T074 [P] [US3] Add scrubber tests in backend/tests/unit/test_sentry_scrub.py and frontend/tests/unit/sentry-scrub.test.ts, plus a test that the sentry-check route is 404 without the bearer, in backend/tests/api/test_maintenance_purge.py
+- [X] T071 [US3] In backend/app/errors.py (unhandled-exception handler), capture the exception, then call `sentry_sdk.flush(timeout=2)` **before returning the response** (C3: no work after the request)
+- [X] T072 [US3] Add a `CRON_SECRET`-protected `POST /internal/maintenance/sentry-check` to backend/app/routers/maintenance.py. It raises a deliberate error carrying fake personal data in headers and query, so scrubbing can be verified on the live API; 404 without the bearer; not in the schema. Add it to specs/007-launch-ready/contracts/ops-endpoints.md.
+- [X] T073 [P] [US3] Add `@sentry/nextjs` to frontend/package.json, with frontend/sentry.server.config.ts and init in frontend/src/instrumentation.ts (DSN-gated, same scrubber rules; relies on the platform's `waitUntil`, no custom timers)
+- [X] T074 [P] [US3] Add scrubber tests in backend/tests/unit/test_sentry_scrub.py and frontend/tests/unit/sentry-scrub.test.ts, plus a test that the sentry-check route is 404 without the bearer, in backend/tests/api/test_maintenance_purge.py
 - [ ] T075 [US3] 🔑 OWNER ACTION: create a Sentry free account (**no card**) with projects `shuaib-health-api` and `shuaib-health-web`. Add `SENTRY_DSN` (and `SENTRY_AUTH_TOKEN` for the website) to the Vercel Production env of each project, then redeploy.
 - [ ] T076 [US3] 🔑 OWNER ACTION: in UptimeRobot add the 4 monitors from data-model.md (web `/` 5 min, API `/health` 5 min, API `/ready` 60 min, a catalog page 60 min), with mobile-app push and email. **Do not edit the existing `kbg-backend` monitor.**
 - [ ] T077 [US3] 🔑 OWNER ACTION: enable deployment-failure notifications on both Vercel projects
@@ -261,14 +262,14 @@ description: "Task list for 007-launch-ready"
 **Goal**: daily encrypted off-platform backups (14 days), a tested restore, and a restore point before migrations.
 **Independent test**: the restore drill finishes in < 30 min with matching row counts and a known booking.
 
-- [ ] T080 [US5] Write the backup workflow template at docs/runbooks/backup-workflow.yml.example. It is copied into the private repo and contains no secrets:
+- [X] T080 [US5] Write the backup workflow template at docs/runbooks/backup-workflow.yml.example. It is copied into the private repo and contains no secrets:
   - daily `0 21 * * *` UTC;
   - `pg_dump -Fc` via the read-only role;
   - `age` encrypt to `AGE_RECIPIENT`;
   - `upload-artifact` with `retention-days: 14`;
   - fails loudly on any error.
-- [ ] T081 [US5] Write docs/runbooks/restore-drill.md: download artifact → `age -d` with the laptop key → `pg_restore` into a new Neon branch → compare row counts and one known booking reference → record duration → delete the scratch branch. Include the **monthly manual Google Drive copy** step (the owner's routine).
-- [ ] T082 [P] [US5] Write docs/runbooks/migration-restore-point.md: before merging a PR with a migration, create Neon snapshot or branch `pre-<sha7>-<yyyymmdd>`; how to restore; delete after 14 days or when near the 10-branch limit
+- [X] T081 [US5] Write docs/runbooks/restore-drill.md: download artifact → `age -d` with the laptop key → `pg_restore` into a new Neon branch → compare row counts and one known booking reference → record duration → delete the scratch branch. Include the **monthly manual Google Drive copy** step (the owner's routine).
+- [X] T082 [P] [US5] Write docs/runbooks/migration-restore-point.md: before merging a PR with a migration, create Neon snapshot or branch `pre-<sha7>-<yyyymmdd>`; how to restore; delete after 14 days or when near the 10-branch limit
 - [ ] T083 [US5] 🔑 OWNER ACTION: generate an `age` key pair on your laptop and store the private key in your password manager; share only the **public** key
 - [ ] T084 [US5] 🔑 OWNER ACTION: create the **private** GitHub repo `shuaib-health-backups`, add the workflow from T080, and add the secrets `NEON_BACKUP_URL` (read-only role, direct host) and `AGE_RECIPIENT`
 - [ ] T085 [US5] 🔑 OWNER ACTION: run the backup workflow once manually; confirm the artifact exists, shows the 14-day expiry, and that a failed run emails you

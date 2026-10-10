@@ -1,0 +1,57 @@
+# Daily encrypted backup of the Shuaib Health production database (007, T080).
+#
+# Copy this file to the PRIVATE repo `shuaib-health-backups` as `.github/workflows/backup.yml`.
+# It holds no secrets. Add two repository secrets there (Settings -> Secrets and variables -> Actions):
+#   NEON_BACKUP_URL  the read-only role (`backup_ro`), DIRECT host (no "-pooler"), sslmode=require
+#   AGE_RECIPIENT    the owner's age PUBLIC key ("age1...")
+# The private key never leaves the owner's laptop and password manager.
+#
+# A failed run emails the repository owner (GitHub's default for scheduled workflows).
+name: backup
+
+on:
+  schedule:
+    - cron: "0 21 * * *" # 21:00 UTC = 02:00 in Karachi
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Install the Postgres 17 client and age
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          . /etc/os-release
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17 age
+
+      - name: Dump, encrypt, check
+        env:
+          NEON_BACKUP_URL: ${{ secrets.NEON_BACKUP_URL }}
+          AGE_RECIPIENT: ${{ secrets.AGE_RECIPIENT }}
+        run: |
+          set -euo pipefail
+          test -n "$NEON_BACKUP_URL" || { echo "NEON_BACKUP_URL is not set"; exit 1; }
+          test -n "$AGE_RECIPIENT" || { echo "AGE_RECIPIENT is not set"; exit 1; }
+          stamp="$(date -u +%Y%m%d-%H%M)"
+          # Plain text never touches the disk: the dump goes straight into age.
+          pg_dump --format=custom --no-owner --no-privileges "$NEON_BACKUP_URL" \
+            | age --recipient "$AGE_RECIPIENT" --output "shuaib-health-${stamp}.dump.age"
+          size="$(stat -c %s "shuaib-health-${stamp}.dump.age")"
+          echo "encrypted backup: ${size} bytes"
+          # An empty or tiny file means the dump failed quietly.
+          test "$size" -gt 10000
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shuaib-health-backup
+          path: shuaib-health-*.dump.age
+          retention-days: 14
+          if-no-files-found: error
