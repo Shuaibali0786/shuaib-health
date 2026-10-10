@@ -4,12 +4,13 @@ import {
   MARK_SMALL,
   MARK_VIEWBOX,
   SMALL_MARK_MAX_PX,
+  WATERMARK_COLOURS,
   type MarkPart,
   type MarkTone,
 } from "@/lib/brand-marks";
 
 /** "auto" reads --logo-body / --logo-rings / --logo-plus from CSS, so a stylesheet (the Command Centre's Night theme) can recolour it. */
-export type LogoMarkTone = MarkTone | "auto";
+export type LogoMarkTone = MarkTone | "auto" | "watermark";
 
 interface LogoMarkProps {
   /** Rendered width and height in pixels. At 32 px and below the sturdier SMALL drawing is used. */
@@ -22,7 +23,8 @@ interface LogoMarkProps {
 
 /** The fill of one part: a colour, or for "auto" a CSS variable that falls back to the light colour. */
 function fillOf(part: MarkPart, tone: LogoMarkTone): string {
-  return tone === "auto" ? `var(--logo-${part}, ${MARK_COLOURS.light[part]})` : MARK_COLOURS[tone][part];
+  if (tone === "auto") return `var(--logo-${part}, ${MARK_COLOURS.light[part]})`;
+  return tone === "watermark" ? WATERMARK_COLOURS[part] : MARK_COLOURS[tone][part];
 }
 
 /**

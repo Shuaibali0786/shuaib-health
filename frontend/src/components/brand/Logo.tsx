@@ -1,5 +1,6 @@
-import { LogoMark, type LogoMarkTone } from "./LogoMark";
+import { cn } from "@/lib/cn";
 import { WORDMARK_COLOURS } from "@/lib/brand-marks";
+import { LogoMark, type LogoMarkTone } from "./LogoMark";
 import { WORDMARK_HEALTH_PATH, WORDMARK_SHUAIB_PATH, WORDMARK_VIEWBOX } from "./wordmark-paths";
 
 type LogoSize = "sm" | "md" | "lg";
@@ -9,7 +10,7 @@ type LogoSize = "sm" | "md" | "lg";
  * - night: on dark backgrounds (cream body, deeper teal plus, white and light-teal wordmark)
  * - small: the sturdy drawing for 32 px and below; the light colours
  * - one-colour: print; body and rings navy, plus white
- * - auto: light, but every colour is read from the --logo-* CSS variables (the Command Centre switches them in Night theme)
+ * - auto: light, but every colour is read from the --logo-* CSS variables
  */
 export type LogoVariant = "light" | "night" | "small" | "one-colour" | "auto";
 
@@ -21,17 +22,22 @@ interface LogoProps {
   className?: string;
 }
 
-// The wordmark height follows the mark: `font` is the equivalent type size in pixels (the wordmark is a
-// drawing, so, like the mark, it does not grow with the browser's text-size setting; this keeps the header
-// on one row at large text sizes).
-const SIZES: Record<LogoSize, { mark: number; font: number }> = {
-  sm: { mark: 28, font: 20 },
-  md: { mark: 36, font: 23 },
-  lg: { mark: 48, font: 34 },
+/**
+ * `font` is the equivalent type size in pixels (the wordmark is a drawing, so, like the mark, it does not
+ * grow with the browser's text-size setting).
+ * - "md" is the header logo, with three steps because the header row has to stay on one line: compact below
+ *   640 px (logo, call icon, "Book" and menu button must fit at 320 to 430 px), full from 640 to 1279 px, and
+ *   compact again from 1280 px, where the eight nav links, the phone and "Book Appointment" fill the row
+ *   (about 175 px are left for the logo).
+ * - "lg" is the footer logo: full size at every width.
+ * The Tailwind classes are written out in full so Tailwind can find them; a wordmark's height is 0.77 x the
+ * font size (its viewBox is 77 units tall at font size 100).
+ */
+const SIZES: Record<LogoSize, { mark: number; font: number; wide?: { mark: number; font: number }; wordClass: string; gap: string }> = {
+  sm: { mark: 28, font: 20, wordClass: "h-[15.4px]", gap: "gap-2" },
+  md: { mark: 32, font: 23, wide: { mark: 40, font: 32 }, wordClass: "h-[17.7px] sm:h-[24.6px] xl:h-[17.7px]", gap: "gap-1.5 sm:gap-2.5 xl:gap-1.5" },
+  lg: { mark: 40, font: 32, wordClass: "h-[24.6px]", gap: "gap-2.5" },
 };
-
-// Inline styles, not utility classes: the Command Centre stylesheet only scans src/admin, so a shared component cannot rely on Tailwind classes.
-const ROW = { display: "inline-flex", alignItems: "center" } as const;
 
 const TONE_OF: Record<LogoVariant, LogoMarkTone> = {
   light: "light",
@@ -55,25 +61,33 @@ function wordFill(word: "shuaib" | "health", variant: LogoVariant): string {
  * name, for example aria-label="Shuaib Health home".
  */
 export function Logo({ variant = "light", wordmark = true, size = "md", className }: LogoProps) {
-  const { mark, font } = SIZES[size];
-  const symbol = <LogoMark size={mark} tone={TONE_OF[variant]} small={variant === "small" ? true : undefined} />;
+  const metrics = SIZES[size];
+  const tone = TONE_OF[variant];
+  const small = variant === "small" ? true : undefined;
+  const mark = metrics.wide ? (
+    <>
+      <span className="inline-flex sm:hidden xl:inline-flex">
+        <LogoMark size={metrics.mark} tone={tone} small={small} />
+      </span>
+      <span className="hidden sm:inline-flex xl:hidden">
+        <LogoMark size={metrics.wide.mark} tone={tone} small={small} />
+      </span>
+    </>
+  ) : (
+    <LogoMark size={metrics.mark} tone={tone} small={small} />
+  );
 
   if (!wordmark) {
-    return (
-      <span className={className} style={ROW}>
-        {symbol}
-      </span>
-    );
+    return <span className={cn("inline-flex", className)}>{mark}</span>;
   }
 
-  const scale = font / 100;
+  const { x, y, width, height } = WORDMARK_VIEWBOX;
   return (
-    <span className={className} style={{ ...ROW, gap: 8 }}>
-      {symbol}
+    <span className={cn("inline-flex items-center", metrics.gap, className)}>
+      {mark}
       <svg
-        viewBox={`${WORDMARK_VIEWBOX.x} ${WORDMARK_VIEWBOX.y} ${WORDMARK_VIEWBOX.width} ${WORDMARK_VIEWBOX.height}`}
-        width={Math.round(WORDMARK_VIEWBOX.width * scale * 10) / 10}
-        height={Math.round(WORDMARK_VIEWBOX.height * scale * 10) / 10}
+        viewBox={`${x} ${y} ${width} ${height}`}
+        className={cn("w-auto", metrics.wordClass)}
         aria-hidden="true"
         focusable="false"
         data-wordmark=""

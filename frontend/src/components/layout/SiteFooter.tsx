@@ -28,7 +28,7 @@ export async function SiteFooter() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link href="/" aria-label={`${site.name} home`} className="inline-block rounded-control">
-              <Logo size="md" variant="night" />
+              <Logo size="lg" variant="night" />
             </Link>
             <p className="mt-4 max-w-xs text-base">
               A calm, modern clinic and diagnostic lab website for Karachi. This is a portfolio demo and not a real

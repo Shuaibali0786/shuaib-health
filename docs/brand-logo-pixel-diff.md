@@ -68,3 +68,12 @@ Method: a pixel counts as changed when any colour channel differs by more than 1
 | Public site | privacy | 2 | 1.70 | 2.96 | +31 px |
 | Public site | terms | 2 | 2.17 | 3.75 | +31 px |
 | Slip PDF | slip-pdf | 1 | 1.04 | 1.04 | none |
+
+## Round 2 (owner review of PR #7): wordmark, spacing, watermark
+
+Compared with the baselines in the first commit of this PR (backup: `D:\shuaib-health-baseline-backup\r1-baselines\`; diff images in `D:\shuaib-health-baseline-backup\diff-r2\`). 139 shots compared, 62 changed, 77 unchanged.
+
+- Public site, desktop: 31 shots, mean 0.45 %, max 0.65 %. The changes are the header logo (now "Shuaib Health" with a space) and the footer logo; page heights are unchanged.
+- Public site, mobile: 31 shots, mean 2.7 %, max 4.0 %. Every page is 4 px taller than in round 1, because the footer logo is larger (40 px mark, 32 px type).
+- Command Centre: 0 of 76 changed. One dark new-booking shot moved on regeneration through timing noise, so I reverted it to the committed image.
+- Slip PDF: the baseline still passes within its 0.2 % tolerance, so I refreshed it by hand. At a one-level colour tolerance, 3.9 % of pixels differ, all inside the watermark box (x 310 to 529, y 538 to 769). The header, stamp, QR and text are untouched.

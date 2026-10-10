@@ -1,7 +1,7 @@
 // The confirmation slip the visitor keeps: a PDF, a calendar file and a WhatsApp message.
 // All three are built from the masked AppointmentView only (FR-051, FR-057): the full name, full
 // mobile number, email and reason are never available here, so they can never leak into a file.
-import { MARK_COLOURS, MARK_LARGE, MARK_SMALL, MARK_VIEWBOX, SMALL_MARK_MAX_PX } from "@/lib/brand-marks";
+import { MARK_COLOURS, MARK_LARGE, MARK_SMALL, MARK_VIEWBOX, SMALL_MARK_MAX_PX, WATERMARK_COLOURS } from "@/lib/brand-marks";
 import { formatPkr } from "@/lib/format";
 import { arriveByTime, formatLocalDateWithYear, zoneLabel } from "./labels";
 import { qrModules } from "./qr";
@@ -197,11 +197,11 @@ function roundedRect(ops: string[], x: number, top: number, w: number, h: number
 
 /**
  * The Booking Plus mark (lib/brand-marks.ts), drawn as vector rectangles: a calendar body, two
- * binder rings and a plus. `tone` "night" suits the navy header band, "light" the watermark on white.
+ * binder rings and a plus. `tone` "night" suits the navy header band, "watermark" the faint mark on white (rings in the body colour).
  */
-function logoMark(ops: string[], x: number, top: number, size: number, tone: "light" | "night"): void {
+function logoMark(ops: string[], x: number, top: number, size: number, tone: "watermark" | "night"): void {
   const k = size / MARK_VIEWBOX;
-  const colours = MARK_COLOURS[tone];
+  const colours = tone === "watermark" ? WATERMARK_COLOURS : MARK_COLOURS[tone];
   for (const r of size <= SMALL_MARK_MAX_PX ? MARK_SMALL : MARK_LARGE) {
     roundedRect(ops, x + r.x * k, top + r.y * k, r.width * k, r.height * k, r.rx * k, hexRgb(colours[r.part]));
   }
@@ -262,13 +262,13 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic, fonts: S
   const right = PAGE_W - MARGIN;
   const innerW = PAGE_W - 2 * MARGIN;
 
-  // Faint logo watermark behind everything, at the page's 4 %: centred on the visit details, wholly inside that band, so it
+  // Faint logo watermark behind everything, at the page's 2 %: centred on the visit details, wholly inside that band, so it
   // can never reach the header, the stamp, the QR or the page edge. Then a fine gold frame.
   const detailsTop = 202 + X;
   const detailsBottom = 374 + X; // where the "Before you come" box starts
   const markSize = 140;
   ops.push("q /GS1 gs");
-  logoMark(ops, (PAGE_W - markSize) / 2, (detailsTop + detailsBottom - markSize) / 2, markSize, "light");
+  logoMark(ops, (PAGE_W - markSize) / 2, (detailsTop + detailsBottom - markSize) / 2, markSize, "watermark");
   ops.push("Q");
   frame(12, 12, PAGE_W - 24, PAGE_H - 24, GOLD, 0.7);
 
@@ -414,7 +414,7 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic, fonts: S
     ...fontObjects,
     ...descriptors,
     ...fontFiles,
-    "<< /Type /ExtGState /ca 0.04 /CA 0.04 >>",
+    "<< /Type /ExtGState /ca 0.02 /CA 0.02 >>",
   ];
 
   // Every character is Latin-1, so string length equals byte length and the xref offsets are exact.

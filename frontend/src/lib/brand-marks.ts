@@ -50,6 +50,12 @@ export const MARK_COLOURS: Record<MarkTone, Record<MarkPart, string>> = {
   "one-colour": { body: "#0B1F3A", rings: "#0B1F3A", plus: "#FFFFFF" },
 };
 
+/**
+ * The faint mark behind the appointment slip: the rings take the body's colour (no gold), so it can
+ * never compete with the text above it. Drawn at 2 % opacity on the page and the PDF.
+ */
+export const WATERMARK_COLOURS: Record<MarkPart, string> = { body: "#0B1F3A", rings: "#0B1F3A", plus: "#2BB5A8" };
+
 /** Colours of the two wordmark words. */
 export const WORDMARK_COLOURS: Record<MarkTone, { shuaib: string; health: string }> = {
   light: { shuaib: "#0B1F3A", health: "#1E7F76" },
