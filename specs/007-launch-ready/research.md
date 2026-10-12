@@ -127,7 +127,7 @@ Services would keep the API private (internal binding), which is attractive. But
 - **Alerts**: UptimeRobot mobile-app push and email (free). Vercel deploy-failure notifications are on for both projects.
 
 ## R8. Environments and databases (FR-005, FR-016, Constitution VII)
-- **Neon production project** (Singapore): `main` branch = production. A **`preview` branch** is created **while the project is still empty** (before any migration or seed), so it never holds production data (playbook §2). It is migrated by preview builds and seeded with demo data only. No production credentials go to previews. Taking a restore point (snapshot or branch) before migrations uses this project's 10-branch allowance.
+- **Neon production project** (Singapore): `production` branch (Neon's default branch name) = production. A **`preview` branch** is created **while the project is still empty** (before any migration or seed), so it never holds production data (playbook §2). It is migrated by preview builds and seeded with demo data only. No production credentials go to previews. Taking a restore point (snapshot or branch) before migrations uses this project's 10-branch allowance.
 - **Dev database**: stays in its existing separate Neon project, so dev work doesn't use production compute hours.
 - **CI test database**: a Postgres **service container** inside GitHub Actions (disposable, $0, never Neon). This satisfies "tests never touch dev or prod".
 

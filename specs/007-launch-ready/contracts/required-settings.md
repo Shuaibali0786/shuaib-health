@@ -7,8 +7,8 @@ Names only, never values. **S** = secret (dashboard only). **Prod-req** = missin
 | Setting | S | Prod-req | Production | Preview | Notes |
 |---|---|---|---|---|---|
 | `APP_ENV` | | yes | `production` | `production` | |
-| `DATABASE_URL` | S | yes | Neon `main` **pooled** | Neon `preview` pooled | `sslmode=require`. Preview uses a **different role password** (reset on the preview branch after branching), so a preview credential can't open production. |
-| `DIRECT_DATABASE_URL` | S | yes | Neon `main` direct | Neon `preview` direct | migrations in production **and** preview builds, each against its own branch |
+| `DATABASE_URL` | S | yes | Neon `production` **pooled** | Neon `preview` pooled | `sslmode=require`. Preview uses a **different role password** (reset on the preview branch after branching), so a preview credential can't open production. |
+| `DIRECT_DATABASE_URL` | S | yes | Neon `production` direct | Neon `preview` direct | migrations in production **and** preview builds, each against its own branch |
 | `BOOKING_PROXY_SECRET` | S | yes | ≥ 32 chars | different value | must equal the website value in the same environment |
 | `PRIVACY_HASH_KEY` | S | yes | ≥ 32 chars | different value | rotating it changes fingerprints |
 | `SESSION_SECRET` | S | yes | ≥ 32 chars | different value | rotating it signs everyone out |

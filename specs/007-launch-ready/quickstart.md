@@ -10,9 +10,9 @@ Run this **after** Phases 1–3 are merged. The owner creates accounts and click
 
 ## 1. Neon (Singapore)
 1. New project `shuaib-health-prod`, region **AWS Asia Pacific (Singapore)**. Set compute to a **fixed 0.25 CU** (no autoscaling).
-2. **Immediately** (while the project is still empty, before any deploy or seed) create branch `preview` from `main`. It must never contain production data. Then reset the app role's password **on the preview branch**, so its credentials differ from production.
-3. Create a role `backup_ro` with read-only grants on `main`.
-4. Copy the pooled and direct URLs for `main` and `preview` into your password manager.
+2. **Immediately** (while the project is still empty, before any deploy or seed) create branch `preview` from the default branch (named `production` in Neon). It must never contain production data. Then reset the app role's password **on the preview branch**, so its credentials differ from production.
+3. Create a role `backup_ro` with read-only grants on the `production` branch.
+4. Copy the pooled and direct URLs for `production` and `preview` into your password manager.
 
 ## 2. Vercel: API project
 1. Import the repo → project `shuaib-health-api`, **Root Directory `backend/`**.
@@ -25,7 +25,7 @@ Run this **after** Phases 1–3 are merged. The owner creates accounts and click
 8. Check `https://<api>/health` → 200 and `/ready` → 200.
 
 ## 3. First seed + first admin (laptop, once)
-1. Open a fresh terminal and set `DIRECT_DATABASE_URL` / `DATABASE_URL` to the **prod `main`** values for this shell only.
+1. Open a fresh terminal and set `DIRECT_DATABASE_URL` / `DATABASE_URL` to the **prod `production` branch** values for this shell only.
 2. Run the seed with its production flag. The guard shows the masked host and DB name; type the DB name to confirm.
 3. Run `create_admin`; enter the password interactively.
 4. Close the terminal. Check the shell history holds no URL.

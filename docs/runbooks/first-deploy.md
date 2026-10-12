@@ -10,10 +10,11 @@ Written from `specs/007-launch-ready/quickstart.md`. Every step the owner must d
 - [ ] No sales copy, prices outside the labelled samples, or "hire us" buttons on the site (FR-075; see `specs/007-launch-ready/results/copy-audit.md`).
 
 ## 1. 🔑 Neon (Singapore)
+In Neon the default branch is named **`production`** (not `main`). `main` in these docs always means the Git branch.
 1. Create project `shuaib-health-prod`, region **AWS Asia Pacific (Singapore)**. Set compute to a **fixed 0.25 CU**.
 2. **Immediately, while the project is empty**, create the branch `preview`. It must never hold production data. Then reset the app role's password **on the `preview` branch** so its credentials differ from production.
-3. Create the read-only role `backup_ro` on `main`. Set history retention to the free maximum (6 h).
-4. Store the pooled and direct URLs of `main` and `preview` in your password manager. No payment method.
+3. Create the read-only role `backup_ro` on the `production` branch. History retention is not editable on the Free plan: leave the default and check it later through the Neon API if needed.
+4. Store the pooled and direct URLs of `production` and `preview` in your password manager. No payment method.
 
 ## 2. 🔑 Secrets (on your laptop)
 Generate `BOOKING_PROXY_SECRET`, `PRIVACY_HASH_KEY`, `SESSION_SECRET` and `CRON_SECRET` with a local generator (for example `openssl rand -hex 32`), **different for Production and Preview**. Keep them in your password manager.
@@ -43,7 +44,7 @@ then the same again with `--label warm`. Warm p95 must be under 1 s and the cold
 
 ## 7. 🔑 First production deploy, seed and admin
 1. Redeploy `shuaib-health-api` for Production. The build log must show the migration succeeded; `/health` = 200 and `/ready` = 200.
-2. On your laptop open a **fresh terminal** (a throwaway shell). Set these for this shell only: `DATABASE_URL` (prod `main`, pooled), `DIRECT_DATABASE_URL` (prod `main`, direct), `APP_ENV=development`, and three throwaway values of at least 32 characters for `BOOKING_PROXY_SECRET`, `PRIVACY_HASH_KEY`, `SESSION_SECRET` (they are not used by these commands). Then, from `backend/`:
+2. On your laptop open a **fresh terminal** (a throwaway shell). Set these for this shell only: `DATABASE_URL` (Neon `production` branch, pooled), `DIRECT_DATABASE_URL` (Neon `production` branch, direct), `APP_ENV=development`, and three throwaway values of at least 32 characters for `BOOKING_PROXY_SECRET`, `PRIVACY_HASH_KEY`, `SESSION_SECRET` (they are not used by these commands). Then, from `backend/`:
 
 ```
 uv run python -m app.seed --i-understand-this-is-production --expect-host <prod host>
