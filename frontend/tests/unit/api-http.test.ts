@@ -74,7 +74,7 @@ describe("getJson", () => {
     expect((await errorOf(getJson("/clinic", Item))).kind).toBe("network");
   });
 
-  it("maps a hang past 3000 ms to timeout", async () => {
+  it("maps a hang past 8000 ms to timeout", async () => {
     vi.useFakeTimers();
     vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
       const controller = new AbortController();
@@ -83,9 +83,9 @@ describe("getJson", () => {
     });
     vi.stubGlobal("fetch", hangingFetch());
     const pending = errorOf(getJson("/clinic", Item));
-    await vi.advanceTimersByTimeAsync(3000);
+    await vi.advanceTimersByTimeAsync(8000);
     expect((await pending).kind).toBe("timeout");
-    expect(AbortSignal.timeout).toHaveBeenCalledWith(3000);
+    expect(AbortSignal.timeout).toHaveBeenCalledWith(8000);
   });
 
   it.each([404, 429, 500])("maps HTTP %i to status with the code", async (status) => {
@@ -110,7 +110,7 @@ describe("getJson", () => {
     expect((await errorOf(getJson("/clinic", Item))).requestId).toBe("req-123");
   });
 
-  it("uses a caller-supplied signal instead of the default 3000 ms one", async () => {
+  it("uses a caller-supplied signal instead of the default 8000 ms one", async () => {
     const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
     const fetchMock = vi.fn(async () => json({ name: "ok" }));
     vi.stubGlobal("fetch", fetchMock);
@@ -194,5 +194,12 @@ describe("getDataRevalidateSeconds", () => {
     vi.stubEnv("CATALOG_DATA_REVALIDATE_SECONDS", value);
     expect(getDataRevalidateSeconds()).toBe(300);
     expect(warn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("catalog timeout", () => {
+  it("is 8 s: longer than the 4 to 6 s a cold API needs on its first request", async () => {
+    const { CATALOG_TIMEOUT_MS } = await import("@/lib/api/http");
+    expect(CATALOG_TIMEOUT_MS).toBe(8000);
   });
 });

@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const PASS_THROUGH = new Set([404, 422, 429, 503]);
-const TIMEOUT_MS = 5000;
+// A cold API needs 4 to 6 s on its first request after a quiet period (results/cold-start.md).
+const TIMEOUT_MS = 8000;
 
 function backendQuery(params: URLSearchParams): string {
   const out = new URLSearchParams();

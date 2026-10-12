@@ -40,7 +40,7 @@ Call a temporary debug-safe check (or read the structured log line) once from yo
 3. Deploy, then set the API's `CORS_ORIGINS` to the website's production origin and redeploy the API.
 
 ## 6. Monitoring, errors, alerts
-- UptimeRobot: 4 monitors (see data-model.md), mobile-app push and email.
+- UptimeRobot: one monitor, API `/health` every 5 minutes (see data-model.md for why there is only one), mobile-app push and email.
 - Sentry: two projects (website, API); set the DSNs; trigger one test error each and check scrubbing.
 - Vercel: enable deployment-failure notifications on both projects.
 

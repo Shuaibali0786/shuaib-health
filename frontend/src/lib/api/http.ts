@@ -22,7 +22,12 @@ export class ApiError extends Error {
   }
 }
 
-const DEFAULT_TIMEOUT_MS = 3000;
+/**
+ * How long a catalog request may take. A cold API (Python function start plus a sleeping database) needs
+ * 4 to 6 s on its first request after a quiet period (specs/007-launch-ready/results/cold-start.md), so the
+ * limit is 8 s. A refresh that still fails keeps serving the last good data (lib/api/cached.ts).
+ */
+export const CATALOG_TIMEOUT_MS = 8000;
 
 function serverHeaders(clientIp: string | undefined): Record<string, string> {
   const headers: Record<string, string> = { accept: "application/json", ...protectionBypassHeaders() };
@@ -40,7 +45,7 @@ function isAbort(error: unknown): boolean {
 
 /**
  * GET `${CATALOG_API_URL}/api/v1${path}` and validate the body. This is the only `fetch` call in
- * `src/`. Callers that fetch several pages pass one shared `signal` so a whole list has one 3 s budget.
+ * `src/`. Callers that fetch several pages pass one shared `signal` so a whole list has one 8 s budget.
  *
  * When `BOOKING_PROXY_SECRET` is set the request proves it comes from this website's server, so the API
  * does not count builds and ISR against one shared bucket. `clientIp` is for a caller that has a visitor
@@ -60,7 +65,7 @@ export async function getJson<T>(
   try {
     const res = await fetch(`${base}/api/v1${path}`, {
       cache: "no-store",
-      signal: signal ?? AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+      signal: signal ?? AbortSignal.timeout(CATALOG_TIMEOUT_MS),
       headers: serverHeaders(clientIp),
     });
     requestId = res.headers.get("x-request-id") ?? undefined;

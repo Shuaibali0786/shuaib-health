@@ -79,7 +79,7 @@ describe("getAllPages", () => {
     expect(new Set(signals).size).toBe(1);
   });
 
-  it("has one 3 s budget per resource: page 2 hanging after page 1 took 2500 ms times out at 3000 ms total", async () => {
+  it("has one 8 s budget per resource: page 2 hanging after page 1 took 7500 ms times out at 8000 ms total", async () => {
     vi.useFakeTimers();
     vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
       const controller = new AbortController();
@@ -90,7 +90,7 @@ describe("getAllPages", () => {
       "fetch",
       vi.fn((url: string, init?: RequestInit) => {
         if (pageOf(url) === 1) {
-          return new Promise<Response>((resolve) => setTimeout(() => resolve(page([1], 250, 1)), 2500));
+          return new Promise<Response>((resolve) => setTimeout(() => resolve(page([1], 250, 1)), 7500));
         }
         return new Promise<Response>((_resolve, reject) => {
           init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
@@ -103,10 +103,10 @@ describe("getAllPages", () => {
       () => null,
       (error: unknown) => ({ error, at: Date.now() - started }),
     );
-    await vi.advanceTimersByTimeAsync(3000);
+    await vi.advanceTimersByTimeAsync(8000);
     const result = await outcome;
     expect(result?.error).toBeInstanceOf(ApiError);
     expect((result?.error as ApiError).kind).toBe("timeout");
-    expect(result?.at).toBe(3000);
+    expect(result?.at).toBe(8000);
   });
 });
