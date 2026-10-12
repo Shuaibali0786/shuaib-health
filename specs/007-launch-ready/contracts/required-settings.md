@@ -13,7 +13,7 @@ Names only, never values. **S** = secret (dashboard only). **Prod-req** = missin
 | `PRIVACY_HASH_KEY` | S | yes | ≥ 32 chars | different value | rotating it changes fingerprints |
 | `SESSION_SECRET` | S | yes | ≥ 32 chars | different value | rotating it signs everyone out |
 | `CORS_ORIGINS` | | yes (prod) | production website origin | preview origin pattern not allowed; the BFF doesn't need it | no `*`, no trailing slash |
-| `TRUSTED_PROXY_HOPS` | | — | **measured** (R5) | same | |
+| `TRUSTED_PROXY_HOPS` | | — | **measured: 1** (R5, 2026-10-12) | same | |
 | `DEMO_MODE` | | **yes (new)** | `true` | `true` | fail-closed (FR-020) |
 | `DEMO_ENABLED` | | **yes (new)** | `true` | `true` | must match the website |
 | `SENTRY_DSN` | S | no | API Sentry DSN | unset or same | unset = Sentry off |
