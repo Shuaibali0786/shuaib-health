@@ -56,7 +56,7 @@ The guard prints the **masked** host and the database name and asks you to **typ
 4. 🔑 Run the read-only SQL Claude gives you to confirm the production clinic has `indexable = false`.
 
 ## 8. 🔑 Measure proxy hops
-Open the live API once from your phone. Read the `xffHops` value in the Vercel runtime log and tell Claude **only the number**. Claude works out `TRUSTED_PROXY_HOPS`; set it, set `CORS_ORIGINS` to the website's production origin, and redeploy the API. Record the value here: `TRUSTED_PROXY_HOPS = ___`.
+Open the live API once from your phone. Read the `xffHops` value in the Vercel runtime log and tell Claude **only the number**. Claude works out `TRUSTED_PROXY_HOPS`; set it, set `CORS_ORIGINS` to the website's production origin, and redeploy the API. Record the value here: `TRUSTED_PROXY_HOPS = 1`.
 
 ## 9. 🔑 Website production deploy
 Trigger the first production deploy of `shuaib-health-web` and share the production URL with Claude.
