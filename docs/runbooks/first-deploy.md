@@ -65,7 +65,7 @@ Trigger the first production deploy of `shuaib-health-web` and share the product
 Run `smoke-test.md` on desktop (Claude) and on a real phone on mobile data (you). Lighthouse mobile ×3, the p95 check and the alert tests follow. Save everything in `specs/007-launch-ready/results/`.
 
 ## 11. Monitoring, errors, backups
-- UptimeRobot: **one** monitor, API `/health` every 5 minutes (it never touches the database, so it keeps the function warm without keeping Neon awake). Do **not** add a website `/`, `/ready` or catalog-page monitor: they would wake Neon around the clock and use up the free compute hours. Do not edit `kbg-backend`.
+- UptimeRobot: **one** monitor, API `/health` every 5 minutes (it never touches the database, so it keeps the function warm without keeping Neon awake). Do **not** add a website `/`, `/ready` or catalog-page monitor: they would wake Neon around the clock and use up the free compute hours. Do not edit `kbg-backend`. UptimeRobot Free probes with **HEAD**; `/health` and `/ready` answer both GET and HEAD with 200 (fixed 2026-10-12 after the first monitor showed DOWN on a 405). If the monitor is DOWN, first run `curl -I <api>/health`; a 405 means HEAD was lost, anything else check the incident text.
 - Sentry: projects `shuaib-health-api` and `shuaib-health-web`; set `SENTRY_DSN` in each project's Production environment and redeploy; run the sentry-check once (`specs/007-launch-ready/contracts/ops-endpoints.md`).
 - Vercel: enable deployment-failure notifications on both projects.
 - Backups: `backup-workflow.yml.example`, then `restore-drill.md`.
