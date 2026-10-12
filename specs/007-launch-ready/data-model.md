@@ -45,10 +45,9 @@ State: `building → ready (live) → superseded | rolled-back`. A failed build 
 
 | Target | Interval | Alerts |
 |---|---|---|
-| Website `/` | 5 min | push + email |
 | API `/health` | 5 min | push + email |
-| API `/ready` | 60 min | push + email |
-| Website catalog page | 60 min | push + email |
+
+Owner decision 2026-10-12: ONE monitor only, API `/health` every 5 min (no database, keeps the function warm). No monitor may keep Neon awake: a website `/` ping every 5 min re-requests the page as its 5-minute cache expires, which calls the API and the database about every 5 min, and 0.25 CU awake 24/7 is about 180 CU-hours a month, more than the Free allowance. Not added: website `/`, API `/ready`, a catalog page.
 
 ## Backup
 

@@ -135,3 +135,13 @@ describe("GET /api/booking/slots/[doctorSlug]", () => {
     expect(logged).not.toContain(SECRET);
   });
 });
+
+describe("slots lookup timeout", () => {
+  it("waits up to 8 s, so a cold API (4 to 6 s on its first request) still answers", async () => {
+    const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
+    vi.stubGlobal("fetch", vi.fn(async () => json(slots)));
+    const response = await call("dr-omar-sheikh");
+    expect(response.status).toBe(200);
+    expect(timeoutSpy).toHaveBeenCalledWith(8000);
+  });
+});

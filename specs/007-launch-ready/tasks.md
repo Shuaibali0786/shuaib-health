@@ -208,6 +208,7 @@ description: "Task list for 007-launch-ready"
 - [X] T052 [US1] Write docs/runbooks/first-deploy.md from quickstart.md, with every owner step marked, including "do not touch Render / kbg-backend"
 - [X] T053 [P] [US1] Write docs/runbooks/smoke-test.md (FR-060): home, catalog page, booking end to end with slip, demo dashboard, admin sign-in page, robots/noindex, no-localhost, website/API demo-switch agreement, security headers, `/health`, `/ready`, no sales copy
 - [X] T117 [P] [US1] Self-host the Google Fonts with `next/font/local` so builds never download fonts (frontend/src/fonts/, the three layouts). Same bytes as Google served; baseline diff in specs/007-launch-ready/results/fonts-pixel-diff.md.
+- [X] T118 [US1] Raise the catalog fetch timeout and the slots lookup timeout from 3 s / 5 s to 8 s (cold API needs 4 to 6 s on its first request; results/cold-start.md), keeping last-good data on a failed refresh (frontend/src/lib/api/http.ts, paginate.ts, app/api/booking/slots). Owner decision C, 2026-10-12.
 - [ ] T054 [US1] 🔑 OWNER ACTION: review and approve the merge of **PR-2** (Phases 4–6 code)
 
 ### Launch (owner, guided by Claude)
@@ -248,7 +249,7 @@ description: "Task list for 007-launch-ready"
 - [X] T073 [P] [US3] Add `@sentry/nextjs` to frontend/package.json, with frontend/sentry.server.config.ts and init in frontend/src/instrumentation.ts (DSN-gated, same scrubber rules; relies on the platform's `waitUntil`, no custom timers)
 - [X] T074 [P] [US3] Add scrubber tests in backend/tests/unit/test_sentry_scrub.py and frontend/tests/unit/sentry-scrub.test.ts, plus a test that the sentry-check route is 404 without the bearer, in backend/tests/api/test_maintenance_purge.py
 - [ ] T075 [US3] 🔑 OWNER ACTION: create a Sentry free account (**no card**) with projects `shuaib-health-api` and `shuaib-health-web`. Add `SENTRY_DSN` (and `SENTRY_AUTH_TOKEN` for the website) to the Vercel Production env of each project, then redeploy.
-- [ ] T076 [US3] 🔑 OWNER ACTION: in UptimeRobot add the 4 monitors from data-model.md (web `/` 5 min, API `/health` 5 min, API `/ready` 60 min, a catalog page 60 min), with mobile-app push and email. **Do not edit the existing `kbg-backend` monitor.**
+- [ ] T076 [US3] 🔑 OWNER ACTION: in UptimeRobot add **one** monitor: API `/health` every 5 min, with mobile-app push and email (owner decision 2026-10-12: nothing else, so Neon is never kept awake; see data-model.md). **Do not edit the existing `kbg-backend` monitor.**
 - [ ] T077 [US3] 🔑 OWNER ACTION: enable deployment-failure notifications on both Vercel projects
 - [ ] T078 [US3] 🔑 OWNER ACTION: alert test. Add a temporary monitor on a URL that returns 404 (e.g. `/health-does-not-exist`), confirm the phone alert arrives within 10 minutes and the recovery notice after deleting it, and tell Claude the times. Claude records them in specs/007-launch-ready/results/alert-test.md (SC-005).
 - [ ] T079 [US3] 🔑 OWNER ACTION: call the sentry-check endpoint once with the cron bearer (Claude provides the command, run in your own terminal). Claude then reviews the Sentry event fields you share (no values) and records the scrubbing verdict in specs/007-launch-ready/results/sentry-check.md.
