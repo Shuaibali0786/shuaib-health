@@ -24,6 +24,14 @@ def test_health_is_ok_and_not_cached(app_client: TestClient) -> None:
     assert re.match(r"^[0-9a-f]{32}$", response.headers["x-request-id"])
 
 
+def test_health_and_ready_answer_head(app_client: TestClient) -> None:
+    for path in ("/health", "/ready"):
+        response = app_client.head(path)
+        assert response.status_code == 200, path
+        assert response.content == b""
+        assert response.headers["cache-control"] == "no-store"
+
+
 def test_unknown_path_is_standard_404(app_client: TestClient) -> None:
     response = app_client.get("/nope")
     assert response.status_code == 404
