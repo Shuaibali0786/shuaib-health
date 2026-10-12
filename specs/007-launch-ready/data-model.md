@@ -9,7 +9,7 @@
 | name | `local` · `ci` · `preview` · `production` |
 | website host | laptop · GitHub runner · Vercel Preview · Vercel Production (`sin1`) |
 | API host | laptop · GitHub runner · Vercel Preview (API project) · Vercel Production (`sin1`) |
-| database | dev Neon project · Postgres service container · Neon prod project `preview` branch · Neon prod project `main` branch |
+| database | dev Neon project · Postgres service container · Neon prod project `preview` branch · Neon prod project `production` branch |
 | `APP_ENV` | development · test · production (preview runs `production` so the production checks also run on previews) |
 | demo switches | ON everywhere for this feature; **must be explicit** in production and preview |
 | `indexable` | OFF everywhere |
@@ -55,7 +55,7 @@ State: `building → ready (live) → superseded | rolled-back`. A failed build 
 | Field | Rule |
 |---|---|
 | taken_at | daily ~02:00 Asia/Karachi |
-| source | Neon prod `main`, read-only role, direct URL |
+| source | Neon prod `production`, read-only role, direct URL |
 | format | `pg_dump -Fc`, then `age`-encrypted to the owner's public key |
 | location | private repo `shuaib-health-backups`, workflow artifact |
 | retention | 14 days (`retention-days: 14`) |

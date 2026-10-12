@@ -23,7 +23,7 @@ There are no product features and no new database tables.
 
 **Language/Version**: Python 3.12 (backend, matches `requires-python >=3.12,<3.13`; Vercel default 3.12) · TypeScript 5 strict / Node 24.x (frontend)
 **Primary Dependencies**: Existing: FastAPI, SQLModel, Alembic, psycopg 3, uv; Next.js 16.4 App Router. **New**: `sentry-sdk[fastapi]`, `@sentry/nextjs` (error tracking, R6). **New CI-only tools**: gitleaks, pip-audit, `age` (backups).
-**Storage**: Neon Postgres. Production project in `aws-ap-southeast-1`: `main` branch for production, `preview` branch for Vercel previews. Dev stays in its separate existing project. CI uses a Postgres 16 service container.
+**Storage**: Neon Postgres. Production project in `aws-ap-southeast-1`: `production` branch (Neon's default branch name) for production, `preview` branch for Vercel previews. Dev stays in its separate existing project. CI uses a Postgres 16 service container.
 **Testing**: pytest, Vitest, Playwright (existing). New: rate-limit trust tests, settings fail-closed tests, seed/admin target-guard tests, security-header and no-localhost assertions, CI build with a dead API.
 **Target Platform**: Vercel Functions (Node for the website, Python for the API), region `sin1`; Neon Free; GitHub Actions; UptimeRobot Free; Sentry Free.
 **Project Type**: Web app (existing `frontend/` + `backend/` monorepo), deployed as **two Vercel projects** from one repository (root dirs `frontend/` and `backend/`).
