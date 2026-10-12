@@ -28,11 +28,15 @@ def head_revision() -> str | None:
     return ScriptDirectory.from_config(Config(str(ALEMBIC_INI))).get_current_head()
 
 
+# HEAD is allowed (hidden from the schema) because UptimeRobot Free probes with HEAD.
+# /health never touches the database.
+@router.head("/health", include_in_schema=False)
 @router.get("/health", response_model=HealthStatus)
 def health() -> Response:
     return JSONResponse({"status": "ok"}, headers=NO_STORE)
 
 
+@router.head("/ready", include_in_schema=False)
 @router.get(
     "/ready",
     response_model=HealthStatus,
