@@ -83,7 +83,7 @@ Write a short incident note: what broke, why, fix, how we prevent it (and add a 
 - [ ] Demo smoke test on live + phone test
 - [ ] Rollback plan known ([rollback runbook](runbooks/rollback.md))
 - [ ] Merge = production deploy: restore point taken first if the PR has a migration ([how](runbooks/migration-restore-point.md)); env vars set per [new-env-var](runbooks/new-env-var.md)
-- [ ] Other runbooks: [secret rotation](runbooks/secret-rotation.md) · [custom domain](runbooks/custom-domain-prep.md) · [free-tier usage](runbooks/free-tier-usage.md)
+- [ ] Other runbooks: [secret rotation](runbooks/secret-rotation.md) · [custom domain](runbooks/custom-domain-prep.md)
 
 ## 8. For Claude Code (paste into every feature prompt)
 "Follow SAFE-CHANGE-PLAYBOOK.md: own branch, additive reversible migrations, feature flag for new behaviour, no deleted/loosened old tests, full suites green in single sequential runs, pixel-diff report for any baseline change, never touch production or print secrets, STOP before merge."
