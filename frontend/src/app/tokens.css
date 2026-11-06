@@ -41,6 +41,11 @@
   --color-gold-500: #b8923a;
   --color-gold-700: #7a5c14;
 
+  /* Specialty preset accents (Feature 009): rose-gold for Skin & Aesthetic, soft tints for preset cards. */
+  --color-rose-50: #fbf1f2;
+  --color-rose-700: #9d4b5a;
+  --color-gold-50: #fbf6ea;
+
   --color-sky-400: #38bdf8;
   --color-blue-50: #eff6ff;
   --color-blue-600: #2563eb;
