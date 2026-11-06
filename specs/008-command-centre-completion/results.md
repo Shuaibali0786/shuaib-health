@@ -25,3 +25,6 @@ Until then the `e2e` CI check is expected to fail on those 12 screenshots only.
 ## Not done
 - T013 full e2e across all projects: run in CI.
 - T014 baseline regeneration: waiting for owner approval (above).
+
+## CI round 1 fix (7 Nov, same night)
+CI also failed `admin-demo-polish.spec.ts` "one set of numbers" on every admin project. That test reads the first `.chips` row as the status chips, and the new date-range row had taken that place. The date-range row now has its own class (`.quick-ranges`, same look); the old test is unchanged. Local re-run of `admin-demo-polish admin-bookings admin-mobile admin-clipping admin-a11y` (admin-desktop, admin-mobile): **101 passed, 21 skipped**. The remaining CI failures should be only the 12 expected Bookings screenshots.

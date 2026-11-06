@@ -47,7 +47,7 @@ export function StatusChips({ counts, total, statuses, onToggle, onAll }: { coun
 export function QuickRangeChips({ filters, today, onChange }: { filters: Pick<BookingFilters, "from" | "to">; today: string; onChange: FilterChange }) {
   const active = activeRange(filters, today);
   return (
-    <div className="chips quick-ranges" role="group" aria-label="Date range">
+    <div className="quick-ranges" role="group" aria-label="Date range">
       {quickRanges(today).map((range) => (
         <button key={range.id} type="button" className="chip" aria-pressed={active === range.id} onClick={() => onChange({ from: range.from, to: range.to, page: 1 })}>
           {range.label}

@@ -3054,8 +3054,23 @@ svg.i-sm {
 }
 
 /* ----- Feature 008: quick ranges, roles table, print -------------------------------------- */
-.chips.quick-ranges {
-  padding-bottom: 10px;
+/* Its own class, not .chips: the status chips stay the first .chips row (tests and styles rely on it). */
+.quick-ranges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 16px 10px;
+}
+@media (max-width: 900px) {
+  .m-filters .quick-ranges {
+    padding: 10px 0 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .m-filters .quick-ranges::-webkit-scrollbar {
+    display: none;
+  }
 }
 .perm-table caption {
   text-align: left;
