@@ -3,6 +3,10 @@ import * as z from "zod";
 
 import { normalizePkMobile } from "./phone";
 
+// Zod probes for eval support with `new Function("")`; a strict CSP reports that harmless probe as a
+// violation. One small form does not need the JIT path, so skip the probe.
+z.config({ jitless: true });
+
 // The visitor's details. The server repeats every rule; these messages are for the form.
 
 export const RULES_MESSAGE = "Please accept the clinic rules to continue.";

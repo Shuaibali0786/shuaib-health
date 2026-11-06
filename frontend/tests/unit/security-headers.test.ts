@@ -51,6 +51,15 @@ describe("header sets", () => {
     expect(names(publicSiteHeaders("enforce"))).toEqual(["Referrer-Policy", "Content-Security-Policy"]);
   });
 
+  it("lets the contact page frame OpenStreetMap only, and nothing else", () => {
+    for (const mode of ["report", "enforce"] as const) {
+      const csp = publicSiteHeaders(mode).find((h) => h.key.startsWith("Content-Security-Policy"))?.value ?? "";
+      expect(csp).toContain("frame-src https://www.openstreetmap.org;");
+      expect(csp).toContain("default-src 'self'");
+      expect(csp).not.toMatch(/unsafe-eval/);
+    }
+  });
+
   it("never touches the staff Referrer-Policy or CSP: the public set skips /admin and /api/admin", () => {
     const re = new RegExp(`^${PUBLIC_SITE_SOURCE}$`);
     expect(re.test("/")).toBe(true);

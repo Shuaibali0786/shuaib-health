@@ -31,6 +31,8 @@ const CSP_DIRECTIVES = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
+  // The contact page shows an OpenStreetMap area only after the visitor clicks "Show map".
+  "frame-src https://www.openstreetmap.org",
   "connect-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
