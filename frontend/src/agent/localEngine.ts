@@ -74,7 +74,8 @@ export function answerPatient(question: string, pack: KnowledgePack): AgentReply
     const d = doctor.item;
     return {
       intent: "doctor",
-      text: `${d.name} is a ${d.specialty} (${d.departmentName}). Consultation fee: ${pkr(d.feePkr)} (sample). Usually available: ${d.days.map((day) => DAY[day] ?? day).join(", ")}.`,
+      // The catalog's "specialty" is often the department name itself ("Gynecology"), so say it once.
+      text: `${d.name} works in ${d.departmentName || d.specialty}${d.specialty && d.specialty !== d.departmentName ? ` (${d.specialty})` : ""}. Consultation fee: ${pkr(d.feePkr)} (sample). Usually available: ${d.days.map((day) => DAY[day] ?? day).join(", ")}.`,
       links: [
         { label: `About ${d.name}`, href: `/doctors/${d.slug}` },
         { label: `Book with ${d.name}`, href: `/book-appointment?doctor=${encodeURIComponent(d.slug)}` },

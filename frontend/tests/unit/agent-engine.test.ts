@@ -174,3 +174,10 @@ describe("ASSISTANT_ENABLED", () => {
     expect(isAssistantEnabled()).toBe(true);
   });
 });
+
+describe("doctor wording", () => {
+  it("names the department once when the specialty is the department", () => {
+    const text = answer({ mode: "patient", question: "Dr Ayesha Rahman" }, pack).text;
+    expect(text).toMatch(/^Dr\. Ayesha Rahman works in Gynecology\. Consultation fee/);
+  });
+});
