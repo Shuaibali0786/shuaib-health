@@ -47,12 +47,14 @@ Never test on production. Never copy real patient data to dev.
 ## 3. Release flow (har nayi cheez ka safar)
 1. Branch → build → all tests green locally
 2. Open PR → CI runs all checks → preview link → Shuaib clicks through it
-3. Merge to `main` → deploy to **our demo first**
+3. Merge to `main` → **Vercel's Git integration deploys production automatically** (website and API), so the merge click *is* the production deploy; no manual "Deploy" step follows. This is our demo first.
 4. Smoke test on live (home, booking, slip, dashboard, phone) — 5 minutes
 5. Then roll out to **one client** → watch 24 h → then **all clients**
 6. If anything is wrong: switch the feature flag OFF, or roll back to the previous version (one click on Vercel: website and API projects), then fix calmly
 
 ## 4. Rollback plan (agar kuch toot jaye)
+> Merging to `main` auto-deploys production, so treat every merge as a release: CI green, restore point first if the PR has a migration, then merge. Steps: [deploy](runbooks/deploy.md) · [rollback](runbooks/rollback.md) · [restore point](runbooks/migration-restore-point.md) · [restore drill](runbooks/restore-drill.md) · [incident template](incidents/TEMPLATE.md).
+
 - Frontend (Vercel): "Promote previous deployment" — instant
 - Backend (Vercel API project): "Instant Rollback" to the previous deployment — instant (migrations are additive, so the old code still works)
 - Database: run the migration's downgrade, or restore last backup
@@ -79,7 +81,9 @@ Write a short incident note: what broke, why, fix, how we prevent it (and add a 
 - [ ] Feature flag default decided
 - [ ] Lighthouse mobile ≥ 90 · API p95 < 1 s
 - [ ] Demo smoke test on live + phone test
-- [ ] Rollback plan known
+- [ ] Rollback plan known ([rollback runbook](runbooks/rollback.md))
+- [ ] Merge = production deploy: restore point taken first if the PR has a migration ([how](runbooks/migration-restore-point.md)); env vars set per [new-env-var](runbooks/new-env-var.md)
+- [ ] Other runbooks: [secret rotation](runbooks/secret-rotation.md) · [custom domain](runbooks/custom-domain-prep.md) · [free-tier usage](runbooks/free-tier-usage.md)
 
 ## 8. For Claude Code (paste into every feature prompt)
 "Follow SAFE-CHANGE-PLAYBOOK.md: own branch, additive reversible migrations, feature flag for new behaviour, no deleted/loosened old tests, full suites green in single sequential runs, pixel-diff report for any baseline change, never touch production or print secrets, STOP before merge."
