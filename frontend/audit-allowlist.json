@@ -21,6 +21,13 @@
       "reason": "Same package and chain as GHSA-jmr9-qjv8-65gv above: dev-only, unused in CI, no patched release.",
       "addedOn": "2026-10-10",
       "reviewDate": "2026-11-09"
+    },
+    {
+      "id": "GHSA-mrhx-c7xc-m3w5",
+      "package": "zod",
+      "reason": "dev-only: zod@3.25.76 <- chromium-bidi <- puppeteer-core <- lighthouse <- @lhci/cli (CI Lighthouse check). Not shipped to users or run in production. The direct zod dependency of the app is pinned to ^4.6.6 and is not affected. The only npm fix is @lhci/cli 0.16.0, a breaking major change to the Lighthouse tooling, deferred.",
+      "addedOn": "2026-11-06",
+      "reviewDate": "2026-12-06"
     }
   ]
 }
