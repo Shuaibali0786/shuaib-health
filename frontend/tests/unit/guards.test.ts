@@ -70,7 +70,13 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
     expect(found).toEqual([]);
   });
 
-  it("keeps the OpenStreetMap URL inside MapEmbed.tsx", () => {
-    expect(offenders(/openstreetmap\.org/, (path) => path === "components/contact/MapEmbed.tsx")).toEqual([]);
+  it("keeps the OpenStreetMap URL inside MapEmbed.tsx, plus the single CSP frame-src entry", () => {
+    // Owner-approved 2026-11-06: lib/security-headers.ts may name the host, but only as the frame-src directive.
+    expect(
+      offenders(/openstreetmap\.org/, (path) => path === "components/contact/MapEmbed.tsx" || path === "lib/security-headers.ts"),
+    ).toEqual([]);
+    const csp = files.find((file) => file.path === "lib/security-headers.ts")?.code ?? "";
+    expect(csp.match(/openstreetmap\.org/g)).toHaveLength(1);
+    expect(csp).toContain('"frame-src https://www.openstreetmap.org"');
   });
 });

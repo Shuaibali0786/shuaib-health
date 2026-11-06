@@ -39,6 +39,27 @@ const CSP_DIRECTIVES = [
   "form-action 'self'",
 ];
 
+/**
+ * Where the browser sends CSP violation reports: the Sentry "security" endpoint of the website project,
+ * read from CSP_REPORT_URI (a public ingest address that carries a public key, not a secret, but kept
+ * out of the code). Unset means no reporting. Anything but a plain https URL fails the build, so a typo
+ * cannot inject extra CSP directives.
+ */
+export function cspReportUri(env: Record<string, string | undefined>): string | undefined {
+  const raw = env.CSP_REPORT_URI?.trim();
+  if (!raw) return undefined;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error("CSP_REPORT_URI must be a valid https URL.");
+  }
+  if (url.protocol !== "https:" || /[;,\s]/.test(raw)) {
+    throw new Error("CSP_REPORT_URI must be a plain https URL (no spaces, commas or semicolons).");
+  }
+  return url.href;
+}
+
 /** Headers for every route, including the staff pages (which keep their own private headers on top). */
 export function commonSecurityHeaders(mode: SecurityHeadersMode): HeaderEntry[] {
   if (mode === "off") return [];
@@ -55,9 +76,9 @@ export function commonSecurityHeaders(mode: SecurityHeadersMode): HeaderEntry[] 
  * Referrer policy and CSP for the public site only. The staff routes already send their own
  * `Referrer-Policy` and `Content-Security-Policy` (PRIVATE_HEADERS); they must stay unchanged in every mode.
  */
-export function publicSiteHeaders(mode: SecurityHeadersMode): HeaderEntry[] {
+export function publicSiteHeaders(mode: SecurityHeadersMode, reportUri?: string): HeaderEntry[] {
   if (mode === "off") return [];
-  const csp = CSP_DIRECTIVES.join("; ");
+  const csp = (reportUri ? [...CSP_DIRECTIVES, `report-uri ${reportUri}`] : CSP_DIRECTIVES).join("; ");
   return [
     { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
     mode === "report"
