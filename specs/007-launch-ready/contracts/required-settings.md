@@ -34,6 +34,7 @@ Names only, never values. **S** = secret (dashboard only). **Prod-req** = missin
 | `SITE_URL` | | yes, or derived | production https URL | unset → `VERCEL_URL`-derived | build fails in prod if neither it nor `VERCEL_PROJECT_PRODUCTION_URL` exists |
 | `DEMO_ENABLED` | | **yes (new)** | `true` | `true` | build-time; changing it needs a redeploy |
 | `SITE_SECURITY_HEADERS` | | **yes (flag)** | `report` at launch → `enforce` | `report` | code default `off`; switching needs a redeploy (FR-065) |
+| `CSP_REPORT_URI` | | no | Sentry "security" endpoint of the website project (https, public key inside) | unset | CSP violation reports; plain https URL only, a bad value fails the build; needs a redeploy |
 | `API_PROTECTION_BYPASS` | S | no | **unset** | API project's "Protection Bypass for Automation" value | Preview scope only; sent as `x-vercel-protection-bypass` from server code |
 | `SENTRY_DSN` / `SENTRY_AUTH_TOKEN` | S | no | website DSN / source-map upload token | optional | |
 | `CLINIC_FALLBACK_JSON` | | no | optional | optional | |

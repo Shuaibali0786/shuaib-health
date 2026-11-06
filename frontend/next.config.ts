@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 import {
   PUBLIC_SITE_SOURCE,
   commonSecurityHeaders,
+  cspReportUri,
   publicSiteHeaders,
   securityHeadersMode,
 } from "./src/lib/security-headers";
@@ -18,6 +19,7 @@ const PRIVATE_HEADERS = [
 
 // Read once per build; throws on Vercel when SITE_SECURITY_HEADERS is unset or invalid.
 const securityMode = securityHeadersMode(process.env);
+const reportUri = cspReportUri(process.env);
 
 const nextConfig: NextConfig = {
   // Each e2e server builds into its own folder (NEXT_DIST_DIR) so builds never collide. Unset means .next.
@@ -33,7 +35,7 @@ const nextConfig: NextConfig = {
         ? []
         : [
             { source: "/:path*", headers: commonSecurityHeaders(securityMode) },
-            { source: PUBLIC_SITE_SOURCE, headers: publicSiteHeaders(securityMode) },
+            { source: PUBLIC_SITE_SOURCE, headers: publicSiteHeaders(securityMode, reportUri) },
           ]),
       { source: "/admin", headers: PRIVATE_HEADERS },
       { source: "/admin/:path*", headers: PRIVATE_HEADERS },
