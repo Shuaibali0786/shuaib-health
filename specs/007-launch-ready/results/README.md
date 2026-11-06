@@ -22,3 +22,4 @@ Every file below is produced by this feature. No file may contain a secret value
 | `final-suites.md` | Final suites, gitleaks, npm audit, pip-audit vs baseline | T101, T102 | Polish |
 | `lighthouse/live-2026-11-06.md` + `lighthouse/live/` | Live Lighthouse mobile x3 (home, doctors, booking) | T067 | Done, owner review |
 | `csp-report-only-analysis.md` | Report-only CSP analysis and recommendation | T069 | Done (not enforced) |
+| `lighthouse/seo-indexable-test.md` | SEO with indexable=true on a test-only local build | T112 | Done |
