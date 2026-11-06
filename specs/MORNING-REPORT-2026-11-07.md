@@ -24,7 +24,7 @@ Good morning Shuaib. Everything asked for was built. There are **4 draft PRs** a
   3. An old test read the new chip row instead of the status chips.
 
 ## What is NOT done, and why
-1. **Bookings screenshots (#23) were not updated** (17 in CI: Bookings, the drawer and the confirm dialog).** The playbook says you must see the diff first. Diff images: `specs/008-command-centre-completion/results/visual-diff/`. Steps to accept: `specs/008-command-centre-completion/results.md`.
+1. **Bookings screenshots (#23) were not updated** (17 in CI: Bookings, the drawer and the confirm dialog). The playbook says you must see the diff first. Diff images: `specs/008-command-centre-completion/results/visual-diff/`. Steps to accept: `specs/008-command-centre-completion/results.md`.
 2. **Lighthouse on the new preset pages and with the assistant on** was not measured on the laptop. CI's Lighthouse job passed on #24 and #25 for the pages it checks.
 3. **New roles (Doctor, Lab staff), CSV export, preset-aware real booking/dashboard, a real AI provider:** not built. Each needs your decision (questions below).
 4. **No link to the presets from existing pages** yet. A link would change every public screenshot. For now, share the URL directly.
