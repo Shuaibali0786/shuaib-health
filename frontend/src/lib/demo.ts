@@ -16,3 +16,14 @@ export function isDemoEnabled(): boolean {
   }
   return !(raw === "false" || raw === "0" || raw === "no" || raw === "off");
 }
+
+/**
+ * ASSISTANT_ENABLED: the chat assistant (Feature 010, ADR-0013). OFF by default: only "true", "1", "yes" or
+ * "on" turn it on. Read when asked; the public pages are rendered at build or revalidation time, so set it
+ * before building, like DEMO_ENABLED. When off, no assistant code or data is in any page. It lives in this
+ * file because this is the one place the public site reads its feature switches.
+ */
+export function isAssistantEnabled(): boolean {
+  const raw = process.env.ASSISTANT_ENABLED?.trim().toLowerCase();
+  return raw === "true" || raw === "1" || raw === "yes" || raw === "on";
+}
