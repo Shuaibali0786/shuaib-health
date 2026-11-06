@@ -6,7 +6,7 @@ Good morning Shuaib. Everything asked for was built. There are **4 draft PRs** a
 
 | Feature | Spec / plan / tasks / analyze | Phases done | Tests | Draft PR | CI state |
 |---|---|---|---|---|---|
-| **008 Command Centre completion** (quick date ranges, roles table, print list) | ✔ / ✔ / ✔ / ✔ | All 5 phases (13 of 15 tasks; T013, T014 wait for you) | Vitest 1450 pass (8 new); admin e2e 101 + 200 pass locally | [#23](https://github.com/Shuaibali0786/shuaib-health/pull/23) | backend, frontend, secrets, offline, stateful **green**. e2e: **expected red on 12 Bookings screenshots** until you approve new baselines (question 1). The other e2e failure was fixed tonight. |
+| **008 Command Centre completion** (quick date ranges, roles table, print list) | ✔ / ✔ / ✔ / ✔ | All 5 phases (13 of 15 tasks; T013, T014 wait for you) | Vitest 1450 pass (8 new); admin e2e 101 + 200 pass locally | [#23](https://github.com/Shuaibali0786/shuaib-health/pull/23) | backend, frontend, secrets, offline, stateful **green**. e2e: **red only on the Bookings screenshots** (17 across the 4 screen sizes CI checks; verified after the last run) until you approve new baselines (question 1). The other e2e failure was fixed tonight. |
 | **009 Specialty presets** (Dental, Skin & Aesthetic, Diagnostic Lab, Multi-speciality) | ✔ / ✔ / ✔ / ✔ + ADR-0012 | All 5 phases (12/12 tasks) | Vitest 1451 pass (9 new); e2e 330 + 516 pass locally | [#24](https://github.com/Shuaibali0786/shuaib-health/pull/24) | **All green** (incl. e2e and Lighthouse) |
 | **010 AI agent v1** (free engine, patient + clinic-owner modes, flag off) | ✔ / ✔ / ✔ / ✔ + ADR-0013 | All 6 phases (15/15 tasks) | Vitest 1466 pass (25 new, incl. a 40-question accuracy set); flag-on e2e 28 pass | [#25](https://github.com/Shuaibali0786/shuaib-health/pull/25) | **All green** (CI runs with the flag off) |
 | **Fiverr showcase** (42 screenshots, video script, README) | n/a (docs) | Done | n/a | [#26](https://github.com/Shuaibali0786/shuaib-health/pull/26) | docs only |
@@ -24,7 +24,7 @@ Good morning Shuaib. Everything asked for was built. There are **4 draft PRs** a
   3. An old test read the new chip row instead of the status chips.
 
 ## What is NOT done, and why
-1. **Bookings screenshots (#23) were not updated.** The playbook says you must see the diff first. Diff images: `specs/008-command-centre-completion/results/visual-diff/`. Steps to accept: `specs/008-command-centre-completion/results.md`.
+1. **Bookings screenshots (#23) were not updated** (17 in CI: Bookings, the drawer and the confirm dialog).** The playbook says you must see the diff first. Diff images: `specs/008-command-centre-completion/results/visual-diff/`. Steps to accept: `specs/008-command-centre-completion/results.md`.
 2. **Lighthouse on the new preset pages and with the assistant on** was not measured on the laptop. CI's Lighthouse job passed on #24 and #25 for the pages it checks.
 3. **New roles (Doctor, Lab staff), CSV export, preset-aware real booking/dashboard, a real AI provider:** not built. Each needs your decision (questions below).
 4. **No link to the presets from existing pages** yet. A link would change every public screenshot. For now, share the URL directly.
@@ -32,7 +32,7 @@ Good morning Shuaib. Everything asked for was built. There are **4 draft PRs** a
 6. Vercel automatically built **preview** deployments for the PRs (its normal Git integration). I did not start any deploy, and nothing was written to the preview database.
 
 ## Questions for Shuaib (short; full list in `specs/QUESTIONS-FOR-SHUAIB.md`)
-1. Update the 12 Bookings screenshots for #23? (yes / no)
+1. Update the Bookings screenshots for #23 (17 files per OS)? (yes / no)
 2. Merge order #24 → #23 → #25 → #26 OK?
 3. Add Doctor and Lab staff roles? (needs a database change)
 4. Allow CSV/Excel export of bookings? (patient names leave the system)
