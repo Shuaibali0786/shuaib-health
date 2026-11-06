@@ -154,7 +154,7 @@ description: "Task list for 007-launch-ready"
   - **0 required approvals** (your merge click is the approval);
   - **include administrators** (no bypass);
   - no force-push or deletion.
-- [ ] T039 [US2] 🔑 OWNER ACTION: review and approve the merge of **PR-1**
+- [X] T039 [US2] 🔑 OWNER ACTION: review and approve the merge of **PR-1** (done: PR #8 merged by the owner on 2026-10-10, merge commit 3bdecb3, all four checks required; Linux baselines approved on the PR, T116)
 
 **Checkpoint**: `main` is protected, and CI blocks every unsafe merge from here on.
 
@@ -209,7 +209,7 @@ description: "Task list for 007-launch-ready"
 - [X] T053 [P] [US1] Write docs/runbooks/smoke-test.md (FR-060): home, catalog page, booking end to end with slip, demo dashboard, admin sign-in page, robots/noindex, no-localhost, website/API demo-switch agreement, security headers, `/health`, `/ready`, no sales copy
 - [X] T117 [P] [US1] Self-host the Google Fonts with `next/font/local` so builds never download fonts (frontend/src/fonts/, the three layouts). Same bytes as Google served; baseline diff in specs/007-launch-ready/results/fonts-pixel-diff.md.
 - [X] T118 [US1] Raise the catalog fetch timeout and the slots lookup timeout from 3 s / 5 s to 8 s (cold API needs 4 to 6 s on its first request; results/cold-start.md), keeping last-good data on a failed refresh (frontend/src/lib/api/http.ts, paginate.ts, app/api/booking/slots). Owner decision C, 2026-10-12.
-- [ ] T054 [US1] 🔑 OWNER ACTION: review and approve the merge of **PR-2** (Phases 4–6 code)
+- [X] T054 [US1] 🔑 OWNER ACTION: review and approve the merge of **PR-2** (done: PR #12 merged by the owner on 2026-10-10, merge commit efef7f7, all four checks required) (Phases 4–6 code)
 
 ### Launch (owner, guided by Claude)
 - [X] T055 [US1] 🔑 OWNER ACTION (done 2026-10-11; Neon names the default branch `production`, not `main`; Free plan, so history retention stays at the default and is not editable; check later via the API if needed): create the Neon project `shuaib-health-prod` in AWS Singapore. Set compute **fixed at 0.25 CU**. **Immediately, while the project is empty**, create branch `preview`; it must never hold production data (playbook §2). Then **reset the app role's password on the `preview` branch** (Neon resets are branch-scoped), so preview and production credentials differ (FR-005, Constitution VII). Check that the preview connection string is refused by the `main` host; Claude provides the one-line check, which prints no URL. create the read-only role `backup_ro`; set history retention to the free maximum (6 h). Store the URLs in your password manager. **No payment method.**
@@ -226,9 +226,9 @@ description: "Task list for 007-launch-ready"
 - [x] T064 [US1] 🔑 OWNER ACTION: trigger the first production deploy of `shuaib-health-web` and share the production URL
 - [x] T065 [US1] Run docs/runbooks/smoke-test.md against the live URL on desktop (Playwright MCP, read-only) and record in specs/007-launch-ready/results/smoke-<date>.md
 - [ ] T066 [US1] 🔑 OWNER ACTION: real-device phone QA on mobile data (Android; iPhone if available). Run the smoke checklist and save screenshots to specs/007-launch-ready/results/phone-qa/
-- [ ] T067 (live run done 2026-11-06, see results/lighthouse/live-2026-11-06.md; tick after owner review) [P] [US1] Lighthouse mobile ×3 (median, warm) on the live home and one catalog page, saving JSON and HTML to specs/007-launch-ready/results/lighthouse/. Pass = Performance, Accessibility and Best Practices each ≥ 90 (SC-002). Record the live SEO score with a note if it is lowered only by the "blocked from indexing" audit (expected for the noindex demo).
-- [ ] T112 [P] [US1] SEO check on a **test-only** local production build with `indexable=true`: use a temporary local database or fixture override; the seed, fixtures and live data stay unchanged. Lighthouse SEO must be ≥ 90 on home and one catalog page. Save to specs/007-launch-ready/results/lighthouse/seo-indexable-test.md (SC-002).
-- [ ] T068 (PARTIAL 2026-11-06: /health p95 558 ms; catalog got 403s, see results/p95.md) [P] [US1] API p95 on the live API (200 catalog + 20 slot requests, warm) via backend/scripts/measure_latency.py, saved to specs/007-launch-ready/results/p95.md (SC-003)
+- [X] T067 (owner accepted 2026-11-06: performance 94-96, accessibility 98-100, best practices 96-100; SEO low only because of noindex; see results/lighthouse/live-2026-11-06.md) [P] [US1] Lighthouse mobile ×3 (median, warm) on the live home and one catalog page, saving JSON and HTML to specs/007-launch-ready/results/lighthouse/. Pass = Performance, Accessibility and Best Practices each ≥ 90 (SC-002). Record the live SEO score with a note if it is lowered only by the "blocked from indexing" audit (expected for the noindex demo).
+- [X] T112 (done 2026-11-06: SEO 100 on home and /doctors, see results/lighthouse/seo-indexable-test.md) [P] [US1] SEO check on a **test-only** local production build with `indexable=true`: use a temporary local database or fixture override; the seed, fixtures and live data stay unchanged. Lighthouse SEO must be ≥ 90 on home and one catalog page. Save to specs/007-launch-ready/results/lighthouse/seo-indexable-test.md (SC-002).
+- [X] T068 (done 2026-11-06 with the owner's reduced budget: /health p95 345-558 ms; catalog p95 under 650 ms in a spaced 60-request run; the first run's 403s were Vercel DDoS Mitigation challenges; see results/p95.md) [P] [US1] API p95 on the live API (200 catalog + 20 slot requests, warm) via backend/scripts/measure_latency.py, saved to specs/007-launch-ready/results/p95.md (SC-003)
 - [ ] T069 [US1] 🔑 OWNER ACTION: after one clean release with `SITE_SECURITY_HEADERS=report` and no CSP violations in the console or Sentry (Claude checks and reports), set `SITE_SECURITY_HEADERS=enforce` in the website's Production env and redeploy. No code change; Claude reruns frontend/tests/e2e/security-headers.spec.ts against the live URL.
 
 **Checkpoint (MVP)**: live demo works on a phone; SC-001, SC-002, SC-003, SC-008, SC-011 evidenced.
