@@ -5,6 +5,8 @@ Written from `specs/007-launch-ready/quickstart.md`. Every step the owner must d
 > **Do not touch Render, the `kbg-backend` service, or its UptimeRobot monitor at any step.** Shuaib Health does not use Render.
 
 ## 0. Before you start
+> **How deploys happen (corrected 6 Nov 2026).** Both Vercel projects use the GitHub Git integration. **Merging a PR to `main` deploys production automatically** for the website and the API, and every PR gets a preview. Older notes implied a manual production deploy after merge; that is only needed for the very first deploy of a new project and for a redeploy with no code change (for example after changing an environment variable). Merge only when you are ready for production to change. See `deploy.md` and `rollback.md`.
+
 - [ ] `main` CI is green.
 - [ ] The constitution amendment (backend on Vercel) is merged and ADR-0011 is Accepted.
 - [ ] No sales copy, prices outside the labelled samples, or "hire us" buttons on the site (FR-075; see `specs/007-launch-ready/results/copy-audit.md`).
@@ -43,7 +45,7 @@ uv run python scripts/measure_latency.py --base-url <api preview url> --label co
 then the same again with `--label warm`. Warm p95 must be under 1 s and the cold catalog request inside the website's timeout. Claude records the numbers in `specs/007-launch-ready/results/cold-start.md`. **If a target fails, stop.**
 
 ## 7. 🔑 First production deploy, seed and admin
-1. Redeploy `shuaib-health-api` for Production. The build log must show the migration succeeded; `/health` = 200 and `/ready` = 200.
+1. Production deploys on merge to `main`; for this first deploy (or a redeploy with no code change) use Redeploy on `shuaib-health-api`. The build log must show the migration succeeded; `/health` = 200 and `/ready` = 200.
 2. On your laptop open a **fresh terminal** (a throwaway shell). Set these for this shell only: `DATABASE_URL` (Neon `production` branch, pooled), `DIRECT_DATABASE_URL` (Neon `production` branch, direct), `APP_ENV=development`, and three throwaway values of at least 32 characters for `BOOKING_PROXY_SECRET`, `PRIVACY_HASH_KEY`, `SESSION_SECRET` (they are not used by these commands). Then, from `backend/`:
 
 ```
@@ -59,7 +61,7 @@ The guard prints the **masked** host and the database name and asks you to **typ
 Open the live API once from your phone. Read the `xffHops` value in the Vercel runtime log and tell Claude **only the number**. Claude works out `TRUSTED_PROXY_HOPS`; set it, set `CORS_ORIGINS` to the website's production origin, and redeploy the API. Record the value here: `TRUSTED_PROXY_HOPS = 1`.
 
 ## 9. 🔑 Website production deploy
-Trigger the first production deploy of `shuaib-health-web` and share the production URL with Claude.
+The website's production deploy also happens on merge to `main` (or Redeploy when nothing changed in Git). Share the production URL with Claude.
 
 ## 10. Verify
 Run `smoke-test.md` on desktop (Claude) and on a real phone on mobile data (you). Lighthouse mobile ×3, the p95 check and the alert tests follow. Save everything in `specs/007-launch-ready/results/`.

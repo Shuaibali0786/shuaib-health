@@ -20,3 +20,5 @@ Every file below is produced by this feature. No file may contain a secret value
 | `rollback-rehearsal.md` | Timed rollback of website and API | T095 | Launch |
 | `usage-day7.md` | Day-7 usage and month-end projection | T100 | Launch |
 | `final-suites.md` | Final suites, gitleaks, npm audit, pip-audit vs baseline | T101, T102 | Polish |
+| `lighthouse/live-2026-11-06.md` + `lighthouse/live/` | Live Lighthouse mobile x3 (home, doctors, booking) | T067 | Done, owner review |
+| `csp-report-only-analysis.md` | Report-only CSP analysis and recommendation | T069 | Done (not enforced) |

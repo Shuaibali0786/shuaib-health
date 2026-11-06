@@ -226,9 +226,9 @@ description: "Task list for 007-launch-ready"
 - [x] T064 [US1] 🔑 OWNER ACTION: trigger the first production deploy of `shuaib-health-web` and share the production URL
 - [x] T065 [US1] Run docs/runbooks/smoke-test.md against the live URL on desktop (Playwright MCP, read-only) and record in specs/007-launch-ready/results/smoke-<date>.md
 - [ ] T066 [US1] 🔑 OWNER ACTION: real-device phone QA on mobile data (Android; iPhone if available). Run the smoke checklist and save screenshots to specs/007-launch-ready/results/phone-qa/
-- [ ] T067 [P] [US1] Lighthouse mobile ×3 (median, warm) on the live home and one catalog page, saving JSON and HTML to specs/007-launch-ready/results/lighthouse/. Pass = Performance, Accessibility and Best Practices each ≥ 90 (SC-002). Record the live SEO score with a note if it is lowered only by the "blocked from indexing" audit (expected for the noindex demo).
+- [ ] T067 (live run done 2026-11-06, see results/lighthouse/live-2026-11-06.md; tick after owner review) [P] [US1] Lighthouse mobile ×3 (median, warm) on the live home and one catalog page, saving JSON and HTML to specs/007-launch-ready/results/lighthouse/. Pass = Performance, Accessibility and Best Practices each ≥ 90 (SC-002). Record the live SEO score with a note if it is lowered only by the "blocked from indexing" audit (expected for the noindex demo).
 - [ ] T112 [P] [US1] SEO check on a **test-only** local production build with `indexable=true`: use a temporary local database or fixture override; the seed, fixtures and live data stay unchanged. Lighthouse SEO must be ≥ 90 on home and one catalog page. Save to specs/007-launch-ready/results/lighthouse/seo-indexable-test.md (SC-002).
-- [ ] T068 [P] [US1] API p95 on the live API (200 catalog + 20 slot requests, warm) via backend/scripts/measure_latency.py, saved to specs/007-launch-ready/results/p95.md (SC-003)
+- [ ] T068 (PARTIAL 2026-11-06: /health p95 558 ms; catalog got 403s, see results/p95.md) [P] [US1] API p95 on the live API (200 catalog + 20 slot requests, warm) via backend/scripts/measure_latency.py, saved to specs/007-launch-ready/results/p95.md (SC-003)
 - [ ] T069 [US1] 🔑 OWNER ACTION: after one clean release with `SITE_SECURITY_HEADERS=report` and no CSP violations in the console or Sentry (Claude checks and reports), set `SITE_SECURITY_HEADERS=enforce` in the website's Production env and redeploy. No code change; Claude reruns frontend/tests/e2e/security-headers.spec.ts against the live URL.
 
 **Checkpoint (MVP)**: live demo works on a phone; SC-001, SC-002, SC-003, SC-008, SC-011 evidenced.
@@ -286,13 +286,13 @@ description: "Task list for 007-launch-ready"
 **Goal**: rollback in minutes by following a document; incident notes and env-var checklist exist.
 **Independent test**: the owner rolls back website and API using only the runbook, timed.
 
-- [ ] T088 [P] [US6] Write docs/runbooks/deploy.md: routine deploy (CI green → restore point if migration → merge → watch both builds → smoke test)
-- [ ] T089 [P] [US6] Write docs/runbooks/rollback.md: Vercel Instant Rollback per project; DB downgrade or Neon restore; demo switch both sides + redeploy; "never enable billing" note
-- [ ] T090 [P] [US6] Create docs/incidents/TEMPLATE.md (what broke, impact, timeline, cause, fix, prevention test)
-- [ ] T091 [P] [US6] Write docs/runbooks/new-env-var.md (`.env.example`, required-settings contract, both Vercel projects × Production and Preview, redeploy, smoke)
-- [ ] T092 [P] [US6] Write docs/runbooks/secret-rotation.md (per secret: where it is set, the side effects such as sign-out or fingerprint change, the order across the two projects)
-- [ ] T093 [P] [US6] Write docs/runbooks/custom-domain-prep.md (FR-024): settings to change (`SITE_URL`, `CORS_ORIGINS`, HSTS preload later), checks to re-run, and a sign-in check on the new origin (audit E1). No purchase.
-- [ ] T094 [US6] Link the runbooks from docs/SAFE-CHANGE-PLAYBOOK.md §4 and §7 and from docs/runbooks/README.md (FR-072)
+- [X] T088 [P] [US6] Write docs/runbooks/deploy.md: routine deploy (CI green → restore point if migration → merge → watch both builds → smoke test)
+- [X] T089 [P] [US6] Write docs/runbooks/rollback.md: Vercel Instant Rollback per project; DB downgrade or Neon restore; demo switch both sides + redeploy; "never enable billing" note
+- [X] T090 [P] [US6] Create docs/incidents/TEMPLATE.md (what broke, impact, timeline, cause, fix, prevention test)
+- [X] T091 [P] [US6] Write docs/runbooks/new-env-var.md (`.env.example`, required-settings contract, both Vercel projects × Production and Preview, redeploy, smoke)
+- [X] T092 [P] [US6] Write docs/runbooks/secret-rotation.md (per secret: where it is set, the side effects such as sign-out or fingerprint change, the order across the two projects)
+- [X] T093 [P] [US6] Write docs/runbooks/custom-domain-prep.md (FR-024): settings to change (`SITE_URL`, `CORS_ORIGINS`, HSTS preload later), checks to re-run, and a sign-in check on the new origin (audit E1). No purchase.
+- [X] T094 [US6] Link the runbooks from docs/SAFE-CHANGE-PLAYBOOK.md §4 and §7 and from docs/runbooks/README.md (FR-072)
 - [ ] T095 [US6] 🔑 OWNER ACTION: rehearse rollback on live: Instant Rollback the website and then the API to the previous deployment, then forward again, following only docs/runbooks/rollback.md. Claude times it and records in specs/007-launch-ready/results/rollback-rehearsal.md (SC-006).
 - [ ] T096 [US6] 🔑 OWNER ACTION: review and approve the merge of **PR-3** (runbooks and docs)
 
