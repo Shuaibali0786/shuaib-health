@@ -163,7 +163,9 @@ def migrated_engine(test_engine: Engine) -> Engine:
 
 @pytest.fixture(scope="session")
 def seeded_engine(migrated_engine: Engine) -> Engine:
-    run_seed(migrated_engine)
+    # Sample leave and holidays are placed relative to the seed run's day. Seed at the frozen test
+    # clock, so tests that freeze time (FROZEN_NOW) never see them drift out of their window.
+    run_seed(migrated_engine, now=FROZEN_NOW)
     return migrated_engine
 
 

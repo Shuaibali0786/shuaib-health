@@ -28,11 +28,11 @@
     "@sentry/nextjs": "11.6.0",
     "framer-motion": "^13.4.6",
     "lucide-react": "^1.49.0",
-    "next": "16.4.0",
+    "next": "16.4.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.89.0",
-    "zod": "^4.6.5"
+    "zod": "^4.6.6"
   },
   "overrides": {
     "openapi-typescript": {
@@ -57,15 +57,15 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.1.1",
     "eslint": "^9.39.5",
-    "eslint-config-next": "16.4.0",
+    "eslint-config-next": "16.4.1",
     "jsdom": "^29.1.1",
     "openapi-typescript": "7.13.0",
     "pdfjs-dist": "^6.4.299",
     "sharp": "^0.35.5",
     "tailwindcss": "^4",
     "typescript": "~6.0.3",
-    "vite": "^8.3.1",
-    "vitest": "^5.0.2",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3",
     "yaml": "^2.9.1"
   }
 }
