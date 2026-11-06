@@ -3052,3 +3052,68 @@ svg.i-sm {
     justify-content: center;
   }
 }
+
+/* ----- Feature 008: quick ranges, roles table, print -------------------------------------- */
+.chips.quick-ranges {
+  padding-bottom: 10px;
+}
+.perm-table caption {
+  text-align: left;
+  padding: 0 16px 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.perm-table td {
+  text-align: center;
+  width: 130px;
+}
+.perm-table th[scope="row"] {
+  font-weight: 500;
+  color: var(--text);
+}
+.perm-table td[data-allowed="true"] {
+  color: var(--accent);
+}
+.perm-table td[data-allowed="false"] {
+  color: var(--muted);
+}
+.perm-note {
+  margin: 0;
+  padding: 12px 16px 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.print-only {
+  display: none;
+}
+@media print {
+  .side,
+  .bottom-nav,
+  .m-top,
+  .statusbar-right,
+  .skip-link,
+  .filters,
+  .chips-slot,
+  .m-filters,
+  .pager,
+  .print-button,
+  .toast,
+  button {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--color-navy-900);
+  }
+  .shell,
+  .main,
+  .card {
+    box-shadow: none !important;
+    background: var(--color-white) !important;
+  }
+  .disclaimer {
+    display: block !important;
+  }
+}
