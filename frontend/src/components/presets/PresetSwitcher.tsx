@@ -6,8 +6,8 @@ import { PRESETS, presetPath, type PresetId } from "@/presets/specialties";
 /** Plain links, so switching works without JavaScript and every view has its own address. */
 export function PresetSwitcher({ current }: { current: PresetId }) {
   return (
-    <nav aria-label="Choose your specialty" className="preset-switcher -mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
-      <ul className="flex w-max gap-2 md:w-auto md:flex-wrap">
+    <nav aria-label="Choose your specialty" className="preset-switcher">
+      <ul className="flex flex-wrap gap-2">
         {PRESETS.map((preset) => {
           const active = preset.id === current;
           return (

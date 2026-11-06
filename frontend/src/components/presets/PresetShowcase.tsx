@@ -157,7 +157,7 @@ export function PresetShowcase({ preset, trail }: { preset: SpecialtyPreset; tra
                 <PreviewLabel />
               </div>
               <div className="preset-slip mt-4 rounded-card p-4 text-sm">
-                <p className="font-display text-lg font-bold">{preset.clinicName}</p>
+                <p className="text-lg font-bold">{preset.clinicName}</p>
                 <p className="text-muted">{preset.visitWord} confirmed</p>
                 <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
                   <dt className="text-muted">Reference</dt>
