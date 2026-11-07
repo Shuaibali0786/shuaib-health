@@ -92,7 +92,7 @@ def generated(settings_factory: SettingsFactory) -> dict[str, Any]:
 
 
 def test_contract_declares_the_admin_surface(contract: dict[str, Any]) -> None:
-    assert contract["info"]["version"] == "1.3.0"
+    assert contract["info"]["version"] == "1.4.0"
     assert len(CONTRACT_OPERATIONS) == 26
     assert {op["operationId"] for op in CONTRACT_OPERATIONS.values()} >= PENDING_ADMIN_OPERATIONS
 

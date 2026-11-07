@@ -33,6 +33,7 @@ from app.routers import (
     admin_dashboard,
     admin_staff,
     appointments,
+    assistant,
     clinic,
     departments,
     doctors,
@@ -119,6 +120,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(packages.router)
     api.include_router(slots.router)
     api.include_router(appointments.router)
+    api.include_router(assistant.router)
     api.include_router(admin_auth.router)
     api.include_router(admin_staff.router)
     api.include_router(admin_bookings.router)

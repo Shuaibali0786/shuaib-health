@@ -15,6 +15,22 @@ const hoursText = (rules: SiteConfig["openingHours"]) => {
   return `${days}, ${times}`;
 };
 
+/**
+ * Public emergency numbers by the clinic's time zone (white-label: each client's own country). Unknown zones
+ * get a neutral phrase rather than a wrong number.
+ */
+const EMERGENCY_BY_ZONE: Record<string, string> = {
+  "Asia/Karachi": "1122 or 115",
+  "Asia/Dubai": "998 (ambulance) or 999",
+  "Asia/Riyadh": "997 (ambulance) or 911",
+  "Asia/Qatar": "999",
+  "Asia/Bahrain": "999",
+  "Asia/Muscat": "9999",
+  "Asia/Kuwait": "112",
+  "Europe/London": "999 or 112",
+};
+export const emergencyNumbersFor = (timeZone: string) => EMERGENCY_BY_ZONE[timeZone] ?? "your local emergency number";
+
 export function buildKnowledgePack(input: {
   site: SiteConfig;
   departments: Department[];
@@ -30,6 +46,7 @@ export function buildKnowledgePack(input: {
       name: input.site.name,
       phone: input.site.generalPhone.display,
       emergencyPhone: input.site.emergencyPhone.display,
+      emergencyNumbers: emergencyNumbersFor(input.site.timeZone),
       address: [...input.site.address],
       hours: hoursText(input.site.openingHours),
       labHours: hoursText(input.site.labHours),

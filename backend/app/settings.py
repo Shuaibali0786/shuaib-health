@@ -98,6 +98,14 @@ class Settings(BaseSettings):
     # offered (the feature switch); enrolled accounts then cannot finish signing in
     # (never a password-only fallback).
     two_factor_key: SecretStr | None = None
+    # Feature 010 v1.1: the assistant's optional Claude provider. OFF unless enabled AND a key
+    # is set; otherwise the website keeps the free engine. The monthly cap is a hard spend limit.
+    assistant_ai_enabled: bool = False
+    anthropic_api_key: SecretStr | None = None
+    assistant_ai_model: str = "claude-haiku-5-5"
+    assistant_ai_monthly_budget_usd: float = Field(5.0, ge=0, le=500)
+    assistant_ai_per_ip_per_hour: int = Field(20, ge=1, le=1000)
+    assistant_ai_per_day: int = Field(500, ge=1, le=100_000)
 
     @field_validator("booking_proxy_secret", "privacy_hash_key", "session_secret", mode="before")
     @classmethod
@@ -130,6 +138,13 @@ class Settings(BaseSettings):
             decoded = b""
         if len(decoded) != 32:
             raise ValueError("TWO_FACTOR_KEY must be base64 for exactly 32 random bytes")
+        return value
+
+    @field_validator("anthropic_api_key", mode="before")
+    @classmethod
+    def _blank_api_key_means_off(cls, value: object) -> object:
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return None
         return value
 
     @field_validator("sentry_dsn", mode="before")

@@ -11,6 +11,8 @@ export type AgentReply = {
   suggestions?: string[];
   /** What the provider understood, for tests and (later) anonymous quality counts. Never shown. */
   intent: string;
+  /** v1.1: the department a symptom points to (no diagnosis), for tests. Never shown. */
+  department?: string;
 };
 
 export type AgentRequest = { mode: AgentMode; question: string };
@@ -29,6 +31,8 @@ export type KnowledgePack = {
     name: string;
     phone: string;
     emergencyPhone: string;
+    /** Public emergency numbers for the clinic's country, e.g. "1122 or 115" (from the clinic time zone). */
+    emergencyNumbers: string;
     address: string[];
     hours: string;
     labHours: string;

@@ -4,7 +4,7 @@ Routes return these models, never the SQLModel tables.
 """
 
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
@@ -316,3 +316,18 @@ class AppointmentView(CamelModel):
 class BookingConflict(CamelModel):
     error: ErrorInfo
     alternatives: list[AlternativeSlot] | None = Field(default=None, max_length=5)
+
+
+# --- Feature 010 v1.1: the assistant's optional Claude provider -----------------------------------
+
+
+class AssistantQuestion(CamelModel):
+    """From the website server (proxy secret): the question and the public knowledge pack."""
+
+    question: str = Field(min_length=1, max_length=300)
+    pack: dict[str, Any]
+
+
+class AssistantAnswer(CamelModel):
+    text: str
+    provider: Literal["claude"] = "claude"

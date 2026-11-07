@@ -1,9 +1,9 @@
-// Feature 010: the free local answer engine, its normaliser, throttle, knowledge pack and flag.
+// Feature 010 (v1.1): the free local answer engine, its normaliser, throttle, knowledge pack and flag.
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { buildKnowledgePack } from "@/agent/knowledge";
-import { answer } from "@/agent/localEngine";
-import { MAX_QUESTION, tokens } from "@/agent/normalize";
+import { buildKnowledgePack, emergencyNumbersFor } from "@/agent/knowledge";
+import { QUICK_REPLIES, answer, welcomeMessage } from "@/agent/localEngine";
+import { MAX_QUESTION, detectLang, tokens } from "@/agent/normalize";
 import { getProvider } from "@/agent/registry";
 import { createThrottle } from "@/agent/throttle";
 import type { AgentMode, KnowledgePack } from "@/agent/types";
@@ -19,17 +19,73 @@ import { siteConfig } from "../fixtures/catalog/siteConfig";
 const pack: KnowledgePack = buildKnowledgePack({ site: siteConfig, departments, doctors, labTests, packages: healthPackages, faqGroups, demo: true });
 const ask = (question: string, mode: AgentMode = "patient") => answer({ mode, question }, pack);
 
-// [question, expected intent, text the answer must contain (optional)]
-const PATIENT_SET: Array<[string, string, string?]> = [
-  ["When are you open?", "hours"],
+// [question, expected intent, text the answer must contain (optional), expected language (optional)]
+// v1.1: 100 questions in English, Roman Urdu, Urdu and Arabic script; every one must pass (SC-001 raised to 100%).
+type Case = [string, string, string?, ("en" | "roman")?];
+const PATIENT_SET: Case[] = [
+  // Greetings and small talk (owner's live test: these used to get "Sorry, I don't have an answer")
+  ["hi", "greeting", "I'm the clinic's assistant", "en"],
+  ["Hello", "greeting", "Welcome to Shuaib Health", "en"],
+  ["hey there", "greeting", "How can I help you today?", "en"],
+  ["good morning", "greeting", "Good morning!", "en"],
+  ["Good evening", "greeting", "Good evening!", "en"],
+  ["salam", "greeting", "Wa alaikum assalam!", "roman"],
+  ["Assalam o alaikum", "greeting", "Wa alaikum assalam!", "roman"],
+  ["assalamualaikum", "greeting", "Wa alaikum assalam!", "roman"],
+  ["AOA", "greeting", "khush aamdeed", "roman"],
+  ["السلام علیکم", "greeting", "Wa alaikum assalam!", "roman"],
+  ["مرحبا", "greeting", "Marhaba!", "en"],
+  ["marhaba", "greeting", "Marhaba!", "en"],
+  ["what do you do", "about", "I'm Shuaib Health's assistant", "en"],
+  ["who are you?", "about", "assistant", "en"],
+  ["aap kaun ho", "about", "Main Shuaib Health ka assistant hoon", "roman"],
+  ["help", "help", "I can't give medical advice", "en"],
+  ["thanks", "thanks", "You're very welcome", "en"],
+  ["thank you so much", "thanks", "welcome", "en"],
+  ["shukriya", "thanks", "Koi baat nahi", "roman"],
+  ["شکریہ", "thanks", "Koi baat nahi", "roman"],
+  ["bye", "bye", "Goodbye", "en"],
+  ["Allah hafiz", "bye", "Allah Hafiz", "roman"],
+  ["how are you", "how_are_you", "doing well", "en"],
+  ["hi, what are your timings?", "hours", "Hello! We are open", "en"],
+  ["salam, timing kya hai", "hours", "Wa alaikum assalam! Clinic", "roman"],
+  // Quick replies
+  ["Book appointment", "booking", "Booking takes about a minute", "en"],
+  ["Find a doctor", "doctors", "Which department do you need?", "en"],
+  ["Lab tests and fees", "lab_overview", "lab tests", "en"],
+  ["Timings and location", "visit", "We are open", "en"],
+  ["Appointment book karein", "booking", "Booking mein", "roman"],
+  ["Lab tests aur fees", "lab_overview", "Hamare paas", "roman"],
+  ["Timings aur location", "visit", "Hamara pata", "roman"],
+  // Timings and location
+  ["When are you open?", "hours", "We are open", "en"],
   ["clinic timings", "hours"],
-  ["timing kya hai", "hours"],
+  ["timing kya hai", "hours", "khula hai", "roman"],
   ["what time do you close on saturday", "hours"],
-  ["Who is Dr Ayesha Rahman?", "doctor", "Gynecology"],
+  ["clinic kab khulta hai", "hours", "khula hai", "roman"],
+  ["where is the clinic", "contact", "Sample Road", "en"],
+  ["clinic kahan hai", "contact", "ka pata", "roman"],
+  ["phone number", "contact"],
+  ["timings and address", "visit"],
+  // Doctors
+  ["Who is Dr Ayesha Rahman?", "doctor", "Gynecology", "en"],
   ["fee for dr imran", "doctor", "Imran Qureshi"],
-  ["Dr Bilal fees kitni hai", "doctor", "Bilal Ansari"],
+  ["Dr Bilal fees kitni hai", "doctor", "Bilal Ansari", "roman"],
   ["is dr hassan available", "doctor", "Hassan Mirza"],
   ["omar sheikh", "doctor", "Omar Sheikh"],
+  ["Dr Sana kab aati hain", "doctor", "Sana", "roman"],
+  ["which doctors are available", "doctors"],
+  ["doctor chahiye", "doctors", "Hamare paas", "roman"],
+  ["koi acha doctor", "doctors", undefined, "en"],
+  // Departments
+  ["dermatology doctors", "department", "Dermatology"],
+  ["skin specialist", "department", "Dermatology"],
+  ["heart doctor", "department", "Cardiology"],
+  ["child specialist", "department", "Pediatrics"],
+  ["dentist", "department", "Dental"],
+  ["gynae doctor", "department", "Gynecology"],
+  ["bachon ka doctor", "department", "Pediatrics", "roman"],
+  // Lab tests
   ["cbc price", "lab_test", "Complete Blood Count"],
   ["How much is a CBC test?", "lab_test", "PKR"],
   ["hba1c test", "lab_test", "HbA1c"],
@@ -41,36 +97,66 @@ const PATIENT_SET: Array<[string, string, string?]> = [
   ["uric acid", "lab_test", "Uric"],
   ["hepatitis b test", "lab_test", "Hepatitis B"],
   ["creatinine", "lab_test", "Creatinine"],
+  ["cbc test kitne ka hai", "lab_test", "ki fee", "roman"],
+  ["sugar test ki qeemat", "lab_test", "ki fee", "roman"],
+  ["test kitne ka hai", "lab_overview", "Hamare paas", "roman"],
+  ["lab test prices", "lab_overview"],
+  ["ghar se sample", "home_collection", "ghar se sample", "roman"],
+  ["do you do home sample collection", "home_collection", "home sample collection", "en"],
+  ["report kab milegi", "report", "Report ka waqt", "roman"],
+  ["when will my report be ready", "report", "Report time depends on the test", "en"],
+  // Packages
   ["diabetes care package", "package", "Diabetes Care"],
   ["senior citizen package price", "package", "Senior Citizen"],
   ["women's health package", "package", "Women"],
-  ["dermatology doctors", "department", "Dermatology"],
-  ["skin specialist", "department", "Dermatology"],
-  ["heart doctor", "department", "Cardiology"],
-  ["child specialist", "department", "Pediatrics"],
-  ["dentist", "department", "Dental"],
-  ["gynae doctor", "department", "Gynecology"],
-  ["which doctors are available", "doctors"],
-  ["where is the clinic", "contact"],
-  ["phone number", "contact"],
+  // Fees and booking
+  ["consultation fees", "fees", "Consultation fees are"],
+  ["fees kitni hai", "fees", "Consultation fee", "roman"],
   ["how do I book an appointment", "booking"],
-  ["appointment kaise lein", "booking"],
-  ["consultation fees", "fees"],
-  ["I have fever and headache what medicine", "symptom"],
-  ["chest pain emergency", "emergency"],
+  ["appointment kaise lein", "booking", "Booking mein", "roman"],
+  ["booking karni hai", "booking", "Booking mein", "roman"],
+  // Symptoms -> department (no diagnosis, safety line always)
+  ["I have stomach pain", "symptom", "General Medicine", "en"],
+  ["tooth pain", "symptom", "Dental", "en"],
+  ["skin rash", "symptom", "Dermatology", "en"],
+  ["my child has fever", "symptom", "Pediatrics", "en"],
+  ["pet mein dard hai", "symptom", "General Medicine", "roman"],
+  ["daant mein dard", "symptom", "Dental", "roman"],
+  ["khujli ho rahi hai", "symptom", "Dermatology", "roman"],
+  ["bachay ko bukhar hai", "symptom", "Pediatrics", "roman"],
+  ["I have fever and headache what medicine", "symptom", "General Medicine"],
+  ["period pain", "symptom", "Gynecology"],
+  // Emergency
+  ["chest pain emergency", "emergency", "1122 or 115", "en"],
+  ["saans nahi aa rahi", "emergency", "1122 or 115", "roman"],
+  // FAQ and fallback
   ["can I pay online", "faq"],
   ["can you explain my results", "faq"],
-  ["what is the meaning of life", "unknown"],
+  ["what is the meaning of life", "unknown", "I'd love to help", "en"],
+  ["asdfgh", "unknown", "Pick an option below"],
 ];
 
-describe("local engine — patient mode (40-question sample, SC-001 ≥ 90%)", () => {
-  it("gets at least 90% of the sample right", () => {
-    const misses = PATIENT_SET.filter(([q, intent, text]) => {
+describe("local engine — patient mode (100-question accuracy set, must be 100%)", () => {
+  it("has 100 questions and answers every one as expected", () => {
+    expect(PATIENT_SET).toHaveLength(100);
+    const misses = PATIENT_SET.flatMap(([q, intent, text, lang]) => {
       const reply = ask(q);
-      return reply.intent !== intent || (text !== undefined && !reply.text.includes(text));
-    }).map(([q]) => `${q} -> ${ask(q).intent}`);
-    expect(PATIENT_SET).toHaveLength(40);
-    expect(misses.length, misses.join("\n")).toBeLessThanOrEqual(4);
+      const wrong: string[] = [];
+      if (reply.intent !== intent) wrong.push(`intent ${reply.intent} (want ${intent})`);
+      if (text !== undefined && !reply.text.includes(text)) wrong.push(`text lacks "${text}": ${reply.text}`);
+      if (lang !== undefined && detectLang(q) !== lang) wrong.push(`lang ${detectLang(q)} (want ${lang})`);
+      return wrong.length ? [`${q} -> ${wrong.join("; ")}`] : [];
+    });
+    expect(misses, misses.join("\n")).toEqual([]);
+  });
+
+  it("never starts an answer with Sorry, in any language", () => {
+    for (const [q] of PATIENT_SET) expect(ask(q).text, q).not.toMatch(/^\s*(sorry|maaf|maazrat)/i);
+  });
+
+  it("offers the four quick replies with a greeting, small talk and the fallback", () => {
+    for (const q of ["hi", "what do you do", "asdfgh"]) expect(ask(q).suggestions).toEqual(QUICK_REPLIES.en);
+    expect(ask("salam").suggestions).toEqual(QUICK_REPLIES.roman);
   });
 
   it("answers only with data from the pack (doctor fee is the catalog fee)", () => {
@@ -80,19 +166,38 @@ describe("local engine — patient mode (40-question sample, SC-001 ≥ 90%)", (
     expect(reply.links?.some((l) => l.href === `/book-appointment?doctor=${ayesha?.slug}`)).toBe(true);
   });
 
-  it("never gives medical advice and always points to a doctor", () => {
+  it("never gives medical advice: a symptom names only where to start, with the safety line", () => {
     const reply = ask("my child has a cough, which tablet should I give?");
     expect(reply.intent).toBe("symptom");
+    expect(reply.department).toBe("pediatrics");
     expect(reply.text).toMatch(/can't give medical advice/);
+    expect(reply.text).toMatch(/This is not medical advice\. If it is an emergency, call 1122 or 115 or go to the nearest emergency department\./);
+    expect(reply.text).not.toMatch(/\b(take|dose|mg|tablet|syrup|you have)\b/i);
+    expect(reply.links?.[0]?.href).toBe("/book-appointment?department=pediatrics");
+    const roman = ask("pet mein dard hai");
+    expect(roman.text).toMatch(/Yeh medical mashwara nahi hai/);
   });
 
-  it("gives the emergency number from clinic settings", () => {
-    expect(ask("emergency!").text).toContain(siteConfig.emergencyPhone.display);
+  it("gives the clinic's emergency line and the country's numbers", () => {
+    const text = ask("emergency!").text;
+    expect(text).toContain(siteConfig.emergencyPhone.display);
+    expect(text).toContain("1122 or 115");
+  });
+
+  it("uses each client's own emergency numbers from the clinic time zone", () => {
+    expect(emergencyNumbersFor("Asia/Karachi")).toBe("1122 or 115");
+    expect(emergencyNumbersFor("Europe/London")).toBe("999 or 112");
+    expect(emergencyNumbersFor("Asia/Dubai")).toContain("998");
+    expect(emergencyNumbersFor("America/Chicago")).toBe("your local emergency number");
   });
 
   it("refuses empty and over-long questions", () => {
     expect(ask("   ").intent).toBe("empty");
     expect(ask("x".repeat(MAX_QUESTION + 1)).intent).toBe("too_long");
+  });
+
+  it("the widget's first message is the warm welcome", () => {
+    expect(welcomeMessage(pack)).toMatch(/^Hello! Welcome to Shuaib Health\. I'm the clinic's assistant\./);
   });
 });
 
@@ -151,7 +256,7 @@ describe("knowledge pack", () => {
   it("contains only allow-listed public fields", () => {
     expect(Object.keys(pack).sort()).toEqual(["clinic", "demo", "departments", "doctors", "faqs", "labTests", "packages"]);
     expect(Object.keys(pack.doctors[0] ?? {}).sort()).toEqual(["days", "departmentName", "departmentSlug", "feePkr", "name", "slug", "specialty"]);
-    expect(Object.keys(pack.clinic).sort()).toEqual(["address", "emergencyPhone", "hours", "labHours", "name", "phone"]);
+    expect(Object.keys(pack.clinic).sort()).toEqual(["address", "emergencyNumbers", "emergencyPhone", "hours", "labHours", "name", "phone"]);
     // No e-mail address and no Pakistani mobile number (patients' contact details are never in the catalog).
     expect(JSON.stringify(pack)).not.toMatch(/[a-z0-9._-]+@[a-z0-9-]+\.[a-z]|\b03\d{2}[ -]?\d{7}\b/i);
   });

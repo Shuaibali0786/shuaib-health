@@ -3,34 +3,32 @@
 import { Send, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 
-import { PATIENT_SUGGESTIONS } from "@/agent/localEngine";
+import { QUICK_REPLIES, welcomeMessage } from "@/agent/localEngine";
 import { MAX_QUESTION } from "@/agent/normalize";
 import { GUIDE_SUGGESTIONS } from "@/agent/productGuide";
-import { getProvider } from "@/agent/registry";
+import { getProvider, type ProviderId } from "@/agent/registry";
 import { createThrottle } from "@/agent/throttle";
 import type { AgentLink, AgentMode, KnowledgePack } from "@/agent/types";
 import { cn } from "@/lib/cn";
 
-export type AssistantPanelProps = { pack: KnowledgePack; onClose: () => void };
+export type AssistantPanelProps = { pack: KnowledgePack; provider?: ProviderId; onClose: () => void };
 
 type Message = { id: number; from: "you" | "assistant"; text: string; links?: AgentLink[] };
 
-const GREETING: Record<AgentMode, string> = {
-  patient: "Hello! Ask me about timings, doctors, departments, lab tests and fees. I can also take you to booking.",
-  guide: "Hello! I can show a clinic owner what this system includes and how it looks for your specialty.",
-};
+const GUIDE_GREETING = "Hello! I can show a clinic owner what this system includes and how it looks for your specialty.";
+const greetingFor = (mode: AgentMode, pack: KnowledgePack) => (mode === "guide" ? GUIDE_GREETING : welcomeMessage(pack));
 
 /**
  * The chat panel (Feature 010): a dialog with an optional Patient / Product guide switch (demo only), the
  * conversation (announced politely to screen readers), suggestion chips and a short input. The conversation
  * lives only in this component's memory: nothing is stored or sent anywhere.
  */
-export function AssistantPanel({ pack, onClose }: AssistantPanelProps) {
-  const provider = useMemo(() => getProvider(pack), [pack]);
+export function AssistantPanel({ pack, provider: providerId = "local", onClose }: AssistantPanelProps) {
+  const provider = useMemo(() => getProvider(pack, providerId), [pack, providerId]);
   const throttle = useMemo(() => createThrottle(), []);
   const [mode, setMode] = useState<AgentMode>("patient");
-  const [messages, setMessages] = useState<Message[]>([{ id: 0, from: "assistant", text: GREETING.patient }]);
-  const [suggestions, setSuggestions] = useState<string[]>(PATIENT_SUGGESTIONS);
+  const [messages, setMessages] = useState<Message[]>(() => [{ id: 0, from: "assistant", text: welcomeMessage(pack) }]);
+  const [suggestions, setSuggestions] = useState<string[]>(QUICK_REPLIES.en);
   const [draft, setDraft] = useState("");
   const [paused, setPaused] = useState(false);
   const next = useRef(1);
@@ -59,8 +57,8 @@ export function AssistantPanel({ pack, onClose }: AssistantPanelProps) {
   function switchMode(to: AgentMode) {
     if (to === mode) return;
     setMode(to);
-    setMessages([{ id: next.current++, from: "assistant", text: GREETING[to] }]);
-    setSuggestions(to === "guide" ? GUIDE_SUGGESTIONS : PATIENT_SUGGESTIONS);
+    setMessages([{ id: next.current++, from: "assistant", text: greetingFor(to, pack) }]);
+    setSuggestions(to === "guide" ? GUIDE_SUGGESTIONS : QUICK_REPLIES.en);
   }
 
   async function ask(question: string) {
