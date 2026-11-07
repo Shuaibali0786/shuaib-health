@@ -24,6 +24,13 @@ AuthAction = Literal[
     "staff.deactivated",
     "staff.reactivated",
     "staff.role_changed",
+    "auth.two_factor_challenge",
+    "auth.two_factor_failed",
+    "auth.two_factor_enabled",
+    "auth.two_factor_disabled",
+    "auth.backup_code_used",
+    "auth.backup_codes_regenerated",
+    "staff.two_factor_reset",
 ]
 AuthOutcome = Literal["ok", "refused", "bad_credentials", "locked", "inactive"]
 ActorType = Literal["anonymous", "staff", "system"]

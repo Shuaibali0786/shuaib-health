@@ -70,6 +70,85 @@ export function staffMessage(error: unknown): string {
       return "The demo is read-only: changes are not saved.";
     case "not_found":
       return "That person no longer exists. Reload the list.";
+    case "two_factor_off":
+      return "Two-step sign-in is already off for that person. Reload the list.";
+    case "cannot_reset_self":
+      return "Use your own Security page to change your two-step sign-in.";
+    case "network":
+    case "timeout":
+      return "We could not reach the service. Please try again.";
+    default:
+      return "Something went wrong. Please try again.";
+  }
+}
+
+// Feature 011: two-step sign-in. A wrong code never hints whether the password was right (it was, to get here).
+export function attemptsLeftOf(error: AdminApiError): number | null {
+  const body = error.body;
+  if (body && typeof body === "object" && "attemptsLeft" in body && typeof body.attemptsLeft === "number") return body.attemptsLeft;
+  return null;
+}
+
+export function twoFactorMessage(error: unknown): string {
+  if (!(error instanceof AdminApiError)) return "Something went wrong. Please try again.";
+  switch (error.code) {
+    case "two_factor_failed": {
+      const left = attemptsLeftOf(error);
+      return left === null ? "That code did not work. Check your app and try again." : `That code did not work. ${left} ${left === 1 ? "try" : "tries"} left.`;
+    }
+    case "challenge_expired":
+      return "This sign-in step has ended. Please sign in again.";
+    case "account_locked": {
+      const minutes = minutesFrom(error.retryAfter);
+      return `Too many attempts — try again in ${minutes} ${minutes === 1 ? "minute" : "minutes"}.`;
+    }
+    case "rate_limited":
+      return "Too many attempts from this network. Please wait a few minutes and try again.";
+    case "two_factor_unavailable":
+      return "Two-step sign-in is not available right now. Ask the clinic's technical contact.";
+    case "validation_error":
+      return "Enter the 6-digit code from your app, or a backup code.";
+    case "network":
+    case "timeout":
+      return "We could not reach the service. Check your connection and try again.";
+    default:
+      return error.status >= 500 ? "We could not reach the service. Check your connection and try again." : "Something went wrong. Please try again.";
+  }
+}
+
+/** True when the person must go back to the password step. */
+export function endsTwoFactorStep(error: unknown): boolean {
+  return error instanceof AdminApiError && (error.code === "challenge_expired" || error.code === "account_locked");
+}
+
+export function securityMessage(error: unknown): string {
+  if (!(error instanceof AdminApiError)) return "Something went wrong. Please try again.";
+  const field = error.body && typeof error.body === "object" && "error" in error.body ? (error.body as { error: { details?: { field: string }[] } }).error.details?.[0]?.field : undefined;
+  switch (error.code) {
+    case "validation_error":
+      if (field === "currentPassword") return "Your current password is not correct.";
+      if (field === "code" || field === "backupCode") return "That code did not work. Check your app and try again.";
+      return "Check what you typed and try again.";
+    case "two_factor_unavailable":
+      return "Two-step sign-in is not available on this system yet.";
+    case "two_factor_admins_only":
+      return "Two-step sign-in is offered to admin accounts.";
+    case "two_factor_already_on":
+      return "Two-step sign-in is already on. Reload the page.";
+    case "two_factor_not_started":
+      return "The setup timed out. Start again to get a new key.";
+    case "two_factor_off":
+      return "Two-step sign-in is off for this account.";
+    case "cannot_reset_self":
+      return "Use your own Security page to change your two-step sign-in.";
+    case "password_change_required":
+      return "Choose a new password first, then turn on two-step sign-in.";
+    case "account_locked": {
+      const minutes = minutesFrom(error.retryAfter);
+      return `Too many attempts — try again in ${minutes} ${minutes === 1 ? "minute" : "minutes"}.`;
+    }
+    case "demo_read_only":
+      return "The demo is read-only: changes are not saved.";
     case "network":
     case "timeout":
       return "We could not reach the service. Please try again.";

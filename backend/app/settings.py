@@ -4,6 +4,8 @@ Validation errors name the offending setting but never echo its value, and every
 URL is a ``SecretStr`` so it is masked in ``repr``, logs and tracebacks.
 """
 
+import base64
+import binascii
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -92,6 +94,10 @@ class Settings(BaseSettings):
     demo_limit_per_ip_per_hour: int = Field(10, ge=1, le=1000)
     demo_session_hours: int = Field(2, ge=1, le=24)
     status_undo_seconds: int = Field(10, ge=1, le=120)
+    # Feature 011: encrypts each account's authenticator secret. Missing = two-step sign-in is not
+    # offered (the feature switch); enrolled accounts then cannot finish signing in
+    # (never a password-only fallback).
+    two_factor_key: SecretStr | None = None
 
     @field_validator("booking_proxy_secret", "privacy_hash_key", "session_secret", mode="before")
     @classmethod
@@ -110,6 +116,20 @@ class Settings(BaseSettings):
         raw = value.get_secret_value() if isinstance(value, SecretStr) else value
         if not isinstance(raw, str) or len(raw) < _MIN_SECRET_LENGTH:
             raise ValueError(f"CRON_SECRET must be at least {_MIN_SECRET_LENGTH} characters")
+        return value
+
+    @field_validator("two_factor_key", mode="before")
+    @classmethod
+    def _two_factor_key_is_32_bytes(cls, value: object) -> object:
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return None
+        raw = value.get_secret_value() if isinstance(value, SecretStr) else value
+        try:
+            decoded = base64.b64decode(str(raw).strip(), validate=True)
+        except (binascii.Error, ValueError):
+            decoded = b""
+        if len(decoded) != 32:
+            raise ValueError("TWO_FACTOR_KEY must be base64 for exactly 32 random bytes")
         return value
 
     @field_validator("sentry_dsn", mode="before")

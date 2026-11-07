@@ -374,3 +374,29 @@ def test_the_app_starts_when_the_database_is_down(
     warnings = [r.getMessage() for r in caplog.records if r.getMessage().startswith("purge_failed")]
     assert warnings
     assert all("127.0.0.1" not in w and "postgresql" not in w for w in warnings)
+
+
+def test_two_factor_challenges_go_1_day_after_they_expired(db_session: Session) -> None:
+    """Feature 011: the second sign-in step leaves no lasting rows."""
+    conn = db_session.connection()
+    staff = make_staff(db_session, "challenge@example.org")
+    ids = []
+    for expired_hours_ago in (25, 23, -1):
+        expires = FROZEN_NOW - timedelta(hours=expired_hours_ago)
+        row = conn.execute(
+            text(
+                "INSERT INTO staff_sign_in_challenge "
+                "(staff_id, token_hash, created_at, expires_at, ip_fingerprint) "
+                "VALUES (:staff, :hash, :created, :expires, :fp) RETURNING id"
+            ),
+            {
+                "staff": staff.id,
+                "hash": uuid.uuid4().hex * 2,
+                "created": expires - timedelta(minutes=5),
+                "expires": expires,
+                "fp": "f" * 16,
+            },
+        ).one()
+        ids.append(row.id)
+    purge_old_sessions(conn, now=FROZEN_NOW, limit=None)
+    assert remaining(conn, "staff_sign_in_challenge", ids) == set(ids[1:])

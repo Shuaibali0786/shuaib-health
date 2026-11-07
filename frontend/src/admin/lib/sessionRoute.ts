@@ -1,6 +1,6 @@
 import "server-only";
 
-import { SESSION_COOKIE } from "./cookie";
+import { CHALLENGE_COOKIE, SESSION_COOKIE } from "./cookie";
 
 // Shared by the staff app's route handlers (sign-in/out, password, and the catch-all proxy): the same
 // guards and the same cookie attributes everywhere (contracts/website-admin.md §2 and §3).
@@ -19,6 +19,15 @@ export function sessionCookie(token: string): string {
 
 export function clearedSessionCookie(): string {
   return `${SESSION_COOKIE}=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=Strict`;
+}
+
+/** Feature 011: the two-step sign-in challenge, valid for 5 minutes. Same attributes as the session cookie. */
+export function challengeCookie(token: string): string {
+  return `${CHALLENGE_COOKIE}=${token}; Max-Age=300; Path=/; Secure; HttpOnly; SameSite=Strict`;
+}
+
+export function clearedChallengeCookie(): string {
+  return `${CHALLENGE_COOKIE}=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=Strict`;
 }
 
 export function cookieValue(request: Request, name: string): string | undefined {

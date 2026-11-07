@@ -49,9 +49,14 @@ export function AppShell({ viewer, clinicName, serverNow, theme = "light", child
               </div>
             </div>
             {viewer.kind === "staff" ? (
-              <Link href="/admin/account/password" prefetch={false} className="btn btn-quiet btn-sm">
-                Change password
-              </Link>
+              <>
+                <Link href="/admin/account/password" prefetch={false} className="btn btn-quiet btn-sm">
+                  Change password
+                </Link>
+                <Link href="/admin/account/security" prefetch={false} className="btn btn-quiet btn-sm">
+                  Security
+                </Link>
+              </>
             ) : null}
             <SignOutButton />
           </div>

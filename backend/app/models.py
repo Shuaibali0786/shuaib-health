@@ -14,6 +14,7 @@ from typing import Any
 from sqlalchemy import (
     ARRAY,
     CHAR,
+    BigInteger,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -323,7 +324,11 @@ AUDIT_ACTIONS_SQL = (
     "('appointment.created','appointment.rejected','auth.sign_in','auth.sign_in_failed',"
     "'auth.lockout','auth.sign_out','auth.session_expired','auth.password_changed',"
     "'booking.status_changed','booking.status_undone','booking.phone_revealed','staff.created',"
-    "'staff.password_reset','staff.deactivated','staff.reactivated','staff.role_changed')"
+    "'staff.password_reset','staff.deactivated','staff.reactivated','staff.role_changed',"
+    # Feature 011 (migration 0004): two-step sign-in.
+    "'auth.two_factor_challenge','auth.two_factor_failed','auth.two_factor_enabled',"
+    "'auth.two_factor_disabled','auth.backup_code_used','auth.backup_codes_regenerated',"
+    "'staff.two_factor_reset')"
 )
 AUDIT_OUTCOMES_SQL = (
     "('ok','rate_limited_ip','rate_limited_phone','limit_reached','trap','slot_taken',"
@@ -331,7 +336,7 @@ AUDIT_OUTCOMES_SQL = (
 )
 SESSION_END_REASONS_SQL = (
     "('sign_out','idle','absolute','evicted','password_changed','password_reset',"
-    "'deactivated','replaced')"
+    "'deactivated','replaced','two_factor_reset')"
 )
 
 
@@ -472,6 +477,10 @@ class StaffAccount(Entity, table=True):
     __table_args__ = (
         CheckConstraint("role IN ('admin','receptionist')", name="role_valid"),
         CheckConstraint("password_hash LIKE '$argon2id$%'", name="password_hash_argon2id"),
+        CheckConstraint(
+            "totp_enabled_at IS NULL OR totp_secret_encrypted IS NOT NULL",
+            name="totp_enabled_has_secret",
+        ),
     )
 
     email: str = Field(max_length=254, unique=True)
@@ -486,6 +495,44 @@ class StaffAccount(Entity, table=True):
         default=None,
         sa_column=Column(UUID_TYPE, ForeignKey("staff_account.id", ondelete="RESTRICT")),
     )
+    # Feature 011: two-step sign-in. The secret is AES-GCM encrypted (app/auth/secretbox.py);
+    # it is "on" only once totp_enabled_at is set. totp_last_step blocks a replayed code.
+    totp_secret_encrypted: str | None = Field(default=None, max_length=200)
+    totp_enabled_at: datetime | None = _instant(nullable=True)
+    totp_last_step: int | None = Field(default=None, sa_type=BigInteger)
+    totp_setup_started_at: datetime | None = _instant(nullable=True)
+
+
+class StaffBackupCode(SQLModel, table=True):
+    """One single-use backup code; only its keyed hash is stored (Feature 011)."""
+
+    __tablename__ = "staff_backup_code"
+    __table_args__ = (UniqueConstraint("staff_id", "code_hash"),)
+
+    id: uuid.UUID | None = _uuid_pk()
+    staff_id: uuid.UUID = _fk("staff_account.id", "CASCADE")
+    code_hash: str = Field(sa_type=CHAR(64))
+    created_at: datetime | None = _timestamp()
+    used_at: datetime | None = _instant(nullable=True)
+
+
+class StaffSignInChallenge(SQLModel, table=True):
+    """The second sign-in step after a correct password (Feature 011, research R4)."""
+
+    __tablename__ = "staff_sign_in_challenge"
+    __table_args__ = (
+        CheckConstraint("expires_at > created_at", name="expires_after_created"),
+        CheckConstraint("attempts >= 0 AND attempts <= 5", name="attempts_range"),
+    )
+
+    id: uuid.UUID | None = _uuid_pk()
+    staff_id: uuid.UUID = _fk("staff_account.id", "CASCADE")
+    token_hash: str = Field(sa_type=CHAR(64), unique=True)
+    created_at: datetime | None = _timestamp()
+    expires_at: datetime = _instant(index=True)
+    attempts: int = _small_int_default(0)
+    used_at: datetime | None = _instant(nullable=True)
+    ip_fingerprint: str = Field(sa_type=CHAR(16))
 
 
 class StaffSession(SQLModel, table=True):

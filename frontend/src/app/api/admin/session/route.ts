@@ -1,9 +1,9 @@
 import * as z from "zod";
 
 import { SESSION_COOKIE } from "@/admin/lib/cookie";
-import { SessionIssuedSchema } from "@/admin/lib/schemas";
+import { SessionIssuedSchema, TwoFactorChallengeSchema } from "@/admin/lib/schemas";
 import { callAdminBackend } from "@/admin/lib/server";
-import { clearedSessionCookie, cookieValue, isSameOrigin, readJsonBody, sessionCookie } from "@/admin/lib/sessionRoute";
+import { challengeCookie, clearedSessionCookie, cookieValue, isSameOrigin, readJsonBody, sessionCookie } from "@/admin/lib/sessionRoute";
 import { ApiError } from "@/lib/api/http";
 import { clientIpFrom } from "@/lib/booking/backend";
 import { errorJson, noStoreJson } from "@/lib/booking/respond";
@@ -11,6 +11,8 @@ import { errorJson, noStoreJson } from "@/lib/booking/respond";
 // Sign-in (POST) and sign-out (DELETE) for the staff app (contracts/website-admin.md §3). The backend
 // returns the session token to this server only: it goes into the __Host- cookie and the browser
 // receives the `viewer` alone. Sign-out clears the cookie whatever the backend answers.
+// Feature 011: when the account uses two-step sign-in the backend answers 202 with a challenge; its token
+// goes into its own __Host- cookie (5 minutes) and the browser receives only { twoFactorRequired: true }.
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +57,11 @@ export async function POST(request: Request): Promise<Response> {
     const issued = SessionIssuedSchema.safeParse(result.body);
     if (!issued.success) return errorJson(502, "upstream_error", "Unexpected answer from the service.", requestId);
     return noStoreJson(issued.data.viewer, 200, { "set-cookie": sessionCookie(issued.data.token) });
+  }
+  if (result.status === 202) {
+    const challenge = TwoFactorChallengeSchema.safeParse(result.body);
+    if (!challenge.success) return errorJson(502, "upstream_error", "Unexpected answer from the service.", requestId);
+    return noStoreJson({ twoFactorRequired: true }, 202, { "set-cookie": challengeCookie(challenge.data.challengeToken) });
   }
   if (!PASS_THROUGH.has(result.status) || result.body === null) {
     return errorJson(502, "upstream_error", "Unexpected answer from the service.", requestId);

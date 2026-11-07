@@ -22,6 +22,13 @@ const DEMO_DAY = JSON.parse(readFileSync(new URL("../fixtures/admin/demo-day.jso
 export const ADMIN_MODES = ["admin-down", "admin-slow", "session-expired", "booking-changed"];
 export const ADMIN_SLOW_MS = 20_000;
 export const PASSWORD = "Correct-Horse-9-Battery";
+// Feature 011: an admin with two-step sign-in on. It signs in through the code step and is never in the
+// staff list (so the existing staff tests and screenshots are unchanged). Codes are fixed for the tests.
+export const TWO_FACTOR_EMAIL = "two-factor@clinic.test";
+export const TWO_FACTOR_CODE = "123456";
+export const TWO_FACTOR_BACKUP = "ABCDE-FGHJK";
+const TWO_FACTOR_CHALLENGE = "shc_e2e-challenge";
+const BACKUP_CODES = ["ABCDE-FGHJK", "BCDEF-GHJKM", "CDEFG-HJKMN", "DEFGH-JKMNP", "EFGHJ-KMNPQ", "FGHJK-MNPQR", "GHJKM-NPQRS", "HJKMN-PQRST", "JKMNP-QRSTV", "KMNPQ-RSTVW"];
 
 const TODAY = DEMO_DAY.meta.date; // Mon 5 Oct 2026 in the clinic, the date the mock "now" falls on
 const TIME_ZONE = DEMO_DAY.meta.timezone;
@@ -55,7 +62,7 @@ export const csrfFor = (token) => `csrf-${token}`;
 /** The Viewer of a contract (`GET /admin/auth/me`) for a session entry. */
 function viewerOf(token, session, now) {
   const expires = new Date(Date.parse(now) + 30 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
-  const rest = omit(session, ["email", "expired", "overview"]);
+  const rest = omit(session, ["email", "expired", "overview", "twoFactor"]);
   // A demo viewer carries the instant the demo treats as now, as the backend's `me` does.
   const demo = session.kind === "demo" ? { demoNow: session.typicalDay ? `${TODAY}T07:30:00Z` : now, typicalDay: session.typicalDay === true } : {};
   return { ...rest, ...demo, csrfToken: csrfFor(token), clinicToday: TODAY, timezone: TIME_ZONE, sessionExpiresAt: expires };
@@ -152,6 +159,10 @@ export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45
           const body = parse(bodyText);
           if (!body || typeof body.email !== "string" || typeof body.password !== "string") return invalid("email");
           const email = body.email.trim().toLowerCase();
+          if (email === TWO_FACTOR_EMAIL) {
+            if (body.password !== PASSWORD) return refuse(401, "sign_in_failed", "Email or password is incorrect.");
+            return { status: 202, body: { twoFactorRequired: true, challengeToken: TWO_FACTOR_CHALLENGE, expiresAt: new Date(Date.parse(now) + 300000).toISOString() } };
+          }
           if (email === "locked@clinic.test") {
             return { status: 429, headers: { "Retry-After": "900" }, body: errorBody("account_locked", "Too many attempts. Try again later.", { retryAfterSeconds: 900 }) };
           }
@@ -163,6 +174,42 @@ export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45
             return { status: 200, body: { token: member.token, viewer: viewerOf(member.token, sessions[member.token], now) } };
           }
           return { status: 200, body: issue(member) };
+        }
+
+        if (method === "POST" && route === "/auth/sign-in/two-factor") {
+          const body = parse(bodyText);
+          if (!body || body.challengeToken !== TWO_FACTOR_CHALLENGE) return refuse(401, "challenge_expired", "This sign-in step has ended. Please sign in again.");
+          const ok = body.code === TWO_FACTOR_CODE || (typeof body.backupCode === "string" && body.backupCode.toUpperCase() === TWO_FACTOR_BACKUP);
+          if (!ok) return { status: 401, body: { ...errorBody("two_factor_failed", "That code did not work. Check your app and try again."), attemptsLeft: 4 } };
+          counter += 1;
+          const token = `cs_e2e-issued-${counter}`;
+          sessions[token] = { kind: "staff", role: "admin", displayName: "Sample Admin C", mustChangePassword: false, email: TWO_FACTOR_EMAIL, twoFactor: true };
+          return { status: 200, body: { token, viewer: viewerOf(token, sessions[token], now) } };
+        }
+
+        if (method === "GET" && route === "/auth/two-factor") {
+          const result = gate(headers, mode, { staffOnly: true, readsOnly: true });
+          if (result.error) return result.error;
+          if (result.session.twoFactor) return { status: 200, body: { available: true, enabled: true, enabledAt: "2026-10-01T04:00:00Z", backupCodesLeft: 10, canEnrol: false } };
+          return { status: 200, body: { available: true, enabled: false, canEnrol: result.session.role === "admin" } };
+        }
+
+        if (method === "POST" && route === "/auth/two-factor/setup") {
+          const result = gate(headers, mode, { write: true, staffOnly: true });
+          if (result.error) return result.error;
+          if (result.session.role !== "admin") return refuse(403, "two_factor_admins_only", "Two-step sign-in is offered to admins.");
+          const body = parse(bodyText);
+          if (!body || body.currentPassword !== PASSWORD) return invalid("currentPassword");
+          const secret = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
+          return { status: 200, body: { secret, otpauthUri: `otpauth://totp/Shuaib%20Health:${encodeURIComponent(result.session.email ?? "admin")}?secret=${secret}&issuer=Shuaib%20Health&algorithm=SHA1&digits=6&period=30` } };
+        }
+
+        if (method === "POST" && route === "/auth/two-factor/enable") {
+          const result = gate(headers, mode, { write: true, staffOnly: true });
+          if (result.error) return result.error;
+          const body = parse(bodyText);
+          if (!body || body.code !== TWO_FACTOR_CODE) return invalid("code");
+          return { status: 200, body: { backupCodes: BACKUP_CODES } };
         }
 
         if (method === "POST" && route === "/auth/sign-out") {

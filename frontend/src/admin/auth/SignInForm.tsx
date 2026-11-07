@@ -3,10 +3,11 @@
 import { useId, useState, type FormEvent } from "react";
 
 import { adminRequest, setCsrfToken } from "@/admin/lib/client";
-import { ViewerSchema, type Viewer } from "@/admin/lib/schemas";
+import { SignInResultSchema, type Viewer } from "@/admin/lib/schemas";
 import { useHydrated } from "@/admin/ui/useHydrated";
 
 import { signInMessage } from "./copy";
+import { TwoFactorStep } from "./TwoFactorStep";
 
 type Props = {
   onSignedIn: (viewer: Viewer) => void;
@@ -17,7 +18,11 @@ type Props = {
   onPendingChange?: (pending: boolean) => void;
 };
 
-/** Email and password. Failures are generic: the message never says which of the two was wrong. */
+/**
+ * Email and password. Failures are generic: the message never says which of the two was wrong. When the
+ * account uses two-step sign-in (Feature 011) the same form id moves to the code step, so a dialog's
+ * external submit button keeps working.
+ */
 export function SignInForm({ onSignedIn, formId, hideSubmit = false, autoFocus = false, onPendingChange }: Props) {
   const emailId = useId();
   const passwordId = useId();
@@ -26,6 +31,7 @@ export function SignInForm({ onSignedIn, formId, hideSubmit = false, autoFocus =
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [needsCode, setNeedsCode] = useState(false);
   const hydrated = useHydrated();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -35,10 +41,14 @@ export function SignInForm({ onSignedIn, formId, hideSubmit = false, autoFocus =
     onPendingChange?.(true);
     setError(null);
     try {
-      const viewer = await adminRequest({ method: "POST", path: "session", body: { email, password } }, ViewerSchema);
-      setCsrfToken(viewer.csrfToken);
+      const result = await adminRequest({ method: "POST", path: "session", body: { email, password } }, SignInResultSchema);
       setPassword("");
-      onSignedIn(viewer);
+      if ("twoFactorRequired" in result) {
+        setNeedsCode(true);
+        return;
+      }
+      setCsrfToken(result.csrfToken);
+      onSignedIn(result);
     } catch (caught) {
       setError(signInMessage(caught));
       setPassword("");
@@ -46,6 +56,21 @@ export function SignInForm({ onSignedIn, formId, hideSubmit = false, autoFocus =
       setPending(false);
       onPendingChange?.(false);
     }
+  }
+
+  if (needsCode) {
+    return (
+      <TwoFactorStep
+        formId={formId}
+        hideSubmit={hideSubmit}
+        onPendingChange={onPendingChange}
+        onSignedIn={onSignedIn}
+        onRestart={(message) => {
+          setNeedsCode(false);
+          setError(message);
+        }}
+      />
+    );
   }
 
   return (
