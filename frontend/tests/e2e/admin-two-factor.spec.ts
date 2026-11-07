@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { signIn, wcagViolations } from "./admin-helpers";
 import { alertOf, PASSWORD, signInThroughForm } from "./admin-auth-helpers";
@@ -8,6 +8,21 @@ import { alertOf, PASSWORD, signInThroughForm } from "./admin-auth-helpers";
 const TWO_FACTOR_EMAIL = "two-factor@clinic.test";
 const CODE = "123456";
 const CHALLENGE_COOKIE = "__Host-cc_2fa";
+
+// A label stays on one line and sits above its field (it once wrapped to 2-4 lines inside a bordered box).
+async function expectLabelAboveField(page: Page, name: string) {
+  const input = page.getByLabel(name);
+  const label = page.locator(`label[for="${await input.getAttribute("id")}"]`);
+  const [l, i] = [await label.boundingBox(), await input.boundingBox()];
+  expect(l && i).toBeTruthy();
+  expect(l!.height).toBeLessThan(26);
+  expect(l!.y + l!.height).toBeLessThanOrEqual(i!.y + 1);
+}
+
+const WIDTHS = [
+  { name: "desktop", width: 1280, height: 800 },
+  { name: "phone", width: 375, height: 700 },
+];
 
 test.describe("two-step sign-in", () => {
   test("the password alone opens no session; the app code does, and the challenge never reaches the page", async ({ page, context }) => {
@@ -57,6 +72,27 @@ test.describe("two-step sign-in", () => {
 });
 
 test.describe("Security page", () => {
+  for (const size of WIDTHS) {
+    test(`labels stay on one line above their fields (${size.name})`, async ({ page, context, baseURL }) => {
+      await page.setViewportSize({ width: size.width, height: size.height });
+      await signIn(context, "admin", baseURL!);
+      await page.goto("/admin/account/security");
+      await page.getByRole("button", { name: "Turn on two-step sign-in" }).click();
+      await expectLabelAboveField(page, "Current password");
+      await page.getByLabel("Current password").fill(PASSWORD);
+      await page.getByRole("button", { name: "Continue" }).click();
+      await expect(page.getByRole("img", { name: /QR code to add this account/ })).toBeVisible();
+      await expectLabelAboveField(page, "Code from your authenticator app");
+    });
+
+    test(`the sign-in code step keeps its label on one line (${size.name})`, async ({ page }) => {
+      await page.setViewportSize({ width: size.width, height: size.height });
+      await signInThroughForm(page, TWO_FACTOR_EMAIL, PASSWORD);
+      await expect(page.getByLabel("Code from your authenticator app")).toBeVisible();
+      await expectLabelAboveField(page, "Code from your authenticator app");
+    });
+  }
+
   test("an admin turns on two-step sign-in: QR code, key, code, backup codes", async ({ page, context, baseURL }) => {
     await signIn(context, "admin", baseURL!);
     await page.goto("/admin/account/security");

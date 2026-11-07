@@ -182,18 +182,11 @@ def start_setup(
         raise AdminError("two_factor_already_on")
     if not passwords.verify_password(staff.password_hash, current_password):
         raise RequestInvalid("currentPassword", "is incorrect")
-    pending_fresh = (
-        staff.totp_secret_encrypted is not None
-        and staff.totp_setup_started_at is not None
-        and now - staff.totp_setup_started_at < PENDING_TTL
-    )
-    if pending_fresh:
-        secret = _secret(key, staff)
-    else:
-        secret = totp.new_secret()
-        staff.totp_secret_encrypted = secretbox.encrypt(key, _id(staff), secret)
-        staff.totp_setup_started_at = now
-        staff.totp_last_step = None
+    # Every start issues a brand-new secret; an earlier pending one stops working.
+    secret = totp.new_secret()
+    staff.totp_secret_encrypted = secretbox.encrypt(key, _id(staff), secret)
+    staff.totp_setup_started_at = now
+    staff.totp_last_step = None
     db.commit()
     return SetupKey(totp.to_base32(secret), totp.otpauth_uri(secret, staff.email, issuer))
 
