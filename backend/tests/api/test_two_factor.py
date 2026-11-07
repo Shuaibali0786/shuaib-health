@@ -297,11 +297,22 @@ def test_an_admin_enrols_with_password_and_a_code(
     )
     assert staff.totp_enabled_at is None
 
-    # The same key while the setup is fresh; a wrong code keeps it off.
+    # Starting again (e.g. after Cancel) issues a brand-new key; the old one no longer works.
     again = tf_client.post(
         f"{API}/auth/two-factor/setup", json={"currentPassword": PASSWORD}, headers=auth
     )
-    assert again.json()["secret"] == body["secret"]
+    assert again.json()["secret"] != body["secret"]
+    old_secret = secret
+    body = again.json()
+    secret = base64.b32decode(body["secret"] + "=" * (-len(body["secret"]) % 8))
+    assert (
+        tf_client.post(
+            f"{API}/auth/two-factor/enable",
+            json={"code": code_now(old_secret, cc_clock)},
+            headers=auth,
+        ).status_code
+        == 422
+    )
     assert (
         tf_client.post(
             f"{API}/auth/two-factor/enable", json={"code": "000000"}, headers=auth
@@ -325,6 +336,44 @@ def test_an_admin_enrols_with_password_and_a_code(
     for record in caplog.records:
         message = record.getMessage() + str(record.__dict__)
         assert not any(value in message for value in leaked)
+
+
+def test_every_setup_start_issues_a_fresh_secret_even_after_turning_it_off(
+    tf_client: TestClient, db_session: Session, tf_settings: Settings, cc_clock: FrozenClock
+) -> None:
+    staff = make_staff(db_session)
+    auth, _, _ = staff_session(db_session, tf_settings, staff, cc_clock.now())
+
+    def start() -> bytes:
+        body = tf_client.post(
+            f"{API}/auth/two-factor/setup", json={"currentPassword": PASSWORD}, headers=auth
+        ).json()
+        return base64.b32decode(body["secret"] + "=" * (-len(body["secret"]) % 8))
+
+    first, second = start(), start()
+    assert first != second
+    refused = tf_client.post(
+        f"{API}/auth/two-factor/enable", json={"code": code_now(first, cc_clock)}, headers=auth
+    )
+    assert refused.status_code == 422 and staff.totp_enabled_at is None
+    enabled = tf_client.post(
+        f"{API}/auth/two-factor/enable", json={"code": code_now(second, cc_clock)}, headers=auth
+    )
+    assert enabled.status_code == 200, enabled.text
+
+    # Off, then on again: a third, different secret; the second no longer works.
+    off = tf_client.post(
+        f"{API}/auth/two-factor/disable",
+        json={"currentPassword": PASSWORD, "code": code_now(second, cc_clock, 1)},
+        headers=auth,
+    )
+    assert off.status_code == 204, off.text
+    third = start()
+    assert third not in (first, second)
+    stale = tf_client.post(
+        f"{API}/auth/two-factor/enable", json={"code": code_now(second, cc_clock)}, headers=auth
+    )
+    assert stale.status_code == 422
 
 
 def test_setup_refusals(
