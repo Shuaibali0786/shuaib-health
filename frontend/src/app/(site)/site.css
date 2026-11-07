@@ -109,3 +109,64 @@
     display: none !important;
   }
 }
+
+/* ----- Feature 009: specialty preset showcase (ADR-0012). Colours come only from tokens. ----- */
+.preset-scope {
+  --preset-strong: var(--color-navy-900);
+  --preset-accent: var(--color-gold-700);
+  --preset-tint: var(--color-gold-50);
+}
+.preset-scope[data-preset="dental"] {
+  --preset-strong: var(--color-teal-700);
+  --preset-accent: var(--color-teal-700);
+  --preset-tint: var(--color-teal-50);
+}
+.preset-scope[data-preset="skin-aesthetic"] {
+  --preset-strong: var(--color-rose-700);
+  --preset-accent: var(--color-rose-700);
+  --preset-tint: var(--color-rose-50);
+}
+.preset-scope[data-preset="diagnostic-lab"] {
+  --preset-strong: var(--color-blue-700);
+  --preset-accent: var(--color-blue-700);
+  --preset-tint: var(--color-blue-50);
+}
+.preset-hero {
+  background: linear-gradient(180deg, var(--preset-tint), var(--color-white) 85%);
+}
+.preset-eyebrow,
+.preset-price,
+.preset-icon {
+  color: var(--preset-accent);
+}
+.preset-monogram {
+  background: var(--preset-strong);
+  color: var(--color-white);
+  box-shadow: 0 0 0 3px var(--color-gold-300);
+}
+.preset-tab-active {
+  background: var(--preset-strong);
+  color: var(--color-white);
+}
+.preset-tint {
+  background: var(--preset-tint);
+}
+.preset-chosen {
+  background: var(--preset-strong);
+  color: var(--color-white);
+}
+.preset-preview-label {
+  background: var(--color-gold-50);
+  color: var(--color-gold-700);
+  border: 1px solid var(--color-gold-300);
+}
+.preset-slip {
+  background: var(--color-white);
+  border: 1px solid var(--color-gold-300);
+  border-top: 4px solid var(--preset-strong);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .preset-switcher a {
+    transition: background-color 160ms ease, color 160ms ease;
+  }
+}

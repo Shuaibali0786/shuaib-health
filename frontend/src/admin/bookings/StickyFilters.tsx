@@ -7,7 +7,7 @@ import type { BookingFilters } from "@/admin/lib/bookingsUrl";
 import type { BookingStatus, Lookups } from "@/admin/lib/schemas";
 import { Dialog } from "@/admin/ui/Dialog";
 
-import { DateField, DoctorAndDepartment, SearchField, StatusChips, dateLabel, type FilterChange } from "./FilterBar";
+import { DateField, DoctorAndDepartment, QuickRangeChips, SearchField, StatusChips, dateLabel, type FilterChange } from "./FilterBar";
 
 /**
  * The phone filters: a sticky search field with a Filters button (date, doctor, department in a sheet)
@@ -26,6 +26,7 @@ export function StickyFilters({ filters, lookups, today, counts, total, onChange
           {active ? dateLabel(filters, today).split(",")[0] : "Today"}
         </button>
       </div>
+      <QuickRangeChips filters={filters} today={today} onChange={onChange} />
       <StatusChips counts={counts} total={total} statuses={filters.statuses} onToggle={toggle} onAll={() => onChange({ statuses: [], page: 1 })} />
       <Dialog
         open={open}

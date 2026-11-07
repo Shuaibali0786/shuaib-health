@@ -1,4 +1,5 @@
 import { healthTips } from "@/data/healthTips";
+import { PRESETS, SPECIALTIES_PATH, presetPath } from "@/presets/specialties";
 import { departmentPath, doctorPath, labTestPath, ROUTES, tipPath } from "@/lib/routes";
 import type { Department, Doctor, LabTest, PageManifestEntry } from "@/types/content";
 
@@ -104,6 +105,24 @@ const staticPages = (homeTitle: string): PageManifestEntry[] => [
     // A task flow, not a search landing page; kept out of the sitemap on purpose.
     inSitemap: false,
   },
+  // Feature 009: the "Choose your specialty" demo showcase. Demo only (404 when DEMO_ENABLED is off),
+  // noindex, never in the sitemap.
+  {
+    path: SPECIALTIES_PATH,
+    title: "Choose your specialty",
+    description: "Portfolio demo: the same clinic website, booking and dashboard, shown for dental, skin, lab and multi-speciality clinics.",
+    kind: "static",
+    inSitemap: false,
+  },
+  ...PRESETS.map(
+    (preset): PageManifestEntry => ({
+      path: presetPath(preset.id),
+      title: `${preset.label} clinic demo`,
+      description: `Portfolio demo of a sample ${preset.label.toLowerCase()} clinic: services, team, booking, slip and dashboard previews.`,
+      kind: "static",
+      inSitemap: false,
+    }),
+  ),
 ];
 
 export function doctorEntry(doctor: Doctor): PageManifestEntry {

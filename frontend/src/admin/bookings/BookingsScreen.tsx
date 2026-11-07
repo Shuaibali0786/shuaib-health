@@ -17,6 +17,7 @@ import {
   type Lookups,
   type RecentBooking,
 } from "@/admin/lib/schemas";
+import { clinicDate, formatDayMonth, formatTime } from "@/admin/lib/format";
 import { allowedNext } from "@/admin/lib/statusRules";
 import { clinicClock } from "@/admin/state/clinicClock";
 import { NewBookingToasts } from "@/admin/overview/NewBookingToast";
@@ -32,6 +33,7 @@ import { BookingTable } from "./BookingTable";
 import { ConfirmDialog, type ChangeRequest } from "./ConfirmDialog";
 import { FilterBar, dateLabel, type FilterChange } from "./FilterBar";
 import { Pagination } from "./Pagination";
+import { PrintButton } from "./PrintButton";
 import { StickyFilters } from "./StickyFilters";
 import { UndoToast } from "./UndoToast";
 import { bookingMessage, latestFrom, messageFor, outcomeUnknown, summaryOf } from "./copy";
@@ -332,6 +334,12 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
           <div className="sub" data-testid="bookings-summary">
             {heading} · {total} {total === 1 ? "booking" : "bookings"} · clinic time (Karachi)
           </div>
+          <p className="print-only" data-testid="print-header">
+            Printed {formatDayMonth(clinicDate(nowMs, timeZone))}, {formatTime(nowMs, timeZone)} · phone numbers stay masked
+          </p>
+        </div>
+        <div className="actions">
+          <PrintButton />
         </div>
       </div>
 
