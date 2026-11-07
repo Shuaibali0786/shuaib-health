@@ -8,6 +8,7 @@ import { adminRequest } from "@/admin/lib/client";
 import { StaffSchema, type Role, type Staff } from "@/admin/lib/schemas";
 import { generateTempPassword } from "@/admin/lib/tempPassword";
 
+import { PermissionsCard } from "./PermissionsCard";
 import { ConfirmDialog, CreateStaffForm, TempPasswordDialog, type NewStaff } from "./StaffForms";
 import { StaffTable, type StaffActions } from "./StaffTable";
 
@@ -91,6 +92,7 @@ export function StaffScreen({ initial, readOnly }: { initial: Staff[]; readOnly:
         </div>
         {staff.length === 0 ? <p className="empty">No staff accounts to show.</p> : <StaffTable staff={staff} actions={actions} readOnly={readOnly} busyId={busyId} />}
       </section>
+      <PermissionsCard />
 
       <TempPasswordDialog open={shown !== null} name={shown?.name ?? ""} password={shown?.password ?? ""} heading={shown?.heading ?? ""} onClose={() => setShown(null)} />
       <ConfirmDialog
