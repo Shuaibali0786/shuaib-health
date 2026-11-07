@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { privacyContent, termsContent } from "../../src/data/legalContent";
+import { buildPrivacyContent, buildTermsContent } from "../../src/data/legalContent";
+import { siteConfig } from "../fixtures/catalog/siteConfig";
 import { NOTICE } from "./helpers";
+
+const privacyContent = buildPrivacyContent(siteConfig);
+const termsContent = buildTermsContent(siteConfig);
 
 for (const [path, content] of [
   ["/privacy", privacyContent],
@@ -10,9 +14,10 @@ for (const [path, content] of [
     test("shows the title, last-updated date, demo notice and a heading for every required topic", async ({ page }) => {
       await page.goto(path);
       await expect(page.getByRole("heading", { level: 1, name: content.title })).toBeVisible();
-      await expect(page.getByText("Last updated 2 Oct 2026")).toBeVisible();
+      await expect(page.getByText("Last updated 7 Nov 2026")).toBeVisible();
       await expect(page.getByRole("main").getByText("Portfolio demo, not legal advice")).toBeVisible();
       await expect(page.getByText(/not legal advice/).first()).toBeVisible();
+      await expect(page.getByRole("note").filter({ hasText: content.templateNotice })).toBeVisible();
       for (const section of content.sections) {
         await expect(page.getByRole("heading", { level: 2, name: section.heading, exact: true })).toBeVisible();
       }
@@ -58,4 +63,13 @@ test("every footer and legal link to Privacy and Terms opens a real page", async
   await expect(page.getByRole("heading", { level: 1, name: "Privacy" })).toBeVisible();
   await page.getByRole("contentinfo").getByRole("link", { name: "Terms" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Terms" })).toBeVisible();
+});
+
+test("both pages name the clinic and its phone from settings and say they are a template", async ({ page }) => {
+  for (const path of ["/privacy", "/terms"]) {
+    await page.goto(path);
+    const main = page.getByRole("main");
+    await expect(main.getByText(/Template: .+ must check and adapt this page with a qualified legal adviser/)).toBeVisible();
+    await expect(main.getByText(`You can reach us at ${siteConfig.generalPhone.display}`).first()).toBeVisible();
+  }
 });

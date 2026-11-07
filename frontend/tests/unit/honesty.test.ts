@@ -15,9 +15,12 @@ import { healthPackages } from "../fixtures/catalog/healthPackages";
 import { healthTips } from "@/data/healthTips";
 import { buildFacts, buildHeroFacts, quickActions, whyPoints } from "@/data/homeContent";
 import { labTestCategories, labTests } from "../fixtures/catalog/labTests";
-import { privacyContent, termsContent } from "@/data/legalContent";
+import { buildPrivacyContent, buildTermsContent } from "@/data/legalContent";
 import { siteConfig } from "../fixtures/catalog/siteConfig";
 import { BANNED_CLAIMS, BRAND_WORDS, stringValues } from "./helpers/forbidden";
+
+const privacyContent = buildPrivacyContent(siteConfig);
+const termsContent = buildTermsContent(siteConfig);
 
 /**
  * Constitution I (honesty) and V (no backend dependency), as automatic checks.
