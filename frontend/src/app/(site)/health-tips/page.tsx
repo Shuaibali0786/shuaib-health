@@ -32,7 +32,11 @@ export default async function HealthTipsPage() {
           <span>General information, not medical advice. These articles are samples written for the demo.</span>
         </p>
       </PageHeader>
-      <Section tone="background" spacing="compact" aria-label="Health tip articles">
+      <Section tone="background" spacing="compact" labelledBy="health-tips-list-title">
+        {/* Visually hidden: gives the cards (h3) a parent h2, so the outline is h1 > h2 > h3 (Lighthouse heading-order, 2026-11-07). */}
+        <h2 id="health-tips-list-title" className="sr-only">
+          Health tip articles
+        </h2>
         <Suspense fallback={<TipBrowserFallback tips={tips} categories={categories} />}>
           <TipBrowser tips={tips} categories={categories} />
         </Suspense>

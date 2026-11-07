@@ -38,7 +38,8 @@ test.describe("seo", () => {
   });
 
   test("generated Open Graph images return a PNG", async ({ page, request }) => {
-    for (const path of ["/", "/health-tips/staying-hydrated"]) {
+    // Listing pages included: their own openGraph metadata used to drop the site-wide card (2026-11-07 audit).
+    for (const path of ["/", "/health-tips/staying-hydrated", "/doctors", "/about", "/book-appointment", "/demo/specialties"]) {
       await page.goto(path);
       const url = await page.locator("meta[property='og:image']").first().getAttribute("content");
       expect(url, path).toBeTruthy();

@@ -48,11 +48,22 @@ test.describe("accessibility (WCAG 2.2 AA)", () => {
     await expect(page.locator("header")).toHaveCount(1);
     await expect(page.locator("footer")).toHaveCount(1);
     await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-    const levels = await page.locator("h1, h2, h3").evaluateAll((headings) => headings.map((heading) => Number(heading.tagName[1])));
-    for (let i = 1; i < levels.length; i++) {
-      expect(levels[i]! - levels[i - 1]!, "headings never skip a level going down").toBeLessThanOrEqual(1);
-    }
   });
+
+  // The listing pages went h1 -> card h3 until 2026-11-07 (Lighthouse heading-order; axe tags it best-practice,
+  // so the WCAG scans above never saw it).
+  for (const path of ["/", "/doctors", "/departments", "/lab-tests", "/health-tips", "/health-packages", "/about"]) {
+    test(`${path}: headings never skip a level going down`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+      const levels = await page.locator("h1, h2, h3, h4").evaluateAll((headings) => headings.map((heading) => Number(heading.tagName[1])));
+      for (let i = 1; i < levels.length; i++) {
+        expect(levels[i]! - levels[i - 1]!, `heading ${i} on ${path}`).toBeLessThanOrEqual(1);
+      }
+      const results = await new AxeBuilder({ page }).withRules(["heading-order"]).analyze();
+      expect(results.violations.map((violation) => violation.nodes[0]?.target.join(" "))).toEqual([]);
+    });
+  }
 
   test("keyboard: the skip link is the first stop and moves focus to the main content", async ({ page, isMobile }) => {
     test.skip(isMobile, "needs a physical keyboard; covered on the desktop project");
