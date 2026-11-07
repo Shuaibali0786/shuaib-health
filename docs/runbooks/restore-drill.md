@@ -1,6 +1,6 @@
 # Restore drill
 
-Proves a backup can be turned back into a working database. Do it once at launch (T086) and then every quarter. Target: **under 30 minutes**, with matching row counts and one known booking found.
+Proves a backup can be turned back into a working database. Do it once at launch (T086) and then every month (helper script and short checklist: `backup-setup.md`, part C). Target: **under 30 minutes**, with matching row counts and one known booking found.
 
 🔑 = only the owner can do this. Claude guides live and records the result in `specs/007-launch-ready/results/restore-drill.md`. Never paste a database URL or the age private key into chat.
 
