@@ -3,6 +3,7 @@
 import { MessageCircle } from "lucide-react";
 import { useEffect, useRef, useState, type ComponentType } from "react";
 
+import type { ProviderId } from "@/agent/registry";
 import type { KnowledgePack } from "@/agent/types";
 
 import type { AssistantPanelProps } from "./AssistantPanel";
@@ -11,7 +12,7 @@ import type { AssistantPanelProps } from "./AssistantPanel";
  * The gold "Ask us" button (Feature 010). The panel, the engine and their styles are loaded only on the
  * first click, so pages that never open the chat pay for this small button only.
  */
-export function AssistantLauncher({ pack }: { pack: KnowledgePack }) {
+export function AssistantLauncher({ pack, provider = "local" }: { pack: KnowledgePack; provider?: ProviderId }) {
   const [Panel, setPanel] = useState<ComponentType<AssistantPanelProps> | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -59,7 +60,7 @@ export function AssistantLauncher({ pack }: { pack: KnowledgePack }) {
           Ask us
         </button>
       )}
-      {open && Panel ? <Panel pack={pack} onClose={close} /> : null}
+      {open && Panel ? <Panel pack={pack} provider={provider} onClose={close} /> : null}
     </>
   );
 }

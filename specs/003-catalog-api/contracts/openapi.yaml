@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Clinic Catalog API
-  version: 1.3.0
+  version: 1.4.0
   description: >
     Public, read-only catalog API (Feature 003). Single-tenant: every clinic value comes from the
     database. Field names and types match frontend/src/types/content.ts; fields marked
@@ -179,6 +179,32 @@ paths:
         "429": { $ref: "#/components/responses/RateLimited" }
         "503": { $ref: "#/components/responses/Unavailable" }
 
+  /api/v1/assistant/answer:
+    post:
+      summary: Answer one website question with the optional AI provider (Feature 010 v1.1)
+      description: >
+        OFF by default: without ASSISTANT_AI_ENABLED=true and ANTHROPIC_API_KEY the answer is 503 and the
+        website keeps its free built-in engine. Server-to-server (X-Proxy-Secret). Grounded only in the
+        public knowledge pack in the body. Per-IP and per-day limits (429) and a hard monthly cost cap (503).
+        Never cached; the question is never logged.
+      parameters:
+        - name: X-Proxy-Secret
+          in: header
+          required: true
+          schema: { type: string }
+        - name: X-Client-IP
+          in: header
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AssistantQuestion" } } }
+      responses:
+        "200": { description: The answer (Cache-Control no-store), content: { application/json: { schema: { $ref: "#/components/schemas/AssistantAnswer" } } } }
+        "403": { description: Missing or wrong proxy secret, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "422": { description: Invalid body, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "429": { description: Too many questions from this address or today, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "503": { description: "Off, no key, monthly budget reached, or the AI service failed (service_unavailable): use the free engine", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
   /api/v1/appointments:
     post:
       summary: Book one slot (idempotent)
@@ -812,6 +838,18 @@ components:
         reason: { type: [string, "null"], maxLength: 300 }
         acceptRules: { type: boolean, const: true }
         trap: { type: [string, "null"], maxLength: 200, description: Honeypot; must be empty }
+    AssistantQuestion:
+      type: object
+      required: [question, pack]
+      properties:
+        question: { type: string, minLength: 1, maxLength: 300 }
+        pack: { type: object, additionalProperties: true, description: "The website's public knowledge pack (clinic, departments, doctors, lab tests, packages, FAQ)" }
+    AssistantAnswer:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string }
+        provider: { type: string, enum: [claude] }
     AppointmentView:
       type: object
       required: [reference, status, doctor, department, startsAt, endsAt, localDate, localTime, timeZone, feePkr, patientNameMasked, mobileMasked, bookedAt, isSample]

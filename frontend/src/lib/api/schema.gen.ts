@@ -595,6 +595,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/assistant/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Answer one website question with the optional AI provider (Feature 010 v1.1)
+         * @description OFF by default: without ASSISTANT_AI_ENABLED=true and ANTHROPIC_API_KEY the answer is 503 and the website keeps its free built-in engine. Server-to-server (X-Proxy-Secret). Grounded only in the public knowledge pack in the body. Per-IP and per-day limits (429) and a hard monthly cost cap (503). Never cached; the question is never logged.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header: {
+                    "X-Proxy-Secret": string;
+                    "X-Client-IP"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AssistantQuestion"];
+                };
+            };
+            responses: {
+                /** @description The answer (Cache-Control no-store) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AssistantAnswer"];
+                    };
+                };
+                /** @description Missing or wrong proxy secret */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Invalid body */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Too many questions from this address or today */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Off, no key, monthly budget reached, or the AI service failed (service_unavailable): use the free engine */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/appointments": {
         parameters: {
             query?: never;
@@ -1366,6 +1448,18 @@ export interface components {
             acceptRules: true;
             /** @description Honeypot; must be empty */
             trap?: string | null;
+        };
+        AssistantQuestion: {
+            question: string;
+            /** @description The website's public knowledge pack (clinic, departments, doctors, lab tests, packages, FAQ) */
+            pack: {
+                [key: string]: unknown;
+            };
+        };
+        AssistantAnswer: {
+            text: string;
+            /** @enum {string} */
+            provider?: "claude";
         };
         AppointmentView: {
             /** @description Display form XXXXX-XXXXX */

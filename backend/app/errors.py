@@ -31,6 +31,10 @@ class ClinicNotConfigured(Exception):
     pass
 
 
+class ServiceUnavailable(Exception):
+    """503 service_unavailable: an optional service is off or failed (the caller falls back)."""
+
+
 class StoredDataInvalid(Exception):
     """Stored data does not match its schema. Becomes a generic 500; the data is never echoed."""
 
@@ -283,6 +287,10 @@ async def _database_unavailable(_: Request, exc: Exception) -> JSONResponse:
     return error_response(503, "service_unavailable", "The service is temporarily unavailable.")
 
 
+async def _service_unavailable(_: Request, __: Exception) -> JSONResponse:
+    return error_response(503, "service_unavailable", "The service is temporarily unavailable.")
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(StarletteHTTPException, _http_exception)
     app.add_exception_handler(RequestValidationError, _validation_error)
@@ -294,6 +302,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(Forbidden, _forbidden)
     app.add_exception_handler(RequestRejected, _request_rejected)
     app.add_exception_handler(AdminError, _admin_error)
+    app.add_exception_handler(ServiceUnavailable, _service_unavailable)
     for db_error in (OperationalError, InterfaceError, PoolTimeoutError):
         app.add_exception_handler(db_error, _database_unavailable)
 

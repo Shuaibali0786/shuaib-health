@@ -7,7 +7,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { loadKnowledgePack } from "@/agent/knowledge";
 import { AssistantLauncher } from "@/components/agent/AssistantLauncher";
-import { isAssistantEnabled } from "@/lib/demo";
+import { getAssistantProvider, isAssistantEnabled } from "@/lib/demo";
 import { getSiteConfig } from "@/lib/content";
 import { siteUrl } from "@/lib/seo";
 import { THEME_COLOR } from "../theme-color";
@@ -65,7 +65,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <SiteFooter />
-        {assistantPack ? <AssistantLauncher pack={assistantPack} /> : null}
+        {assistantPack ? <AssistantLauncher pack={assistantPack} provider={getAssistantProvider()} /> : null}
       </body>
     </html>
   );

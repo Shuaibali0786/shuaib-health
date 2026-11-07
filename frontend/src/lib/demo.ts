@@ -27,3 +27,13 @@ export function isAssistantEnabled(): boolean {
   const raw = process.env.ASSISTANT_ENABLED?.trim().toLowerCase();
   return raw === "true" || raw === "1" || raw === "yes" || raw === "on";
 }
+
+/**
+ * ASSISTANT_PROVIDER (Feature 010 v1.1): which engine answers the chat. "local" (the default, and anything
+ * unknown) is the free built-in engine. "claude" adds the optional AI provider for questions the free
+ * engine cannot answer; it also needs ASSISTANT_AI_ENABLED and ANTHROPIC_API_KEY on the API, and falls
+ * back to the free engine whenever the API says no (off, limits, monthly budget). Read at build time.
+ */
+export function getAssistantProvider(): "local" | "claude" {
+  return process.env.ASSISTANT_PROVIDER?.trim().toLowerCase() === "claude" ? "claude" : "local";
+}
