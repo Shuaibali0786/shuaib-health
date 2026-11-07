@@ -7,7 +7,7 @@ import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { ADMIN_MODES, ADMIN_SLOW_MS, createAdmin } from "./admin.mjs";
+import { ADMIN_MODES, ADMIN_SEARCH_SLOW_MS, ADMIN_SLOW_MS, createAdmin } from "./admin.mjs";
 import { BOOKING_MODES, BOOKING_SLOW_MS, createBooking } from "./booking.mjs";
 
 const FIXTURES = fileURLToPath(new URL("../fixtures/api/", import.meta.url));
@@ -239,11 +239,12 @@ export function createMockServer({ startMode = process.env.MOCK_API_MODE || "ok"
         const result = call.run();
         send(res, result.status, result.body, result.headers);
       };
-      if (mode === "admin-slow") {
+      // "admin-search-slow" delays only the bookings search, so a page that waits for it streams in after the shell (and its bell) has hydrated.
+      if (mode === "admin-slow" || (mode === "admin-search-slow" && path.endsWith("/bookings/search"))) {
         const timer = setTimeout(() => {
           slowTimers.delete(timer);
           if (!res.destroyed) respond();
-        }, ADMIN_SLOW_MS);
+        }, mode === "admin-search-slow" ? ADMIN_SEARCH_SLOW_MS : ADMIN_SLOW_MS);
         slowTimers.add(timer);
         res.on("close", () => {
           clearTimeout(timer);

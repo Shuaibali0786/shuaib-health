@@ -2,12 +2,12 @@
 
 import { Bell } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { clinicDate, formatDayMonth } from "@/admin/lib/format";
 import { bookedAgo } from "@/admin/lib/relativeTime";
 import type { BookingSummary } from "@/admin/lib/schemas";
-import { bell } from "@/admin/state/bell";
+import { bell, useBell } from "@/admin/state/bell";
 import { clinicClock } from "@/admin/state/clinicClock";
 import { openRequest } from "@/admin/state/openRequest";
 
@@ -17,8 +17,7 @@ import { openRequest } from "@/admin/state/openRequest";
  * count for this person only. The count and list come from `bell` (one poller for every bell on the page).
  */
 export function NewBookingsBell({ demo, timeZone, tone = "light" }: { demo: boolean; timeZone: string; tone?: "light" | "dark" }) {
-  useSyncExternalStore(bell.subscribe, bell.getSnapshot, () => 0);
-  const data = bell.current();
+  const data = useBell().view;
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLSpanElement>(null);
   const panelId = useId();

@@ -19,8 +19,10 @@ import { createBookings } from "./admin-bookings.mjs";
 
 const DEMO_DAY = JSON.parse(readFileSync(new URL("../fixtures/admin/demo-day.json", import.meta.url), "utf8"));
 
-export const ADMIN_MODES = ["admin-down", "admin-slow", "session-expired", "booking-changed"];
+export const ADMIN_MODES = ["admin-down", "admin-slow", "admin-search-slow", "session-expired", "booking-changed"];
 export const ADMIN_SLOW_MS = 20_000;
+// Long enough for the shell and its bell to hydrate and poll first, short of every page timeout.
+export const ADMIN_SEARCH_SLOW_MS = 5_000;
 export const PASSWORD = "Correct-Horse-9-Battery";
 // Feature 011: an admin with two-step sign-in on. It signs in through the code step and is never in the
 // staff list (so the existing staff tests and screenshots are unchanged). Codes are fixed for the tests.
