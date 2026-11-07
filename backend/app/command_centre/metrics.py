@@ -25,6 +25,7 @@ from app.command_centre.schemas import (
     InsightsRange,
     Kpis,
     Overview,
+    OverviewCards,
     RecentBooking,
     StatusCount,
     Trend,
@@ -156,6 +157,7 @@ def build_overview(
     holiday_today: str | None,
     holiday_last_week: bool,
     recent: Sequence[RecentBooking],
+    cards: OverviewCards,
     is_sample: bool,
 ) -> Overview:
     """Assembles the Overview from facts both sources can supply (data-model §8)."""
@@ -202,6 +204,7 @@ def build_overview(
         now=now,
         clinic_closed=holiday_today,
         kpis=kpis,
+        cards=cards,
         agenda=agenda,
         next_up=next_up(today, now),
         recent_bookings=list(recent),

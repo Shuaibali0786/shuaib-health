@@ -161,6 +161,9 @@ class BookingSummary(CamelModel):
     doctor: DoctorRef
     allowed_next: list[Status]
     is_sample: bool | None = None
+    booked_at: AwareDatetime
+    # Feature 012: new for the signed-in staff member (not opened, not marked seen).
+    is_new: bool = False
 
 
 class HistoryItem(CamelModel):
@@ -176,16 +179,22 @@ class BookingDetail(BookingSummary):
     email_masked: str | None = None
     reason: str | None = None
     fee_pkr: int
-    booked_at: AwareDatetime
     history: list[HistoryItem]
     patient_age: int | None = None
     booked_by: str | None = None
 
 
 class BookingSearchRequest(CamelModel):
+    """Which bookings to list. Dates apply only when ``q`` is empty: a search by reference or name
+    looks at every date. ``scope="upcoming"`` means every booking from tomorrow on, and
+    ``booked_within_hours`` is the "Recently booked" filter (no dates unless given)."""
+
     q: str | None = Field(default=None, max_length=80)
     from_: date | None = Field(default=None, alias="from")
     to: date | None = None
+    scope: Literal["day", "upcoming"] = "day"
+    booked_within_hours: Literal[24, 168] | None = None
+    sort: Literal["soonest", "recently_booked"] = "soonest"
     doctor_id: uuid.UUID | None = None
     department_id: uuid.UUID | None = None
     statuses: list[Status] | None = None
@@ -201,10 +210,19 @@ class BookingSearchRequest(CamelModel):
         return self
 
 
+class DayBookings(CamelModel):
+    """Bookings on one clinic-local day, for the Upcoming view's day headings."""
+
+    date: date
+    count: int
+
+
 class BookingPage(CamelModel):
     items: list[BookingSummary]
     total: int
     status_counts: dict[Status, int] = Field(default_factory=dict)
+    # Upcoming scope only: every day with bookings (not just this page's), soonest first.
+    day_counts: list[DayBookings] = Field(default_factory=list)
     page: int
     page_size: int = PAGE_SIZE
 
@@ -272,7 +290,39 @@ class AgendaDoctor(CamelModel):
 
 
 class RecentBooking(BookingSummary):
-    booked_at: AwareDatetime
+    pass
+
+
+class OverviewCards(CamelModel):
+    """The count cards (Feature 012). Today, tomorrow and the next seven days count bookings that
+    are not cancelled; ``cancelled_this_week`` counts the cancelled ones of the clinic-local
+    Monday-Sunday week; ``new_since_last_visit`` is what the bell shows."""
+
+    today: int
+    tomorrow: int
+    next7_days: int
+    new_since_last_visit: int
+    cancelled_this_week: int
+
+
+class NewBookings(CamelModel):
+    """The bell: how many bookings are new for this staff member and the newest few."""
+
+    count: int
+    items: list[BookingSummary] = Field(max_length=5)
+
+
+class MarkSeenRequest(CamelModel):
+    """Either the bookings just opened, or ``all`` to mark every current booking seen."""
+
+    references: list[str] | None = Field(default=None, max_length=50)
+    all: bool = False
+
+    @model_validator(mode="after")
+    def _one_of(self) -> "MarkSeenRequest":
+        if self.all == bool(self.references):
+            raise ValueError("send either references or all")
+        return self
 
 
 class Overview(CamelModel):
@@ -280,6 +330,7 @@ class Overview(CamelModel):
     now: AwareDatetime
     clinic_closed: str | None = None
     kpis: Kpis
+    cards: OverviewCards
     agenda: list[AgendaDoctor]
     next_up: list[BookingSummary] = Field(max_length=5)
     recent_bookings: list[RecentBooking] = Field(default_factory=list, max_length=5)

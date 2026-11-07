@@ -17,6 +17,7 @@ pytestmark = pytest.mark.db
 
 TABLES = {
     "clinic_settings",
+    "booking_seen",
     "clinic_rule",
     "department",
     "doctor",

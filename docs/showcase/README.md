@@ -20,6 +20,8 @@ The fake booking used the name "Sana Example" and 0300 1234567. Every page shows
 | Confirmation slip (QR, masked details) | `slip-*.png` |
 | Command Centre overview | `dashboard-overview-*.png` |
 | Bookings with quick date ranges (PR #23) | `dashboard-bookings-*.png` |
+| Upcoming bookings grouped by day, New badges, Booked on (Feature 012) | `dashboard-upcoming-*.png` |
+| The bell: new bookings since you last looked (Feature 012) | `dashboard-bell-*.png` |
 | Insights | `dashboard-insights-*.png` |
 | Roles and permissions (PR #23) | `dashboard-roles-*.png` |
 | Assistant, patient question (PR #25) | `assistant-patient-*.png` |
@@ -33,3 +35,5 @@ Note: booking, slip and dashboard are **not preset-aware** yet; they show the sh
 3. Run [`capture-showcase.mjs`](capture-showcase.mjs) from `frontend/` (instructions at the top of the file).
 
 Video: [`DEMO-VIDEO-SCRIPT.md`](DEMO-VIDEO-SCRIPT.md).
+
+The Overview (with its count cards), Bookings, Upcoming and bell shots were re-taken for Feature 012 with [`capture-upcoming.mjs`](capture-upcoming.mjs) (copy it into `frontend/` to run, same local mock build as above).

@@ -56,6 +56,8 @@ export const summaryOf = (detail: BookingDetail): BookingSummary => ({
   doctor: detail.doctor,
   allowedNext: detail.allowedNext,
   isSample: detail.isSample,
+  bookedAt: detail.bookedAt,
+  isNew: detail.isNew,
 });
 
 /** The sentence of the undo offer: "Marked Ayesha K. as arrived." */

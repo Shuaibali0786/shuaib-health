@@ -501,6 +501,19 @@ class StaffAccount(Entity, table=True):
     totp_enabled_at: datetime | None = _instant(nullable=True)
     totp_last_step: int | None = Field(default=None, sa_type=BigInteger)
     totp_setup_started_at: datetime | None = _instant(nullable=True)
+    # Feature 012: "Mark all seen" moves this to now; NULL means "since the account was created".
+    bookings_seen_at: datetime | None = _instant(nullable=True)
+
+
+class BookingSeen(SQLModel, table=True):
+    """A booking one staff member has opened (Feature 012); with ``staff_account.bookings_seen_at``
+    it decides which bookings are still new for that member."""
+
+    __tablename__ = "booking_seen"
+
+    staff_id: uuid.UUID = _fk("staff_account.id", "CASCADE", index=False, primary_key=True)
+    appointment_id: uuid.UUID = _fk("appointment.id", "CASCADE", primary_key=True)
+    seen_at: datetime | None = _timestamp()
 
 
 class StaffBackupCode(SQLModel, table=True):

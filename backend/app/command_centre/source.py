@@ -19,6 +19,7 @@ from app.command_centre.schemas import (
     Insights,
     InsightsRange,
     Lookups,
+    NewBookings,
     Overview,
 )
 
@@ -31,6 +32,8 @@ class CommandCentreSource(Protocol):
     def detail(self, reference: str, tz: ZoneInfo, now: datetime) -> BookingDetail: ...
 
     def lookups(self) -> Lookups: ...
+
+    def new_bookings(self, tz: ZoneInfo, now: datetime) -> NewBookings: ...
 
     def overview(self, tz: ZoneInfo, now: datetime) -> Overview: ...
 

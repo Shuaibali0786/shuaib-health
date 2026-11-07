@@ -17,6 +17,7 @@ from app.command_centre.schemas import (
     Insights,
     InsightsRange,
     Lookups,
+    NewBookings,
     Overview,
 )
 
@@ -29,12 +30,16 @@ def apply_read_timeout(db: Session) -> None:
 
 
 class RealSource:
-    def __init__(self, db: Session) -> None:
+    def __init__(self, db: Session, staff_id: uuid.UUID | None = None) -> None:
         self.db = db
+        self.staff_id = staff_id
         apply_read_timeout(db)
 
     def search(self, body: BookingSearchRequest, tz: ZoneInfo, now: datetime) -> BookingPage:
-        return service.search(self.db, body, tz, now)
+        return service.search(self.db, body, tz, now, self.staff_id)
+
+    def new_bookings(self, tz: ZoneInfo, now: datetime) -> NewBookings:
+        return service.new_bookings(self.db, self.staff_id, tz, now)
 
     def detail(self, reference: str, tz: ZoneInfo, now: datetime) -> BookingDetail:
         return service.detail(self.db, reference, tz, now)
@@ -43,7 +48,7 @@ class RealSource:
         return service.lookups(self.db)
 
     def overview(self, tz: ZoneInfo, now: datetime) -> Overview:
-        return service.overview(self.db, tz, now)
+        return service.overview(self.db, tz, now, self.staff_id)
 
     def insights(self, range_days: InsightsRange, tz: ZoneInfo, now: datetime) -> Insights:
         return service.insights(self.db, range_days, tz, now)

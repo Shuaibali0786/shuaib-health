@@ -8,6 +8,8 @@ import { clinicClock, deviceReference, useClinicNow } from "@/admin/state/clinic
 import { formatUpdatedAgo } from "@/admin/state/livePoll";
 import { useLiveStatus } from "@/admin/state/liveStatus";
 
+import { NewBookingsBell } from "./NewBookingsBell";
+
 /** "Asia/Karachi" -> "Karachi". */
 function cityOf(timeZone: string): string {
   return (timeZone.split("/").pop() ?? timeZone).replaceAll("_", " ");
@@ -19,7 +21,7 @@ function cityOf(timeZone: string): string {
  * the server reading, so a device with the wrong time or zone still shows the clinic time.
  * `demoDate` fixes the date for the demo viewer, whose today is its dataset date.
  */
-export function StatusBar({ serverNow, timeZone, demoDate, typicalDay = false }: { serverNow: string; timeZone: string; demoDate?: string; typicalDay?: boolean }) {
+export function StatusBar({ serverNow, timeZone, demoDate, typicalDay = false, demo = false }: { serverNow: string; timeZone: string; demoDate?: string; typicalDay?: boolean; demo?: boolean }) {
   const serverMs = Date.parse(serverNow);
   // Declared before useClinicNow so the offset is known when its subscription starts the clock.
   // A screen that has fresher data (the Overview's poll) seeds the clock itself; this reading is the shell's, taken when it rendered.
@@ -37,6 +39,9 @@ export function StatusBar({ serverNow, timeZone, demoDate, typicalDay = false }:
     <div className="statusbar">
       <span className="eyebrow">Command Centre · {formatDayMonth(date)}</span>
       <div className="statusbar-right">
+        <span className="d-only">
+          <NewBookingsBell demo={demo} timeZone={timeZone} />
+        </span>
         <span className="clock">
           <Clock className="i i-sm" aria-hidden="true" />
           <time dateTime={new Date(now).toISOString()} aria-live="off" suppressHydrationWarning>

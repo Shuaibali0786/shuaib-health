@@ -306,7 +306,7 @@ export function createAdmin({ now = process.env.MOCK_NOW || "2026-10-05T06:20:45
           return bookings.activity(query);
         }
 
-        const bookingRoute = /^\/(lookups|bookings\/)/.test(route) || route === "/bookings/search";
+        const bookingRoute = /^\/(lookups|bookings\/)/.test(route) || route === "/bookings/search";  // includes bookings/new and bookings/seen
         if (bookingRoute) {
           // Reads, the search and the phone reveal are open to staff and demo; a status change is staff-only.
           // Every POST carries the CSRF token of a staff session.

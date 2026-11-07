@@ -18,21 +18,26 @@ import {
   type RecentBooking,
 } from "@/admin/lib/schemas";
 import { clinicDate, formatDayMonth, formatTime } from "@/admin/lib/format";
+import { dayHeading } from "@/admin/lib/relativeTime";
 import { allowedNext } from "@/admin/lib/statusRules";
+import { bell } from "@/admin/state/bell";
 import { clinicClock } from "@/admin/state/clinicClock";
 import { NewBookingToasts } from "@/admin/overview/NewBookingToast";
 import { demoOverlay } from "@/admin/state/demoOverlay";
 import { newBookings } from "@/admin/state/newBookings";
+import { openRequest } from "@/admin/state/openRequest";
 import { undoStore } from "@/admin/state/undo";
 import { useLivePoll } from "@/admin/state/liveStatus";
 import { EmptyState, ErrorState } from "@/admin/ui/States";
 
 import { BookingCards } from "./BookingCard";
 import { BookingDrawer } from "./BookingDrawer";
-import { BookingTable } from "./BookingTable";
+import { BookingTable, type BookingListOptions } from "./BookingTable";
 import { ConfirmDialog, type ChangeRequest } from "./ConfirmDialog";
 import { FilterBar, dateLabel, type FilterChange } from "./FilterBar";
 import { Pagination } from "./Pagination";
+import { CheckCheck } from "lucide-react";
+
 import { PrintButton } from "./PrintButton";
 import { StickyFilters } from "./StickyFilters";
 import { UndoToast } from "./UndoToast";
@@ -64,6 +69,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
   const [message, setMessage] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.parse(serverNow));
   const overlayVersion = useSyncExternalStore(demoOverlay.subscribe, demoOverlay.getSnapshot, () => 0);
+  const bellVersion = useSyncExternalStore(bell.subscribe, bell.getSnapshot, () => 0);
 
   // The clinic minute moves "from 09:40" style rules along without re-rendering every second.
   useEffect(() => clinicClock.onMinute((ms) => setNowMs(ms)), []);
@@ -92,11 +98,12 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
             departmentName,
             statusOf: demoOverlay.statusOf.bind(demoOverlay),
             nameOf: (reference) => demoOverlay.detailOf(reference)?.patientName,
+            nowMs,
           })
         : [],
     // `overlayVersion` is the signal that the overlay changed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [demo, filters.q, filters.from, filters.to, filters.doctor, filters.department, clinicToday, departmentName, overlayVersion],
+    [demo, filters.q, filters.from, filters.to, filters.doctor, filters.department, filters.view, filters.booked, clinicToday, departmentName, overlayVersion],
   );
 
   const items = useMemo(() => {
@@ -215,12 +222,38 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openReference, detailTick]);
 
+  /** Takes the New mark off rows in the list now; the server's own answer follows with the next refresh. */
+  const clearNew = useCallback((references: readonly string[] | "all") => {
+    setData((page) => ({ ...page, items: page.items.map((b) => (b.isNew && (references === "all" || references.includes(b.reference)) ? { ...b, isNew: false } : b)) }));
+  }, []);
+
   function open(booking: BookingSummary) {
     setDetail(null);
     setDetailFailed(false);
     setMessage(null);
     setSelected(booking);
+    // Opening a booking is what "seen" means: it stops being New for this staff member only (Feature 012).
+    if (bell.isNew(booking)) {
+      clearNew([booking.reference]);
+      void bell.markSeen(booking.reference);
+    }
   }
+
+  async function markAllSeen() {
+    clearNew("all");
+    await bell.markAllSeen(clinicClock.now());
+  }
+
+  // A booking opened from the bell (or waiting when this screen mounted).
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  });
+  useEffect(() => {
+    const waiting = openRequest.take();
+    if (waiting) openRef.current(waiting);
+    return openRequest.subscribe((booking) => openRef.current(booking));
+  }, []);
 
   function close() {
     setSelected(null);
@@ -299,10 +332,30 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
 
   // ----- Rendering ----------------------------------------------------------------------------
 
+  // `bellVersion` is the signal that something was opened or cleared.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const isNew = useCallback((booking: BookingSummary) => bell.isNew(booking), [bellVersion]);
+  const upcoming = filters.view === "upcoming" && !filters.q.trim();
+  const dayCounts = useMemo(() => new Map((data.dayCounts ?? []).map((d) => [d.date, d.count])), [data.dayCounts]);
+  const perDay = useMemo(() => {
+    const here = new Map<string, number>();
+    for (const b of items) here.set(b.localDate, (here.get(b.localDate) ?? 0) + 1);
+    return here;
+  }, [items]);
+  const listOptions: BookingListOptions = {
+    isNew,
+    timeZone,
+    nowMs,
+    showDate: filters.view === "upcoming" ? false : Boolean(filters.q.trim()) || (filters.booked !== null && !filters.from && !filters.to),
+    groupOf: upcoming ? (date) => ({ label: dayHeading(date, clinicToday, formatDayMonth), count: dayCounts.get(date) ?? perDay.get(date) ?? 0 }) : undefined,
+  };
+  const anyNew = (bell.current()?.count ?? 0) > 0 || items.some(isNew);
+
   const total = demo && filters.statuses.length ? items.length : data.total + simulated.length;
   const label = dateLabel(filters, clinicToday);
-  const heading = label.startsWith("Today") ? "Today" : label;
-  const isFiltered = Boolean(filters.q.trim() || filters.doctor || filters.department || filters.statuses.length || filters.from || filters.to);
+  const searching = Boolean(filters.q.trim());
+  const heading = searching ? "All dates" : filters.view === "upcoming" ? "Upcoming" : filters.booked !== null && !filters.from && !filters.to ? (filters.booked === 24 ? "Booked in the last 24 hours" : "Booked in the last 7 days") : label.startsWith("Today") ? "Today" : label;
+  const isFiltered = Boolean(filters.q.trim() || filters.doctor || filters.department || filters.statuses.length || filters.from || filters.to || filters.view === "upcoming" || filters.booked !== null);
   const allCounts = (Object.values(counts) as number[]).reduce((a, b) => a + b, 0);
   const clear = () => setFilters({ ...EMPTY_FILTERS });
   const pageTo = (page: number) => setFilters((current) => ({ ...current, page }));
@@ -339,6 +392,12 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
           </p>
         </div>
         <div className="actions">
+          {anyNew ? (
+            <button type="button" className="btn" onClick={() => void markAllSeen()}>
+              <CheckCheck className="i i-sm" aria-hidden="true" />
+              Mark all seen
+            </button>
+          ) : null}
           <PrintButton />
         </div>
       </div>
@@ -356,7 +415,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
 
       <section className="card d-only" aria-label="Bookings" aria-busy={loading} data-loading={loading ? "true" : "false"}>
         <FilterBar filters={filters} lookups={lookups} today={clinicToday} counts={counts} total={allCounts} onChange={onFilters} />
-        {items.length > 0 ? <BookingTable bookings={items} onOpen={(booking) => open(booking)} onQuick={choose} busyReference={busy ? (request?.booking.reference ?? null) : null} /> : list}
+        {items.length > 0 ? <BookingTable bookings={items} onOpen={(booking) => open(booking)} onQuick={choose} busyReference={busy ? (request?.booking.reference ?? null) : null} {...listOptions} /> : list}
         <Pagination page={data.page} total={total} pageSize={data.pageSize} onPage={pageTo} />
       </section>
 
@@ -365,7 +424,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
         <p className="count-line">
           {total} {total === 1 ? "booking" : "bookings"} · {heading.toLowerCase() === "today" ? "today" : heading}
         </p>
-        {items.length > 0 ? <BookingCards bookings={items} onOpen={(booking) => open(booking)} timeZone={timeZone} /> : list}
+        {items.length > 0 ? <BookingCards bookings={items} onOpen={(booking) => open(booking)} {...listOptions} /> : list}
         <Pagination page={data.page} total={total} pageSize={data.pageSize} onPage={pageTo} />
       </div>
 

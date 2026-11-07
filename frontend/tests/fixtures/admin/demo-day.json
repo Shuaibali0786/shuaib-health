@@ -202,6 +202,13 @@
         "comparedTo": "2026-09-28"
       }
     },
+    "cards": {
+      "today": 56,
+      "tomorrow": 50,
+      "next7Days": 346,
+      "newSinceLastVisit": 12,
+      "cancelledThisWeek": 14
+    },
     "agenda": [
       {
         "doctor": {
@@ -234,7 +241,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T03:41:00Z",
+            "isNew": false
           },
           {
             "reference": "DXYJQ7Q7FR",
@@ -253,7 +262,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T01:18:00Z",
+            "isNew": false
           },
           {
             "reference": "DC3NYZ3GNA",
@@ -272,7 +283,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T11:12:00Z",
+            "isNew": false
           },
           {
             "reference": "DYYJPAT2XR",
@@ -291,7 +304,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T03:12:00Z",
+            "isNew": false
           },
           {
             "reference": "DEENHYCG6V",
@@ -310,7 +325,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T00:23:00Z",
+            "isNew": false
           },
           {
             "reference": "DPXG74X5Z5",
@@ -329,7 +346,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T04:32:00Z",
+            "isNew": false
           },
           {
             "reference": "DBREKERTJC",
@@ -348,7 +367,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T17:07:00Z",
+            "isNew": false
           },
           {
             "reference": "DJCMES8FG8",
@@ -367,7 +388,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T05:50:00Z",
+            "isNew": false
           },
           {
             "reference": "DRB5P9NAFM",
@@ -389,7 +412,9 @@
               "completed",
               "no_show"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T02:28:00Z",
+            "isNew": false
           },
           {
             "reference": "DYDSEBZFBY",
@@ -410,7 +435,9 @@
             "allowedNext": [
               "completed"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T21:16:00Z",
+            "isNew": false
           },
           {
             "reference": "DRJSACKCF2",
@@ -432,7 +459,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T06:27:00Z",
+            "isNew": false
           },
           {
             "reference": "D5YHCQTM8J",
@@ -454,7 +483,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T18:26:00Z",
+            "isNew": false
           },
           {
             "reference": "DXYGGE5ZMN",
@@ -476,7 +507,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T22:17:00Z",
+            "isNew": false
           },
           {
             "reference": "DSP377A7W4",
@@ -498,7 +531,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T04:38:00Z",
+            "isNew": false
           }
         ]
       },
@@ -533,7 +568,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T02:29:00Z",
+            "isNew": false
           },
           {
             "reference": "DW28GRTQ5D",
@@ -552,7 +589,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T03:25:00Z",
+            "isNew": false
           },
           {
             "reference": "DTMW6FP76Z",
@@ -571,7 +610,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T23:59:00Z",
+            "isNew": false
           },
           {
             "reference": "DJFYJYC57R",
@@ -590,7 +631,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T20:15:00Z",
+            "isNew": false
           },
           {
             "reference": "D4PXCHYWBW",
@@ -609,7 +652,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T04:22:00Z",
+            "isNew": false
           },
           {
             "reference": "DHWRC5VW7V",
@@ -628,7 +673,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-09-30T19:28:00Z",
+            "isNew": false
           },
           {
             "reference": "DF5KRCKPR8",
@@ -647,7 +694,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T22:04:00Z",
+            "isNew": false
           },
           {
             "reference": "DHA433AWTX",
@@ -666,7 +715,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T05:17:00Z",
+            "isNew": false
           },
           {
             "reference": "DS29MWVGGY",
@@ -685,7 +736,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T08:06:00Z",
+            "isNew": false
           },
           {
             "reference": "DJSRQM7W54",
@@ -707,7 +760,9 @@
               "completed",
               "no_show"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T21:02:00Z",
+            "isNew": false
           },
           {
             "reference": "D9T5P44ZGC",
@@ -726,7 +781,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T05:19:00Z",
+            "isNew": false
           },
           {
             "reference": "DDVXRZMEFN",
@@ -748,7 +805,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T05:03:00Z",
+            "isNew": false
           }
         ]
       },
@@ -783,7 +842,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T19:57:00Z",
+            "isNew": false
           },
           {
             "reference": "DYSB7K2GJK",
@@ -802,7 +863,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T04:20:00Z",
+            "isNew": false
           },
           {
             "reference": "DCSY3ZDDGG",
@@ -821,7 +884,9 @@
               "isActive": true
             },
             "allowedNext": [],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T00:58:00Z",
+            "isNew": false
           },
           {
             "reference": "DKRQPQBFQW",
@@ -842,7 +907,9 @@
             "allowedNext": [
               "completed"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T02:02:00Z",
+            "isNew": false
           },
           {
             "reference": "DWFN46WXPY",
@@ -864,7 +931,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-09-30T23:25:00Z",
+            "isNew": false
           },
           {
             "reference": "D5VNRTTS3E",
@@ -886,7 +955,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-04T04:18:00Z",
+            "isNew": false
           },
           {
             "reference": "D2EDKTK2ZB",
@@ -908,7 +979,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T03:40:00Z",
+            "isNew": false
           },
           {
             "reference": "DSXHSXRYQD",
@@ -929,7 +1002,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T05:55:00Z",
+            "isNew": false
           }
         ]
       },
@@ -967,7 +1042,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-04T02:21:00Z",
+            "isNew": false
           },
           {
             "reference": "D54K79R7CK",
@@ -989,7 +1066,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T04:53:00Z",
+            "isNew": false
           },
           {
             "reference": "DYC8AMKPHT",
@@ -1011,7 +1090,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T23:43:00Z",
+            "isNew": false
           },
           {
             "reference": "DTCMNK5DDA",
@@ -1033,7 +1114,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T22:38:00Z",
+            "isNew": false
           },
           {
             "reference": "D6EN9JFYBF",
@@ -1055,7 +1138,9 @@
               "arrived",
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-04T07:19:00Z",
+            "isNew": false
           },
           {
             "reference": "DKZVCRZGW4",
@@ -1076,7 +1161,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T02:33:00Z",
+            "isNew": false
           },
           {
             "reference": "DEGTSB2RC9",
@@ -1097,7 +1184,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T02:23:00Z",
+            "isNew": false
           },
           {
             "reference": "D6TVH9DY78",
@@ -1118,7 +1207,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T03:13:00Z",
+            "isNew": false
           },
           {
             "reference": "DDK357AGPM",
@@ -1139,7 +1230,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T22:59:00Z",
+            "isNew": false
           },
           {
             "reference": "DG42ZZ8MKY",
@@ -1160,7 +1253,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T02:08:00Z",
+            "isNew": false
           },
           {
             "reference": "DJMNX5ZVXM",
@@ -1181,7 +1276,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-04T10:40:00Z",
+            "isNew": false
           },
           {
             "reference": "D675S82YGQ",
@@ -1202,7 +1299,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T05:49:00Z",
+            "isNew": false
           }
         ]
       },
@@ -1239,7 +1338,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T18:48:00Z",
+            "isNew": false
           },
           {
             "reference": "DZF8WCEBMD",
@@ -1260,7 +1361,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T08:58:00Z",
+            "isNew": false
           },
           {
             "reference": "DVPF976BR5",
@@ -1281,7 +1384,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T04:39:00Z",
+            "isNew": false
           },
           {
             "reference": "DVR6HW9HH7",
@@ -1302,7 +1407,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T06:22:00Z",
+            "isNew": false
           },
           {
             "reference": "DBS4V79F4V",
@@ -1323,7 +1430,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T10:16:00Z",
+            "isNew": false
           },
           {
             "reference": "DFGFVS9RS2",
@@ -1344,7 +1453,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T05:05:00Z",
+            "isNew": false
           },
           {
             "reference": "DZDJ2RG6KF",
@@ -1365,7 +1476,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T03:19:00Z",
+            "isNew": false
           },
           {
             "reference": "D64ZRACT99",
@@ -1386,7 +1499,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T06:58:00Z",
+            "isNew": false
           },
           {
             "reference": "DK859AQNMH",
@@ -1407,7 +1522,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T08:00:00Z",
+            "isNew": false
           },
           {
             "reference": "DVP33Z979D",
@@ -1428,7 +1545,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-02T05:24:00Z",
+            "isNew": false
           },
           {
             "reference": "DHCT3V9YAD",
@@ -1449,7 +1568,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-03T00:39:00Z",
+            "isNew": false
           },
           {
             "reference": "DGDY292NBH",
@@ -1470,7 +1591,9 @@
             "allowedNext": [
               "cancelled"
             ],
-            "isSample": true
+            "isSample": true,
+            "bookedAt": "2026-10-01T12:55:00Z",
+            "isNew": false
           }
         ]
       }
@@ -1496,7 +1619,9 @@
           "arrived",
           "cancelled"
         ],
-        "isSample": true
+        "isSample": true,
+        "bookedAt": "2026-10-01T06:27:00Z",
+        "isNew": false
       },
       {
         "reference": "DWFN46WXPY",
@@ -1518,7 +1643,9 @@
           "arrived",
           "cancelled"
         ],
-        "isSample": true
+        "isSample": true,
+        "bookedAt": "2026-09-30T23:25:00Z",
+        "isNew": false
       },
       {
         "reference": "DDVXRZMEFN",
@@ -1540,7 +1667,9 @@
           "arrived",
           "cancelled"
         ],
-        "isSample": true
+        "isSample": true,
+        "bookedAt": "2026-10-01T05:03:00Z",
+        "isNew": false
       },
       {
         "reference": "D5YHCQTM8J",
@@ -1562,7 +1691,9 @@
           "arrived",
           "cancelled"
         ],
-        "isSample": true
+        "isSample": true,
+        "bookedAt": "2026-10-03T18:26:00Z",
+        "isNew": false
       },
       {
         "reference": "D5VNRTTS3E",
@@ -1584,7 +1715,9 @@
           "arrived",
           "cancelled"
         ],
-        "isSample": true
+        "isSample": true,
+        "bookedAt": "2026-10-04T04:18:00Z",
+        "isNew": false
       }
     ],
     "recentBookings": [],
@@ -9385,11 +9518,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-01T03:41:00Z",
+      "isNew": false,
       "patientName": "Talha Zaidi",
       "emailMasked": "t****@e****.com",
       "reason": "Follow-up visit",
       "feePkr": 2000,
-      "bookedAt": "2026-10-01T03:41:00Z",
       "history": [
         {
           "at": "2026-10-01T03:41:00Z",
@@ -9432,11 +9566,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-02T02:29:00Z",
+      "isNew": false,
       "patientName": "Kamran Baig",
       "emailMasked": "k****@e****.com",
       "reason": "Thyroid profile review",
       "feePkr": 1500,
-      "bookedAt": "2026-10-02T02:29:00Z",
       "history": [
         {
           "at": "2026-10-02T02:29:00Z",
@@ -9479,11 +9614,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-02T01:18:00Z",
+      "isNew": false,
       "patientName": "Usman Butt",
       "emailMasked": "u****@e****.com",
       "reason": "Prescription renewal",
       "feePkr": 2000,
-      "bookedAt": "2026-10-02T01:18:00Z",
       "history": [
         {
           "at": "2026-10-02T01:18:00Z",
@@ -9526,11 +9662,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-03T03:25:00Z",
+      "isNew": false,
       "patientName": "Zubair Anwar",
       "emailMasked": "z****@e****.com",
       "reason": "Sample collection",
       "feePkr": 1500,
-      "bookedAt": "2026-10-03T03:25:00Z",
       "history": [
         {
           "at": "2026-10-03T03:25:00Z",
@@ -9573,11 +9710,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-03T11:12:00Z",
+      "isNew": false,
       "patientName": "Zubair Shah",
       "emailMasked": "z****@e****.com",
       "reason": "Follow-up visit",
       "feePkr": 2000,
-      "bookedAt": "2026-10-03T11:12:00Z",
       "history": [
         {
           "at": "2026-10-03T11:12:00Z",
@@ -9613,11 +9751,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-01T23:59:00Z",
+      "isNew": false,
       "patientName": "Amna Baig",
       "emailMasked": "a****@e****.com",
       "reason": "Diabetes screening",
       "feePkr": 1500,
-      "bookedAt": "2026-10-01T23:59:00Z",
       "history": [
         {
           "at": "2026-10-01T23:59:00Z",
@@ -9660,11 +9799,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-01T03:12:00Z",
+      "isNew": false,
       "patientName": "Nimra Aslam",
       "emailMasked": "n****@e****.com",
       "reason": "Follow-up visit",
       "feePkr": 2000,
-      "bookedAt": "2026-10-01T03:12:00Z",
       "history": [
         {
           "at": "2026-10-01T03:12:00Z",
@@ -9707,11 +9847,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-03T20:15:00Z",
+      "isNew": false,
       "patientName": "Asad Khan",
       "emailMasked": "a****@e****.com",
       "reason": "Diabetes screening",
       "feePkr": 1500,
-      "bookedAt": "2026-10-03T20:15:00Z",
       "history": [
         {
           "at": "2026-10-03T20:15:00Z",
@@ -9754,11 +9895,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-01T00:23:00Z",
+      "isNew": false,
       "patientName": "Talha Nadeem",
       "emailMasked": "t****@e****.com",
       "reason": "Prescription renewal",
       "feePkr": 2000,
-      "bookedAt": "2026-10-01T00:23:00Z",
       "history": [
         {
           "at": "2026-10-01T00:23:00Z",
@@ -9801,11 +9943,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-01T19:57:00Z",
+      "isNew": false,
       "patientName": "Anaya Raza",
       "emailMasked": "a****@e****.com",
       "reason": "Cough and cold",
       "feePkr": 2500,
-      "bookedAt": "2026-10-01T19:57:00Z",
       "history": [
         {
           "at": "2026-10-01T19:57:00Z",
@@ -9849,11 +9992,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-02T04:22:00Z",
+      "isNew": false,
       "patientName": "Saba Khan",
       "emailMasked": "s****@e****.com",
       "reason": "Sample collection",
       "feePkr": 1500,
-      "bookedAt": "2026-10-02T04:22:00Z",
       "history": [
         {
           "at": "2026-10-02T04:22:00Z",
@@ -9896,11 +10040,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-03T04:32:00Z",
+      "isNew": false,
       "patientName": "Usman Anwar",
       "emailMasked": "u****@e****.com",
       "reason": "Follow-up visit",
       "feePkr": 2000,
-      "bookedAt": "2026-10-03T04:32:00Z",
       "history": [
         {
           "at": "2026-10-03T04:32:00Z",
@@ -9936,11 +10081,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-09-30T19:28:00Z",
+      "isNew": false,
       "patientName": "Amna Iqbal",
       "emailMasked": "a****@e****.com",
       "reason": "Blood test review",
       "feePkr": 1500,
-      "bookedAt": "2026-09-30T19:28:00Z",
       "history": [
         {
           "at": "2026-09-30T19:28:00Z",
@@ -9983,11 +10129,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-03T04:20:00Z",
+      "isNew": false,
       "patientName": "Hadi Zaidi",
       "emailMasked": "z****@e****.com",
       "reason": "Cough and cold",
       "feePkr": 2500,
-      "bookedAt": "2026-10-03T04:20:00Z",
       "history": [
         {
           "at": "2026-10-03T04:20:00Z",
@@ -10031,11 +10178,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-03T22:04:00Z",
+      "isNew": false,
       "patientName": "Iqra Tariq",
       "emailMasked": "i****@e****.com",
       "reason": "Diabetes screening",
       "feePkr": 1500,
-      "bookedAt": "2026-10-03T22:04:00Z",
       "history": [
         {
           "at": "2026-10-03T22:04:00Z",
@@ -10071,11 +10219,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-03T17:07:00Z",
+      "isNew": false,
       "patientName": "Talha Raza",
       "emailMasked": "t****@e****.com",
       "reason": "Routine check-up",
       "feePkr": 2000,
-      "bookedAt": "2026-10-03T17:07:00Z",
       "history": [
         {
           "at": "2026-10-03T17:07:00Z",
@@ -10118,11 +10267,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-02T00:58:00Z",
+      "isNew": false,
       "patientName": "Musa Zaidi",
       "emailMasked": "s****@e****.com",
       "reason": "Vaccination",
       "feePkr": 2500,
-      "bookedAt": "2026-10-02T00:58:00Z",
       "history": [
         {
           "at": "2026-10-02T00:58:00Z",
@@ -10166,11 +10316,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-02T05:17:00Z",
+      "isNew": false,
       "patientName": "Rabia Hussain",
       "emailMasked": "r****@e****.com",
       "reason": "Blood test review",
       "feePkr": 1500,
-      "bookedAt": "2026-10-02T05:17:00Z",
       "history": [
         {
           "at": "2026-10-02T05:17:00Z",
@@ -10206,11 +10357,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-02T05:50:00Z",
+      "isNew": false,
       "patientName": "Ayesha Hussain",
       "emailMasked": "a****@e****.com",
       "reason": "Skin rash",
       "feePkr": 2000,
-      "bookedAt": "2026-10-02T05:50:00Z",
       "history": [
         {
           "at": "2026-10-02T05:50:00Z",
@@ -10253,11 +10405,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-03T08:06:00Z",
+      "isNew": false,
       "patientName": "Zubair Anwar",
       "emailMasked": "z****@e****.com",
       "reason": "Sample collection",
       "feePkr": 1500,
-      "bookedAt": "2026-10-03T08:06:00Z",
       "history": [
         {
           "at": "2026-10-03T08:06:00Z",
@@ -10296,11 +10449,12 @@
         "no_show"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-02T02:28:00Z",
+      "isNew": false,
       "patientName": "Danish Raza",
       "emailMasked": "d****@e****.com",
       "reason": "Fever and cough",
       "feePkr": 2000,
-      "bookedAt": "2026-10-02T02:28:00Z",
       "history": [
         {
           "at": "2026-10-02T02:28:00Z",
@@ -10339,11 +10493,12 @@
         "no_show"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-02T21:02:00Z",
+      "isNew": false,
       "patientName": "Hira Khan",
       "emailMasked": "h****@e****.com",
       "reason": "Diabetes screening",
       "feePkr": 1500,
-      "bookedAt": "2026-10-02T21:02:00Z",
       "history": [
         {
           "at": "2026-10-02T21:02:00Z",
@@ -10381,11 +10536,12 @@
         "completed"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-01T21:16:00Z",
+      "isNew": false,
       "patientName": "Mehwish Shah",
       "emailMasked": "m****@e****.com",
       "reason": "Skin rash",
       "feePkr": 2000,
-      "bookedAt": "2026-10-01T21:16:00Z",
       "history": [
         {
           "at": "2026-10-01T21:16:00Z",
@@ -10423,11 +10579,12 @@
         "completed"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T02:02:00Z",
+      "isNew": false,
       "patientName": "Arham Khan",
       "emailMasked": "h****@e****.com",
       "reason": "Growth check",
       "feePkr": 2500,
-      "bookedAt": "2026-10-03T02:02:00Z",
       "history": [
         {
           "at": "2026-10-03T02:02:00Z",
@@ -10464,11 +10621,12 @@
       },
       "allowedNext": [],
       "isSample": true,
+      "bookedAt": "2026-10-02T05:19:00Z",
+      "isNew": false,
       "patientName": "Khadija Zaidi",
       "emailMasked": "k****@e****.com",
       "reason": "Diabetes screening",
       "feePkr": 1500,
-      "bookedAt": "2026-10-02T05:19:00Z",
       "history": [
         {
           "at": "2026-10-02T05:19:00Z",
@@ -10507,11 +10665,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-01T06:27:00Z",
+      "isNew": false,
       "patientName": "Usman Tariq",
       "emailMasked": "u****@e****.com",
       "reason": "Blood pressure review",
       "feePkr": 2000,
-      "bookedAt": "2026-10-01T06:27:00Z",
       "history": [
         {
           "at": "2026-10-01T06:27:00Z",
@@ -10543,11 +10702,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-09-30T23:25:00Z",
+      "isNew": false,
       "patientName": "Anaya Baig",
       "emailMasked": "h****@e****.com",
       "reason": "Growth check",
       "feePkr": 2500,
-      "bookedAt": "2026-09-30T23:25:00Z",
       "history": [
         {
           "at": "2026-09-30T23:25:00Z",
@@ -10580,11 +10740,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-01T05:03:00Z",
+      "isNew": false,
       "patientName": "Nimra Latif",
       "emailMasked": "n****@e****.com",
       "reason": "Diabetes screening",
       "feePkr": 1500,
-      "bookedAt": "2026-10-01T05:03:00Z",
       "history": [
         {
           "at": "2026-10-01T05:03:00Z",
@@ -10616,11 +10777,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T18:26:00Z",
+      "isNew": false,
       "patientName": "Javeria Anwar",
       "emailMasked": "j****@e****.com",
       "reason": "Blood pressure review",
       "feePkr": 2000,
-      "bookedAt": "2026-10-03T18:26:00Z",
       "history": [
         {
           "at": "2026-10-03T18:26:00Z",
@@ -10652,11 +10814,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-04T04:18:00Z",
+      "isNew": false,
       "patientName": "Alishba Siddiqui",
       "emailMasked": "m****@e****.com",
       "reason": "Vaccination",
       "feePkr": 2500,
-      "bookedAt": "2026-10-04T04:18:00Z",
       "history": [
         {
           "at": "2026-10-04T04:18:00Z",
@@ -10689,11 +10852,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-02T22:17:00Z",
+      "isNew": false,
       "patientName": "Yasir Iqbal",
       "emailMasked": "y****@e****.com",
       "reason": "Skin rash",
       "feePkr": 2000,
-      "bookedAt": "2026-10-02T22:17:00Z",
       "history": [
         {
           "at": "2026-10-02T22:17:00Z",
@@ -10725,11 +10889,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-04T02:21:00Z",
+      "isNew": false,
       "patientName": "Hira Rehman",
       "emailMasked": "h****@e****.com",
       "reason": "Eczema flare-up",
       "feePkr": 3000,
-      "bookedAt": "2026-10-04T02:21:00Z",
       "history": [
         {
           "at": "2026-10-04T02:21:00Z",
@@ -10761,11 +10926,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T04:53:00Z",
+      "isNew": false,
       "patientName": "Hira Rehman",
       "emailMasked": "h****@e****.com",
       "reason": "Acne review",
       "feePkr": 3000,
-      "bookedAt": "2026-10-03T04:53:00Z",
       "history": [
         {
           "at": "2026-10-03T04:53:00Z",
@@ -10797,11 +10963,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-01T04:38:00Z",
+      "isNew": false,
       "patientName": "Saad Iqbal",
       "emailMasked": "s****@e****.com",
       "reason": "Routine check-up",
       "feePkr": 2000,
-      "bookedAt": "2026-10-01T04:38:00Z",
       "history": [
         {
           "at": "2026-10-01T04:38:00Z",
@@ -10833,11 +11000,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-01T23:43:00Z",
+      "isNew": false,
       "patientName": "Zubair Zaidi",
       "emailMasked": "z****@e****.com",
       "reason": "Follow-up visit",
       "feePkr": 3000,
-      "bookedAt": "2026-10-01T23:43:00Z",
       "history": [
         {
           "at": "2026-10-01T23:43:00Z",
@@ -10869,11 +11037,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T03:40:00Z",
+      "isNew": false,
       "patientName": "Inaya Hussain",
       "emailMasked": "m****@e****.com",
       "reason": "Well-child check-up",
       "feePkr": 2500,
-      "bookedAt": "2026-10-03T03:40:00Z",
       "history": [
         {
           "at": "2026-10-03T03:40:00Z",
@@ -10906,11 +11075,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-01T22:38:00Z",
+      "isNew": false,
       "patientName": "Waqas Anwar",
       "emailMasked": "w****@e****.com",
       "reason": "Mole check",
       "feePkr": 3000,
-      "bookedAt": "2026-10-01T22:38:00Z",
       "history": [
         {
           "at": "2026-10-01T22:38:00Z",
@@ -10942,11 +11112,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-04T07:19:00Z",
+      "isNew": false,
       "patientName": "Sadia Rehman",
       "emailMasked": "s****@e****.com",
       "reason": "Eczema flare-up",
       "feePkr": 3000,
-      "bookedAt": "2026-10-04T07:19:00Z",
       "history": [
         {
           "at": "2026-10-04T07:19:00Z",
@@ -10977,11 +11148,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T05:55:00Z",
+      "isNew": false,
       "patientName": "Alishba Baig",
       "emailMasked": "s****@e****.com",
       "reason": "Growth check",
       "feePkr": 2500,
-      "bookedAt": "2026-10-03T05:55:00Z",
       "history": [
         {
           "at": "2026-10-03T05:55:00Z",
@@ -11013,11 +11185,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T02:33:00Z",
+      "isNew": false,
       "patientName": "Yasir Butt",
       "emailMasked": "y****@e****.com",
       "reason": "Mole check",
       "feePkr": 3000,
-      "bookedAt": "2026-10-03T02:33:00Z",
       "history": [
         {
           "at": "2026-10-03T02:33:00Z",
@@ -11048,11 +11221,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-02T02:23:00Z",
+      "isNew": false,
       "patientName": "Fatima Latif",
       "emailMasked": "f****@e****.com",
       "reason": "Acne review",
       "feePkr": 3000,
-      "bookedAt": "2026-10-02T02:23:00Z",
       "history": [
         {
           "at": "2026-10-02T02:23:00Z",
@@ -11083,11 +11257,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T03:13:00Z",
+      "isNew": false,
       "patientName": "Sana Akhtar",
       "emailMasked": "s****@e****.com",
       "reason": "Hair fall",
       "feePkr": 3000,
-      "bookedAt": "2026-10-03T03:13:00Z",
       "history": [
         {
           "at": "2026-10-03T03:13:00Z",
@@ -11118,11 +11293,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-02T22:59:00Z",
+      "isNew": false,
       "patientName": "Sana Shah",
       "emailMasked": "s****@e****.com",
       "reason": "Skin rash",
       "feePkr": 3000,
-      "bookedAt": "2026-10-02T22:59:00Z",
       "history": [
         {
           "at": "2026-10-02T22:59:00Z",
@@ -11153,11 +11329,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T02:08:00Z",
+      "isNew": false,
       "patientName": "Ali Anwar",
       "emailMasked": "a****@e****.com",
       "reason": "Mole check",
       "feePkr": 3000,
-      "bookedAt": "2026-10-03T02:08:00Z",
       "history": [
         {
           "at": "2026-10-03T02:08:00Z",
@@ -11188,11 +11365,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-04T10:40:00Z",
+      "isNew": false,
       "patientName": "Nimra Siddiqui",
       "emailMasked": "n****@e****.com",
       "reason": "Follow-up visit",
       "feePkr": 3000,
-      "bookedAt": "2026-10-04T10:40:00Z",
       "history": [
         {
           "at": "2026-10-04T10:40:00Z",
@@ -11223,11 +11401,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T18:48:00Z",
+      "isNew": false,
       "patientName": "Fatima Javed",
       "emailMasked": "f****@e****.com",
       "reason": "Chest discomfort",
       "feePkr": 3500,
-      "bookedAt": "2026-10-03T18:48:00Z",
       "history": [
         {
           "at": "2026-10-03T18:48:00Z",
@@ -11258,11 +11437,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T05:49:00Z",
+      "isNew": false,
       "patientName": "Ayesha Zaidi",
       "emailMasked": "a****@e****.com",
       "reason": "Skin rash",
       "feePkr": 3000,
-      "bookedAt": "2026-10-03T05:49:00Z",
       "history": [
         {
           "at": "2026-10-03T05:49:00Z",
@@ -11293,11 +11473,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-02T08:58:00Z",
+      "isNew": false,
       "patientName": "Iqra Shah",
       "emailMasked": "i****@e****.com",
       "reason": "Palpitations",
       "feePkr": 3500,
-      "bookedAt": "2026-10-02T08:58:00Z",
       "history": [
         {
           "at": "2026-10-02T08:58:00Z",
@@ -11328,11 +11509,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T04:39:00Z",
+      "isNew": false,
       "patientName": "Danish Shah",
       "emailMasked": "d****@e****.com",
       "reason": "Chest discomfort",
       "feePkr": 3500,
-      "bookedAt": "2026-10-03T04:39:00Z",
       "history": [
         {
           "at": "2026-10-03T04:39:00Z",
@@ -11363,11 +11545,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-02T06:22:00Z",
+      "isNew": false,
       "patientName": "Maryam Javed",
       "emailMasked": "m****@e****.com",
       "reason": "Chest discomfort",
       "feePkr": 3500,
-      "bookedAt": "2026-10-02T06:22:00Z",
       "history": [
         {
           "at": "2026-10-02T06:22:00Z",
@@ -11398,11 +11581,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-01T10:16:00Z",
+      "isNew": false,
       "patientName": "Nimra Nadeem",
       "emailMasked": "n****@e****.com",
       "reason": "ECG review",
       "feePkr": 3500,
-      "bookedAt": "2026-10-01T10:16:00Z",
       "history": [
         {
           "at": "2026-10-01T10:16:00Z",
@@ -11433,11 +11617,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-01T05:05:00Z",
+      "isNew": false,
       "patientName": "Junaid Shah",
       "emailMasked": "j****@e****.com",
       "reason": "Chest discomfort",
       "feePkr": 3500,
-      "bookedAt": "2026-10-01T05:05:00Z",
       "history": [
         {
           "at": "2026-10-01T05:05:00Z",
@@ -11468,11 +11653,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T03:19:00Z",
+      "isNew": false,
       "patientName": "Hira Javed",
       "emailMasked": "h****@e****.com",
       "reason": "ECG review",
       "feePkr": 3500,
-      "bookedAt": "2026-10-03T03:19:00Z",
       "history": [
         {
           "at": "2026-10-03T03:19:00Z",
@@ -11503,11 +11689,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-01T06:58:00Z",
+      "isNew": false,
       "patientName": "Yasir Siddiqui",
       "emailMasked": "y****@e****.com",
       "reason": "Palpitations",
       "feePkr": 3500,
-      "bookedAt": "2026-10-01T06:58:00Z",
       "history": [
         {
           "at": "2026-10-01T06:58:00Z",
@@ -11538,11 +11725,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T08:00:00Z",
+      "isNew": false,
       "patientName": "Iqra Rehman",
       "emailMasked": "i****@e****.com",
       "reason": "Blood pressure review",
       "feePkr": 3500,
-      "bookedAt": "2026-10-03T08:00:00Z",
       "history": [
         {
           "at": "2026-10-03T08:00:00Z",
@@ -11573,11 +11761,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-02T05:24:00Z",
+      "isNew": false,
       "patientName": "Maryam Raza",
       "emailMasked": "m****@e****.com",
       "reason": "Blood pressure review",
       "feePkr": 3500,
-      "bookedAt": "2026-10-02T05:24:00Z",
       "history": [
         {
           "at": "2026-10-02T05:24:00Z",
@@ -11608,11 +11797,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-03T00:39:00Z",
+      "isNew": false,
       "patientName": "Talha Latif",
       "emailMasked": "t****@e****.com",
       "reason": "Blood pressure review",
       "feePkr": 3500,
-      "bookedAt": "2026-10-03T00:39:00Z",
       "history": [
         {
           "at": "2026-10-03T00:39:00Z",
@@ -11643,11 +11833,12 @@
         "cancelled"
       ],
       "isSample": true,
+      "bookedAt": "2026-10-01T12:55:00Z",
+      "isNew": false,
       "patientName": "Waqas Baig",
       "emailMasked": "w****@e****.com",
       "reason": "Follow-up after echo",
       "feePkr": 3500,
-      "bookedAt": "2026-10-01T12:55:00Z",
       "history": [
         {
           "at": "2026-10-01T12:55:00Z",

@@ -29,7 +29,7 @@ const randomCode = (length) => Array.from({ length }, () => ALPHABET[Math.floor(
 
 const errorBody = (code, message, extra = {}) => ({ error: { code, message, requestId: "mock" }, ...extra });
 const refuse = (status, code, message, extra) => ({ status, body: errorBody(code, message, extra) });
-const SUMMARY_KEYS = ["reference", "startsAt", "endsAt", "localDate", "localTime", "status", "version", "patientNameMasked", "phoneMasked", "doctor", "allowedNext", "isSample"];
+const SUMMARY_KEYS = ["reference", "startsAt", "endsAt", "localDate", "localTime", "status", "version", "patientNameMasked", "phoneMasked", "doctor", "allowedNext", "isSample", "bookedAt"];
 const pick = (object, keys) => Object.fromEntries(keys.filter((key) => key in object).map((key) => [key, object[key]]));
 
 /** `0315****277` -> `0315 0000277`: a full number that is consistent with its masked form. */
@@ -42,8 +42,41 @@ export function createBookings({ fixture, now }) {
   const stamp = () => new Date(nowMs()).toISOString().replace(/\.\d{3}Z$/, "Z");
   const departmentIds = new Map(fixture.lookups.departments.map((department) => [department.name, department.id]));
 
-  const seed = (prefix) =>
-    fixture.details.map((detail) => ({ ...structuredClone(detail), reference: prefix ? prefix + detail.reference.slice(1) : detail.reference, version: 1 }));
+  const seed = (prefix) => {
+    const today = fixture.details.map((detail) => ({ ...structuredClone(detail), reference: prefix ? prefix + detail.reference.slice(1) : detail.reference, version: 1 }));
+    return [...today, ...upcoming(prefix)];
+  };
+
+  /**
+   * Feature 012: bookings on the next three days (the fixture is one day). They copy the first eight of
+   * today's bookings, are always confirmed, and were made a few hours apart before "now", so the newest
+   * ones are New. `future` keeps them out of the Overview's recentBookings (older tests rely on that list).
+   */
+  function upcoming(prefix) {
+    const out = [];
+    for (let offset = 1; offset <= 3; offset += 1) {
+      fixture.details.slice(0, 8).forEach((detail, index) => {
+        const shift = offset * 86_400_000;
+        const startsAt = new Date(Date.parse(detail.startsAt) + shift).toISOString().replace(/\.\d{3}Z$/, "Z");
+        const endsAt = new Date(Date.parse(detail.endsAt) + shift).toISOString().replace(/\.\d{3}Z$/, "Z");
+        const localDate = new Date(Date.parse(`${detail.localDate}T00:00:00Z`) + shift).toISOString().slice(0, 10);
+        const serialNo = (offset - 1) * 8 + index;
+        out.push({
+          ...structuredClone(detail),
+          reference: `${prefix ? "G" : "F"}${offset}${detail.reference.slice(2)}`,
+          version: 1,
+          status: "confirmed",
+          startsAt,
+          endsAt,
+          localDate,
+          bookedAt: new Date(Date.parse(now) - (serialNo + 1) * 3 * 3_600_000).toISOString().replace(/\.\d{3}Z$/, "Z"),
+          history: [{ at: stamp(), toStatus: "confirmed", actor: "Online booking", isUndo: false }],
+          future: true,
+        });
+      });
+    }
+    return out;
+  }
 
   let staffBookings = seed("R");
   const demoBookings = seed(null);
@@ -57,7 +90,34 @@ export function createBookings({ fixture, now }) {
   };
 
   const withNext = (booking) => ({ ...booking, allowedNext: allowedNext(booking.status, Date.parse(booking.startsAt), nowMs()) });
-  const summaryOf = (booking) => pick(withNext(booking), SUMMARY_KEYS);
+  const summaryOf = (booking, isNew = false) => ({ ...pick(withNext(booking), SUMMARY_KEYS), isNew });
+
+  // Feature 012. A staff session remembers what it opened (by e-mail); "Mark all seen" moves its watermark to
+  // now. The demo, like the backend's, never stores anything: its New set is fixed.
+  const seen = new Map();
+  const watermarks = new Map();
+  const seenOf = (session) => {
+    if (!seen.has(session.email)) seen.set(session.email, new Set());
+    return seen.get(session.email);
+  };
+  const DEMO_NEW_LIMIT = 12;
+  function newBookings(session) {
+    const demo = session.kind === "demo";
+    const list = demo ? demoBookings : staffBookings;
+    const opened = demo ? new Set() : seenOf(session);
+    const mark = demo ? 0 : (watermarks.get(session.email) ?? 0);
+    const found = list
+      .filter((b) => b.bookedAt && Date.parse(b.bookedAt) <= nowMs() && Date.parse(b.bookedAt) >= nowMs() - 24 * 3_600_000 && Date.parse(b.startsAt) > nowMs())
+      .filter((b) => Date.parse(b.bookedAt) > mark && !opened.has(b.reference))
+      .sort((a, b) => b.bookedAt.localeCompare(a.bookedAt) || a.reference.localeCompare(b.reference))
+      .slice(0, demo ? DEMO_NEW_LIMIT : undefined);
+    return found;
+  }
+  const newRefs = (session) => new Set(newBookings(session).map((b) => b.reference));
+  const bell = (session) => {
+    const found = newBookings(session);
+    return { count: found.length, items: found.slice(0, 5).map((b) => summaryOf(b, true)) };
+  };
   const find = (list, reference) => list.find((booking) => booking.reference === reference);
 
   /** A fresh future booking for one test to own (tests run in parallel against one mock). */
@@ -86,13 +146,18 @@ export function createBookings({ fixture, now }) {
     return reference;
   }
 
-  function searchResult(list, body) {
+  function searchResult(list, body, session) {
     const q = typeof body.q === "string" ? body.q.trim().toLowerCase() : "";
-    const from = body.from ?? body.to ?? fixture.meta.date;
-    const to = body.to ?? from;
+    const tomorrow = new Date(Date.parse(`${fixture.meta.date}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+    const hours = body.bookedWithinHours;
+    const noDates = Boolean(q) || (hours && !body.from && !body.to);
+    const from = body.scope === "upcoming" ? tomorrow : (body.from ?? body.to ?? fixture.meta.date);
+    const to = body.scope === "upcoming" ? "9999-12-31" : (body.to ?? from);
     const wanted = Array.isArray(body.statuses) ? body.statuses : [];
+    const newSet = newRefs(session);
     const inWindow = list
-      .filter((b) => b.localDate >= from && b.localDate <= to)
+      .filter((b) => noDates || (b.localDate >= from && b.localDate <= to))
+      .filter((b) => !hours || (Date.parse(b.bookedAt) >= nowMs() - hours * 3_600_000 && Date.parse(b.bookedAt) <= nowMs()))
       .filter((b) => !q || b.reference.toLowerCase().includes(q) || b.patientName.toLowerCase().includes(q))
       .filter((b) => !body.doctorId || b.doctor.id === body.doctorId)
       .filter((b) => !body.departmentId || departmentIds.get(b.doctor.departmentName) === body.departmentId);
@@ -100,9 +165,19 @@ export function createBookings({ fixture, now }) {
     for (const b of inWindow) statusCounts[b.status] = (statusCounts[b.status] ?? 0) + 1;
     const hits = inWindow
       .filter((b) => wanted.length === 0 || wanted.includes(b.status))
-      .sort((a, b) => a.startsAt.localeCompare(b.startsAt) || a.doctor.name.localeCompare(b.doctor.name) || a.reference.localeCompare(b.reference));
+      .sort((a, b) =>
+        body.sort === "recently_booked"
+          ? b.bookedAt.localeCompare(a.bookedAt) || a.reference.localeCompare(b.reference)
+          : a.startsAt.localeCompare(b.startsAt) || a.doctor.name.localeCompare(b.doctor.name) || a.reference.localeCompare(b.reference),
+      );
     const page = Number.isInteger(body.page) && body.page >= 1 ? body.page : 1;
-    return { items: hits.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(summaryOf), total: hits.length, statusCounts, page, pageSize: PAGE_SIZE };
+    const result = { items: hits.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((b) => summaryOf(b, newSet.has(b.reference))), total: hits.length, statusCounts, page, pageSize: PAGE_SIZE };
+    if (body.scope === "upcoming") {
+      const perDay = new Map();
+      for (const b of hits) perDay.set(b.localDate, (perDay.get(b.localDate) ?? 0) + 1);
+      result.dayCounts = [...perDay.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, count }));
+    }
+    return result;
   }
 
   /**
@@ -123,7 +198,26 @@ export function createBookings({ fixture, now }) {
         return refuse(422, "validation_error", "Some request parameters are invalid.");
       }
       if (typeof body.q === "string" && body.q.length > 80) return refuse(422, "validation_error", "Some request parameters are invalid.");
-      return { status: 200, body: searchResult(list, body) };
+      if (![undefined, 24, 168].includes(body.bookedWithinHours)) return refuse(422, "validation_error", "Some request parameters are invalid.");
+      return { status: 200, body: searchResult(list, body, session) };
+    }
+
+    if (method === "GET" && route === "/bookings/new") return { status: 200, body: bell(session) };
+
+    if (method === "POST" && route === "/bookings/seen") {
+      let body;
+      try {
+        body = bodyText ? JSON.parse(bodyText) : {};
+      } catch {
+        return refuse(422, "validation_error", "Some request parameters are invalid.");
+      }
+      const references = Array.isArray(body.references) ? body.references : [];
+      if (Boolean(body.all) === (references.length > 0)) return refuse(422, "validation_error", "Some request parameters are invalid.");
+      if (!demo) {
+        if (body.all) watermarks.set(session.email, nowMs() + 60_000);
+        else for (const reference of references) seenOf(session).add(String(reference).toUpperCase());
+      }
+      return { status: 200, body: bell(session) };
     }
 
     const match = route.match(/^\/bookings\/([0-9A-Za-z]{10})(\/status\/undo|\/status|\/reveal-phone)?$/);
@@ -220,23 +314,41 @@ export function createBookings({ fixture, now }) {
       .filter((b) => b.status === "confirmed" && Date.parse(b.startsAt) >= nowMs() - 15 * 60_000)
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt) || a.doctor.name.localeCompare(b.doctor.name) || a.reference.localeCompare(b.reference))
       .slice(0, 5)
-      .map(summaryOf);
+      .map((b) => summaryOf(b));
     const recentBookings = demo
       ? []
       : staffBookings
-          .filter((b) => b.bookedAt)
+          .filter((b) => b.bookedAt && !b.future)
           .sort((a, b) => b.bookedAt.localeCompare(a.bookedAt) || a.reference.localeCompare(b.reference))
           .slice(0, 5)
-          .map((b) => ({ ...summaryOf(b), bookedAt: b.bookedAt }));
+          .map((b) => summaryOf(b));
     return {
       localDate: fixture.meta.date,
       now: now,
       clinicClosed: closed ? "Founders Day" : null,
       kpis,
+      cards: cardsOf(session, state, closed),
       agenda,
       nextUp,
       recentBookings,
       isSample: demo,
+    };
+  }
+
+  /** Feature 012 count cards over the mock's bookings (a session marked "closed"/"empty" has none). */
+  function cardsOf(session, state, closed) {
+    const list = session.kind === "demo" ? demoBookings : staffBookings;
+    const day = (offset) => new Date(Date.parse(`${fixture.meta.date}T00:00:00Z`) + offset * 86_400_000).toISOString().slice(0, 10);
+    const active = (b) => b.status !== "cancelled";
+    const on = (date) => list.filter((b) => b.localDate === date && active(b)).length;
+    if (state) return { today: 0, tomorrow: closed ? on(day(1)) : 0, next7Days: 0, newSinceLastVisit: 0, cancelledThisWeek: 0 };
+    const monday = -((new Date(`${fixture.meta.date}T00:00:00Z`).getUTCDay() + 6) % 7);
+    return {
+      today: on(day(0)),
+      tomorrow: on(day(1)),
+      next7Days: list.filter((b) => b.localDate >= day(1) && b.localDate <= day(7) && active(b)).length,
+      newSinceLastVisit: newBookings(session).length,
+      cancelledThisWeek: list.filter((b) => b.localDate >= day(monday) && b.localDate <= day(monday + 6) && b.status === "cancelled").length,
     };
   }
 

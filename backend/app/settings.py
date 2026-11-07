@@ -108,6 +108,13 @@ class Settings(BaseSettings):
     assistant_ai_monthly_budget_usd: float = Field(5.0, ge=0, le=500)
     assistant_ai_per_ip_per_hour: int = Field(20, ge=1, le=1000)
     assistant_ai_per_day: int = Field(500, ge=1, le=100_000)
+    # Feature 012: clinic email alerts (a new booking, and a morning summary). OFF unless enabled
+    # AND the key, sender and recipients are all set; see docs/runbooks/email-alerts.md.
+    email_alerts_enabled: bool = False
+    email_api_key: SecretStr | None = None
+    email_alerts_from: str | None = None
+    email_alerts_to: str | None = None  # comma-separated clinic addresses
+    email_alerts_link: str | None = None  # the Command Centre address shown as a button
 
     @field_validator("booking_proxy_secret", "privacy_hash_key", "session_secret", mode="before")
     @classmethod

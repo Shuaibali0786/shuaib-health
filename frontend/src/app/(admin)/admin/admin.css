@@ -1745,7 +1745,7 @@ svg.i-sm {
     color: var(--ink);
   }
   .bcard .t {
-    grid-row: span 2;
+    grid-row: span 3;
     font-size: calc(22px * var(--display-scale));
     line-height: 1;
   }
@@ -3208,4 +3208,258 @@ svg.i-sm {
   width: 20px;
   height: 20px;
   margin-top: 1px;
+}
+
+/* ----- Feature 012: upcoming bookings, New badge, bell, count cards ------------------------ */
+.new-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 18px;
+  vertical-align: 1px;
+}
+.bk tr[data-new="true"] td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.bcard[data-new="true"] {
+  border-color: var(--accent);
+}
+.bcard .booked-ago {
+  grid-column: 2;
+  font-size: 12px;
+  color: var(--muted);
+}
+.bk .booked-on {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.bk .day-row th,
+.bcards .day-head h3 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  padding: 10px 16px;
+  background: var(--bg-tint);
+  color: var(--heading);
+  font-size: 14px;
+  font-weight: 600;
+  border-block: 1px solid var(--border);
+}
+.bk .day-row th {
+  display: table-cell;
+}
+.day-count {
+  margin-left: 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.bcards .day-head {
+  margin-top: 6px;
+}
+.bcards .day-head h3 {
+  margin: 0;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.chip-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  padding-right: 2px;
+}
+.search-note {
+  margin: 0;
+  padding: 0 16px 8px;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.m-filters .search-note {
+  padding: 6px 2px 0;
+}
+
+.bell {
+  position: relative;
+  display: inline-flex;
+}
+.bell-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--heading);
+}
+.bell[data-tone="dark"] .bell-btn {
+  color: var(--color-white);
+  border-color: color-mix(in srgb, var(--color-white) 30%, transparent);
+  background: transparent;
+}
+.bell-count {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--color-teal-700);
+  color: var(--color-white);
+  border: 2px solid var(--card);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+.bell[data-tone="dark"] .bell-count {
+  border-color: var(--color-navy-900);
+}
+.bell-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(70vh, 480px);
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-soft-cc);
+  text-align: left;
+}
+.bell-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+}
+.bell-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.bell-panel li button {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  text-align: left;
+  color: var(--ink);
+  background: none;
+  border: 0;
+}
+.bell-panel li button:hover,
+.bell-panel li button:focus-visible {
+  background: var(--accent-bg);
+}
+.bell-panel li button b {
+  color: var(--heading);
+}
+.bell-panel li button span {
+  font-size: 13px;
+}
+.bell-panel li button small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.bell-panel .muted {
+  margin: 0;
+  padding: 12px 10px;
+}
+
+.count-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.count-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.count-card:hover {
+  border-color: var(--accent);
+}
+.count-card .label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.count-card .value {
+  font-family: var(--font-display);
+  font-weight: var(--numeral-weight);
+  font-size: calc(30px * var(--display-scale));
+  line-height: 1;
+  color: var(--heading);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+@media (max-width: 1399px) and (min-width: 901px) {
+  .count-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .count-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .count-card {
+    padding: 13px 14px;
+  }
+  .count-card:last-child {
+    grid-column: span 2;
+  }
+}
+@media print {
+  .bell,
+  .new-badge {
+    display: none !important;
+  }
+}
+
+/* The bell joins the phone top bar: keep it one line (the sticky filters sit at its height). */
+@media (max-width: 900px) {
+  .m-top-actions {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+  .m-top-actions .bell-btn {
+    width: 36px;
+  }
+  .m-top > :first-child {
+    min-width: 0;
+  }
+  .m-top .brand-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }

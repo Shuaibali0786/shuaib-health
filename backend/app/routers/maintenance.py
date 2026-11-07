@@ -7,6 +7,7 @@ bearer token the route answers 404, so it does not reveal that it exists.
 import hmac
 import logging
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 import sentry_sdk
 from fastapi import APIRouter, Depends, Header, Request
@@ -15,8 +16,11 @@ from sqlalchemy import Engine
 
 from app.booking.clock import Clock, get_clock
 from app.booking.maintenance import run_purge
-from app.db import get_engine
+from app.command_centre import service as cc_service
+from app.db import SessionDep, get_engine
 from app.errors import NotFound, error_response
+from app.notifications import sender, templates
+from app.repositories import clinic as clinic_repo
 from app.settings import Settings
 
 logger = logging.getLogger("app.maintenance")
@@ -76,3 +80,34 @@ def purge(
         logger.warning("purge_failed: %s", type(error).__name__)
         return error_response(500, "internal_error", "Something went wrong.")
     return JSONResponse({"status": "ok", "purged": purged}, headers=NO_STORE)
+
+
+@router.api_route("/daily-summary", methods=["GET", "POST"], dependencies=[Depends(require_cron)])
+def daily_summary(
+    request: Request,
+    session: SessionDep,
+    clock: Annotated[Clock, Depends(get_clock)],
+) -> Response:
+    """The morning email ("Today 8, tomorrow 5"), called once a day by Vercel Cron. A no-op while
+    ``EMAIL_ALERTS_ENABLED`` is off or not fully set up."""
+    settings: Settings = request.app.state.settings
+    if sender.mail_config(settings) is None:
+        return JSONResponse({"status": "disabled"}, headers=NO_STORE)
+    try:
+        clinic = clinic_repo.get_clinic_settings(session)
+        if clinic is None:
+            return JSONResponse({"status": "no_clinic"}, headers=NO_STORE)
+        facts = cc_service.daily_summary(
+            session,
+            ZoneInfo(clinic.time_zone),
+            clock.now(),
+            clinic.name,
+        )
+        sent = sender.send(
+            settings,
+            templates.daily_summary_email(facts, link=settings.email_alerts_link),
+        )
+    except Exception as error:
+        logger.warning("daily_summary_failed: %s", type(error).__name__)
+        return error_response(500, "internal_error", "Something went wrong.")
+    return JSONResponse({"status": "sent" if sent else "failed"}, headers=NO_STORE)

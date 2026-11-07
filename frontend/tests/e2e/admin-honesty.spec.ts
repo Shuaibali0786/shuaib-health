@@ -45,6 +45,7 @@ test("demo bookings are labelled Sample: every row of the list and the booking d
   test.skip(isMobile, "phones show booking cards; the table and its drawer are the desktop list");
   await signIn(context, "demo", baseURL!);
   await page.goto("/admin/bookings");
+  await page.waitForLoadState("networkidle"); // hydrated, so the first click is handled
   const rows = page.locator("table.bk tbody tr[data-ref]");
   await expect(rows.first()).toBeVisible();
   const count = await rows.count();

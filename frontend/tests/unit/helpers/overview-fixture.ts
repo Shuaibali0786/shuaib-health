@@ -26,6 +26,7 @@ export function booking(reference: string, hhmm: string, status: BookingStatus =
     doctor: MIRZA,
     allowedNext: [],
     isSample: true,
+    bookedAt: new Date(MIDNIGHT - 86_400_000).toISOString(),
     ...overrides,
   };
 }
@@ -54,6 +55,7 @@ export function overview(agenda: AgendaDoctor[], overrides: Partial<Overview> = 
     now: new Date(NOW).toISOString(),
     clinicClosed: null,
     kpis: kpis(),
+    cards: { today: 0, tomorrow: 0, next7Days: 0, newSinceLastVisit: 0, cancelledThisWeek: 0 },
     agenda,
     nextUp: [],
     recentBookings: [],

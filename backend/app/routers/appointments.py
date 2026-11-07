@@ -14,6 +14,7 @@ from app.db import SessionDep, get_engine
 from app.deps import ClientIpDep, ProxySecretDep, SettingsDep
 from app.errors import NotFound, RateLimited
 from app.logging_config import request_id_var
+from app.notifications import alerts
 from app.repositories import appointments as repo
 
 router = APIRouter(tags=["booking"])
@@ -51,7 +52,7 @@ def create_appointment(
     response: Response,
 ) -> schemas.AppointmentView:
     response.headers["Cache-Control"] = "no-store"
-    return service.create_appointment(
+    view = service.create_appointment(
         session,
         data=data,
         idempotency_key=idempotency_key,
@@ -61,6 +62,9 @@ def create_appointment(
         clock=clock,
         settings=settings,
     )
+    if settings.email_alerts_enabled:  # Feature 012; best effort, never fails the booking
+        alerts.notify_new_booking(settings, view, clock.now())
+    return view
 
 
 @router.get(

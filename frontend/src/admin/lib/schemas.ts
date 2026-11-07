@@ -88,6 +88,10 @@ export const BookingSummarySchema = z.object({
   doctor: DoctorRefSchema,
   allowedNext: z.array(BookingStatusSchema),
   isSample: z.boolean().optional(),
+  /** When the booking was made. */
+  bookedAt: z.iso.datetime({ offset: true }),
+  /** Feature 012: new for the signed-in staff member (not opened, not marked seen). */
+  isNew: z.boolean().optional(),
 });
 
 export const HistoryItemSchema = z.object({
@@ -105,7 +109,6 @@ export const BookingDetailSchema = BookingSummarySchema.extend({
   patientAge: z.number().int().optional(),
   bookedBy: z.string().optional(),
   feePkr: z.number().int(),
-  bookedAt: z.iso.datetime({ offset: true }),
   history: z.array(HistoryItemSchema),
 });
 
@@ -113,9 +116,14 @@ export const BookingPageSchema = z.object({
   items: z.array(BookingSummarySchema),
   total: z.number().int(),
   statusCounts: z.partialRecord(BookingStatusSchema, z.number().int()).optional(),
+  /** Upcoming scope only: bookings per clinic-local day for the whole result, soonest first. */
+  dayCounts: z.array(z.object({ date: z.iso.date(), count: z.number().int() })).optional(),
   page: z.number().int(),
   pageSize: z.number().int(),
 });
+
+/** The bell: how many bookings are new for this staff member, and the newest five. */
+export const NewBookingsSchema = z.object({ count: z.number().int(), items: z.array(BookingSummarySchema).max(5) });
 
 export const StatusChangeResultSchema = z.object({ booking: BookingDetailSchema, changeId: z.uuid(), undoExpiresAt: z.iso.datetime({ offset: true }) });
 export const PhoneRevealSchema = z.object({ phone: z.string(), telHref: z.string(), maskAfterSeconds: z.number().int() });
@@ -125,6 +133,7 @@ export type Lookups = z.infer<typeof LookupsSchema>;
 export type BookingSummary = z.infer<typeof BookingSummarySchema>;
 export type BookingDetail = z.infer<typeof BookingDetailSchema>;
 export type BookingPage = z.infer<typeof BookingPageSchema>;
+export type NewBookings = z.infer<typeof NewBookingsSchema>;
 export type HistoryItem = z.infer<typeof HistoryItemSchema>;
 export type StatusChangeResult = z.infer<typeof StatusChangeResultSchema>;
 export type PhoneReveal = z.infer<typeof PhoneRevealSchema>;
@@ -145,13 +154,17 @@ export const KpisSchema = z.object({
 
 export const WorkHoursSchema = z.object({ start: z.string(), end: z.string() });
 export const AgendaDoctorSchema = z.object({ doctor: DoctorRefSchema, sessions: z.array(WorkHoursSchema), items: z.array(BookingSummarySchema) });
-export const RecentBookingSchema = BookingSummarySchema.extend({ bookedAt: z.iso.datetime({ offset: true }) });
+export const RecentBookingSchema = BookingSummarySchema;
+
+/** Feature 012 count cards. */
+export const OverviewCardsSchema = z.object({ today: z.number().int(), tomorrow: z.number().int(), next7Days: z.number().int(), newSinceLastVisit: z.number().int(), cancelledThisWeek: z.number().int() });
 
 export const OverviewSchema = z.object({
   localDate: z.iso.date(),
   now: z.iso.datetime({ offset: true }),
   clinicClosed: z.string().nullable().optional(),
   kpis: KpisSchema,
+  cards: OverviewCardsSchema,
   agenda: z.array(AgendaDoctorSchema),
   nextUp: z.array(BookingSummarySchema).max(5),
   recentBookings: z.array(RecentBookingSchema).max(5).optional(),
@@ -160,6 +173,7 @@ export const OverviewSchema = z.object({
 
 export type Trend = z.infer<typeof TrendSchema>;
 export type Kpis = z.infer<typeof KpisSchema>;
+export type OverviewCards = z.infer<typeof OverviewCardsSchema>;
 export type AgendaDoctor = z.infer<typeof AgendaDoctorSchema>;
 export type RecentBooking = z.infer<typeof RecentBookingSchema>;
 export type Overview = z.infer<typeof OverviewSchema>;

@@ -34,6 +34,8 @@ ENDPOINT_POLICIES: dict[tuple[str, str], Policy] = {
     ("GET", "/admin/lookups"): Policy.READ,
     ("GET", "/admin/overview"): Policy.READ,
     ("POST", "/admin/bookings/search"): Policy.READ,
+    ("GET", "/admin/bookings/new"): Policy.READ,
+    ("POST", "/admin/bookings/seen"): Policy.READ,
     ("GET", "/admin/bookings/{reference}"): Policy.READ,
     ("POST", "/admin/bookings/{reference}/reveal-phone"): Policy.READ,
     ("POST", "/admin/bookings/{reference}/status"): Policy.WRITE,

@@ -1,4 +1,5 @@
-// What may appear in the Bookings page address (FR-021): dates, doctor, department, status and page.
+// What may appear in the Bookings page address (FR-021): dates, doctor, department, status, page and (Feature 012)
+// the view, the recently-booked window and the sort.
 // The search text never does: it is sent in a POST body and lives only in the page's memory.
 import { UUID } from "./bffRoutes";
 import { BookingStatusSchema, type BookingStatus } from "./schemas";
@@ -12,9 +13,14 @@ export type BookingFilters = {
   department: string | null;
   statuses: BookingStatus[];
   page: number;
+  /** "day" is the dated list; "upcoming" is every booking from tomorrow, grouped by day. */
+  view: "day" | "upcoming";
+  /** "Recently booked": made within the last 24 hours or 7 days. */
+  booked: 24 | 168 | null;
+  sort: "soonest" | "recently_booked";
 };
 
-export const EMPTY_FILTERS: BookingFilters = { q: "", from: null, to: null, doctor: null, department: null, statuses: [], page: 1 };
+export const EMPTY_FILTERS: BookingFilters = { q: "", from: null, to: null, doctor: null, department: null, statuses: [], page: 1, view: "day", booked: null, sort: "soonest" };
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = (value: string | null | undefined): value is string => !!value && DATE.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
@@ -32,6 +38,7 @@ export function parseFilters(params: Record<string, string | string[] | undefine
     .map((value) => BookingStatusSchema.safeParse(value))
     .flatMap((parsed) => (parsed.success ? [parsed.data] : []));
   const page = Number(get("page"));
+  const booked = get("booked");
   return {
     q: "",
     from: isDate(from) ? from : null,
@@ -40,6 +47,9 @@ export function parseFilters(params: Record<string, string | string[] | undefine
     department: department && UUID.test(department) ? department : null,
     statuses: [...new Set(statuses)],
     page: Number.isInteger(page) && page >= 1 && page <= 10000 ? page : 1,
+    view: get("view") === "upcoming" ? "upcoming" : "day",
+    booked: booked === "24h" ? 24 : booked === "7d" ? 168 : null,
+    sort: get("sort") === "recent" ? "recently_booked" : "soonest",
   };
 }
 
@@ -52,6 +62,9 @@ export function filtersToSearch(filters: BookingFilters): string {
   if (filters.department) params.set("department", filters.department);
   if (filters.statuses.length) params.set("status", filters.statuses.join(","));
   if (filters.page > 1) params.set("page", String(filters.page));
+  if (filters.view === "upcoming") params.set("view", "upcoming");
+  if (filters.booked) params.set("booked", filters.booked === 24 ? "24h" : "7d");
+  if (filters.sort === "recently_booked") params.set("sort", "recent");
   return params.toString();
 }
 
@@ -65,5 +78,8 @@ export function filtersToBody(filters: BookingFilters): Record<string, unknown> 
   if (filters.doctor) body.doctorId = filters.doctor;
   if (filters.department) body.departmentId = filters.department;
   if (filters.statuses.length) body.statuses = filters.statuses;
+  if (filters.view === "upcoming") body.scope = "upcoming";
+  if (filters.booked) body.bookedWithinHours = filters.booked;
+  if (filters.sort === "recently_booked") body.sort = "recently_booked";
   return body;
 }
