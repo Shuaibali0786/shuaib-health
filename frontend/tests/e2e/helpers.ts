@@ -49,6 +49,12 @@ export const ALL_PATHS: string[] = [
   "/book-appointment",
   "/privacy",
   "/terms",
+  // Feature 009 demo showcase (the e2e builds run with the demo on).
+  "/demo/specialties",
+  "/demo/specialties/dental",
+  "/demo/specialties/skin-aesthetic",
+  "/demo/specialties/diagnostic-lab",
+  "/demo/specialties/multi-speciality",
   ...doctors.map((doctor) => `/doctors/${doctor.slug}`),
   ...departments.map((department) => `/departments/${department.slug}`),
   ...labTests.map((test) => `/lab-tests/${test.slug}`),

@@ -5,6 +5,7 @@ import { useId, type ReactNode } from "react";
 
 import { formatDayMonth } from "@/admin/lib/format";
 import type { BookingFilters } from "@/admin/lib/bookingsUrl";
+import { activeRange, quickRanges } from "@/admin/lib/quickRanges";
 import type { BookingStatus, Lookups } from "@/admin/lib/schemas";
 import { STATUS_LABEL } from "@/admin/lib/statusRules";
 
@@ -38,6 +39,20 @@ export function StatusChips({ counts, total, statuses, onToggle, onAll }: { coun
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/** Today, Tomorrow, Next 7 days, Last 7 days: one tap sets the range and keeps the other filters (Feature 008). */
+export function QuickRangeChips({ filters, today, onChange }: { filters: Pick<BookingFilters, "from" | "to">; today: string; onChange: FilterChange }) {
+  const active = activeRange(filters, today);
+  return (
+    <div className="quick-ranges" role="group" aria-label="Date range">
+      {quickRanges(today).map((range) => (
+        <button key={range.id} type="button" className="chip" aria-pressed={active === range.id} onClick={() => onChange({ from: range.from, to: range.to, page: 1 })}>
+          {range.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -122,6 +137,7 @@ export function FilterBar({ filters, lookups, today, counts, total, onChange }: 
         <DoctorAndDepartment lookups={lookups} filters={filters} onChange={onChange} />
       </div>
       <div className="chips-slot">
+        <QuickRangeChips filters={filters} today={today} onChange={onChange} />
         <StatusChips counts={counts} total={total} statuses={filters.statuses} onToggle={toggle} onAll={() => onChange({ statuses: [], page: 1 })} />
       </div>
     </>
