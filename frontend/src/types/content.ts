@@ -220,6 +220,8 @@ export interface LegalContent {
   /** ISO date, "2026-10-02". */
   lastUpdated: string;
   intro: string;
+  /** Shown above the sections: the page is a template the clinic must check and adapt. */
+  templateNotice: string;
   sections: LegalSection[];
 }
 
