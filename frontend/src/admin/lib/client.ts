@@ -1,12 +1,10 @@
 // Browser calls from the Command Centre to this site's own `/api/admin/*` route (the BFF). The browser
 // never talks to the backend; the route adds the proxy secret and the session token from the cookie.
 // This is one of two `fetch` call sites for the staff app (the other is src/admin/lib/server.ts).
+import "@/lib/zodJitless";
 import * as z from "zod";
 
 import { ErrorResponseSchema } from "./schemas";
-
-// Zod probes for eval with `new Function("")`; the staff CSP reports that harmless probe. Skip it (see lib/contactSchema.ts).
-z.config({ jitless: true });
 
 type ErrorCode = z.infer<typeof ErrorResponseSchema>["error"]["code"];
 

@@ -1,5 +1,6 @@
 "use client";
 
+import "@/lib/zodJitless";
 import { useId, useState, type FormEvent } from "react";
 import * as z from "zod";
 

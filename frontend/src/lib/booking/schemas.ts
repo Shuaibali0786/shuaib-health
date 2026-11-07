@@ -3,6 +3,7 @@
 // Unknown keys are stripped, so additive API changes are safe; a missing or mistyped field fails the response.
 // A namespace import, not `import { z }`: the `z` object re-exports every locale and the JSON Schema
 // converters, which then all ship to the browser (about 50 kB gzip on the booking page).
+import "@/lib/zodJitless";
 import * as z from "zod";
 
 const Instant = z.iso.datetime();

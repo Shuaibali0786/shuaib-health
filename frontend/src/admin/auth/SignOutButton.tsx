@@ -1,5 +1,6 @@
 "use client";
 
+import "@/lib/zodJitless";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
