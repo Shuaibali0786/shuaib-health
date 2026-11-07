@@ -1,6 +1,6 @@
 # ADR-0012: Specialty Presets as a Static, Demo-Only Showcase
 
-- **Status:** Proposed (agent, unattended run 2026-11-07; needs owner acceptance)
+- **Status:** Accepted (owner, 2026-11-07; proposed by the agent in the unattended run the same night)
 - **Date:** 2026-11-07
 - **Feature:** 009-specialty-presets
 - **Context:**

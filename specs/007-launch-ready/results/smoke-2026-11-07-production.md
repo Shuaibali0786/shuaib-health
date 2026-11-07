@@ -20,3 +20,13 @@
 | Sentry | not checked (no Sentry access from the agent) | not checked |
 
 Result: PASS. No rollback needed.
+
+## After merging PR #23 (Command Centre completion, `b686f9c`)
+- Deploys: web `shuaib-health-e4s3sq1dl` READY, api `shuaib-health-ed1nrwcbi` READY.
+- The same 13 checks: all PASS. Vercel error logs (web and api): none. Sentry: not checked.
+- Before merging, the 17 Bookings visual baselines were updated with the owner's approval (chips plus the Print list button only, pixel-checked).
+
+## After merging PR #25 (assistant, flag off, `e538798`)
+- Deploys: web `shuaib-health-hmclnk267` READY, api `shuaib-health-e9cpedz5x` READY.
+- The same 13 checks: all PASS. The assistant launcher is absent from `/` and `/doctors` (`ASSISTANT_ENABLED` is not set). Vercel error logs: none. Sentry: not checked.
+- Next: the owner sets `ASSISTANT_ENABLED=true` (Production) on `shuaib-health-web`, the agent redeploys through the Vercel API/CLI, then a smoke test of the assistant.

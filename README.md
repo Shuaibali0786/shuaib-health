@@ -16,8 +16,8 @@ clinics in Pakistan, the Gulf and the UK.
 | **Booking slip** | Confirmation with a reference, a PDF slip with a QR code, print, calendar file and a share link. Personal details are masked. |
 | **Command Centre** | Staff dashboard: today's agenda by doctor, live status flow with undo, search and filters with quick date ranges, insights charts, doctors today, audit log, staff roles, print list. Light and night themes. |
 | **One-click demo** | Visitors open the dashboard with sample data, no password. Nothing is saved. |
-| **Specialty presets** | The same system shown as a Dental, Skin & Aesthetic, Diagnostic Lab or Multi-speciality clinic (`/demo/specialties`). *(PR #24)* |
-| **Assistant** | "Ask us" chat that answers from the clinic's own data (timings, doctors, tests, fees) and guides to booking; a clinic-owner guide on the demo. Free, no AI key; off by default. *(PR #25)* |
+| **Specialty presets** | The same system shown as a Dental, Skin & Aesthetic, Diagnostic Lab or Multi-speciality clinic (`/demo/specialties`). |
+| **Assistant** | "Ask us" chat that answers from the clinic's own data (timings, doctors, tests, fees) and guides to booking; a clinic-owner guide on the demo. Free, no AI key; off by default. |
 | **Security & privacy** | Argon2 passwords, secure cookies, CSRF and Origin checks, server-side roles, audit log, masked phones, no personal data in logs, CSP, secret scanning. |
 | **Quality** | TypeScript strict, 1,400+ unit tests, Playwright end-to-end, accessibility (axe) and visual tests in CI. |
 
