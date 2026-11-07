@@ -1,6 +1,6 @@
 # ADR-0014: Two-step sign-in with an encrypted authenticator secret and a separate challenge step
 
-- **Status:** Proposed (agent, 2026-11-07; needs owner acceptance)
+- **Status:** Accepted (owner, 2026-11-07)
 - **Date:** 2026-11-07
 - **Feature:** 011-admin-two-factor
 - **Context:**
