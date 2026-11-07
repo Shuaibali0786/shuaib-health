@@ -218,6 +218,8 @@ See `.specify/memory/constitution.md` for code quality, testing, performance, se
 - Serverless rules (constitution 1.2.0): no background threads or long tasks in functions; rate limits and lockouts in Postgres; daily maintenance via Vercel Cron → `CRON_SECRET`-protected endpoint
 - Ops (007): GitHub Actions CI (backend, frontend, secrets, e2e) with branch protection; UptimeRobot; Sentry Free (scrubbed); gitleaks; pip-audit; daily `age`-encrypted backups in the private repo `shuaib-health-backups` (14 days)
 - Money rule: free tiers only; never enable billing; non-commercial demo on Vercel Hobby
+- Python 3.12 (backend), TypeScript strict / Next.js 16.4 (frontend) + FastAPI, SQLModel, Alembic. **New: `cryptography`** (AES-GCM only; see research R2). The frontend adds no new dependency: the QR code uses the existing in-house encoder `src/lib/booking/qr.ts`. (011-admin-two-factor)
+- Neon Postgres; migration `0004_two_factor` (additive). See [data-model.md](data-model.md). (011-admin-two-factor)
 
 ## Recent Changes
 - 007-launch-ready: first public demo deployment (spec, plan, ADR-0011, constitution 1.2.0)
