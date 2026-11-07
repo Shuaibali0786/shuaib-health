@@ -1,0 +1,27 @@
+- generic [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e11]:
+        - generic [ref=e12]: Shuaib Health
+        - generic [ref=e13]: Command Centre
+      - heading "Sign in" [level=1] [ref=e14]
+      - paragraph [ref=e15]: Staff only. Use the email and password your administrator gave you.
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]: Email
+          - textbox "Email" [active] [ref=e19]
+        - generic [ref=e20]:
+          - generic [ref=e21]: Password
+          - textbox "Password" [ref=e22]
+        - button "Sign in" [ref=e23] [cursor=pointer]
+      - generic [ref=e24]:
+        - generic [ref=e25]: or
+        - button "View Demo Dashboard" [ref=e27] [cursor=pointer]
+        - paragraph [ref=e28]: A read-only tour with sample data. No password needed.
+      - paragraph [ref=e29]:
+        - link "Designed & built by Shuaib Ali" [ref=e30] [cursor=pointer]:
+          - /url: https://github.com/Shuaibali0786
+      - paragraph [ref=e31]:
+        - generic [ref=e32]: Powered by Shuaib Health
+  - paragraph [ref=e40]: Portfolio demo — not a real clinic, not medical advice. All names and numbers are sample data.
+  - alert [ref=e41]

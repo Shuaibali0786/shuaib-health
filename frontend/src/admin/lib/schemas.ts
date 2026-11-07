@@ -5,6 +5,9 @@
 // A namespace import, not `import { z }`, to keep the locale files out of the bundle.
 import * as z from "zod";
 
+// Zod probes for eval with `new Function("")`; the staff CSP reports that harmless probe. Skip it (see lib/contactSchema.ts).
+z.config({ jitless: true });
+
 export { ErrorInfoSchema, ErrorResponseSchema } from "@/lib/booking/schemas";
 export type { ErrorInfo, ErrorResponse } from "@/lib/booking/schemas";
 
