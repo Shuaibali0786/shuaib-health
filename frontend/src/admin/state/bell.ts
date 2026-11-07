@@ -1,7 +1,15 @@
 // The bell (Feature 012): how many bookings are new for the signed-in staff member, and the newest few.
 // One store and one poller (30 s while the tab is visible) serve every place that shows it. The server is the
 // source of truth for a staff member; the demo keeps what it has opened in memory (no browser storage: the
-// guards forbid it, and a reload simply shows the sample as new again), because the demo server is read-only. `cutoff` hides, until the next answer, what "Mark all seen" has just cleared.
+// guards forbid it, and a reload simply shows the sample as new again), because the demo server is read-only.
+// `cutoff` hides, until the next answer, what "Mark all seen" has just cleared.
+//
+// Rendering reads the bell only through `useBell()`, never the store directly. The shell (and its bell poll) hydrates
+// before a page that streams in later, so by the time that page hydrates the store may already hold an answer the
+// server never saw. `useBell()` hands React the empty server state while it hydrates, then the live one (React's
+// `getServerSnapshot` contract), so the first client render always matches the server's HTML.
+import { useSyncExternalStore } from "react";
+
 import { adminRequest } from "@/admin/lib/client";
 import { NewBookingsSchema, type BookingSummary, type NewBookings } from "@/admin/lib/schemas";
 
@@ -9,13 +17,28 @@ import { LivePoller } from "./livePoll";
 
 type Listener = () => void;
 
+/** What renders from the bell: an immutable snapshot, replaced (never mutated) on every change. */
+export type BellState = {
+  /** What the bell shows, or null before the first answer. */
+  view: NewBookings | null;
+  opened: ReadonlySet<string>;
+  cutoff: number;
+};
+
+/** The state the server renders with (it never polls), and the one React hydrates with. */
+export const EMPTY_BELL: BellState = Object.freeze({ view: null, opened: new Set<string>(), cutoff: Number.NEGATIVE_INFINITY });
+
+/** Whether a row the server called new is still new in this state. */
+export function isNewIn(state: BellState, booking: Pick<BookingSummary, "reference" | "isNew" | "bookedAt">): boolean {
+  return booking.isNew === true && !state.opened.has(booking.reference) && Date.parse(booking.bookedAt) > state.cutoff;
+}
+
 export class BellStore {
   private data: NewBookings | null = null;
   private opened = new Set<string>();
   private cutoff = Number.NEGATIVE_INFINITY;
   private demo = false;
-  private snapshot = 0;
-  private view: NewBookings | null = null;
+  private state: BellState = EMPTY_BELL;
   private readonly listeners = new Set<Listener>();
   private poller: LivePoller<NewBookings> | null = null;
   private users = 0;
@@ -94,17 +117,18 @@ export class BellStore {
     }
   }
 
-  /** Whether a row the server called new is still new here. */
+  /** For event handlers (not rendering): whether a row is still new right now. */
   isNew(booking: Pick<BookingSummary, "reference" | "isNew" | "bookedAt">): boolean {
-    return booking.isNew === true && !this.opened.has(booking.reference) && Date.parse(booking.bookedAt) > this.cutoff;
+    return isNewIn(this.state, booking);
   }
 
-  /** What the bell shows: the server's answer minus what has just been opened or cleared here. */
+  /** For event handlers and tests (not rendering): what the bell shows right now. */
   current(): NewBookings | null {
-    return this.view;
+    return this.state.view;
   }
 
-  getSnapshot = (): number => this.snapshot;
+  /** For `useSyncExternalStore`: the same object until something changes. */
+  getState = (): BellState => this.state;
 
   subscribe = (listener: Listener): (() => void) => {
     this.listeners.add(listener);
@@ -118,11 +142,11 @@ export class BellStore {
     this.poller = null;
     this.users = 0;
     this.data = null;
-    this.view = null;
     this.opened.clear();
     this.cutoff = Number.NEGATIVE_INFINITY;
     this.demo = false;
-    this.emit();
+    this.state = EMPTY_BELL;
+    this.notify();
   }
 
   private compute(): NewBookings | null {
@@ -133,10 +157,20 @@ export class BellStore {
   }
 
   private emit(): void {
-    this.view = this.compute();
-    this.snapshot += 1;
+    this.state = { view: this.compute(), opened: new Set(this.opened), cutoff: this.cutoff };
+    this.notify();
+  }
+
+  private notify(): void {
     for (const listener of [...this.listeners]) listener();
   }
 }
 
 export const bell = new BellStore();
+
+const serverState = (): BellState => EMPTY_BELL;
+
+/** The bell for rendering: the empty server state during hydration, the live state after (see the top of this file). */
+export function useBell(): BellState {
+  return useSyncExternalStore(bell.subscribe, bell.getState, serverState);
+}

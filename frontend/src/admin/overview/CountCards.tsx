@@ -2,11 +2,10 @@
 
 import { Ban, CalendarClock, CalendarDays, CalendarRange, Sparkles, type LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
 
 import { addDays } from "@/admin/lib/quickRanges";
 import type { OverviewCards } from "@/admin/lib/schemas";
-import { bell } from "@/admin/state/bell";
+import { useBell } from "@/admin/state/bell";
 
 import { CountUp } from "./CountUp";
 
@@ -25,8 +24,7 @@ export function weekOf(today: string): { monday: string; sunday: string } {
  * the bell, which knows what this person has just opened.
  */
 export function CountCards({ cards, today, todayLive }: { cards: OverviewCards; today: string; todayLive: number | null }) {
-  useSyncExternalStore(bell.subscribe, bell.getSnapshot, () => 0);
-  const fresh = bell.current()?.count ?? cards.newSinceLastVisit;
+  const fresh = useBell().view?.count ?? cards.newSinceLastVisit;
   const { monday, sunday } = weekOf(today);
   const tomorrow = addDays(today, 1);
   const list: Card[] = [

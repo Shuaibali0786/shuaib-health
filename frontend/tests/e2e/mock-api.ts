@@ -18,6 +18,7 @@ export type MockMode =
   | "rate-limited"
   | "admin-down"
   | "admin-slow"
+  | "admin-search-slow"
   | "session-expired"
   | "booking-changed";
 

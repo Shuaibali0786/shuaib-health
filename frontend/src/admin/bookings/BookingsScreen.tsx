@@ -20,7 +20,7 @@ import {
 import { clinicDate, formatDayMonth, formatTime } from "@/admin/lib/format";
 import { dayHeading } from "@/admin/lib/relativeTime";
 import { allowedNext } from "@/admin/lib/statusRules";
-import { bell } from "@/admin/state/bell";
+import { bell, isNewIn, useBell } from "@/admin/state/bell";
 import { clinicClock } from "@/admin/state/clinicClock";
 import { NewBookingToasts } from "@/admin/overview/NewBookingToast";
 import { demoOverlay } from "@/admin/state/demoOverlay";
@@ -69,7 +69,8 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
   const [message, setMessage] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.parse(serverNow));
   const overlayVersion = useSyncExternalStore(demoOverlay.subscribe, demoOverlay.getSnapshot, () => 0);
-  const bellVersion = useSyncExternalStore(bell.subscribe, bell.getSnapshot, () => 0);
+  // Never read the bell store directly while rendering: `useBell()` hydrates with the server's (empty) state.
+  const bellState = useBell();
 
   // The clinic minute moves "from 09:40" style rules along without re-rendering every second.
   useEffect(() => clinicClock.onMinute((ms) => setNowMs(ms)), []);
@@ -332,9 +333,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
 
   // ----- Rendering ----------------------------------------------------------------------------
 
-  // `bellVersion` is the signal that something was opened or cleared.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const isNew = useCallback((booking: BookingSummary) => bell.isNew(booking), [bellVersion]);
+  const isNew = useCallback((booking: BookingSummary) => isNewIn(bellState, booking), [bellState]);
   const upcoming = filters.view === "upcoming" && !filters.q.trim();
   const dayCounts = useMemo(() => new Map((data.dayCounts ?? []).map((d) => [d.date, d.count])), [data.dayCounts]);
   const perDay = useMemo(() => {
@@ -349,7 +348,7 @@ export function BookingsScreen({ initialPage, lookups, initialFilters, demo, cli
     showDate: filters.view === "upcoming" ? false : Boolean(filters.q.trim()) || (filters.booked !== null && !filters.from && !filters.to),
     groupOf: upcoming ? (date) => ({ label: dayHeading(date, clinicToday, formatDayMonth), count: dayCounts.get(date) ?? perDay.get(date) ?? 0 }) : undefined,
   };
-  const anyNew = (bell.current()?.count ?? 0) > 0 || items.some(isNew);
+  const anyNew = (bellState.view?.count ?? 0) > 0 || items.some(isNew);
 
   const total = demo && filters.statuses.length ? items.length : data.total + simulated.length;
   const label = dateLabel(filters, clinicToday);
