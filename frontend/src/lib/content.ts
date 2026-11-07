@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { aboutContent } from "@/data/aboutContent";
 import { faqGroups } from "@/data/faq";
-import { legalContent } from "@/data/legalContent";
+import { buildPrivacyContent, buildTermsContent } from "@/data/legalContent";
 import { healthTips } from "@/data/healthTips";
 import {
   cachedClinic,
@@ -233,7 +233,8 @@ export async function getFaqGroups(): Promise<FaqGroup[]> {
   return faqGroups;
 }
 
-/** The Privacy or Terms page content. */
+/** The Privacy or Terms page content, filled in with the clinic's name and contact from its settings. */
 export async function getLegalContent(slug: LegalContent["slug"]): Promise<LegalContent> {
-  return legalContent[slug];
+  const site = await getSiteConfig();
+  return slug === "privacy" ? buildPrivacyContent(site) : buildTermsContent(site);
 }

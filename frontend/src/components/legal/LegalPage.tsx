@@ -6,16 +6,16 @@ import { formatKarachiDate } from "@/lib/format";
 import type { LegalContent } from "@/types/content";
 
 /**
- * A Privacy or Terms page: breadcrumb, the page's only h1, the last-updated date, the demo notice,
- * a contents list that links to each section, and one h2 per section. Section text reuses the
- * article renderer, so it is rendered as text, never as HTML.
+ * A Privacy or Terms page: breadcrumb, the page's only h1, the last-updated date, the demo or
+ * template badge, the template notice, a contents list that links to each section, and one h2 per
+ * section. Section text reuses the article renderer, so it is rendered as text, never as HTML.
  */
-export function LegalPage({ content }: { content: LegalContent }) {
+export function LegalPage({ content, isSample }: { content: LegalContent; isSample: boolean }) {
   return (
     <>
       <PageHeader trail={[{ label: content.title }]} title={content.title} intro={content.intro}>
         <p className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
-          <SampleBadge label="Portfolio demo, not legal advice" />
+          <SampleBadge label={isSample ? "Portfolio demo, not legal advice" : "Template, not legal advice"} />
           <span>
             Last updated <time dateTime={content.lastUpdated}>{formatKarachiDate(content.lastUpdated)}</time>
           </span>
@@ -24,6 +24,10 @@ export function LegalPage({ content }: { content: LegalContent }) {
 
       <Section tone="background" spacing="compact" aria-label={`${content.title} details`}>
         <div className="flex max-w-3xl flex-col gap-10">
+          <p role="note" className="rounded-control border border-gold-500 bg-gold-50 px-4 py-3 text-base font-semibold text-navy-900">
+            {content.templateNotice}
+          </p>
+
           <nav aria-label={`${content.title} contents`}>
             <h2 className="text-lg font-bold">On this page</h2>
             <ul className="mt-3 flex flex-col gap-1.5">
