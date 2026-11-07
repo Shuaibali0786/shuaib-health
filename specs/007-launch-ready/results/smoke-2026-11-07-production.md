@@ -30,3 +30,15 @@ Result: PASS. No rollback needed.
 - Deploys: web `shuaib-health-hmclnk267` READY, api `shuaib-health-e9cpedz5x` READY.
 - The same 13 checks: all PASS. The assistant launcher is absent from `/` and `/doctors` (`ASSISTANT_ENABLED` is not set). Vercel error logs: none. Sentry: not checked.
 - Next: the owner sets `ASSISTANT_ENABLED=true` (Production) on `shuaib-health-web`, the agent redeploys through the Vercel API/CLI, then a smoke test of the assistant.
+
+## Assistant switched on (`ASSISTANT_ENABLED=true`, Production, set by the owner)
+- Redeployed `shuaib-health-web` with the Vercel CLI (`vercel redeploy … --target production`): `shuaib-health-cbg6civ7y` READY, aliased to `shuaib-health-web.vercel.app`. Rollback target: `shuaib-health-hmclnk267`.
+- The 11 standard checks: all PASS. Launcher present on `/`, `/doctors`, `/lab-tests`, `/demo/specialties/dental`; absent on `/admin/login`.
+- Live browser check (Playwright, read-only; answers are computed in the browser) on desktop 1440, Pixel 7 and the Dental preset page, 24/24 PASS:
+  - opens from "Ask us"
+  - answers "timings" and "lab test fee" from clinic data
+  - the emergency question gets the safety reply
+  - the clinic-owner question is answered
+  - Escape closes it and returns focus
+  - no sideways scroll and no console errors
+- Vercel error logs: none. Sentry: not checked.

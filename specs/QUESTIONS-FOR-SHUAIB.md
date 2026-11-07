@@ -4,7 +4,7 @@ Short answers are fine ("yes", "no", "A"). Until you answer, the safe choice in 
 
 ## Shuaib's answers (7 Nov 2026)
 - Bookings screenshots (#23): Shuaib confirmed the Print list button is expected; 17 baselines per OS updated.
-- Merge order #24 → #23 → #25 → #26: approved. **#24, #23 and #25 merged and smoke-tested** (`smoke-2026-11-07-production.md`). #26 waits for the assistant step.
+- Merge order #24 → #23 → #25 → #26: approved. **#24, #23 and #25 merged and smoke-tested** (`smoke-2026-11-07-production.md`). Assistant switched on and smoke-tested; #26 merged last.
 - Doctor/Lab roles: later. CSV export: no, not now. Print stays masked. Preset-aware booking/dashboard: later.
 - Preset links: option C, only Fiverr and README.
 - Assistant: turn it on in the live demo after #25 is merged. Shuaib sets `ASSISTANT_ENABLED=true` himself on `shuaib-health-web` (Production); the agent then redeploys through the Vercel API (the dashboard Redeploy asks for a code to the old email) and smoke-tests the assistant.
