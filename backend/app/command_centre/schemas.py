@@ -45,6 +45,52 @@ class ChangePasswordRequest(CamelModel):
     new_password: str = Field(min_length=12, max_length=128)
 
 
+class TwoFactorChallenge(CamelModel):
+    """202 from sign-in when the account uses two-step sign-in (Feature 011). The website keeps
+    ``challenge_token`` in an httpOnly cookie; it never reaches browser JavaScript."""
+
+    two_factor_required: Literal[True] = True
+    challenge_token: str
+    expires_at: AwareDatetime
+
+
+class TwoFactorVerifyRequest(CamelModel):
+    challenge_token: str = Field(max_length=100)
+    code: str | None = Field(default=None, max_length=12)
+    backup_code: str | None = Field(default=None, max_length=16)
+
+
+class TwoFactorStatusOut(CamelModel):
+    available: bool
+    enabled: bool
+    enabled_at: AwareDatetime | None = None
+    backup_codes_left: int | None = None
+    can_enrol: bool
+
+
+class TwoFactorSetupRequest(CamelModel):
+    current_password: str = Field(max_length=128)
+
+
+class TwoFactorSetupOut(CamelModel):
+    secret: str
+    otpauth_uri: str
+
+
+class TwoFactorEnableRequest(CamelModel):
+    code: str = Field(max_length=12)
+
+
+class TwoFactorConfirmRequest(CamelModel):
+    current_password: str = Field(max_length=128)
+    code: str | None = Field(default=None, max_length=12)
+    backup_code: str | None = Field(default=None, max_length=16)
+
+
+class BackupCodesOut(CamelModel):
+    backup_codes: list[str]
+
+
 class StaffOut(CamelModel):
     id: uuid.UUID
     email: str
@@ -55,6 +101,7 @@ class StaffOut(CamelModel):
     must_change_password: bool | None = None
     last_sign_in_at: AwareDatetime | None = None
     is_sample: bool | None = None
+    two_factor_enabled: bool = False
 
 
 class StaffCreate(CamelModel):

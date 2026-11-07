@@ -1,5 +1,8 @@
 """Create the first admin: ``python -m app.auth.create_admin --email you@example.org``.
 
+With ``--reset-two-factor`` it instead turns off two-step sign-in for that account (Feature 011),
+for when no admin can sign in to do it from Staff. No password is asked for.
+
 The password is asked for twice without echo, or read from the first line of stdin with
 ``--password-stdin``. The only output is "Admin account created."; nothing about the password,
 the account or the database is ever printed.
@@ -9,17 +12,22 @@ import argparse
 import getpass
 import sys
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from typing import TextIO
 
 from sqlmodel import Session, col, func, select
 
 from app import models as m
-from app.auth import audit, passwords
+from app.auth import audit, passwords, two_factor
 from app.db import get_engine
 from app.ops.target_guard import GuardRefusal, add_guard_arguments, confirm_target
 from app.settings import get_settings
 
 SUCCESS = "Admin account created."
+RESET_DONE = (
+    "Two-step sign-in turned off; the account must sign in with its password and enrol again."
+)
+RESET_NOTHING = "Two-step sign-in was not on for that account."
 MAX_NAME = 60
 SYSTEM_FINGERPRINT = "0" * 16
 
@@ -83,9 +91,18 @@ def main(
     parser.add_argument("--email", required=True)
     parser.add_argument("--name", default="")
     parser.add_argument("--password-stdin", action="store_true")
+    parser.add_argument("--reset-two-factor", action="store_true")
     add_guard_arguments(parser)
     args = parser.parse_args(argv)
     try:
+        if args.reset_two_factor:
+            if session_factory is None:
+                _guard_target(args.expect_host, from_stdin=False)
+            factory = session_factory or _default_session
+            with factory() as db:
+                done = two_factor.operator_reset(db, args.email, datetime.now(UTC))
+            print(RESET_DONE if done else RESET_NOTHING)
+            return 0
         if session_factory is None:
             _guard_target(args.expect_host, from_stdin=args.password_stdin)
         password = _read_password(stdin or sys.stdin, args.password_stdin, prompt)

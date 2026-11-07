@@ -29,6 +29,7 @@ EndReason = Literal[
     "password_reset",
     "deactivated",
     "replaced",
+    "two_factor_reset",
 ]
 
 

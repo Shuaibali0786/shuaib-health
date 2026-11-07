@@ -21,10 +21,16 @@ class Policy(StrEnum):
 
 ENDPOINT_POLICIES: dict[tuple[str, str], Policy] = {
     ("POST", "/admin/auth/sign-in"): Policy.PUBLIC_PROXY,
+    ("POST", "/admin/auth/sign-in/two-factor"): Policy.PUBLIC_PROXY,
     ("POST", "/admin/demo/start"): Policy.PUBLIC_PROXY,
     ("GET", "/admin/auth/me"): Policy.SELF,
     ("POST", "/admin/auth/sign-out"): Policy.SELF,
     ("POST", "/admin/auth/change-password"): Policy.SELF_STAFF,
+    ("GET", "/admin/auth/two-factor"): Policy.SELF_STAFF,
+    ("POST", "/admin/auth/two-factor/setup"): Policy.SELF_STAFF,
+    ("POST", "/admin/auth/two-factor/enable"): Policy.SELF_STAFF,
+    ("POST", "/admin/auth/two-factor/disable"): Policy.SELF_STAFF,
+    ("POST", "/admin/auth/two-factor/backup-codes"): Policy.SELF_STAFF,
     ("GET", "/admin/lookups"): Policy.READ,
     ("GET", "/admin/overview"): Policy.READ,
     ("POST", "/admin/bookings/search"): Policy.READ,
@@ -39,6 +45,7 @@ ENDPOINT_POLICIES: dict[tuple[str, str], Policy] = {
     ("POST", "/admin/staff"): Policy.WRITE_ADMIN,
     ("POST", "/admin/staff/{staffId}/reset-password"): Policy.WRITE_ADMIN,
     ("PATCH", "/admin/staff/{staffId}"): Policy.WRITE_ADMIN,
+    ("POST", "/admin/staff/{staffId}/two-factor/reset"): Policy.WRITE_ADMIN,
 }
 
 # Policies that need a signed-in session, and those that change state (CSRF applies).

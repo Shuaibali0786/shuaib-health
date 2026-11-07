@@ -728,6 +728,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/auth/sign-in/two-factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Feature 011. Exactly one of code (6 digits) or backupCode. 5 attempts per challenge; wrong codes share the sign-in lockout. Never a password-only fallback: without TWO_FACTOR_KEY the answer is 503. */
+        post: operations["adminSignInTwoFactor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/demo/start": {
         parameters: {
             query?: never;
@@ -788,6 +805,90 @@ export interface paths {
         put?: never;
         /** @description Ends all of the staff member's sessions and issues a fresh one. */
         post: operations["adminChangePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/auth/two-factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminTwoFactorStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/auth/two-factor/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Admins only (403 two_factor_admins_only); refused while the password must be changed. Returns the setup key once; the same key for 15 minutes. */
+        post: operations["adminTwoFactorSetup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/auth/two-factor/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Finishes setup with a code from the app. */
+        post: operations["adminTwoFactorEnable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/auth/two-factor/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Password plus a code or a backup code. */
+        post: operations["adminTwoFactorDisable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/auth/two-factor/backup-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Password plus a code or a backup code. All earlier codes stop working. */
+        post: operations["adminTwoFactorBackupCodes"];
         delete?: never;
         options?: never;
         head?: never;
@@ -982,6 +1083,23 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["adminStaffResetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/staff/{staffId}/two-factor/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Lost phone: turns the person's two-step sign-in off, deletes their backup codes and ends their sessions. Not for yourself (409 cannot_reset_self). */
+        post: operations["adminStaffTwoFactorReset"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1187,7 +1305,7 @@ export interface components {
         };
         ErrorInfo: {
             /** @enum {string} */
-            code: "not_found" | "method_not_allowed" | "validation_error" | "rate_limited" | "internal_error" | "service_unavailable" | "not_configured" | "forbidden" | "request_rejected" | "slot_taken" | "slot_unavailable" | "booking_limit_reached" | "idempotency_key_reused" | "not_signed_in" | "session_expired" | "sign_in_failed" | "account_locked" | "csrf_failed" | "demo_read_only" | "password_change_required" | "weak_password" | "email_taken" | "last_admin" | "transition_not_allowed" | "booking_changed" | "undo_unavailable";
+            code: "not_found" | "method_not_allowed" | "validation_error" | "rate_limited" | "internal_error" | "service_unavailable" | "not_configured" | "forbidden" | "request_rejected" | "slot_taken" | "slot_unavailable" | "booking_limit_reached" | "idempotency_key_reused" | "not_signed_in" | "session_expired" | "sign_in_failed" | "account_locked" | "csrf_failed" | "demo_read_only" | "password_change_required" | "weak_password" | "email_taken" | "last_admin" | "transition_not_allowed" | "booking_changed" | "undo_unavailable" | "two_factor_failed" | "challenge_expired" | "two_factor_unavailable" | "two_factor_admins_only" | "two_factor_already_on" | "two_factor_not_started" | "two_factor_off" | "cannot_reset_self";
             message: string;
             requestId: string;
             retryAfterSeconds?: number;
@@ -1330,6 +1448,46 @@ export interface components {
         SessionIssued: {
             token: string;
             viewer: components["schemas"]["Viewer"];
+        };
+        /** @description Returned to the website server only; the BFF keeps challengeToken in an httpOnly cookie. */
+        TwoFactorChallenge: {
+            /** @constant */
+            twoFactorRequired: true;
+            challengeToken: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        TwoFactorVerifyRequest: {
+            challengeToken: string;
+            code?: string | null;
+            backupCode?: string | null;
+        };
+        TwoFactorStatus: {
+            available: boolean;
+            enabled: boolean;
+            /** Format: date-time */
+            enabledAt?: string | null;
+            backupCodesLeft?: number | null;
+            canEnrol: boolean;
+        };
+        TwoFactorSetupRequest: {
+            currentPassword: string;
+        };
+        TwoFactorSetup: {
+            /** @description base32 setup key */
+            secret: string;
+            otpauthUri: string;
+        };
+        TwoFactorEnableRequest: {
+            code: string;
+        };
+        TwoFactorConfirmRequest: {
+            currentPassword: string;
+            code?: string | null;
+            backupCode?: string | null;
+        };
+        BackupCodes: {
+            backupCodes: string[];
         };
         ChangePasswordRequest: {
             currentPassword: string;
@@ -1561,6 +1719,8 @@ export interface components {
             /** Format: date-time */
             lastSignInAt?: string | null;
             isSample?: boolean;
+            /** @description Feature 011 */
+            twoFactorEnabled?: boolean;
         };
         StaffCreate: {
             email: string;
@@ -1711,6 +1871,15 @@ export interface operations {
                     "application/json": components["schemas"]["SessionIssued"];
                 };
             };
+            /** @description Feature 011: the account uses two-step sign-in; no session yet. Finish with sign-in/two-factor within 5 minutes. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorChallenge"];
+                };
+            };
             /** @description sign_in_failed (generic) */
             401: {
                 headers: {
@@ -1723,6 +1892,51 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             422: components["responses"]["Validation"];
             429: components["responses"]["AdminRateLimited"];
+        };
+    };
+    adminSignInTwoFactor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description signed in */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionIssued"];
+                };
+            };
+            /** @description two_factor_failed (body carries attemptsLeft) or challenge_expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+            429: components["responses"]["AdminRateLimited"];
+            /** @description two_factor_unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     adminDemoStart: {
@@ -1813,6 +2027,206 @@ export interface operations {
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
             422: components["responses"]["Validation"];
+        };
+    };
+    adminTwoFactorStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description two-step sign-in status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorStatus"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminTwoFactorSetup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorSetupRequest"];
+            };
+        };
+        responses: {
+            /** @description setup key and otpauth link */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorSetup"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description two_factor_already_on, two_factor_not_started or two_factor_off */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            422: components["responses"]["Validation"];
+            /** @description two_factor_unavailable (no TWO_FACTOR_KEY) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    adminTwoFactorEnable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorEnableRequest"];
+            };
+        };
+        responses: {
+            /** @description the 10 backup codes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupCodes"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description two_factor_already_on, two_factor_not_started or two_factor_off */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            422: components["responses"]["Validation"];
+            /** @description two_factor_unavailable (no TWO_FACTOR_KEY) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    adminTwoFactorDisable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description turned off; secret and backup codes deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description two_factor_already_on, two_factor_not_started or two_factor_off */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            422: components["responses"]["Validation"];
+            /** @description two_factor_unavailable (no TWO_FACTOR_KEY) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    adminTwoFactorBackupCodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description the 10 backup codes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupCodes"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description two_factor_already_on, two_factor_not_started or two_factor_off */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            422: components["responses"]["Validation"];
+            /** @description two_factor_unavailable (no TWO_FACTOR_KEY) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     adminLookups: {
@@ -2189,6 +2603,42 @@ export interface operations {
                 content?: never;
             };
             422: components["responses"]["Validation"];
+        };
+    };
+    adminStaffTwoFactorReset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                staffId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description reset */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            /** @description not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description two_factor_off or cannot_reset_self */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     adminStaffUpdate: {

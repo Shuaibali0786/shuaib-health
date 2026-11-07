@@ -38,6 +38,8 @@ TABLES = {
     "demo_session",
     "login_throttle",
     "appointment_status_change",
+    "staff_backup_code",
+    "staff_sign_in_challenge",
 }
 BOOKING_TABLES = {
     "doctor_leave",
