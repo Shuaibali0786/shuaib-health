@@ -205,3 +205,49 @@ def test_deactivation_ends_all_sessions_at_once(
     assert response.status_code == 200
     assert cc_client.get(ME, headers=victim).status_code == 401
     assert sign_in(cc_client, "temp@example.org").status_code == 401
+
+
+def test_wrong_current_passwords_count_toward_the_email_lockout(
+    cc_client: TestClient, db_session: Session, cc_settings: Settings
+) -> None:
+    make_staff(db_session)
+    issued = sign_in(cc_client, "owner@example.org").json()
+    hdrs = headers(issued["token"], issued["viewer"]["csrfToken"])
+    body = {"currentPassword": "not-the-password-1", "newPassword": NEW_PASSWORD}
+    attempts = [
+        cc_client.post(f"{API}/auth/change-password", json=body, headers=hdrs)
+        for _ in range(cc_settings.login_lock_failures)
+    ]
+    assert [r.status_code for r in attempts[:-1]] == [422] * (cc_settings.login_lock_failures - 1)
+    assert (attempts[-1].status_code, error_code(attempts[-1])) == (429, "account_locked")
+    # Locked: even the right current password is refused, and the password stays unchanged.
+    right = cc_client.post(
+        f"{API}/auth/change-password",
+        json={"currentPassword": PASSWORD, "newPassword": NEW_PASSWORD},
+        headers=hdrs,
+    )
+    assert (right.status_code, error_code(right)) == (429, "account_locked")
+    # The same lock applies to sign-in for that email.
+    assert error_code(sign_in(cc_client, "owner@example.org")) == "account_locked"
+    assert len(audit_actions(db_session, "auth.lockout")) == 1
+
+
+def test_a_correct_current_password_clears_earlier_wrong_guesses(
+    cc_client: TestClient, db_session: Session, cc_settings: Settings
+) -> None:
+    make_staff(db_session)
+    issued = sign_in(cc_client, "owner@example.org").json()
+    hdrs = headers(issued["token"], issued["viewer"]["csrfToken"])
+    for _ in range(cc_settings.login_lock_failures - 1):
+        wrong = cc_client.post(
+            f"{API}/auth/change-password",
+            json={"currentPassword": "not-the-password-1", "newPassword": NEW_PASSWORD},
+            headers=hdrs,
+        )
+        assert wrong.status_code == 422
+    ok = cc_client.post(
+        f"{API}/auth/change-password",
+        json={"currentPassword": PASSWORD, "newPassword": NEW_PASSWORD},
+        headers=hdrs,
+    )
+    assert ok.status_code == 200

@@ -17,6 +17,7 @@ BOOKING_PHONE_WINDOW = timedelta(hours=24)  # aligned to UTC midnight
 LOOKUP_IP_WINDOW = timedelta(minutes=1)
 LOGIN_IP_WINDOW = timedelta(minutes=15)
 DEMO_IP_WINDOW = timedelta(hours=1)
+REVEAL_SESSION_WINDOW = timedelta(hours=1)
 CLEANUP_LIMIT = 200
 
 HIT = text(
@@ -73,3 +74,7 @@ def login_ip_bucket(key: SecretStr, ip: str) -> str:
 
 def demo_ip_bucket(key: SecretStr, ip: str) -> str:
     return f"demo:ip:{hmac_hex(key, 'demo-ip', ip)}"
+
+
+def reveal_session_bucket(key: SecretStr, session_id: str) -> str:
+    return f"reveal:session:{hmac_hex(key, 'reveal-session', session_id)}"

@@ -144,6 +144,7 @@ The staff dashboard's API lives under `/api/v1/admin/*` (19 operations, OpenAPI 
 | `SESSION_SECRET` | **Required**, at least 32 characters. Keys the session-token and CSRF HMACs; rotating it signs everyone out. The app refuses to start without it. |
 | `STAFF_IDLE_MINUTES` / `STAFF_ABSOLUTE_HOURS` / `STAFF_MAX_SESSIONS` | Staff session limits (defaults 30, 12, 3; the oldest session ends when a 4th starts). |
 | `LOGIN_LOCK_FAILURES` / `LOGIN_LOCK_MINUTES` / `LOGIN_LIMIT_PER_IP_PER_15MIN` | Sign-in lockout and throttling (defaults 5, 15, 20). |
+| `REVEAL_PHONE_LIMIT_PER_SESSION_PER_HOUR` | Full-phone reveals one staff session may make per hour (default 30; each is still audited). |
 | `DEMO_LIMIT_PER_IP_PER_HOUR` / `DEMO_SESSION_HOURS` | Demo starts per IP and demo length (defaults 10, 2). |
 | `STATUS_UNDO_SECONDS` | Undo window for a status change (default 10). |
 

@@ -6,20 +6,21 @@ import {
   cspReportUri,
   publicSiteHeaders,
   securityHeadersMode,
+  staffCspHeaders,
 } from "./src/lib/security-headers";
 
 // Staff pages and their BFF are private: never cached, never indexed, never leaked through a referrer
 // and never framed (FR-037). Applies to redirects and error responses too.
+// Read once per build; throws on Vercel when SITE_SECURITY_HEADERS is unset or invalid.
+const securityMode = securityHeadersMode(process.env);
+const reportUri = cspReportUri(process.env);
+
 const PRIVATE_HEADERS = [
   { key: "Cache-Control", value: "no-store" },
   { key: "X-Robots-Tag", value: "noindex" },
   { key: "Referrer-Policy", value: "no-referrer" },
-  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+  ...staffCspHeaders(securityMode, reportUri),
 ];
-
-// Read once per build; throws on Vercel when SITE_SECURITY_HEADERS is unset or invalid.
-const securityMode = securityHeadersMode(process.env);
-const reportUri = cspReportUri(process.env);
 
 const nextConfig: NextConfig = {
   // Each e2e server builds into its own folder (NEXT_DIST_DIR) so builds never collide. Unset means .next.

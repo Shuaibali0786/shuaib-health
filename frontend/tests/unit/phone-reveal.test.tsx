@@ -64,4 +64,14 @@ describe("PhoneReveal", () => {
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(screen.getByTestId("phone").textContent).toBe("0300****567");
   });
+
+  it("explains the hourly limit when the server answers 429", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: { code: "rate_limited", message: "x", requestId: "r" } }), { status: 429, headers: { "Retry-After": "60" } }),
+    );
+    render(<PhoneReveal reference="RAYESHA001" masked="0300****567" />);
+    await user().click(screen.getByRole("button", { name: "Reveal" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/this hour/);
+    expect(screen.getByTestId("phone").textContent).toBe("0300****567");
+  });
 });

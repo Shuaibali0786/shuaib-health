@@ -87,5 +87,34 @@ export function publicSiteHeaders(mode: SecurityHeadersMode, reportUri?: string)
   ];
 }
 
+// The staff app uses the same sources as the site, minus anything it never needs (no frames, no map).
+// Inline scripts stay allowed for the same reason as on the public site (Next's hydration scripts).
+const STAFF_CSP_DIRECTIVES = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+];
+
+/**
+ * The staff Content-Security-Policy (/admin, /api/admin). Off: only `frame-ancestors 'none'`, as before the
+ * script policy existed. Report: that same enforced header plus the full policy as Report-Only, so a staff
+ * page that needs another source shows up as a report instead of a broken screen. Enforce: the full policy.
+ */
+export function staffCspHeaders(mode: SecurityHeadersMode, reportUri?: string): HeaderEntry[] {
+  const framing: HeaderEntry = { key: "Content-Security-Policy", value: "frame-ancestors 'none'" };
+  if (mode === "off") return [framing];
+  const full = (reportUri ? [...STAFF_CSP_DIRECTIVES, `report-uri ${reportUri}`] : STAFF_CSP_DIRECTIVES).join("; ");
+  return mode === "report"
+    ? [framing, { key: "Content-Security-Policy-Report-Only", value: full }]
+    : [{ key: "Content-Security-Policy", value: full }];
+}
+
 /** Every path except the staff pages and their BFF. */
 export const PUBLIC_SITE_SOURCE = "/((?!admin|api/admin).*)";

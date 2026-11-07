@@ -23,8 +23,9 @@ test.describe("security headers", () => {
     expect(headers["cache-control"]).toContain("no-store");
     expect(headers["x-robots-tag"]).toContain("noindex");
     expect(headers["referrer-policy"]).toBe("no-referrer");
+    // Report mode: framing stays enforced; the staff script policy is only reported.
     expect(headers["content-security-policy"]).toBe("frame-ancestors 'none'");
-    expect(headers["content-security-policy-report-only"]).toBeUndefined();
+    expect(headers["content-security-policy-report-only"]).toContain("script-src 'self' 'unsafe-inline'");
   });
 
   test("the home page raises no CSP violation in the console", async ({ page }) => {

@@ -548,3 +548,18 @@ def test_two_simultaneous_changes_give_one_success_and_one_booking_changed(
     loser = next(r for r in results if r.status_code == 409)
     assert error_code(loser) == "booking_changed"
     assert loser.json()["latest"]["status"] == "arrived"
+
+
+def test_phone_reveals_are_limited_per_session_and_the_allowed_ones_stay_audited(
+    cc_client: TestClient,
+    db_session: Session,
+    cc_settings: Settings,
+    staff_headers: tuple[dict[str, str], Any],
+) -> None:
+    hdrs, _ = staff_headers
+    seed(db_session, "AAAAAAAA01")
+    allowed = cc_settings.reveal_phone_limit_per_session_per_hour
+    url = f"{API}/bookings/AAAAAAAA01/reveal-phone"
+    codes = [cc_client.post(url, headers=hdrs).status_code for _ in range(allowed + 1)]
+    assert codes == [200] * allowed + [429]
+    assert len(audit_rows(db_session, "booking.phone_revealed")) == allowed

@@ -84,7 +84,7 @@ test.describe("shell", () => {
     const shot = await page.screenshot({ clip: { x: 0, y: viewport.height - 48, width: 200, height: 48 } });
     // Decode in the page: every pixel of the strip must be the dark navy of the column, never white.
     const brightest = await page.evaluate(async (base64) => {
-      const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${base64}`)).blob());
+      const bitmap = await createImageBitmap(new Blob([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], { type: "image/png" }));
       const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
       const context = canvas.getContext("2d")!;
       context.drawImage(bitmap, 0, 0);
