@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+// Zod probes for eval support with `new Function("")`; the site's CSP reports that harmless probe as a
+// violation on /contact (live check 2026-11-07). The contact form does not need the JIT path, so skip it,
+// as the booking form does (lib/booking/form.ts).
+z.config({ jitless: true });
+
 /**
  * Validation for the Contact form (FR-073). The demo never sends the message; the same schema is
  * meant to validate the real endpoint later (constitution IV). Messages are plain and specific.
