@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 // The site's CSP has no 'unsafe-eval'. Zod's eval probe (`new Function("")`) is skipped only when
@@ -14,4 +14,10 @@ describe("zod runs without eval on the public forms", () => {
     expect(z.config().jitless).toBe(true);
   });
 
+  it.each(["@/admin/lib/client", "@/admin/lib/schemas"])("the staff app module %s turns on jitless", async (path) => {
+    vi.resetModules();
+    z.config({ jitless: false });
+    await import(path);
+    expect(z.config().jitless).toBe(true);
+  });
 });

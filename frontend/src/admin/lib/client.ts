@@ -5,6 +5,9 @@ import * as z from "zod";
 
 import { ErrorResponseSchema } from "./schemas";
 
+// Zod probes for eval with `new Function("")`; the staff CSP reports that harmless probe. Skip it (see lib/contactSchema.ts).
+z.config({ jitless: true });
+
 type ErrorCode = z.infer<typeof ErrorResponseSchema>["error"]["code"];
 
 /** What the screens know about a failed call; they branch on `code`, never on message text. */
