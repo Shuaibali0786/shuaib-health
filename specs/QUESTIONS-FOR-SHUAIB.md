@@ -2,6 +2,15 @@
 
 Short answers are fine ("yes", "no", "A"). Until you answer, the safe choice in brackets is what was built.
 
+## Shuaib's answers (7 Nov 2026)
+- Bookings screenshots (#23): update only if the chips are the only change. Checked: they are not the only change, because the **Print list** button is also new. **Not updated, waiting for Shuaib.**
+- Merge order #24 → #23 → #25 → #26: approved. **#24 merged and smoke-tested** (`smoke-2026-11-07-production.md`). Stopped before #23.
+- Doctor/Lab roles: later. CSV export: no, not now. Print stays masked. Preset-aware booking/dashboard: later.
+- Preset links: option C, only Fiverr and README.
+- Assistant: turn it on in the live demo after #25 is merged. Shuaib sets `ASSISTANT_ENABLED=true` himself on `shuaib-health-web`, Production, then redeploys.
+- Real AI provider: option C, stay free.
+- ADR-0012 and ADR-0013: accepted. Status to be updated in the files once #25 is on main.
+
 ## Merging and screenshots
 1. **Bookings screenshots (PR #23).** The new date chips change 12 dashboard screenshots. Diff images: `specs/008-command-centre-completion/results/visual-diff/`. OK to update the baselines? [Not updated. CI stays red on those 12 until you say yes.]
 2. **Merge order.** OK to merge in this order: #24 presets → #23 Command Centre → #25 assistant → showcase docs? [Nothing merged.]
