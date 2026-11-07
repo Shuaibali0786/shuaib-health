@@ -13,9 +13,9 @@ import { ConfirmDialog, CreateStaffForm, TempPasswordDialog, type NewStaff } fro
 import { StaffTable, type StaffActions } from "./StaffTable";
 
 type Shown = { name: string; password: string; heading: string };
-type Pending = { kind: "deactivate" | "reset"; member: Staff };
+type Pending = { kind: "deactivate" | "reset" | "two-factor"; member: Staff };
 
-/** The Staff screen: the list, add, change role, deactivate/reactivate and reset password. */
+/** The Staff screen: the list, add, change role, deactivate/reactivate, reset password and (Feature 011) reset two-step sign-in. */
 export function StaffScreen({ initial, readOnly }: { initial: Staff[]; readOnly: boolean }) {
   const [staff, setStaff] = useState(initial);
   const [error, setError] = useState<string | null>(null);
@@ -62,10 +62,17 @@ export function StaffScreen({ initial, readOnly }: { initial: Staff[]; readOnly:
       setShown({ name: member.displayName, password, heading: "Temporary password set" });
     });
 
+  const resetTwoFactor = (member: Staff) =>
+    run(member, async () => {
+      await adminRequest({ method: "POST", path: `staff/${member.id}/two-factor/reset` }, z.null());
+      replace({ ...member, twoFactorEnabled: false });
+    });
+
   const actions: StaffActions = {
     onRole: (member, role) => void patch(member, { role }),
     onActive: (member, active) => (active ? void patch(member, { isActive: true }) : setConfirm({ kind: "deactivate", member })),
     onReset: (member) => setConfirm({ kind: "reset", member }),
+    onResetTwoFactor: (member) => setConfirm({ kind: "two-factor", member }),
   };
 
   return (
@@ -97,20 +104,30 @@ export function StaffScreen({ initial, readOnly }: { initial: Staff[]; readOnly:
       <TempPasswordDialog open={shown !== null} name={shown?.name ?? ""} password={shown?.password ?? ""} heading={shown?.heading ?? ""} onClose={() => setShown(null)} />
       <ConfirmDialog
         open={confirm !== null}
-        title={confirm?.kind === "reset" ? `Reset password for ${confirm.member.displayName}?` : `Deactivate ${confirm?.member.displayName ?? ""}?`}
+        title={
+          confirm?.kind === "reset"
+            ? `Reset password for ${confirm.member.displayName}?`
+            : confirm?.kind === "two-factor"
+              ? `Reset two-step sign-in for ${confirm.member.displayName}?`
+              : `Deactivate ${confirm?.member.displayName ?? ""}?`
+        }
         body={
           confirm?.kind === "reset"
             ? "They are signed out everywhere and must choose a new password. You will see a temporary password once."
-            : "They are signed out at once and cannot sign in until you reactivate the account."
+            : confirm?.kind === "two-factor"
+              ? "Use this when they lost their phone and backup codes. Their two-step sign-in is turned off, their backup codes stop working and they are signed out. They can turn it on again from their Security page."
+              : "They are signed out at once and cannot sign in until you reactivate the account."
         }
-        confirmLabel={confirm?.kind === "reset" ? "Reset password" : "Deactivate"}
-        danger={confirm?.kind === "deactivate"}
+        confirmLabel={confirm?.kind === "reset" ? "Reset password" : confirm?.kind === "two-factor" ? "Reset two-step sign-in" : "Deactivate"}
+        danger={confirm?.kind !== "reset"}
         onCancel={() => setConfirm(null)}
         onConfirm={() => {
           const pending = confirm;
           setConfirm(null);
           if (!pending) return;
-          void (pending.kind === "reset" ? reset(pending.member) : patch(pending.member, { isActive: false }));
+          if (pending.kind === "reset") void reset(pending.member);
+          else if (pending.kind === "two-factor") void resetTwoFactor(pending.member);
+          else void patch(pending.member, { isActive: false });
         }}
       />
     </div>

@@ -1,7 +1,8 @@
 """Automatic deletion of demo data (FR-051, FR-054): bookings after the appointment, audit later.
 
 Also old sign-in sessions (Feature 006, R17): staff sessions 30 days after they ended or expired,
-demo sessions 1 day after they expired. Sessions are purged in every mode; bookings and audit rows
+demo sessions 1 day after they expired, and two-step sign-in challenges (Feature 011) 1 day after
+they expired. Sessions are purged in every mode; bookings and audit rows
 only in demo mode (outside it audit rows are kept, FR-031).
 """
 
@@ -34,9 +35,14 @@ _DELETE_DEMO_SESSIONS = text(
     "DELETE FROM demo_session WHERE ctid IN "
     "(SELECT ctid FROM demo_session WHERE expires_at < :cutoff LIMIT :batch)"
 )
+_DELETE_CHALLENGES = text(
+    "DELETE FROM staff_sign_in_challenge WHERE ctid IN "
+    "(SELECT ctid FROM staff_sign_in_challenge WHERE expires_at < :cutoff LIMIT :batch)"
+)
 
 STAFF_SESSION_KEEP = timedelta(days=30)
 DEMO_SESSION_KEEP = timedelta(days=1)
+CHALLENGE_KEEP = timedelta(days=1)
 
 
 def _delete_batches(conn: Connection, statement: Any, cutoff: datetime, limit: int | None) -> int:
@@ -78,5 +84,6 @@ def purge_old_sessions(conn: Connection, *, now: datetime, limit: int | None = B
     """
     staff = _delete_batches(conn, _DELETE_STAFF_SESSIONS, now - STAFF_SESSION_KEEP, limit)
     demo = _delete_batches(conn, _DELETE_DEMO_SESSIONS, now - DEMO_SESSION_KEEP, limit)
+    _delete_batches(conn, _DELETE_CHALLENGES, now - CHALLENGE_KEEP, limit)
     logger.info("purge_sessions", extra={"event": "purge_sessions", "deleted": staff + demo})
     return staff + demo

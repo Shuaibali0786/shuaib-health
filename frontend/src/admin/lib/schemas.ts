@@ -43,10 +43,29 @@ export const StaffSchema = z.object({
   mustChangePassword: z.boolean().optional(),
   lastSignInAt: z.iso.datetime({ offset: true }).nullable().optional(),
   isSample: z.boolean().optional(),
+  twoFactorEnabled: z.boolean().optional(),
 });
 export const StaffListSchema = z.array(StaffSchema);
 
 export type SessionIssued = z.infer<typeof SessionIssuedSchema>;
+
+// Feature 011: two-step sign-in.
+/** What the backend returns to this server (202) when a code is needed next. The token stays on the server. */
+export const TwoFactorChallengeSchema = z.object({ twoFactorRequired: z.literal(true), challengeToken: z.string().min(1).max(100), expiresAt: z.iso.datetime({ offset: true }) });
+/** What the browser receives instead. */
+export const TwoFactorRequiredSchema = z.object({ twoFactorRequired: z.literal(true) });
+export const SignInResultSchema = z.union([TwoFactorRequiredSchema, ViewerSchema]);
+export const TwoFactorStatusSchema = z.object({
+  available: z.boolean(),
+  enabled: z.boolean(),
+  enabledAt: z.iso.datetime({ offset: true }).nullable().optional(),
+  backupCodesLeft: z.number().int().nullable().optional(),
+  canEnrol: z.boolean(),
+});
+export const TwoFactorSetupSchema = z.object({ secret: z.string().min(16).max(64), otpauthUri: z.string().startsWith("otpauth://totp/").max(300) });
+export const BackupCodesSchema = z.object({ backupCodes: z.array(z.string()).length(10) });
+export type TwoFactorStatus = z.infer<typeof TwoFactorStatusSchema>;
+export type TwoFactorSetup = z.infer<typeof TwoFactorSetupSchema>;
 export type Staff = z.infer<typeof StaffSchema>;
 
 // ----- Bookings (US4) -----------------------------------------------------------------------

@@ -9,6 +9,8 @@ export type StaffActions = {
   onRole: (member: Staff, role: Role) => void;
   onActive: (member: Staff, active: boolean) => void;
   onReset: (member: Staff) => void;
+  /** Feature 011: turn off a person's two-step sign-in (lost phone). */
+  onResetTwoFactor: (member: Staff) => void;
 };
 
 function lastSeen(value: string | null | undefined): string {
@@ -64,6 +66,11 @@ export function StaffTable({ staff, actions, readOnly, busyId }: { staff: Staff[
                       Must change password
                     </span>
                   ) : null}
+                  {member.twoFactorEnabled ? (
+                    <span className="muted" style={{ display: "block", fontSize: 12.5, marginTop: 4 }}>
+                      Two-step sign-in on
+                    </span>
+                  ) : null}
                 </td>
                 <td className="num" data-label="Last sign-in">{lastSeen(member.lastSignInAt)}</td>
                 <td>
@@ -75,6 +82,11 @@ export function StaffTable({ staff, actions, readOnly, busyId }: { staff: Staff[
                       <button type="button" className="btn btn-sm" disabled={disabled} onClick={() => actions.onActive(member, !member.isActive)}>
                         {member.isActive ? "Deactivate" : "Reactivate"}
                       </button>
+                      {member.twoFactorEnabled ? (
+                        <button type="button" className="btn btn-sm" disabled={disabled} onClick={() => actions.onResetTwoFactor(member)}>
+                          Reset two-step sign-in
+                        </button>
+                      ) : null}
                     </div>
                   )}
                 </td>

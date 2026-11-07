@@ -50,6 +50,13 @@ export const ADMIN_ROUTES: readonly AdminRoute[] = [
   { method: "POST", browser: "staff", backend: "/admin/staff", bodyLimit: 2 * KB, timeoutMs: 10000 },
   { method: "POST", browser: "staff/{id}/reset-password", backend: "/admin/staff/{id}/reset-password", bodyLimit: KB, timeoutMs: 10000 },
   { method: "PATCH", browser: "staff/{id}", backend: "/admin/staff/{id}", bodyLimit: KB, timeoutMs: 10000 },
+  // Feature 011: two-step sign-in (self-service) and the admin reset for a lost phone.
+  { method: "POST", browser: "staff/{id}/two-factor/reset", backend: "/admin/staff/{id}/two-factor/reset", bodyLimit: 0, timeoutMs: 10000 },
+  { method: "GET", browser: "two-factor", backend: "/admin/auth/two-factor", bodyLimit: 0, timeoutMs: 5000 },
+  { method: "POST", browser: "two-factor/setup", backend: "/admin/auth/two-factor/setup", bodyLimit: KB, timeoutMs: 10000 },
+  { method: "POST", browser: "two-factor/enable", backend: "/admin/auth/two-factor/enable", bodyLimit: KB, timeoutMs: 10000 },
+  { method: "POST", browser: "two-factor/disable", backend: "/admin/auth/two-factor/disable", bodyLimit: KB, timeoutMs: 10000 },
+  { method: "POST", browser: "two-factor/backup-codes", backend: "/admin/auth/two-factor/backup-codes", bodyLimit: KB, timeoutMs: 10000 },
 ];
 
 export type MatchedRoute = {

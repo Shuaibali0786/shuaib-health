@@ -22,9 +22,22 @@ export const ACTIONS: readonly { value: string; label: string }[] = [
   { value: "staff.deactivated", label: "Deactivated a staff account" },
   { value: "staff.reactivated", label: "Reactivated a staff account" },
   { value: "staff.role_changed", label: "Changed a role" },
+  { value: "auth.two_factor_challenge", label: "Asked for a sign-in code" },
+  { value: "auth.two_factor_failed", label: "Failed sign-in code" },
+  { value: "auth.two_factor_enabled", label: "Turned on two-step sign-in" },
+  { value: "auth.two_factor_disabled", label: "Turned off two-step sign-in" },
+  { value: "auth.backup_code_used", label: "Used a backup code" },
+  { value: "auth.backup_codes_regenerated", label: "Made new backup codes" },
+  { value: "staff.two_factor_reset", label: "Reset two-step sign-in" },
 ];
 const LABEL = new Map(ACTIONS.map((a) => [a.value, a.label]));
 const OUTCOME: Record<string, string> = { refused: "Refused", bad_credentials: "Wrong password", locked: "Locked", inactive: "Account inactive" };
+
+/** A wrong code is not a wrong password, so two-step events name it plainly. */
+function outcomeLabel(event: ActivityEvent): string {
+  if (event.action === "auth.two_factor_failed" && event.outcome === "bad_credentials") return "Wrong code";
+  return OUTCOME[event.outcome] ?? event.outcome;
+}
 
 const statusWord = (status?: string | null) => (status && status in STATUS_LABEL ? STATUS_LABEL[status as keyof typeof STATUS_LABEL] : (status ?? ""));
 
@@ -123,7 +136,7 @@ export function ActivityFeed({ data, staff, action, staffId, sample }: { data: A
                     </td>
                     <td>
                       {describe(event)}
-                      {event.outcome !== "ok" ? <span className="pill pill-off outcome">{OUTCOME[event.outcome] ?? event.outcome}</span> : null}
+                      {event.outcome !== "ok" ? <span className="pill pill-off outcome">{outcomeLabel(event)}</span> : null}
                     </td>
                     <td className="ref">{event.bookingReference ?? "—"}</td>
                     <td className="ref tag" title="First six characters of a one-way code for the network address">

@@ -759,7 +759,7 @@ components:
       type: object
       required: [code, message, requestId]
       properties:
-        code: { type: string, enum: [not_found, method_not_allowed, validation_error, rate_limited, internal_error, service_unavailable, not_configured, forbidden, request_rejected, slot_taken, slot_unavailable, booking_limit_reached, idempotency_key_reused, not_signed_in, session_expired, sign_in_failed, account_locked, csrf_failed, demo_read_only, password_change_required, weak_password, email_taken, last_admin, transition_not_allowed, booking_changed, undo_unavailable] }
+        code: { type: string, enum: [not_found, method_not_allowed, validation_error, rate_limited, internal_error, service_unavailable, not_configured, forbidden, request_rejected, slot_taken, slot_unavailable, booking_limit_reached, idempotency_key_reused, not_signed_in, session_expired, sign_in_failed, account_locked, csrf_failed, demo_read_only, password_change_required, weak_password, email_taken, last_admin, transition_not_allowed, booking_changed, undo_unavailable, two_factor_failed, challenge_expired, two_factor_unavailable, two_factor_admins_only, two_factor_already_on, two_factor_not_started, two_factor_off, cannot_reset_self] }
         message: { type: string }
         requestId: { type: string }
         retryAfterSeconds: { type: integer }
