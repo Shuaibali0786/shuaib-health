@@ -3,7 +3,7 @@
 import { Eye, EyeOff, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { adminRequest } from "@/admin/lib/client";
+import { AdminApiError, adminRequest } from "@/admin/lib/client";
 import { PhoneRevealSchema, type PhoneReveal as Revealed } from "@/admin/lib/schemas";
 
 export const MASK_AFTER_MS = 60_000;
@@ -17,7 +17,7 @@ export const MASK_AFTER_MS = 60_000;
 export function PhoneReveal({ reference, masked, disabled = false }: { reference: string; masked: string; disabled?: boolean }) {
   const [revealed, setRevealed] = useState<Revealed | null>(null);
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<"error" | "limit" | false>(false);
 
   useEffect(() => {
     if (!revealed) return;
@@ -30,8 +30,8 @@ export function PhoneReveal({ reference, masked, disabled = false }: { reference
     setFailed(false);
     try {
       setRevealed(await adminRequest({ method: "POST", path: `bookings/${reference}/reveal-phone` }, PhoneRevealSchema));
-    } catch {
-      setFailed(true);
+    } catch (error) {
+      setFailed(error instanceof AdminApiError && error.status === 429 ? "limit" : "error");
     } finally {
       setBusy(false);
     }
@@ -61,7 +61,9 @@ export function PhoneReveal({ reference, masked, disabled = false }: { reference
       )}
       {failed ? (
         <span role="alert" className="field-error">
-          Could not reveal the number. Please try again.
+          {failed === "limit"
+            ? "You have revealed many numbers this hour. Please try again later."
+            : "Could not reveal the number. Please try again."}
         </span>
       ) : null}
     </span>

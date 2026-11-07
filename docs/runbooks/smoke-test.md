@@ -12,7 +12,7 @@ Run after every production deploy, on desktop, and once on a real phone on mobil
 | 6 | Robots and noindex | `/robots.txt` disallows everything and pages carry `noindex` while the clinic is not indexable |
 | 7 | No localhost | `canonical`, `og:url`, `/sitemap.xml` and `/robots.txt` hold only `https://` addresses of the live site |
 | 8 | Website and API agree on the demo switch | Both have `DEMO_ENABLED=true`: the demo button works; with it off it is not offered |
-| 9 | Security headers | `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Permissions-Policy` on `/`, a catalog page and `/admin/login`; the CSP is report-only (`SITE_SECURITY_HEADERS=report`) or enforced (`enforce`); `/admin/login` keeps its own `Content-Security-Policy: frame-ancestors 'none'` |
+| 9 | Security headers | `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Permissions-Policy` on `/`, a catalog page and `/admin/login`; the CSP is report-only (`report`) or enforced (`enforce`); `/admin/login` always enforces `frame-ancestors 'none'` and, in `enforce` mode, the full staff script policy |
 | 10 | `/health` | API answers 200 `{"status":"ok"}` |
 | 11 | `/ready` | API answers 200 (this wakes the database) |
 | 12 | No sales copy | No price outside a "sample" label, no "hire us" or "buy" call to action |

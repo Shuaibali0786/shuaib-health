@@ -7,6 +7,7 @@ import {
   cspReportUri,
   publicSiteHeaders,
   securityHeadersMode,
+  staffCspHeaders,
 } from "@/lib/security-headers";
 
 const names = (list: { key: string }[]) => list.map((h) => h.key);
@@ -91,6 +92,24 @@ describe("header sets", () => {
       expect(csp).toContain("default-src 'self'");
       expect(csp).not.toMatch(/unsafe-eval/);
     }
+  });
+
+  it("staff CSP: framing only when off, plus a Report-Only script policy in report mode, the full policy when enforced", () => {
+    expect(staffCspHeaders("off")).toEqual([{ key: "Content-Security-Policy", value: "frame-ancestors 'none'" }]);
+
+    const report = staffCspHeaders("report", "https://o1.ingest.sentry.io/api/2/security/?sentry_key=abc");
+    expect(names(report)).toEqual(["Content-Security-Policy", "Content-Security-Policy-Report-Only"]);
+    expect(report[0]?.value).toBe("frame-ancestors 'none'");
+    expect(report[1]?.value).toContain("script-src 'self' 'unsafe-inline'");
+    expect(report[1]?.value).toContain("report-uri https://o1.ingest.sentry.io/");
+
+    const enforce = staffCspHeaders("enforce");
+    expect(names(enforce)).toEqual(["Content-Security-Policy"]);
+    const csp = enforce[0]?.value ?? "";
+    for (const part of ["default-src 'self'", "script-src 'self' 'unsafe-inline'", "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'"]) {
+      expect(csp).toContain(part);
+    }
+    expect(csp).not.toMatch(/unsafe-eval|frame-src|https?:\/\//);
   });
 
   it("never touches the staff Referrer-Policy or CSP: the public set skips /admin and /api/admin", () => {

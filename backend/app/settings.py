@@ -91,6 +91,8 @@ class Settings(BaseSettings):
     login_lock_failures: int = Field(5, ge=1, le=50)
     login_lock_minutes: int = Field(15, ge=1, le=1440)
     login_limit_per_ip_per_15min: int = Field(20, ge=1, le=1000)
+    # Full-phone reveals one staff session may make per hour (each is still audited).
+    reveal_phone_limit_per_session_per_hour: int = Field(30, ge=1, le=1000)
     demo_limit_per_ip_per_hour: int = Field(10, ge=1, le=1000)
     demo_session_hours: int = Field(2, ge=1, le=24)
     status_undo_seconds: int = Field(10, ge=1, le=120)

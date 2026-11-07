@@ -1,4 +1,8 @@
-"""One structured log line per request. Logs the path only, never the query string."""
+"""One structured log line per request.
+
+Logs the route template (``/bookings/{reference}``), never the real path, so a booking reference or
+any other path value cannot reach the logs, and never the query string.
+"""
 
 import logging
 import time
@@ -7,6 +11,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 logger = logging.getLogger("app.access")
 ADMIN_PREFIX = "/api/v1/admin/"
+UNMATCHED = "unmatched"
 
 
 def xff_hops(scope: Scope) -> int:
@@ -53,11 +58,13 @@ class AccessLogMiddleware:
             await self.app(scope, receive, capture_status)
         finally:
             route = scope.get("route")
+            template = getattr(route, "path", None)
             fields = {
                 "event": "request",
                 "method": scope.get("method"),
-                "path": scope.get("path"),
-                "route": getattr(route, "path", None),
+                # Unmatched requests (404s, probes) get a fixed label: the real path is not ours.
+                "path": template or UNMATCHED,
+                "route": template,
                 "status": status,
                 "durationMs": round((time.perf_counter() - started) * 1000, 1),
                 "xffHops": xff_hops(scope),

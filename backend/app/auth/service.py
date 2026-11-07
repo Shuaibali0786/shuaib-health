@@ -182,9 +182,33 @@ def change_password(
     staff = viewer.staff
     if staff is None:
         raise AdminError("demo_read_only")
+    # Wrong guesses here count toward the same per-email lockout as sign-in, so a stolen session
+    # cannot be used to guess the current password without limit.
+    subject = throttle.subject_hash(settings.privacy_hash_key, staff.email)
+    locked = throttle.locked_for(db, subject, now)
+    if locked is not None:
+        passwords.verify_dummy(current_password)
+        raise AdminError("account_locked", retry_after=locked)
     if not passwords.verify_password(staff.password_hash, current_password):
+        newly_locked = throttle.record_failure(db, settings, subject, now)
+        audit.record(
+            db,
+            action="auth.sign_in_failed",
+            outcome="locked" if newly_locked else "bad_credentials",
+            fingerprint=viewer.fingerprint,
+        )
+        if newly_locked:
+            audit.record(
+                db, action="auth.lockout", outcome="locked", fingerprint=viewer.fingerprint
+            )
+        db.commit()
+        events.emit("auth.sign_in_failed")
+        if newly_locked:
+            events.emit("auth.lockout")
+            raise AdminError("account_locked", retry_after=settings.login_lock_minutes * 60)
         # 422, not 401: the session is fine, the form field is wrong (a 401 would sign them out).
         raise RequestInvalid("currentPassword", "is incorrect")
+    throttle.clear(db, subject)
     enforce_policy(new_password, staff.email, staff.password_hash)
     staff.password_hash = passwords.hash_password(new_password)
     staff.must_change_password = False

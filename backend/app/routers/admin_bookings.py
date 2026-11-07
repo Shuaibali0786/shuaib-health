@@ -8,10 +8,12 @@ from typing import Annotated
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Path, Response
+from sqlalchemy import Engine
 from sqlmodel import Session
 
 from app.auth.deps import Viewer, get_source, require_viewer, viewer_now
 from app.auth.policies import Policy
+from app.booking import limits
 from app.booking.clock import ClockDep
 from app.command_centre import service
 from app.command_centre.schemas import (
@@ -24,11 +26,11 @@ from app.command_centre.schemas import (
     StatusChangeResult,
     UndoRequest,
 )
-from app.db import SessionDep
+from app.db import SessionDep, get_engine
 from app.demo import generator
 from app.demo.demo_source import DemoSource
 from app.deps import ADMIN_ERRORS_DOC, SettingsDep
-from app.errors import ClinicNotConfigured
+from app.errors import ClinicNotConfigured, RateLimited
 from app.repositories import clinic as clinic_repo
 from app.schemas import ErrorResponse
 
@@ -111,11 +113,24 @@ def reveal_phone(
     reference: Reference,
     viewer: Annotated[Viewer, Depends(require_viewer(Policy.READ))],
     db: SessionDep,
+    engine: Annotated[Engine, Depends(get_engine)],
+    settings: SettingsDep,
+    clock: ClockDep,
     response: Response,
 ) -> PhoneReveal:
     response.headers.update(NO_STORE)
     if viewer.is_demo and viewer.demo_date is not None:
         return DemoSource(viewer.demo_date).reveal_phone(reference)
+    # Per staff session and hour; every reveal that goes through is still audited by the service.
+    retry = limits.hit(
+        engine,
+        limits.reveal_session_bucket(settings.privacy_hash_key, str(viewer.session_id)),
+        limits.REVEAL_SESSION_WINDOW,
+        settings.reveal_phone_limit_per_session_per_hour,
+        clock.now(),
+    )
+    if retry is not None:
+        raise RateLimited(retry)
     return service.reveal_phone(db, viewer, reference)
 
 

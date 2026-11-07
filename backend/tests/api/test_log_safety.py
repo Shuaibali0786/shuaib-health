@@ -260,3 +260,22 @@ def test_command_centre_traffic_leaves_no_personal_data_passwords_or_tokens_in_l
     }
     for label, value in secrets_and_terms.items():
         assert value not in logged, f"{label} found in logs"
+
+
+def test_the_access_log_records_the_route_template_not_the_real_path(
+    capsys: pytest.CaptureFixture[str], settings_factory: SettingsFactory
+) -> None:
+    app = create_app(settings_factory(rate_limit_per_minute=100))
+
+    @app.get("/things/{reference}")
+    def thing(reference: str) -> dict[str, str]:
+        return {"ok": "yes"}
+
+    client = TestClient(app)
+    assert client.get("/things/AB12CD34EF").status_code == 200
+    client.get("/nothing/ZZ99YY88XX")
+    records = log_records(capsys)
+    assert "AB12CD34EF" not in json.dumps(records)
+    assert "ZZ99YY88XX" not in json.dumps(records)
+    paths = [r["path"] for r in records if r.get("event") == "request"]
+    assert paths == ["/things/{reference}", "unmatched"]
