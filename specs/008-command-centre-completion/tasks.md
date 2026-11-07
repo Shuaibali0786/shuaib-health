@@ -24,5 +24,5 @@ Input: [spec.md](./spec.md), [plan.md](./plan.md). Frontend only. `[P]` = can ru
 ## Phase 5 — Polish and gates
 - [x] T012 `npm run typecheck`, `npm run lint`, `npm test` green (results in `results.md`)
 - [ ] T013 Playwright admin projects for Bookings/Staff + axe (run in CI on the draft PR; laptop run optional)
-- [ ] T014 Visual baselines for Bookings/Staff: review CI diff, regenerate only affected snapshots with a pixel-diff note (owner approval, playbook rule 5)
+- [x] T014 Visual baselines for Bookings/Staff: review CI diff, regenerate only affected snapshots with a pixel-diff note (owner approval, playbook rule 5) — approved by Shuaib 7 Nov 2026 (chips + Print list); 17 Linux baselines from CI run 42281368553, 17 Windows regenerated locally
 - [x] T015 Draft PR; no merge (see PR link in specs/MORNING-REPORT-2026-11-07.md)
