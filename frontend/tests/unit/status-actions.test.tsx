@@ -21,6 +21,7 @@ const booking: BookingSummary = {
   phoneMasked: "0300****567",
   doctor: { id: "3f2b8c1e-5a47-4c0b-9d11-0a1b2c3d4e5f", name: "Dr. Ayesha Rahman", departmentName: "Gynecology" },
   allowedNext: ["arrived", "cancelled"],
+  bookedAt: "2026-10-04T09:05:00Z",
 };
 
 describe("StatusActions", () => {

@@ -3,10 +3,23 @@
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
-from sqlalchemy import Date, DateTime, Select, String, Uuid, cast, literal, null, or_, union_all
+from sqlalchemy import (
+    Date,
+    DateTime,
+    Select,
+    String,
+    Uuid,
+    cast,
+    literal,
+    null,
+    or_,
+    union_all,
+    update,
+)
 from sqlalchemy import select as sa_select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import Session, col, func, select
 
 from app import models as m
@@ -17,10 +30,11 @@ class SearchWindow(TypedDict):
     """Filters shared by the page query and the status counts (all but the statuses)."""
 
     q: str | None
-    starts_from: datetime
-    starts_before: datetime
+    starts_from: datetime | None
+    starts_before: datetime | None
     doctor_id: uuid.UUID | None
     department_id: uuid.UUID | None
+    booked_since: NotRequired[datetime | None]
 
 
 @dataclass(frozen=True)
@@ -40,14 +54,18 @@ def _filtered(
     stmt: Select[Any],
     *,
     q: str | None,
-    starts_from: datetime,
-    starts_before: datetime,
+    starts_from: datetime | None,
+    starts_before: datetime | None,
     doctor_id: uuid.UUID | None,
     department_id: uuid.UUID | None,
+    booked_since: datetime | None = None,
 ) -> Select[Any]:
-    stmt = stmt.where(col(m.Appointment.starts_at) >= starts_from).where(
-        col(m.Appointment.starts_at) < starts_before
-    )
+    if starts_from is not None:
+        stmt = stmt.where(col(m.Appointment.starts_at) >= starts_from)
+    if starts_before is not None:
+        stmt = stmt.where(col(m.Appointment.starts_at) < starts_before)
+    if booked_since is not None:
+        stmt = stmt.where(col(m.Appointment.created_at) >= booked_since)
     term = (q or "").strip()
     if term:
         pattern = escape_like(term)
@@ -68,10 +86,11 @@ def status_counts(
     db: Session,
     *,
     q: str | None,
-    starts_from: datetime,
-    starts_before: datetime,
+    starts_from: datetime | None,
+    starts_before: datetime | None,
     doctor_id: uuid.UUID | None,
     department_id: uuid.UUID | None,
+    booked_since: datetime | None = None,
 ) -> dict[str, int]:
     """Bookings per status for the same filters but not the status filter (the chips)."""
     stmt = _filtered(
@@ -81,6 +100,7 @@ def status_counts(
         starts_before=starts_before,
         doctor_id=doctor_id,
         department_id=department_id,
+        booked_since=booked_since,
     ).group_by(col(m.Appointment.status))
     return {str(status): int(n) for status, n in db.execute(stmt).all()}
 
@@ -89,13 +109,15 @@ def search_bookings(
     db: Session,
     *,
     q: str | None,
-    starts_from: datetime,
-    starts_before: datetime,
+    starts_from: datetime | None,
+    starts_before: datetime | None,
     doctor_id: uuid.UUID | None,
     department_id: uuid.UUID | None,
     statuses: list[str] | None,
     page: int,
     page_size: int,
+    booked_since: datetime | None = None,
+    recently_booked_first: bool = False,
 ) -> tuple[list[BookingRow], int]:
     stmt = _filtered(
         select(m.Appointment, m.Doctor, m.Department)
@@ -106,14 +128,177 @@ def search_bookings(
         starts_before=starts_before,
         doctor_id=doctor_id,
         department_id=department_id,
+        booked_since=booked_since,
     )
     if statuses:
         stmt = stmt.where(col(m.Appointment.status).in_(statuses))
-    stmt = stmt.order_by(
-        col(m.Appointment.starts_at), col(m.Doctor.full_name), col(m.Appointment.reference)
-    )
+    if recently_booked_first:
+        stmt = stmt.order_by(col(m.Appointment.created_at).desc(), col(m.Appointment.reference))
+    else:
+        stmt = stmt.order_by(
+            col(m.Appointment.starts_at), col(m.Doctor.full_name), col(m.Appointment.reference)
+        )
     rows, total = paginate(db, stmt, page, page_size)
     return [BookingRow(a, d, p) for a, d, p in rows], total
+
+
+def day_counts(
+    db: Session,
+    *,
+    tz_name: str,
+    q: str | None,
+    starts_from: datetime | None,
+    starts_before: datetime | None,
+    doctor_id: uuid.UUID | None,
+    department_id: uuid.UUID | None,
+    statuses: list[str] | None,
+    booked_since: datetime | None = None,
+    limit: int = 400,
+) -> list[tuple[date, int]]:
+    """Bookings per clinic-local day for the same filters (the Upcoming view's day headings)."""
+    local_day = cast(func.timezone(tz_name, col(m.Appointment.starts_at)), Date)
+    stmt = _filtered(
+        select(local_day, func.count()).select_from(m.Appointment),
+        q=q,
+        starts_from=starts_from,
+        starts_before=starts_before,
+        doctor_id=doctor_id,
+        department_id=department_id,
+        booked_since=booked_since,
+    )
+    if statuses:
+        stmt = stmt.where(col(m.Appointment.status).in_(statuses))
+    stmt = stmt.group_by(local_day).order_by(local_day).limit(limit)
+    return [(day, int(n)) for day, n in db.execute(stmt).all()]
+
+
+# ----- Seen / new (Feature 012) -----------------------------------------------------------------
+
+
+def seen_watermark(db: Session, staff_id: uuid.UUID) -> datetime | None:
+    """The moment from which bookings count as new for this staff member."""
+    staff = db.get(m.StaffAccount, staff_id)
+    if staff is None:
+        return None
+    return staff.bookings_seen_at or staff.created_at
+
+
+def new_ids(db: Session, staff_id: uuid.UUID, appointments: list[m.Appointment]) -> set[uuid.UUID]:
+    """Which of these are new for the staff member: booked after their watermark, not opened."""
+    if not appointments:
+        return set()
+    watermark = seen_watermark(db, staff_id)
+    if watermark is None:
+        return set()
+    ids = [require_id(a.id) for a in appointments]
+    seen = set(
+        db.exec(
+            select(m.BookingSeen.appointment_id)
+            .where(col(m.BookingSeen.staff_id) == staff_id)
+            .where(col(m.BookingSeen.appointment_id).in_(ids))
+        ).all()
+    )
+    return {
+        require_id(a.id)
+        for a in appointments
+        if a.created_at is not None and a.created_at > watermark and require_id(a.id) not in seen
+    }
+
+
+def _new_filter(staff_id: uuid.UUID, watermark: datetime) -> list[Any]:
+    opened = (
+        sa_select(literal(1))
+        .select_from(m.BookingSeen)
+        .where(col(m.BookingSeen.appointment_id) == col(m.Appointment.id))
+        .where(col(m.BookingSeen.staff_id) == staff_id)
+        .exists()
+    )
+    return [col(m.Appointment.created_at) > watermark, ~opened]
+
+
+def new_count(db: Session, staff_id: uuid.UUID) -> int:
+    watermark = seen_watermark(db, staff_id)
+    if watermark is None:
+        return 0
+    stmt = select(func.count()).select_from(m.Appointment).where(*_new_filter(staff_id, watermark))
+    return int(db.exec(stmt).one())
+
+
+def new_bookings(db: Session, staff_id: uuid.UUID, limit: int) -> tuple[int, list[BookingRow]]:
+    """How many bookings are new for the staff member, and the newest ``limit`` of them."""
+    watermark = seen_watermark(db, staff_id)
+    if watermark is None:
+        return 0, []
+    conditions = _new_filter(staff_id, watermark)
+    count = db.exec(select(func.count()).select_from(m.Appointment).where(*conditions)).one()
+    stmt = (
+        select(m.Appointment, m.Doctor, m.Department)
+        .join(m.Doctor, col(m.Doctor.id) == col(m.Appointment.doctor_id))
+        .join(m.Department, col(m.Department.id) == col(m.Appointment.department_id))
+        .where(*conditions)
+        .order_by(col(m.Appointment.created_at).desc(), col(m.Appointment.reference))
+        .limit(limit)
+    )
+    return int(count), [BookingRow(a, d, p) for a, d, p in db.exec(stmt).all()]
+
+
+def mark_seen(db: Session, staff_id: uuid.UUID, appointment_ids: list[uuid.UUID]) -> None:
+    """Record that the staff member opened these bookings (idempotent)."""
+    for appointment_id in appointment_ids:
+        db.execute(
+            pg_insert(m.BookingSeen)
+            .values(staff_id=staff_id, appointment_id=appointment_id)
+            .on_conflict_do_nothing()
+        )
+
+
+def mark_all_seen(db: Session, staff_id: uuid.UUID, now: datetime) -> None:
+    """Every booking made so far stops being new for this staff member."""
+    db.execute(
+        update(m.StaffAccount)
+        .where(col(m.StaffAccount.id) == staff_id)
+        .values(bookings_seen_at=now)
+    )
+
+
+def appointment_ids_of(db: Session, references: list[str]) -> list[uuid.UUID]:
+    rows = db.exec(
+        select(m.Appointment.id).where(
+            col(m.Appointment.reference).in_([r.upper() for r in references])
+        )
+    ).all()
+    return [require_id(i) for i in rows]
+
+
+def card_counts(
+    db: Session,
+    *,
+    today: tuple[datetime, datetime],
+    tomorrow: tuple[datetime, datetime],
+    next7: tuple[datetime, datetime],
+    week: tuple[datetime, datetime],
+) -> dict[str, int]:
+    """Counts for the Overview cards in one query. Active means not cancelled."""
+    starts = col(m.Appointment.starts_at)
+    active = col(m.Appointment.status) != "cancelled"
+
+    def between(window: tuple[datetime, datetime], *extra: Any) -> Any:
+        return func.count().filter(starts >= window[0], starts < window[1], *extra)
+
+    row = db.execute(
+        select(
+            between(today, active),
+            between(tomorrow, active),
+            between(next7, active),
+            between(week, col(m.Appointment.status) == "cancelled"),
+        ).select_from(m.Appointment)
+    ).one()
+    return {
+        "today": int(row[0]),
+        "tomorrow": int(row[1]),
+        "next7": int(row[2]),
+        "cancelled_week": int(row[3]),
+    }
 
 
 def get_booking(db: Session, reference: str, *, lock: bool = False) -> BookingRow | None:
@@ -348,3 +533,30 @@ def activity_page(
     stmt = stmt.order_by(col(m.AuditLog.occurred_at).desc(), col(m.AuditLog.id))
     rows, total = paginate(db, stmt, page, page_size)
     return [ActivityRow(event, name) for event, name in rows], total
+
+
+def doctor_counts(
+    db: Session, starts_from: datetime, starts_before: datetime, limit: int = 10
+) -> list[tuple[str, int]]:
+    """Active bookings per doctor in a window, the busiest first (the morning email)."""
+    stmt = (
+        select(m.Doctor.full_name, func.count())
+        .select_from(m.Appointment)
+        .join(m.Doctor, col(m.Doctor.id) == col(m.Appointment.doctor_id))
+        .where(col(m.Appointment.starts_at) >= starts_from)
+        .where(col(m.Appointment.starts_at) < starts_before)
+        .where(col(m.Appointment.status) != "cancelled")
+        .group_by(col(m.Doctor.full_name))
+        .order_by(func.count().desc(), col(m.Doctor.full_name))
+        .limit(limit)
+    )
+    return [(name, int(n)) for name, n in db.execute(stmt).all()]
+
+
+def count_booked_since(db: Session, since: datetime) -> int:
+    stmt = (
+        select(func.count())
+        .select_from(m.Appointment)
+        .where(col(m.Appointment.created_at) >= since)
+    )
+    return int(db.exec(stmt).one())

@@ -17,9 +17,8 @@ describe("admin schemas match the contract", () => {
     expectTypeOf<z.infer<typeof TrendSchema>>().toEqualTypeOf<Schemas["Trend"]>();
     expectTypeOf<z.infer<typeof OverviewSchema>["kpis"]>().toEqualTypeOf<Schemas["Overview"]["kpis"]>();
     expectTypeOf<z.infer<typeof OverviewSchema>["agenda"]>().toEqualTypeOf<Schemas["Overview"]["agenda"]>();
-    // The generated type is an intersection (summary and bookedAt); the schema is the same shape, extended.
-    expectTypeOf<NonNullable<z.infer<typeof OverviewSchema>["recentBookings"]>[number]>().toExtend<NonNullable<Schemas["Overview"]["recentBookings"]>[number]>();
-    expectTypeOf<NonNullable<Schemas["Overview"]["recentBookings"]>[number]>().toExtend<NonNullable<z.infer<typeof OverviewSchema>["recentBookings"]>[number]>();
+    expectTypeOf<NonNullable<z.infer<typeof OverviewSchema>["recentBookings"]>[number]>().toEqualTypeOf<NonNullable<Schemas["Overview"]["recentBookings"]>[number]>();
+    expectTypeOf<z.infer<typeof OverviewSchema>["cards"]>().toEqualTypeOf<Schemas["Overview"]["cards"]>();
     // The detail is the summary plus its own fields.
     expectTypeOf<z.infer<typeof BookingDetailSchema>["feePkr"]>().toEqualTypeOf<number>();
     expect(true).toBe(true);

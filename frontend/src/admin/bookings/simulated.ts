@@ -15,6 +15,8 @@ export type SimulatedOptions = {
   statusOf: (reference: string, status: BookingStatus) => BookingStatus;
   /** The full patient name of a simulated booking, for the search box. */
   nameOf: (reference: string) => string | undefined;
+  /** The clinic instant, for the "Recently booked" window. */
+  nowMs?: number;
 };
 
 const order = (a: BookingSummary, b: BookingSummary) => a.startsAt.localeCompare(b.startsAt) || a.doctor.name.localeCompare(b.doctor.name) || a.reference.localeCompare(b.reference);
@@ -24,12 +26,18 @@ const order = (a: BookingSummary, b: BookingSummary) => a.startsAt.localeCompare
  * own status laid over each. The same rules as the server's search: the day range, the doctor, the department
  * and the text (reference or name).
  */
-export function simulatedMatching(extras: readonly BookingSummary[], filters: BookingFilters, { today, departmentName, statusOf, nameOf }: SimulatedOptions): BookingSummary[] {
+export function simulatedMatching(extras: readonly BookingSummary[], filters: BookingFilters, { today, departmentName, statusOf, nameOf, nowMs }: SimulatedOptions): BookingSummary[] {
   const first = filters.from ?? filters.to ?? today;
   const last = filters.to ?? first;
   const term = filters.q.trim().toLowerCase();
+  // The same window rules as the server: a typed search looks at every date, "Recently booked" without dates too,
+  // and "Upcoming" starts tomorrow (the simulated bookings are all on the sample day, so none qualify).
+  if (filters.view === "upcoming" && !term) return [];
+  const anyDate = Boolean(term) || (filters.booked !== null && !filters.from && !filters.to);
+  const bookedSince = filters.booked !== null && nowMs !== undefined ? nowMs - filters.booked * 3_600_000 : null;
   return extras
-    .filter((item) => item.localDate >= first && item.localDate <= last)
+    .filter((item) => anyDate || (item.localDate >= first && item.localDate <= last))
+    .filter((item) => bookedSince === null || Date.parse(item.bookedAt) >= bookedSince)
     .filter((item) => !filters.doctor || item.doctor.id === filters.doctor)
     .filter((item) => !filters.department || item.doctor.departmentName === departmentName)
     .filter((item) => !term || item.reference.toLowerCase().includes(term) || (nameOf(item.reference) ?? item.patientNameMasked).toLowerCase().includes(term))

@@ -20,6 +20,7 @@ from app.command_centre.schemas import (
     BookingPage,
     BookingSearchRequest,
     BookingSummary,
+    DayBookings,
     DepartmentRef,
     DoctorRef,
     DoctorsToday,
@@ -27,7 +28,9 @@ from app.command_centre.schemas import (
     Insights,
     InsightsRange,
     Lookups,
+    NewBookings,
     Overview,
+    OverviewCards,
     PhoneReveal,
 )
 from app.demo import generator
@@ -35,6 +38,8 @@ from app.demo.generator import DemoBooking, DemoDataset, DemoDoctor, DemoStaff
 from app.errors import NotFound
 
 ONLINE_BOOKING = "Online booking"
+DEMO_NEW_LIMIT = 12  # how many sample bookings count as new in the demo
+NEW_LIST_LIMIT = 5
 
 
 def doctor_uuid(slug: str) -> uuid.UUID:
@@ -76,8 +81,23 @@ class DemoSource:
             is_active=True,
         )
 
+    def _new_references(self, now: datetime) -> frozenset[str]:
+        """The sample bookings shown as new: the latest few made in the last 24 hours that are still
+        to come. The demo remembers which ones the visitor opened in their own browser."""
+        recent = [
+            b
+            for b in self.dataset.bookings
+            if now - timedelta(hours=24) <= b.created_at <= now and b.starts_at > now
+        ]
+        recent.sort(key=lambda b: (b.created_at, b.reference), reverse=True)
+        return frozenset(b.reference for b in recent[:DEMO_NEW_LIMIT])
+
     def _summary_fields(
-        self, booking: DemoBooking, tz: ZoneInfo, now: datetime
+        self,
+        booking: DemoBooking,
+        tz: ZoneInfo,
+        now: datetime,
+        new: frozenset[str] = frozenset(),
     ) -> dict[str, object]:
         status = booking.status_at(now)
         local = booking.starts_at.astimezone(tz)
@@ -94,6 +114,8 @@ class DemoSource:
             "doctor": self._doctor_ref(booking),
             "allowed_next": rules.allowed_next(status, booking.starts_at, now),
             "is_sample": True,
+            "booked_at": booking.created_at,
+            "is_new": booking.reference in new,
         }
 
     def _history(self, booking: DemoBooking, now: datetime) -> list[HistoryItem]:
@@ -149,7 +171,6 @@ class DemoSource:
             email_masked=mask_email(booking.email),
             reason=booking.reason,
             fee_pkr=booking.fee_pkr,
-            booked_at=booking.created_at,
             history=self._history(booking, now),
             patient_age=booking.patient_age,
             booked_by=booking.booked_by,
@@ -163,14 +184,28 @@ class DemoSource:
         raise NotFound("Booking")
 
     def search(self, body: BookingSearchRequest, tz: ZoneInfo, now: datetime) -> BookingPage:
-        first, last = resolve_range(body, self.demo_date)
-        lo, hi = day_bounds(first, tz)[0], day_bounds(last, tz)[1]
+        # The same window rules as the real search: a typed search looks at every date, "Upcoming"
+        # starts tomorrow, and "Recently booked" without dates looks at every date too.
         term = (body.q or "").strip().lower()
+        lo: datetime | None
+        hi: datetime | None
+        if term or (body.booked_within_hours and body.from_ is None and body.to is None):
+            lo = hi = None
+        elif body.scope == "upcoming":
+            lo, hi = day_bounds(self.demo_date + timedelta(days=1), tz)[0], None
+        else:
+            first, last = resolve_range(body, self.demo_date)
+            lo, hi = day_bounds(first, tz)[0], day_bounds(last, tz)[1]
+        booked_since = (
+            now - timedelta(hours=body.booked_within_hours) if body.booked_within_hours else None
+        )
         wanted = set(body.statuses or ())
         in_window = [
             b
             for b in self.dataset.bookings
-            if lo <= b.starts_at < hi
+            if (lo is None or lo <= b.starts_at)
+            and (hi is None or b.starts_at < hi)
+            and (booked_since is None or booked_since <= b.created_at <= now)
             and (
                 not term
                 or term in b.reference.lower()
@@ -184,16 +219,43 @@ class DemoSource:
             status = b.status_at(now)
             counts[status] = counts.get(status, 0) + 1
         hits = [b for b in in_window if not wanted or b.status_at(now) in wanted]
-        hits.sort(key=lambda b: (b.starts_at, b.doctor_name, b.reference))
+        if body.sort == "recently_booked":
+            hits.sort(key=lambda b: (-b.created_at.timestamp(), b.reference))
+        else:
+            hits.sort(key=lambda b: (b.starts_at, b.doctor_name, b.reference))
+        days: list[DayBookings] = []
+        if body.scope == "upcoming":
+            per_day: dict[date, int] = {}
+            for b in hits:
+                day = b.starts_at.astimezone(tz).date()
+                per_day[day] = per_day.get(day, 0) + 1
+            days = [DayBookings(date=d, count=n) for d, n in sorted(per_day.items())]
+        new = self._new_references(now)
         start = (body.page - 1) * PAGE_SIZE
         return BookingPage(
             items=[
-                BookingSummary(**self._summary_fields(b, tz, now))
+                BookingSummary(**self._summary_fields(b, tz, now, new))
                 for b in hits[start : start + PAGE_SIZE]
             ],
             total=len(hits),
             page=body.page,
             status_counts=counts,
+            day_counts=days,
+        )
+
+    def new_bookings(self, tz: ZoneInfo, now: datetime) -> NewBookings:
+        new = self._new_references(now)
+        found = sorted(
+            (b for b in self.dataset.bookings if b.reference in new),
+            key=lambda b: (b.created_at, b.reference),
+            reverse=True,
+        )
+        return NewBookings(
+            count=len(found),
+            items=[
+                BookingSummary(**self._summary_fields(b, tz, now, new))
+                for b in found[:NEW_LIST_LIMIT]
+            ],
         )
 
     def detail(self, reference: str, tz: ZoneInfo, now: datetime) -> BookingDetail:
@@ -268,7 +330,35 @@ class DemoSource:
             holiday_today=dataset.holidays.get(today),
             holiday_last_week=earlier in dataset.holidays,
             recent=[],
+            cards=self._cards(tz, now),
             is_sample=True,
+        )
+
+    def _cards(self, tz: ZoneInfo, now: datetime) -> OverviewCards:
+        today = self.demo_date
+        monday = today - timedelta(days=today.weekday())
+
+        def day_of(b: DemoBooking) -> date:
+            return b.starts_at.astimezone(tz).date()
+
+        def active(b: DemoBooking) -> bool:
+            return b.status_at(now) != "cancelled"
+
+        bookings = self.dataset.bookings
+        return OverviewCards(
+            today=sum(1 for b in bookings if day_of(b) == today and active(b)),
+            tomorrow=sum(
+                1 for b in bookings if day_of(b) == today + timedelta(days=1) and active(b)
+            ),
+            next7_days=sum(
+                1 for b in bookings if today < day_of(b) <= today + timedelta(days=7) and active(b)
+            ),
+            new_since_last_visit=len(self._new_references(now)),
+            cancelled_this_week=sum(
+                1
+                for b in bookings
+                if monday <= day_of(b) <= monday + timedelta(days=6) and not active(b)
+            ),
         )
 
     # ----- insights, doctors today, activity (US6-US8) ----------------------------------

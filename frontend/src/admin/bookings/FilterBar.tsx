@@ -57,6 +57,36 @@ export function QuickRangeChips({ filters, today, onChange }: { filters: Pick<Bo
   );
 }
 
+/** Day (one dated list) or Upcoming (every booking from tomorrow, grouped by day). */
+export function ViewChips({ filters, onChange }: { filters: Pick<BookingFilters, "view">; onChange: FilterChange }) {
+  return (
+    <div className="quick-ranges" role="group" aria-label="View">
+      <button type="button" className="chip" aria-pressed={filters.view === "day"} onClick={() => onChange({ view: "day", sort: "soonest", page: 1 })}>
+        By day
+      </button>
+      <button type="button" className="chip" aria-pressed={filters.view === "upcoming"} onClick={() => onChange({ view: "upcoming", page: 1 })}>
+        Upcoming
+      </button>
+    </div>
+  );
+}
+
+/** "Recently booked": made in the last 24 hours or 7 days. A second tap on the pressed chip turns it off. */
+export function BookedChips({ filters, onChange }: { filters: Pick<BookingFilters, "booked">; onChange: FilterChange }) {
+  const choose = (hours: 24 | 168) => onChange({ booked: filters.booked === hours ? null : hours, page: 1 });
+  return (
+    <div className="quick-ranges" role="group" aria-label="Recently booked">
+      <span className="chip-label">Booked</span>
+      <button type="button" className="chip" aria-pressed={filters.booked === 24} onClick={() => choose(24)}>
+        Last 24 hours
+      </button>
+      <button type="button" className="chip" aria-pressed={filters.booked === 168} onClick={() => choose(168)}>
+        Last 7 days
+      </button>
+    </div>
+  );
+}
+
 export function SearchField({ value, onChange, placeholder = "Search reference or patient name" }: { value: string; onChange: (value: string) => void; placeholder?: string }) {
   const id = useId();
   return (
@@ -101,6 +131,24 @@ export function SelectField({ label, value, onChange, children }: { label: strin
   );
 }
 
+export function SortField({ filters, onChange }: { filters: Pick<BookingFilters, "sort">; onChange: FilterChange }) {
+  return (
+    <SelectField label="Sort" value={filters.sort} onChange={(value) => onChange({ sort: value === "recently_booked" ? "recently_booked" : "soonest", page: 1 })}>
+      <option value="soonest">Soonest first</option>
+      <option value="recently_booked">Recently booked first</option>
+    </SelectField>
+  );
+}
+
+/** Says so when the text in the search box ignores the date filter, so an empty day is never a surprise. */
+export function SearchNote({ q }: { q: string }) {
+  return q.trim() ? (
+    <p className="search-note" role="status">
+      Searching all dates
+    </p>
+  ) : null;
+}
+
 export function DoctorAndDepartment({ lookups, filters, onChange }: { lookups: Lookups | null; filters: BookingFilters; onChange: FilterChange }) {
   return (
     <>
@@ -133,11 +181,15 @@ export function FilterBar({ filters, lookups, today, counts, total, onChange }: 
     <>
       <div className="filters">
         <SearchField value={filters.q} onChange={(q) => onChange({ q, page: 1 })} />
-        <DateField filters={filters} today={today} onChange={onChange} />
+        {filters.view === "day" ? <DateField filters={filters} today={today} onChange={onChange} /> : null}
         <DoctorAndDepartment lookups={lookups} filters={filters} onChange={onChange} />
+        <SortField filters={filters} onChange={onChange} />
       </div>
+      <SearchNote q={filters.q} />
       <div className="chips-slot">
-        <QuickRangeChips filters={filters} today={today} onChange={onChange} />
+        <ViewChips filters={filters} onChange={onChange} />
+        {filters.view === "day" ? <QuickRangeChips filters={filters} today={today} onChange={onChange} /> : null}
+        <BookedChips filters={filters} onChange={onChange} />
         <StatusChips counts={counts} total={total} statuses={filters.statuses} onToggle={toggle} onAll={() => onChange({ statuses: [], page: 1 })} />
       </div>
     </>

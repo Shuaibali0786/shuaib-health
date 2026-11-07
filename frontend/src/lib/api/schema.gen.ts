@@ -1026,6 +1026,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/bookings/new": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The bell. How many bookings are new for the signed-in staff member and the newest five. */
+        get: operations["adminBookingsNew"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/bookings/seen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Opening a booking (references) or "Mark all seen" (all) clears the New mark for the signed-in staff member only. The demo writes nothing; it keeps what it has seen in the visitor's browser. */
+        post: operations["adminBookingsMarkSeen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/bookings/{reference}": {
         parameters: {
             query?: never;
@@ -1609,6 +1643,14 @@ export interface components {
                 cancellations: components["schemas"]["Trend"];
                 utilisationPct: components["schemas"]["Trend"];
             };
+            /** @description Feature 012 count cards. today, tomorrow and next7Days count bookings that are not cancelled (next7Days is the seven days after today); cancelledThisWeek counts the cancelled bookings of the clinic-local Monday-Sunday week; newSinceLastVisit is the bell count for the signed-in staff member (the demo's is sample data). */
+            cards: {
+                today: number;
+                tomorrow: number;
+                next7Days: number;
+                newSinceLastVisit: number;
+                cancelledThisWeek: number;
+            };
             agenda: {
                 doctor: components["schemas"]["DoctorRef"];
                 /** @description the doctor's working sessions today in clinic time, for the agenda's off-hours hatching */
@@ -1622,10 +1664,7 @@ export interface components {
             }[];
             nextUp: components["schemas"]["BookingSummary"][];
             /** @description The most recently created bookings (any appointment date), newest first (FR-042). The client polls this endpoint every 30 s (FR-041) and shows a notification for each item whose bookedAt is later than the newest it has already seen; on first load it only records the newest bookedAt. Demo: always empty (the browser simulates new bookings itself). */
-            recentBookings?: (components["schemas"]["BookingSummary"] & {
-                /** Format: date-time */
-                bookedAt: string;
-            })[];
+            recentBookings?: components["schemas"]["BookingSummary"][];
             isSample: boolean;
         };
         DoctorRef: {
@@ -1654,6 +1693,13 @@ export interface components {
             /** @description server-computed with the clock (FR-023/024) */
             allowedNext: components["schemas"]["BookingStatus"][];
             isSample?: boolean;
+            /**
+             * Format: date-time
+             * @description when the booking was made
+             */
+            bookedAt: string;
+            /** @description Feature 012: new for the signed-in staff member (booked after they last marked all seen, and not opened by them) */
+            isNew?: boolean;
         };
         BookingDetail: components["schemas"]["BookingSummary"] & {
             patientName: string;
@@ -1664,8 +1710,6 @@ export interface components {
             /** @description Pediatrics (demo sample data): mother or father */
             bookedBy?: string;
             feePkr: number;
-            /** Format: date-time */
-            bookedAt: string;
             history: {
                 /** Format: date-time */
                 at: string;
@@ -1677,12 +1721,28 @@ export interface components {
             }[];
         };
         BookingSearchRequest: {
-            /** @description reference or patient name; never logged */
+            /** @description reference or patient name; never logged. When set, every date is searched and from/to/scope are ignored. */
             q?: string;
             /** Format: date */
             from?: string;
             /** Format: date */
             to?: string;
+            /**
+             * @description upcoming = every booking from the start of tomorrow
+             * @default day
+             * @enum {string}
+             */
+            scope: "day" | "upcoming";
+            /**
+             * @description Recently booked: made within the last 24 hours or 7 days; without dates it looks at every appointment date
+             * @enum {integer}
+             */
+            bookedWithinHours?: 24 | 168;
+            /**
+             * @default soonest
+             * @enum {string}
+             */
+            sort: "soonest" | "recently_booked";
             /** Format: uuid */
             doctorId?: string;
             /** Format: uuid */
@@ -1698,9 +1758,24 @@ export interface components {
             statusCounts?: {
                 [key: string]: number;
             };
+            /** @description scope=upcoming only: bookings per clinic-local day for the whole result (not just this page), soonest first */
+            dayCounts?: {
+                /** Format: date */
+                date: string;
+                count: number;
+            }[];
             page: number;
             /** @constant */
             pageSize: 20;
+        };
+        NewBookings: {
+            count: number;
+            items: components["schemas"]["BookingSummary"][];
+        };
+        /** @description Exactly one of references (1-50) or all=true. */
+        MarkSeenRequest: {
+            references?: string[];
+            all?: boolean;
         };
         StatusChangeRequest: {
             to: components["schemas"]["BookingStatus"];
@@ -2387,6 +2462,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BookingPage"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    adminBookingsNew: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description new bookings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewBookings"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminBookingsMarkSeen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkSeenRequest"];
+            };
+        };
+        responses: {
+            /** @description the bell after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewBookings"];
                 };
             };
             401: components["responses"]["Unauthenticated"];

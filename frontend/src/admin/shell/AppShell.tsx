@@ -62,10 +62,10 @@ export function AppShell({ viewer, clinicName, serverNow, theme = "light", child
           </div>
         </aside>
         <div className="main">
-          <MobileTopBar clinicName={clinicName} theme={theme} />
+          <MobileTopBar clinicName={clinicName} theme={theme} demo={viewer.kind === "demo"} timeZone={viewer.timezone} />
           {viewer.kind === "demo" ? <DemoRibbon /> : null}
           <main id="main-content" tabIndex={-1} className="content">
-            <StatusBar serverNow={serverNow} timeZone={viewer.timezone} demoDate={viewer.kind === "demo" ? viewer.clinicToday : undefined} typicalDay={viewer.typicalDay === true} />
+            <StatusBar serverNow={serverNow} timeZone={viewer.timezone} demoDate={viewer.kind === "demo" ? viewer.clinicToday : undefined} typicalDay={viewer.typicalDay === true} demo={viewer.kind === "demo"} />
             {children}
           </main>
           <footer className="foot">

@@ -54,8 +54,8 @@ afterEach(() => {
 });
 
 describe("allow-list table", () => {
-  it("lists the 21 routes of the contract, each at most once per method", () => {
-    expect(ADMIN_ROUTES).toHaveLength(21);
+  it("lists the 23 routes of the contract, each at most once per method", () => {
+    expect(ADMIN_ROUTES).toHaveLength(23);
     const keys = ADMIN_ROUTES.map((r) => `${r.method} ${r.browser}`);
     expect(new Set(keys).size).toBe(keys.length);
   });

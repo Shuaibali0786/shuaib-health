@@ -118,6 +118,8 @@ export function simulateBooking({ date, timeZone, agenda, nowMs, serial }: Simul
     doctor: row.doctor,
     allowedNext: [],
     isSample: true,
+    bookedAt,
+    isNew: true,
   };
   const detail: BookingDetail = {
     ...summary,
@@ -127,7 +129,6 @@ export function simulateBooking({ date, timeZone, agenda, nowMs, serial }: Simul
     patientAge: profile.who === "child" ? age : undefined,
     bookedBy,
     feePkr: FEES[department] ?? 2000,
-    bookedAt,
     history: [{ at: bookedAt, toStatus: "confirmed", actor: "Online booking", isUndo: false }],
   };
   return { summary, detail };

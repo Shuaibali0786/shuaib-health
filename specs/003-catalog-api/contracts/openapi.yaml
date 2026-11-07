@@ -430,6 +430,32 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/Validation" }
+  /api/v1/admin/bookings/new:
+    get:
+      tags: [command-centre]
+      operationId: adminBookingsNew
+      x-policy: READ
+      security: [ { proxySecret: [], sessionToken: [] } ]
+      description: The bell. How many bookings are new for the signed-in staff member and the newest five.
+      responses:
+        "200": { description: new bookings, content: { application/json: { schema: { $ref: "#/components/schemas/NewBookings" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/v1/admin/bookings/seen:
+    post:
+      tags: [command-centre]
+      operationId: adminBookingsMarkSeen
+      x-policy: READ
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      description: >-
+        Opening a booking (references) or "Mark all seen" (all) clears the New mark for the signed-in staff member only.
+        The demo writes nothing; it keeps what it has seen in the visitor's browser.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/MarkSeenRequest" } } } }
+      responses:
+        "200": { description: the bell after the change, content: { application/json: { schema: { $ref: "#/components/schemas/NewBookings" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
   /api/v1/admin/bookings/{reference}:
     get:
       tags: [command-centre]
@@ -958,7 +984,7 @@ components:
         comparedTo: { type: string, format: date }
     Overview:
       type: object
-      required: [localDate, now, kpis, agenda, nextUp, isSample]
+      required: [localDate, now, kpis, cards, agenda, nextUp, isSample]
       properties:
         localDate: { type: string, format: date }
         now: { type: string, format: date-time }
@@ -973,6 +999,19 @@ components:
             noShows: { $ref: "#/components/schemas/Trend" }
             cancellations: { $ref: "#/components/schemas/Trend" }
             utilisationPct: { $ref: "#/components/schemas/Trend" }
+        cards:
+          type: object
+          description: >-
+            Feature 012 count cards. today, tomorrow and next7Days count bookings that are not cancelled (next7Days
+            is the seven days after today); cancelledThisWeek counts the cancelled bookings of the clinic-local
+            Monday-Sunday week; newSinceLastVisit is the bell count for the signed-in staff member (the demo's is sample data).
+          required: [today, tomorrow, next7Days, newSinceLastVisit, cancelledThisWeek]
+          properties:
+            today: { type: integer }
+            tomorrow: { type: integer }
+            next7Days: { type: integer }
+            newSinceLastVisit: { type: integer }
+            cancelledThisWeek: { type: integer }
         agenda:
           type: array
           items:
@@ -997,12 +1036,7 @@ components:
             endpoint every 30 s (FR-041) and shows a notification for each item whose bookedAt is later than the newest
             it has already seen; on first load it only records the newest bookedAt. Demo: always empty (the browser
             simulates new bookings itself).
-          items:
-            allOf:
-              - $ref: "#/components/schemas/BookingSummary"
-              - type: object
-                required: [bookedAt]
-                properties: { bookedAt: { type: string, format: date-time } }
+          items: { $ref: "#/components/schemas/BookingSummary" }
         isSample: { type: boolean }
     DoctorRef:
       type: object
@@ -1010,7 +1044,7 @@ components:
       properties: { id: { type: string, format: uuid }, name: { type: string }, departmentName: { type: string }, isActive: { type: boolean } }
     BookingSummary:
       type: object
-      required: [reference, startsAt, endsAt, localDate, localTime, status, version, patientNameMasked, phoneMasked, doctor, allowedNext]
+      required: [reference, startsAt, endsAt, localDate, localTime, status, version, patientNameMasked, phoneMasked, doctor, allowedNext, bookedAt]
       properties:
         reference: { type: string }
         startsAt: { type: string, format: date-time }
@@ -1024,11 +1058,13 @@ components:
         doctor: { $ref: "#/components/schemas/DoctorRef" }
         allowedNext: { type: array, items: { $ref: "#/components/schemas/BookingStatus" }, description: "server-computed with the clock (FR-023/024)" }
         isSample: { type: boolean }
+        bookedAt: { type: string, format: date-time, description: when the booking was made }
+        isNew: { type: boolean, description: "Feature 012: new for the signed-in staff member (booked after they last marked all seen, and not opened by them)" }
     BookingDetail:
       allOf:
         - $ref: "#/components/schemas/BookingSummary"
         - type: object
-          required: [patientName, feePkr, bookedAt, history]
+          required: [patientName, feePkr, history]
           properties:
             patientName: { type: string }
             emailMasked: { type: [string, "null"] }
@@ -1036,7 +1072,6 @@ components:
             patientAge: { type: integer, description: "Pediatrics (demo sample data): the child's age" }
             bookedBy: { type: string, description: "Pediatrics (demo sample data): mother or father" }
             feePkr: { type: integer }
-            bookedAt: { type: string, format: date-time }
             history:
               type: array
               items:
@@ -1051,9 +1086,12 @@ components:
     BookingSearchRequest:
       type: object
       properties:
-        q: { type: string, maxLength: 80, description: reference or patient name; never logged }
+        q: { type: string, maxLength: 80, description: "reference or patient name; never logged. When set, every date is searched and from/to/scope are ignored." }
         from: { type: string, format: date }
         to: { type: string, format: date }
+        scope: { type: string, enum: [day, upcoming], default: day, description: "upcoming = every booking from the start of tomorrow" }
+        bookedWithinHours: { type: integer, enum: [24, 168], description: "Recently booked: made within the last 24 hours or 7 days; without dates it looks at every appointment date" }
+        sort: { type: string, enum: [soonest, recently_booked], default: soonest }
         doctorId: { type: string, format: uuid }
         departmentId: { type: string, format: uuid }
         statuses: { type: array, items: { $ref: "#/components/schemas/BookingStatus" } }
@@ -1065,8 +1103,27 @@ components:
         items: { type: array, items: { $ref: "#/components/schemas/BookingSummary" } }
         total: { type: integer }
         statusCounts: { type: object, additionalProperties: { type: integer }, description: "bookings per status for the same filters, ignoring the status filter (the chips)" }
+        dayCounts:
+          type: array
+          description: "scope=upcoming only: bookings per clinic-local day for the whole result (not just this page), soonest first"
+          items:
+            type: object
+            required: [date, count]
+            properties: { date: { type: string, format: date }, count: { type: integer } }
         page: { type: integer }
         pageSize: { type: integer, const: 20 }
+    NewBookings:
+      type: object
+      required: [count, items]
+      properties:
+        count: { type: integer }
+        items: { type: array, maxItems: 5, items: { $ref: "#/components/schemas/BookingSummary" } }
+    MarkSeenRequest:
+      type: object
+      description: Exactly one of references (1-50) or all=true.
+      properties:
+        references: { type: array, maxItems: 50, items: { type: string } }
+        all: { type: boolean }
     StatusChangeRequest:
       type: object
       required: [to, expectedVersion]

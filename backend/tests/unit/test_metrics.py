@@ -70,6 +70,7 @@ def summary(
                 department_name="General Medicine",
             ),
             "allowed_next": [],
+            "booked_at": starts_at - timedelta(days=1),
         }
     )
 

@@ -22,6 +22,8 @@ Legend: ✅ 2xx · 401 `not_signed_in` · 403f `forbidden` · 403d `demo_read_on
 | GET | /admin/lookups | READ | 401 | ✅ S | ✅ | ✅ | 403 `password_change_required` |
 | GET | /admin/overview | READ | 401 | ✅ S | ✅ | ✅ | 403 pcr |
 | POST | /admin/bookings/search | READ | 401 | ✅ S | ✅ | ✅ | 403 pcr |
+| GET | /admin/bookings/new | READ | 401 | ✅ S (sample list) | ✅ | ✅ | 403 pcr |
+| POST | /admin/bookings/seen | READ (own state only) | 401 | ✅ S, nothing stored | ✅ | ✅ | 403 pcr |
 | GET | /admin/bookings/{reference} | READ | 401 | ✅ S (real ref → 404) | ✅ | ✅ | 403 pcr |
 | POST | /admin/bookings/{reference}/reveal-phone | READ (audited for staff) | 401 | ✅ S, nothing stored | ✅ + audit | ✅ + audit | 403 pcr |
 | POST | /admin/bookings/{reference}/status | WRITE | 401 | 403d | ✅ | ✅ | 403 pcr |

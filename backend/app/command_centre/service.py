@@ -31,6 +31,7 @@ from app.command_centre.schemas import (
     BookingPage,
     BookingSearchRequest,
     BookingSummary,
+    DayBookings,
     DepartmentRef,
     DoctorRef,
     DoctorsToday,
@@ -38,13 +39,17 @@ from app.command_centre.schemas import (
     Insights,
     InsightsRange,
     Lookups,
+    MarkSeenRequest,
+    NewBookings,
     Overview,
+    OverviewCards,
     PhoneReveal,
     RecentBooking,
     StatusChangeResult,
 )
 from app.command_centre.status import Status
 from app.errors import AdminError, AdminErrorCode, NotFound
+from app.notifications.templates import DailySummaryFacts, DoctorLoad
 from app.repositories import command_centre as repo
 
 if TYPE_CHECKING:
@@ -67,7 +72,9 @@ def require(value: uuid.UUID | None) -> uuid.UUID:
     return value
 
 
-def _summary_fields(row: repo.BookingRow, tz: ZoneInfo, now: datetime) -> dict[str, Any]:
+def _summary_fields(
+    row: repo.BookingRow, tz: ZoneInfo, now: datetime, *, is_new: bool = False
+) -> dict[str, Any]:
     appt = row.appointment
     local = appt.starts_at.astimezone(tz)
     status = _status(appt.status)
@@ -89,6 +96,8 @@ def _summary_fields(row: repo.BookingRow, tz: ZoneInfo, now: datetime) -> dict[s
         ),
         "allowed_next": rules.allowed_next(status, appt.starts_at, now),
         "is_sample": appt.is_sample,
+        "booked_at": appt.created_at or appt.starts_at,
+        "is_new": is_new,
     }
 
 
@@ -120,30 +129,96 @@ def _detail_of(db: Session, row: repo.BookingRow, tz: ZoneInfo, now: datetime) -
         email_masked=mask_email(appt.patient_email) if appt.patient_email else None,
         reason=appt.reason,
         fee_pkr=appt.fee_pkr,
-        booked_at=created,
         history=items,
     )
 
 
-def search(db: Session, body: BookingSearchRequest, tz: ZoneInfo, now: datetime) -> BookingPage:
-    first, last = resolve_range(body, now.astimezone(tz).date())
+def search_window(
+    body: BookingSearchRequest, tz: ZoneInfo, now: datetime
+) -> tuple[datetime | None, datetime | None, datetime | None]:
+    """(starts from, starts before, booked since) for a search. A typed search looks at every date;
+    "Upcoming" is every booking from the start of tomorrow; "Recently booked" without dates looks at
+    every date too."""
+    today = now.astimezone(tz).date()
+    booked_since = (
+        now - timedelta(hours=body.booked_within_hours) if body.booked_within_hours else None
+    )
+    if (body.q or "").strip():
+        return None, None, booked_since
+    if body.scope == "upcoming":
+        return day_bounds(today + timedelta(days=1), tz)[0], None, booked_since
+    if body.booked_within_hours and body.from_ is None and body.to is None:
+        return None, None, booked_since
+    first, last = resolve_range(body, today)
+    return day_bounds(first, tz)[0], day_bounds(last, tz)[1], booked_since
+
+
+def search(
+    db: Session,
+    body: BookingSearchRequest,
+    tz: ZoneInfo,
+    now: datetime,
+    staff_id: uuid.UUID | None = None,
+) -> BookingPage:
+    starts_from, starts_before, booked_since = search_window(body, tz, now)
     window: repo.SearchWindow = {
         "q": body.q,
-        "starts_from": day_bounds(first, tz)[0],
-        "starts_before": day_bounds(last, tz)[1],
+        "starts_from": starts_from,
+        "starts_before": starts_before,
         "doctor_id": body.doctor_id,
         "department_id": body.department_id,
+        "booked_since": booked_since,
     }
+    statuses: list[str] | None = list(body.statuses) if body.statuses else None
     rows, total = repo.search_bookings(
         db,
         **window,
-        statuses=list(body.statuses) if body.statuses else None,
+        statuses=statuses,
         page=body.page,
         page_size=PAGE_SIZE,
+        recently_booked_first=body.sort == "recently_booked",
     )
     counts = {_status(name): n for name, n in repo.status_counts(db, **window).items()}
-    items = [BookingSummary(**_summary_fields(r, tz, now)) for r in rows]
-    return BookingPage(items=items, total=total, page=body.page, status_counts=counts)
+    new = repo.new_ids(db, staff_id, [r.appointment for r in rows]) if staff_id else set()
+    items = [
+        BookingSummary(**_summary_fields(r, tz, now, is_new=require(r.appointment.id) in new))
+        for r in rows
+    ]
+    days: list[DayBookings] = []
+    if body.scope == "upcoming":
+        days = [
+            DayBookings(date=day, count=n)
+            for day, n in repo.day_counts(db, tz_name=tz.key, statuses=statuses, **window)
+        ]
+    return BookingPage(
+        items=items, total=total, page=body.page, status_counts=counts, day_counts=days
+    )
+
+
+def new_bookings(
+    db: Session, staff_id: uuid.UUID | None, tz: ZoneInfo, now: datetime
+) -> NewBookings:
+    """The bell: how many bookings are new for this staff member and the newest five."""
+    if staff_id is None:
+        return NewBookings(count=0, items=[])
+    count, rows = repo.new_bookings(db, staff_id, NEW_LIST_LIMIT)
+    return NewBookings(
+        count=count,
+        items=[BookingSummary(**_summary_fields(r, tz, now, is_new=True)) for r in rows],
+    )
+
+
+def mark_seen(
+    db: Session, actor: "Viewer", body: MarkSeenRequest, tz: ZoneInfo, now: datetime
+) -> NewBookings:
+    """Opening a booking, or "Mark all seen", clears the New mark for this staff member only."""
+    staff_id = _staff_id(actor)
+    if body.all:
+        repo.mark_all_seen(db, staff_id, now)
+    else:
+        repo.mark_seen(db, staff_id, repo.appointment_ids_of(db, body.references or []))
+    db.commit()
+    return new_bookings(db, staff_id, tz, now)
 
 
 def detail(db: Session, reference: str, tz: ZoneInfo, now: datetime) -> BookingDetail:
@@ -356,6 +431,7 @@ def reveal_phone(db: Session, actor: "Viewer", reference: str) -> PhoneReveal:
 
 
 RECENT_LIMIT = 5
+NEW_LIST_LIMIT = 5
 
 
 def _rules_of(weekly: repo.WeeklyPlan) -> list[SessionRule]:
@@ -364,7 +440,33 @@ def _rules_of(weekly: repo.WeeklyPlan) -> list[SessionRule]:
     ]
 
 
-def overview(db: Session, tz: ZoneInfo, now: datetime) -> Overview:
+def overview_cards(
+    db: Session, staff_id: uuid.UUID | None, tz: ZoneInfo, now: datetime
+) -> OverviewCards:
+    today = now.astimezone(tz).date()
+    monday = today - timedelta(days=today.weekday())
+    counts = repo.card_counts(
+        db,
+        today=day_bounds(today, tz),
+        tomorrow=day_bounds(today + timedelta(days=1), tz),
+        next7=(
+            day_bounds(today + timedelta(days=1), tz)[0],
+            day_bounds(today + timedelta(days=7), tz)[1],
+        ),
+        week=(day_bounds(monday, tz)[0], day_bounds(monday + timedelta(days=6), tz)[1]),
+    )
+    return OverviewCards(
+        today=counts["today"],
+        tomorrow=counts["tomorrow"],
+        next7_days=counts["next7"],
+        new_since_last_visit=repo.new_count(db, staff_id) if staff_id else 0,
+        cancelled_this_week=counts["cancelled_week"],
+    )
+
+
+def overview(
+    db: Session, tz: ZoneInfo, now: datetime, staff_id: uuid.UUID | None = None
+) -> Overview:
     """Today at a glance from the database: the bookings of the clinic-local day, last week's counts
     for the trends, the 005 schedules, leave and holidays for utilisation, and the newest bookings
     for the notifications."""
@@ -397,11 +499,7 @@ def overview(db: Session, tz: ZoneInfo, now: datetime) -> Overview:
         for w in repo.weekly_plans(db)
     ]
     recent = [
-        RecentBooking(
-            **_summary_fields(r, tz, now),
-            booked_at=r.appointment.created_at or r.appointment.starts_at,
-        )
-        for r in repo.recent_bookings(db, RECENT_LIMIT)
+        RecentBooking(**_summary_fields(r, tz, now)) for r in repo.recent_bookings(db, RECENT_LIMIT)
     ]
     return metrics.build_overview(
         day=today,
@@ -413,6 +511,7 @@ def overview(db: Session, tz: ZoneInfo, now: datetime) -> Overview:
         holiday_today=holidays.get(today),
         holiday_last_week=earlier in holidays,
         recent=recent,
+        cards=overview_cards(db, staff_id, tz, now),
         is_sample=False,
     )
 
@@ -499,3 +598,25 @@ def activity(
         for row in rows
     ]
     return ActivityPage(items=items, total=total, page=page)
+
+
+def daily_summary(db: Session, tz: ZoneInfo, now: datetime, clinic_name: str) -> DailySummaryFacts:
+    """What the morning email says: today, tomorrow, the last day's new bookings, doctors' load."""
+    today = now.astimezone(tz).date()
+    tomorrow = today + timedelta(days=1)
+    counts = repo.card_counts(
+        db,
+        today=day_bounds(today, tz),
+        tomorrow=day_bounds(tomorrow, tz),
+        next7=day_bounds(tomorrow, tz),
+        week=day_bounds(today, tz),
+    )
+    lo, hi = day_bounds(today, tz)
+    return DailySummaryFacts(
+        local_date=today.isoformat(),
+        today=counts["today"],
+        tomorrow=counts["tomorrow"],
+        new_since_yesterday=repo.count_booked_since(db, now - timedelta(hours=24)),
+        per_doctor_today=tuple(DoctorLoad(name, n) for name, n in repo.doctor_counts(db, lo, hi)),
+        clinic_name=clinic_name,
+    )

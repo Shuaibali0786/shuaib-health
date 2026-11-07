@@ -136,4 +136,4 @@ def get_source(viewer: Viewer, db: Session) -> CommandCentreSource:
         if viewer.demo_date is None:
             raise AdminError("not_signed_in")
         return DemoSource(viewer.demo_date)
-    return RealSource(db)
+    return RealSource(db, viewer.staff_id)

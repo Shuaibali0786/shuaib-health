@@ -22,6 +22,7 @@ import { EmptyState, ErrorState } from "@/admin/ui/States";
 import { AgendaList } from "./AgendaList";
 import { AgendaTimeline, type OpenBooking } from "./AgendaTimeline";
 import { AgendaViewToggle, type AgendaView } from "./AgendaViewToggle";
+import { CountCards } from "./CountCards";
 import { KpiGrid } from "./KpiGrid";
 import { NewBookingToasts } from "./NewBookingToast";
 import { NextUpList } from "./NextUpList";
@@ -141,7 +142,7 @@ export function OverviewScreen({ initial, demo, firstName, timeZone, serverNow }
       const next = simulateBooking({ date: viewRef.current.localDate, timeZone, agenda: viewRef.current.agenda, nowMs: clinicClock.now(), serial: demoOverlay.bookings().length + 1 });
       if (!next) return;
       demoOverlay.addBooking(next.detail);
-      newBookings.announce({ ...next.summary, bookedAt: next.detail.bookedAt });
+      newBookings.announce(next.summary);
       glow([next.summary.reference]);
     });
   }, [demo, timeZone, glow]);
@@ -251,6 +252,7 @@ export function OverviewScreen({ initial, demo, firstName, timeZone, serverNow }
       ) : null}
 
       <KpiGrid kpis={view.kpis} />
+      <CountCards cards={view.cards} today={view.localDate} todayLive={view.kpis.appointments.value} />
 
       <section className="card agenda d-only" aria-labelledby="ag-h">
         <div className="card-head">

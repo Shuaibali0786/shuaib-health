@@ -32,6 +32,8 @@ export const ADMIN_ROUTES: readonly AdminRoute[] = [
   { method: "GET", browser: "lookups", backend: "/admin/lookups", bodyLimit: 0, timeoutMs: 5000 },
   { method: "GET", browser: "overview", backend: "/admin/overview", bodyLimit: 0, timeoutMs: 8000 },
   { method: "POST", browser: "bookings/search", backend: "/admin/bookings/search", bodyLimit: 2 * KB, timeoutMs: 8000 },
+  { method: "GET", browser: "bookings/new", backend: "/admin/bookings/new", bodyLimit: 0, timeoutMs: 5000 },
+  { method: "POST", browser: "bookings/seen", backend: "/admin/bookings/seen", bodyLimit: 2 * KB, timeoutMs: 5000 },
   { method: "GET", browser: "bookings/{ref}", backend: "/admin/bookings/{ref}", bodyLimit: 0, timeoutMs: 5000 },
   { method: "POST", browser: "bookings/{ref}/status", backend: "/admin/bookings/{ref}/status", bodyLimit: KB, timeoutMs: 10000 },
   { method: "POST", browser: "bookings/{ref}/status/undo", backend: "/admin/bookings/{ref}/status/undo", bodyLimit: KB, timeoutMs: 10000 },

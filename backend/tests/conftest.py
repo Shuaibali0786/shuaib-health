@@ -228,7 +228,7 @@ def committing_cleanup(committing_engine: Engine) -> Iterator[None]:
     with committing_engine.begin() as conn:
         conn.execute(
             text(
-                "TRUNCATE appointment, appointment_status_change, idempotency_key, "
+                "TRUNCATE appointment, appointment_status_change, booking_seen, idempotency_key, "
                 "rate_limit_counter, audit_log"
             )
         )

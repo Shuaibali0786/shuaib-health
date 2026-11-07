@@ -21,6 +21,8 @@ from app.command_centre.schemas import (
     BookingDetail,
     BookingPage,
     BookingSearchRequest,
+    MarkSeenRequest,
+    NewBookings,
     PhoneReveal,
     StatusChangeRequest,
     StatusChangeResult,
@@ -77,6 +79,51 @@ def search_bookings(
     response.headers.update(NO_STORE)
     source = get_source(viewer, db)
     return source.search(body, clinic_zone(viewer, db), viewer_now(viewer, settings, clock.now()))
+
+
+@router.get(
+    "/bookings/new",
+    response_model=NewBookings,
+    response_model_exclude_none=True,
+    responses=READ_ERRORS,
+    operation_id="adminBookingsNew",
+    summary="Bookings that are new for the signed-in staff member (the bell)",
+)
+def new_bookings(
+    viewer: Annotated[Viewer, Depends(require_viewer(Policy.READ))],
+    db: SessionDep,
+    clock: ClockDep,
+    settings: SettingsDep,
+    response: Response,
+) -> NewBookings:
+    response.headers.update(NO_STORE)
+    source = get_source(viewer, db)
+    return source.new_bookings(clinic_zone(viewer, db), viewer_now(viewer, settings, clock.now()))
+
+
+@router.post(
+    "/bookings/seen",
+    response_model=NewBookings,
+    response_model_exclude_none=True,
+    responses=READ_ERRORS,
+    operation_id="adminBookingsMarkSeen",
+    summary="Mark bookings seen (opened) or all seen, for the signed-in staff member only",
+)
+def mark_seen(
+    body: MarkSeenRequest,
+    viewer: Annotated[Viewer, Depends(require_viewer(Policy.READ))],
+    db: SessionDep,
+    clock: ClockDep,
+    settings: SettingsDep,
+    response: Response,
+) -> NewBookings:
+    response.headers.update(NO_STORE)
+    tz = clinic_zone(viewer, db)
+    now = viewer_now(viewer, settings, clock.now())
+    if viewer.is_demo:
+        # The demo keeps what it has seen in the visitor's browser; nothing is written.
+        return get_source(viewer, db).new_bookings(tz, now)
+    return service.mark_seen(db, viewer, body, tz, clock.now())
 
 
 @router.get(
