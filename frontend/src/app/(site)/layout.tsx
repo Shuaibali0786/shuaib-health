@@ -5,6 +5,9 @@ import { NoticeBar } from "@/components/layout/NoticeBar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SkipLink } from "@/components/layout/SkipLink";
+import { loadKnowledgePack } from "@/agent/knowledge";
+import { AssistantLauncher } from "@/components/agent/AssistantLauncher";
+import { isAssistantEnabled } from "@/lib/demo";
 import { getSiteConfig } from "@/lib/content";
 import { siteUrl } from "@/lib/seo";
 import { THEME_COLOR } from "../theme-color";
@@ -48,7 +51,9 @@ export const viewport: Viewport = {
   themeColor: THEME_COLOR,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Feature 010: the assistant and its knowledge pack exist only when ASSISTANT_ENABLED is on (default off).
+  const assistantPack = isAssistantEnabled() ? await loadKnowledgePack() : null;
   return (
     <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
       <body className="flex min-h-screen flex-col">
@@ -60,6 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <SiteFooter />
+        {assistantPack ? <AssistantLauncher pack={assistantPack} /> : null}
       </body>
     </html>
   );
