@@ -95,6 +95,14 @@ AdminErrorCode = Literal[
     "booking_changed",
     "undo_unavailable",
     "slot_taken",
+    "two_factor_failed",
+    "challenge_expired",
+    "two_factor_unavailable",
+    "two_factor_admins_only",
+    "two_factor_already_on",
+    "two_factor_not_started",
+    "two_factor_off",
+    "cannot_reset_self",
 ]
 # code -> (status, calm message). The message never says which part of a sign-in was wrong.
 ADMIN_ERRORS: dict[str, tuple[int, str]] = {
@@ -113,6 +121,15 @@ ADMIN_ERRORS: dict[str, tuple[int, str]] = {
     "booking_changed": (409, "This booking was changed by someone else."),
     "undo_unavailable": (409, "This change can no longer be undone."),
     "slot_taken": (409, "That time slot has been taken."),
+    # Feature 011: two-step sign-in. The messages never say whether the password was right.
+    "two_factor_failed": (401, "That code did not work. Check your app and try again."),
+    "challenge_expired": (401, "This sign-in step has ended. Please sign in again."),
+    "two_factor_unavailable": (503, "Two-step sign-in is not available right now."),
+    "two_factor_admins_only": (403, "Two-step sign-in is offered to admins."),
+    "two_factor_already_on": (409, "Two-step sign-in is already on."),
+    "two_factor_not_started": (409, "Start the setup again."),
+    "two_factor_off": (409, "Two-step sign-in is off for this account."),
+    "cannot_reset_self": (409, "Use your own security page to change your two-step sign-in."),
 }
 
 

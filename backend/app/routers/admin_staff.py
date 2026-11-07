@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Response, status
 
 from app import models as m
-from app.auth import service
+from app.auth import service, two_factor
 from app.auth.deps import Viewer, require_viewer, viewer_now
 from app.auth.policies import Policy
 from app.booking.clock import ClockDep
@@ -39,6 +39,7 @@ def staff_out(staff: m.StaffAccount) -> StaffOut:
         is_active=staff.is_active,
         must_change_password=staff.must_change_password,
         last_sign_in_at=staff.last_sign_in_at,
+        two_factor_enabled=two_factor.is_enrolled(staff),
     )
 
 
@@ -144,3 +145,20 @@ def update_staff(
         db, viewer, staff_id, role=body.role, is_active=body.is_active, now=clock.now()
     )
     return staff_out(staff)
+
+
+@router.post(
+    "/staff/{staffId}/two-factor/reset",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=WRITE_ERRORS,
+    operation_id="adminStaffTwoFactorReset",
+    summary="Turn off a person's two-step sign-in (lost phone) and sign them out",
+)
+def reset_two_factor(
+    staff_id: StaffId,
+    viewer: Annotated[Viewer, Depends(require_viewer(Policy.WRITE_ADMIN))],
+    db: SessionDep,
+    clock: ClockDep,
+) -> Response:
+    two_factor.reset_for_staff(db, viewer, staff_id, clock.now())
+    return Response(status_code=status.HTTP_204_NO_CONTENT, headers=NO_STORE)

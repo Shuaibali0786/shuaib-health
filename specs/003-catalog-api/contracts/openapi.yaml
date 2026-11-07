@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Clinic Catalog API
-  version: 1.2.0
+  version: 1.3.0
   description: >
     Public, read-only catalog API (Feature 003). Single-tenant: every clinic value comes from the
     database. Field names and types match frontend/src/types/content.ts; fields marked
@@ -238,10 +238,26 @@ paths:
       requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/SignInRequest" } } } }
       responses:
         "200": { description: signed in, content: { application/json: { schema: { $ref: "#/components/schemas/SessionIssued" } } } }
+        "202": { description: "Feature 011: the account uses two-step sign-in; no session yet. Finish with sign-in/two-factor within 5 minutes.", content: { application/json: { schema: { $ref: "#/components/schemas/TwoFactorChallenge" } } } }
         "401": { description: "sign_in_failed (generic)", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/Validation" }
         "429": { $ref: "#/components/responses/AdminRateLimited" }
+  /api/v1/admin/auth/sign-in/two-factor:
+    post:
+      tags: [command-centre]
+      operationId: adminSignInTwoFactor
+      x-policy: PUBLIC_PROXY
+      security: [ { proxySecret: [] } ]
+      description: "Feature 011. Exactly one of code (6 digits) or backupCode. 5 attempts per challenge; wrong codes share the sign-in lockout. Never a password-only fallback: without TWO_FACTOR_KEY the answer is 503."
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/TwoFactorVerifyRequest" } } } }
+      responses:
+        "200": { description: signed in, content: { application/json: { schema: { $ref: "#/components/schemas/SessionIssued" } } } }
+        "401": { description: "two_factor_failed (body carries attemptsLeft) or challenge_expired", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+        "429": { $ref: "#/components/responses/AdminRateLimited" }
+        "503": { description: "two_factor_unavailable", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
   /api/v1/admin/demo/start:
     post:
       tags: [command-centre]
@@ -285,6 +301,76 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/Validation" }
+  /api/v1/admin/auth/two-factor:
+    get:
+      tags: [command-centre]
+      operationId: adminTwoFactorStatus
+      x-policy: SELF_STAFF
+      security: [ { proxySecret: [], sessionToken: [] } ]
+      responses:
+        "200": { description: two-step sign-in status, content: { application/json: { schema: { $ref: "#/components/schemas/TwoFactorStatus" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/v1/admin/auth/two-factor/setup:
+    post:
+      tags: [command-centre]
+      operationId: adminTwoFactorSetup
+      x-policy: SELF_STAFF
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      description: "Admins only (403 two_factor_admins_only); refused while the password must be changed. Returns the setup key once; the same key for 15 minutes."
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/TwoFactorSetupRequest" } } } }
+      responses:
+        "200": { description: setup key and otpauth link, content: { application/json: { schema: { $ref: "#/components/schemas/TwoFactorSetup" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: "two_factor_already_on, two_factor_not_started or two_factor_off", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "422": { $ref: "#/components/responses/Validation" }
+        "503": { description: "two_factor_unavailable (no TWO_FACTOR_KEY)", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+  /api/v1/admin/auth/two-factor/enable:
+    post:
+      tags: [command-centre]
+      operationId: adminTwoFactorEnable
+      x-policy: SELF_STAFF
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      description: "Finishes setup with a code from the app."
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/TwoFactorEnableRequest" } } } }
+      responses:
+        "200": { description: the 10 backup codes, shown once, content: { application/json: { schema: { $ref: "#/components/schemas/BackupCodes" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: "two_factor_already_on, two_factor_not_started or two_factor_off", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "422": { $ref: "#/components/responses/Validation" }
+        "503": { description: "two_factor_unavailable (no TWO_FACTOR_KEY)", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+  /api/v1/admin/auth/two-factor/disable:
+    post:
+      tags: [command-centre]
+      operationId: adminTwoFactorDisable
+      x-policy: SELF_STAFF
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      description: "Password plus a code or a backup code."
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/TwoFactorConfirmRequest" } } } }
+      responses:
+        "204": { description: turned off; secret and backup codes deleted }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: "two_factor_already_on, two_factor_not_started or two_factor_off", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "422": { $ref: "#/components/responses/Validation" }
+        "503": { description: "two_factor_unavailable (no TWO_FACTOR_KEY)", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+  /api/v1/admin/auth/two-factor/backup-codes:
+    post:
+      tags: [command-centre]
+      operationId: adminTwoFactorBackupCodes
+      x-policy: SELF_STAFF
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      description: "Password plus a code or a backup code. All earlier codes stop working."
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/TwoFactorConfirmRequest" } } } }
+      responses:
+        "200": { description: the 10 backup codes, shown once, content: { application/json: { schema: { $ref: "#/components/schemas/BackupCodes" } } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: "two_factor_already_on, two_factor_not_started or two_factor_off", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "422": { $ref: "#/components/responses/Validation" }
+        "503": { description: "two_factor_unavailable (no TWO_FACTOR_KEY)", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
   /api/v1/admin/lookups:
     get:
       tags: [command-centre]
@@ -443,6 +529,20 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { description: not_found }
         "422": { $ref: "#/components/responses/Validation" }
+  /api/v1/admin/staff/{staffId}/two-factor/reset:
+    post:
+      tags: [command-centre]
+      operationId: adminStaffTwoFactorReset
+      x-policy: WRITE_ADMIN
+      security: [ { proxySecret: [], sessionToken: [], csrfToken: [] } ]
+      description: "Lost phone: turns the person's two-step sign-in off, deletes their backup codes and ends their sessions. Not for yourself (409 cannot_reset_self)."
+      parameters: [ { name: staffId, in: path, required: true, schema: { type: string, format: uuid } } ]
+      responses:
+        "204": { description: reset }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: not_found }
+        "409": { description: two_factor_off or cannot_reset_self }
   /api/v1/admin/staff/{staffId}:
     patch:
       tags: [command-centre]
@@ -772,6 +872,39 @@ components:
       type: object
       required: [token, viewer]
       properties: { token: { type: string }, viewer: { $ref: "#/components/schemas/Viewer" } }
+    TwoFactorChallenge:
+      description: Returned to the website server only; the BFF keeps challengeToken in an httpOnly cookie.
+      type: object
+      required: [twoFactorRequired, challengeToken, expiresAt]
+      properties: { twoFactorRequired: { const: true }, challengeToken: { type: string }, expiresAt: { type: string, format: date-time } }
+    TwoFactorVerifyRequest:
+      type: object
+      required: [challengeToken]
+      properties: { challengeToken: { type: string, maxLength: 100 }, code: { type: [string, "null"], maxLength: 12 }, backupCode: { type: [string, "null"], maxLength: 16 } }
+    TwoFactorStatus:
+      type: object
+      required: [available, enabled, canEnrol]
+      properties: { available: { type: boolean }, enabled: { type: boolean }, enabledAt: { type: [string, "null"], format: date-time }, backupCodesLeft: { type: [integer, "null"] }, canEnrol: { type: boolean } }
+    TwoFactorSetupRequest:
+      type: object
+      required: [currentPassword]
+      properties: { currentPassword: { type: string, maxLength: 128 } }
+    TwoFactorSetup:
+      type: object
+      required: [secret, otpauthUri]
+      properties: { secret: { type: string, description: base32 setup key }, otpauthUri: { type: string } }
+    TwoFactorEnableRequest:
+      type: object
+      required: [code]
+      properties: { code: { type: string, maxLength: 12 } }
+    TwoFactorConfirmRequest:
+      type: object
+      required: [currentPassword]
+      properties: { currentPassword: { type: string, maxLength: 128 }, code: { type: [string, "null"], maxLength: 12 }, backupCode: { type: [string, "null"], maxLength: 16 } }
+    BackupCodes:
+      type: object
+      required: [backupCodes]
+      properties: { backupCodes: { type: array, minItems: 10, maxItems: 10, items: { type: string } } }
     ChangePasswordRequest:
       type: object
       required: [currentPassword, newPassword]
@@ -990,6 +1123,7 @@ components:
         mustChangePassword: { type: boolean }
         lastSignInAt: { type: [string, "null"], format: date-time }
         isSample: { type: boolean }
+        twoFactorEnabled: { type: boolean, description: "Feature 011" }
     StaffCreate:
       type: object
       required: [email, displayName, role, temporaryPassword]

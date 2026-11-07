@@ -9,10 +9,16 @@ Legend: ✅ 2xx · 401 `not_signed_in` · 403f `forbidden` · 403d `demo_read_on
 | Method | Path | Policy | No session | Demo | Receptionist | Admin | Must-change-password staff |
 |---|---|---|---|---|---|---|---|
 | POST | /admin/auth/sign-in | PUBLIC_PROXY | ✅ | ✅ (replaces demo) | ✅ (replaces) | ✅ | ✅ |
+| POST | /admin/auth/sign-in/two-factor | PUBLIC_PROXY | ✅ (needs a challenge, 011) | ✅ | ✅ | ✅ | ✅ |
 | POST | /admin/demo/start | PUBLIC_PROXY | ✅ | ✅ (fresh) | ✅ (staff session ended) | ✅ (staff session ended) | ✅ |
 | GET | /admin/auth/me | SELF | 401 | ✅ | ✅ | ✅ | ✅ |
 | POST | /admin/auth/sign-out | SELF | 401 | ✅ | ✅ | ✅ | ✅ |
 | POST | /admin/auth/change-password | SELF_STAFF | 401 | 403d | ✅ | ✅ | ✅ |
+| GET | /admin/auth/two-factor | SELF_STAFF | 401 | 403d | ✅ | ✅ | ✅ |
+| POST | /admin/auth/two-factor/setup | SELF_STAFF (admins only, 011) | 401 | 403d | 403 two_factor_admins_only | ✅ | 403 pcr |
+| POST | /admin/auth/two-factor/enable | SELF_STAFF | 401 | 403d | ✅ | ✅ | ✅ |
+| POST | /admin/auth/two-factor/disable | SELF_STAFF | 401 | 403d | ✅ | ✅ | ✅ |
+| POST | /admin/auth/two-factor/backup-codes | SELF_STAFF | 401 | 403d | ✅ | ✅ | ✅ |
 | GET | /admin/lookups | READ | 401 | ✅ S | ✅ | ✅ | 403 `password_change_required` |
 | GET | /admin/overview | READ | 401 | ✅ S | ✅ | ✅ | 403 pcr |
 | POST | /admin/bookings/search | READ | 401 | ✅ S | ✅ | ✅ | 403 pcr |
@@ -27,6 +33,7 @@ Legend: ✅ 2xx · 401 `not_signed_in` · 403f `forbidden` · 403d `demo_read_on
 | POST | /admin/staff | WRITE_ADMIN | 401 | 403d | 403f | ✅ | 403 pcr |
 | POST | /admin/staff/{staffId}/reset-password | WRITE_ADMIN | 401 | 403d | 403f | ✅ | 403 pcr |
 | PATCH | /admin/staff/{staffId} | WRITE_ADMIN | 401 | 403d | 403f | ✅ | 403 pcr |
+| POST | /admin/staff/{staffId}/two-factor/reset | WRITE_ADMIN (011; not yourself) | 401 | 403d | 403f | ✅ | 403 pcr |
 
 **Session states also tested per READ/WRITE row**: expired idle (31 min, frozen clock) → 401 `session_expired`; expired absolute (12 h 1 min) → 401; ended by sign-out → 401; staff deactivated mid-session → 401; evicted 4th-session → 401; a demo token presented as staff (prefix swap) → 401; demo session past 2 h → 401.
 

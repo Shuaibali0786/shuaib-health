@@ -5,18 +5,27 @@ from typing import Annotated
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Header, Response, status
+from fastapi.responses import JSONResponse
 from sqlalchemy import Engine
 
-from app.auth import events, service, sessions, tokens
+from app.auth import events, service, sessions, tokens, two_factor
 from app.auth.deps import Viewer, demo_clock, require_viewer
 from app.auth.policies import Policy
 from app.booking import limits
 from app.booking.clock import ClockDep
 from app.booking.privacy import fingerprint
 from app.command_centre.schemas import (
+    BackupCodesOut,
     ChangePasswordRequest,
     SessionIssued,
     SignInRequest,
+    TwoFactorChallenge,
+    TwoFactorConfirmRequest,
+    TwoFactorEnableRequest,
+    TwoFactorSetupOut,
+    TwoFactorSetupRequest,
+    TwoFactorStatusOut,
+    TwoFactorVerifyRequest,
     ViewerOut,
 )
 from app.db import SessionDep, get_engine
@@ -34,6 +43,11 @@ ISSUE_ERRORS: dict[int | str, dict[str, object]] = {
     **ADMIN_ERRORS_DOC,
     422: {"model": ErrorResponse},
     429: {"model": ErrorResponse},
+}
+TWO_FACTOR_ERRORS: dict[int | str, dict[str, object]] = {
+    **ISSUE_ERRORS,
+    409: {"model": ErrorResponse},
+    503: {"model": ErrorResponse},
 }
 
 
@@ -155,7 +169,10 @@ def me(
     "/auth/sign-in",
     response_model=SessionIssued,
     response_model_exclude_none=True,
-    responses=ISSUE_ERRORS,
+    responses={
+        **ISSUE_ERRORS,
+        202: {"model": TwoFactorChallenge, "description": "Two-step sign-in: enter a code next"},
+    },
     operation_id="adminSignIn",
     summary="Sign in",
 )
@@ -170,7 +187,7 @@ def sign_in(
     clock: ClockDep,
     response: Response,
     session_token: Annotated[str | None, Header(alias="X-Session-Token")] = None,
-) -> SessionIssued:
+) -> SessionIssued | JSONResponse:
     response.headers.update(NO_STORE)
     now = clock.now()
     issued = service.sign_in(
@@ -183,7 +200,184 @@ def sign_in(
         client_ip=client_ip,
         now=now,
     )
+    if isinstance(issued, two_factor.Challenge):
+        challenge = TwoFactorChallenge(challenge_token=issued.token, expires_at=issued.expires_at)
+        return JSONResponse(
+            challenge.model_dump(mode="json", by_alias=True),
+            status_code=status.HTTP_202_ACCEPTED,
+            headers=NO_STORE,
+        )
     return _issued_out(issued, settings, timezone, now)
+
+
+@router.post(
+    "/auth/sign-in/two-factor",
+    response_model=SessionIssued,
+    response_model_exclude_none=True,
+    responses=TWO_FACTOR_ERRORS,
+    operation_id="adminSignInTwoFactor",
+    summary="Finish signing in with an app code or a backup code",
+)
+def sign_in_two_factor(
+    body: TwoFactorVerifyRequest,
+    _: Annotated[None, Depends(require_viewer(Policy.PUBLIC_PROXY))],
+    db: SessionDep,
+    engine: Annotated[Engine, Depends(get_engine)],
+    settings: SettingsDep,
+    client_ip: ClientIpDep,
+    timezone: Annotated[str, Depends(clinic_timezone)],
+    clock: ClockDep,
+    response: Response,
+    session_token: Annotated[str | None, Header(alias="X-Session-Token")] = None,
+) -> SessionIssued:
+    response.headers.update(NO_STORE)
+    now = clock.now()
+    issued = service.verify_two_factor(
+        db,
+        engine,
+        settings,
+        challenge_token=body.challenge_token,
+        code=body.code,
+        backup_code=body.backup_code,
+        presented_token=session_token,
+        client_ip=client_ip,
+        now=now,
+    )
+    return _issued_out(issued, settings, timezone, now)
+
+
+def clinic_name(db: SessionDep) -> str:
+    settings = clinic_repo.get_clinic_settings(db)
+    if settings is None:
+        raise ClinicNotConfigured
+    return settings.name
+
+
+@router.get(
+    "/auth/two-factor",
+    response_model=TwoFactorStatusOut,
+    response_model_exclude_none=True,
+    responses=ADMIN_ERRORS_DOC,
+    operation_id="adminTwoFactorStatus",
+    summary="Two-step sign-in status for the signed-in staff member",
+)
+def two_factor_status(
+    viewer: Annotated[Viewer, Depends(require_viewer(Policy.SELF_STAFF))],
+    db: SessionDep,
+    settings: SettingsDep,
+    response: Response,
+) -> TwoFactorStatusOut:
+    response.headers.update(NO_STORE)
+    current = two_factor.status(db, settings, viewer)
+    return TwoFactorStatusOut(
+        available=current.available,
+        enabled=current.enabled,
+        enabled_at=current.enabled_at,
+        backup_codes_left=current.backup_codes_left,
+        can_enrol=current.can_enrol,
+    )
+
+
+@router.post(
+    "/auth/two-factor/setup",
+    response_model=TwoFactorSetupOut,
+    responses=TWO_FACTOR_ERRORS,
+    operation_id="adminTwoFactorSetup",
+    summary="Start two-step sign-in setup (password required)",
+)
+def two_factor_setup(
+    body: TwoFactorSetupRequest,
+    viewer: Annotated[Viewer, Depends(require_viewer(Policy.SELF_STAFF))],
+    db: SessionDep,
+    settings: SettingsDep,
+    issuer: Annotated[str, Depends(clinic_name)],
+    clock: ClockDep,
+    response: Response,
+) -> TwoFactorSetupOut:
+    response.headers.update(NO_STORE)
+    key = two_factor.start_setup(
+        db,
+        settings,
+        viewer,
+        current_password=body.current_password,
+        issuer=issuer,
+        now=clock.now(),
+    )
+    return TwoFactorSetupOut(secret=key.secret, otpauth_uri=key.otpauth_uri)
+
+
+@router.post(
+    "/auth/two-factor/enable",
+    response_model=BackupCodesOut,
+    responses=TWO_FACTOR_ERRORS,
+    operation_id="adminTwoFactorEnable",
+    summary="Finish setup with a code from the app; returns the backup codes once",
+)
+def two_factor_enable(
+    body: TwoFactorEnableRequest,
+    viewer: Annotated[Viewer, Depends(require_viewer(Policy.SELF_STAFF))],
+    db: SessionDep,
+    settings: SettingsDep,
+    clock: ClockDep,
+    response: Response,
+) -> BackupCodesOut:
+    response.headers.update(NO_STORE)
+    codes = two_factor.enable(db, settings, viewer, code=body.code, now=clock.now())
+    return BackupCodesOut(backup_codes=codes)
+
+
+@router.post(
+    "/auth/two-factor/disable",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=TWO_FACTOR_ERRORS,
+    operation_id="adminTwoFactorDisable",
+    summary="Turn two-step sign-in off (password and a code required)",
+)
+def two_factor_disable(
+    body: TwoFactorConfirmRequest,
+    viewer: Annotated[Viewer, Depends(require_viewer(Policy.SELF_STAFF))],
+    db: SessionDep,
+    settings: SettingsDep,
+    clock: ClockDep,
+) -> Response:
+    two_factor.disable(
+        db,
+        settings,
+        viewer,
+        current_password=body.current_password,
+        code=body.code,
+        backup_code=body.backup_code,
+        now=clock.now(),
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT, headers=NO_STORE)
+
+
+@router.post(
+    "/auth/two-factor/backup-codes",
+    response_model=BackupCodesOut,
+    responses=TWO_FACTOR_ERRORS,
+    operation_id="adminTwoFactorBackupCodes",
+    summary="Replace the backup codes (password and a code required)",
+)
+def two_factor_backup_codes(
+    body: TwoFactorConfirmRequest,
+    viewer: Annotated[Viewer, Depends(require_viewer(Policy.SELF_STAFF))],
+    db: SessionDep,
+    settings: SettingsDep,
+    clock: ClockDep,
+    response: Response,
+) -> BackupCodesOut:
+    response.headers.update(NO_STORE)
+    codes = two_factor.regenerate_backup_codes(
+        db,
+        settings,
+        viewer,
+        current_password=body.current_password,
+        code=body.code,
+        backup_code=body.backup_code,
+        now=clock.now(),
+    )
+    return BackupCodesOut(backup_codes=codes)
 
 
 @router.post(

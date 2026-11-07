@@ -13,7 +13,7 @@ from sqlalchemy import Engine
 from sqlmodel import Session, col, func, select
 
 from app import models as m
-from app.auth import audit, events, passwords, sessions, throttle
+from app.auth import audit, events, passwords, sessions, throttle, two_factor
 from app.auth.deps import Viewer
 from app.booking.privacy import fingerprint
 from app.errors import AdminError, NotFound, RequestInvalid
@@ -55,7 +55,7 @@ def sign_in(
     presented_token: str | None,
     client_ip: str,
     now: datetime,
-) -> Issued:
+) -> "Issued | two_factor.Challenge":
     fp = fingerprint(settings.privacy_hash_key, client_ip)
     throttle.check_login_ip(engine, settings, client_ip, now)
     typed = normalise_email(email)
@@ -91,15 +91,62 @@ def sign_in(
             raise AdminError("account_locked", retry_after=settings.login_lock_minutes * 60)
         raise AdminError("sign_in_failed")
 
-    throttle.clear(db, subject)
-    sessions.end_presented(db, settings, presented_token, "replaced", now)
     if passwords.needs_rehash(staff.password_hash):
         staff.password_hash = passwords.hash_password(password)
+    if two_factor.is_enrolled(staff):
+        # Feature 011: the password alone opens no session. The failed-attempt counter is kept,
+        # so re-entering a known password cannot buy more code guesses; it clears on full success.
+        challenge = two_factor.create_challenge(db, settings, staff, fp, now)
+        db.commit()
+        return challenge
+    throttle.clear(db, subject)
+    return finish_sign_in(db, settings, staff, presented_token=presented_token, fp=fp, now=now)
+
+
+def finish_sign_in(
+    db: Session,
+    settings: Settings,
+    staff: m.StaffAccount,
+    *,
+    presented_token: str | None,
+    fp: str,
+    now: datetime,
+) -> Issued:
+    """Issue the session once every sign-in step has passed; commits."""
+    sessions.end_presented(db, settings, presented_token, "replaced", now)
     staff.last_sign_in_at = now
     token, row = sessions.create_staff_session(db, settings, staff, fp, now)
     audit.record(db, action="auth.sign_in", fingerprint=fp, staff_id=staff.id, role=staff.role)
     db.commit()
     return Issued(token, row, staff)
+
+
+def verify_two_factor(
+    db: Session,
+    engine: Engine,
+    settings: Settings,
+    *,
+    challenge_token: str,
+    code: str | None,
+    backup_code: str | None,
+    presented_token: str | None,
+    client_ip: str,
+    now: datetime,
+) -> Issued:
+    verified = two_factor.verify_challenge(
+        db,
+        engine,
+        settings,
+        challenge_token=challenge_token,
+        code=code,
+        backup_code=backup_code,
+        client_ip=client_ip,
+        now=now,
+    )
+    fp = fingerprint(settings.privacy_hash_key, client_ip)
+    return finish_sign_in(
+        db, settings, verified.staff, presented_token=presented_token, fp=fp, now=now
+    )
 
 
 def sign_out(db: Session, viewer: Viewer, now: datetime) -> None:
