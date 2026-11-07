@@ -1,6 +1,6 @@
 # ADR-0013: AI Agent — Provider Interface with a Free Local Engine First
 
-- **Status:** Proposed (agent, unattended run 2026-11-07; needs owner acceptance)
+- **Status:** Accepted (owner, 2026-11-07; proposed by the agent in the unattended run the same night)
 - **Date:** 2026-11-07
 - **Feature:** 010-ai-agent
 - **Context:**
