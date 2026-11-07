@@ -12,6 +12,7 @@ from app.main import create_app
 from app.notifications import alerts, sender, templates
 from app.schemas import AppointmentDepartment, AppointmentDoctor, AppointmentView
 from app.settings import Settings
+from tests.api.test_maintenance_purge import CRON, GOOD
 from tests.conftest import SettingsFactory
 
 NOW = datetime(2026, 10, 5, 4, 0, tzinfo=UTC)
@@ -150,13 +151,10 @@ def test_nothing_is_sent_when_the_flag_is_off(settings_factory: SettingsFactory)
 def test_the_daily_summary_route_is_hidden_without_the_cron_secret_and_a_no_op_while_off(
     settings_factory: SettingsFactory,
 ) -> None:
-    settings: Settings = settings_factory(
-        maintenance_via_cron=True, cron_secret="test-cron-secret-0123456789abcdefghij"
-    )
+    settings: Settings = settings_factory(maintenance_via_cron=True, cron_secret=CRON)
     client = TestClient(create_app(settings))
     url = "/internal/maintenance/daily-summary"
     assert client.get(url).status_code == 404
     assert client.get(url, headers={"Authorization": "Bearer wrong"}).status_code == 404
-    good = {"Authorization": "Bearer test-cron-secret-0123456789abcdefghij"}
-    response = client.get(url, headers=good)
+    response = client.get(url, headers=GOOD)
     assert (response.status_code, response.json()) == (200, {"status": "disabled"})
