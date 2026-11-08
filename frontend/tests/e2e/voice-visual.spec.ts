@@ -10,7 +10,7 @@ const ON = truthy(process.env.ASSISTANT_ENABLED) && truthy(process.env.VOICE_ENA
 
 async function openVoice(page: Page) {
   await page.goto("/");
-  await page.getByRole("button", { name: /Talk to us/ }).click({ timeout: 8000 });
+  await page.getByRole("button", { name: "Talk by voice, in English or Urdu" }).click({ timeout: 8000 });
   const dialog = page.getByRole("dialog", { name: /Ask / });
   await expect(dialog.getByText("Listening...")).toBeVisible({ timeout: 8000 });
   return dialog;
@@ -23,11 +23,10 @@ test.describe("voice panel visuals", () => {
     await installFakeWebSpeech(page);
   });
 
-  test("the discovery bubble above Ask us", async ({ page }) => {
+  test("the one Ask us button with the mic inside", async ({ page }) => {
     await page.goto("/");
-    const bubble = page.getByRole("button", { name: /Talk to us/ });
-    await expect(bubble).toBeVisible({ timeout: 8000 });
-    await expect(page.locator(".voice-bubble")).toHaveScreenshot("bubble.png", { animations: "disabled" });
+    await expect(page.getByRole("button", { name: "Talk by voice, in English or Urdu" })).toBeVisible({ timeout: 8000 });
+    await expect(page.locator(".assistant-dock")).toHaveScreenshot("ask-us-with-mic.png", { animations: "disabled" });
   });
 
   test("voice mode, listening", async ({ page }) => {
@@ -39,6 +38,7 @@ test.describe("voice panel visuals", () => {
     const dialog = await openVoice(page);
     const log = page.getByRole("log");
     const say = async (text: string, expected: string | RegExp) => {
+      await expect(dialog.getByText("Listening...")).toBeVisible({ timeout: 20000 });
       await hear(page, text);
       await expect(log).toContainText(expected, { timeout: 8000 });
     };

@@ -16,226 +16,227 @@ Checks on every conversation: the right department (only ones we have), a real f
 | 3 | Browser | **not completed** | Claude Code stopped the run because the computer was low on memory, before any conversation finished. Not restarted (the tool asked not to restart it automatically). |
 | 4 | Router (Vitest) | 16 / 18 | **#9 FAIL (product):** "pregnancy checkup ke liye lady doctor chahiye" booked the *Urine Pregnancy Test* at the lab instead of Gynecology. **Fixed:** a problem word picks a lab test only when the patient talks about a test, lab or report. #16 was the harness echoing the wrong sentence; it now echoes exactly what the assistant said, written in Urdu letters. Also added: a booking that starts straight away names the department, doctor and fee. |
 | 5 | Router (Vitest) | 18 / 18 pass | Then I read every transcript myself. Two tone problems the checks did not catch: "Daant ki safai karwani hai" got "Mujhe sun kar afsos hua" (sympathy for a cleaning), and "pata nahi" got "Theek hai! Kuch aur madad chahiye?". **Fixed:** sympathy only for pain or illness; "pata nahi" / "no" with nothing open is now asked kindly with choices. |
-| 6 | Router (Vitest), final code | **18 / 18 pass** | Transcripts below. All 330 voice unit tests pass. |
+| 6 | Router (Vitest), final code | **18 / 18 pass** | All 330 voice unit tests pass. |
+| 7 | **Browser, final code** | **18 / 18 pass** | Re-run once memory allowed (desktop Chromium, production build, mock API), together with the whole voice e2e suite: 34 passed, 1 skipped (flag-off check), and 1 new visual baseline written (the one "Ask us" button with the mic). **Transcripts below are from this browser run.** |
 
 Every fixed bug has a regression test: `frontend/tests/unit/voice-selftest-regressions.test.ts` and the conversation file above.
 
 ## Not verified tonight
 - **A real microphone and real voices** (sound quality, accents, room echo on laptop speakers, how Chrome's own Urdu listening spells things). The tests use a scripted speech API.
-- **The browser run of the final code** (round 3 was stopped for memory). The final code was verified through the router (round 5) and by the unit and widget tests; please re-run `ASSISTANT_ENABLED=true VOICE_ENABLED=true npx playwright test voice-selftest --project=desktop --workers=1` when the PC is free.
+- The mobile browser project for the self-test (run on desktop Chromium only, to stay within the PC's memory).
 - The Gemini brain against the real Google service (OFF; tested with a fake).
 
-## Results table and full transcripts (round 5, final code)
+## Results table and full transcripts (round 7: browser, final code)
 In the transcripts, "voice" lines are what the scripted speech API heard; "Urdu letters" lines were heard in Urdu script exactly as written (the chat shows them in English letters). Choices in brackets are the tappable buttons under the reply.
 
 | # | Conversation | By | Result | Checks |
 |---|---|---|---|---|
-| 1 | Fever, Roman Urdu by voice -> General Medicine -> slip | voice | PASS | apologies: 0; chat in English letters only; not stuck; booked once, real slot, English name |
-| 2 | Allergy, typed Roman Urdu -> Dermatology -> slip | typed | PASS | apologies: 0; chat in English letters only; not stuck; booked once, real slot, English name |
-| 3 | Skin rash, spoken in Urdu letters (days, numbers, name) -> Dermatology -> English name | voice | PASS | apologies: 0; chat in English letters only; not stuck; booked once, real slot, English name |
-| 4 | Teeth cleaning by voice -> Dental -> slip (email with a doctor's first name in it) | voice | PASS | apologies: 0; chat in English letters only; not stuck; booked once, real slot, English name |
-| 5 | English: I need a blood test -> CBC -> slip with the test | typed | PASS | apologies: 0; chat in English letters only; not stuck; booked once, real slot, English name |
-| 6 | High BP by voice -> Cardiology -> slip | voice | PASS | apologies: 0; chat in English letters only; not stuck; booked once, real slot, English name |
-| 7 | Child with cough and fever -> Pediatrics -> slip | typed | PASS | apologies: 0; chat in English letters only; not stuck; booked once, real slot, English name |
-| 8 | Health package -> lab booking -> slip shows the package | typed | PASS | apologies: 0; chat in English letters only; not stuck; booked once, real slot, English name |
-| 9 | Pregnancy check-up by voice -> Gynecology -> slip | voice | PASS | apologies: 0; chat in English letters only; not stuck; booked once, real slot, English name |
-| 10 | Is the clinic open today? (Sunday: closed, no booking) | voice | PASS | apologies: 0; chat in English letters only; not stuck; nothing booked |
-| 11 | Topic change mid-way: allergy -> actually teeth | typed | PASS | apologies: 0; chat in English letters only; not stuck; booked once, real slot, English name |
-| 12 | Wrong phone number corrected at the card | voice | PASS | apologies: 0; chat in English letters only; not stuck; booked once, real slot, English name |
-| 13 | 'Rehne do' stops the booking (nothing booked) | voice | PASS | apologies: 0; chat in English letters only; not stuck; nothing booked |
-| 14 | Emergency: chest pain -> emergency number first | voice | PASS | apologies: 0; chat in English letters only; not stuck; nothing booked |
-| 15 | Injection attempts are refused (nothing booked, nothing leaked) | typed | PASS | apologies: 0; chat in English letters only; not stuck; nothing booked |
-| 16 | Echo case: its own apology heard back in Urdu letters is ignored | voice | PASS | its own echo (Urdu letters) was ignored; apologies: 0; chat in English letters only; not stuck; nothing booked |
-| 17 | Not offered (eyes): honest, with a General Medicine check-up offered | voice | PASS | apologies: 1; chat in English letters only; not stuck; nothing booked |
-| 18 | Unclear three times: one apology at most, calm choices, then a problem is understood | voice | PASS | apologies: 0; chat in English letters only; not stuck; nothing booked |
+| 1 | Fever, Roman Urdu by voice -> General Medicine -> slip | voice | PASS | apologies: 0; chat in English letters only; not stuck; slip opened, English only; no console errors |
+| 2 | Allergy, typed Roman Urdu -> Dermatology -> slip | typed | PASS | apologies: 0; chat in English letters only; not stuck; slip opened, English only; no console errors |
+| 3 | Skin rash, spoken in Urdu letters (days, numbers, name) -> Dermatology -> English slip | voice | PASS | apologies: 0; chat in English letters only; not stuck; slip opened, English only; no console errors |
+| 4 | Teeth cleaning by voice -> Dental -> slip | voice | PASS | apologies: 0; chat in English letters only; not stuck; slip opened, English only; no console errors |
+| 5 | English: I need a blood test -> CBC -> slip with the test | typed | PASS | apologies: 0; chat in English letters only; not stuck; slip opened, English only; no console errors |
+| 6 | High BP by voice -> Cardiology -> slip | voice | PASS | apologies: 0; chat in English letters only; not stuck; slip opened, English only; no console errors |
+| 7 | Child with cough and fever -> Pediatrics -> slip | typed | PASS | apologies: 0; chat in English letters only; not stuck; slip opened, English only; no console errors |
+| 8 | Health package -> lab booking -> slip shows the package | typed | PASS | apologies: 0; chat in English letters only; not stuck; slip opened, English only; no console errors |
+| 9 | Pregnancy check-up by voice -> Gynecology -> slip | voice | PASS | apologies: 0; chat in English letters only; not stuck; slip opened, English only; no console errors |
+| 10 | Is the clinic open today? (no booking) | voice | PASS | apologies: 0; chat in English letters only; not stuck; no console errors |
+| 11 | Topic change mid-way: allergy -> actually teeth | typed | PASS | apologies: 0; chat in English letters only; not stuck; slip opened, English only; no console errors |
+| 12 | Wrong phone number corrected at the card | voice | PASS | apologies: 0; chat in English letters only; not stuck; slip opened, English only; no console errors |
+| 13 | 'Rehne do' stops the booking (nothing booked) | voice | PASS | apologies: 0; chat in English letters only; not stuck; no console errors |
+| 14 | Emergency: chest pain -> emergency number first | voice | PASS | apologies: 0; chat in English letters only; not stuck; no console errors |
+| 15 | Injection attempts are refused (nothing booked, nothing leaked) | typed | PASS | apologies: 0; chat in English letters only; not stuck; no console errors |
+| 16 | Echo case: its own apology heard back in Urdu letters is ignored | voice | PASS | its own echo was ignored (no reply); apologies: 1; chat in English letters only; not stuck; no console errors |
+| 17 | Not offered (eyes): honest, with a General Medicine check-up offered | voice | PASS | apologies: 1; chat in English letters only; not stuck; no console errors |
+| 18 | Unclear twice: one apology at most, calm choices, then a problem is understood | voice | PASS | apologies: 1; chat in English letters only; not stuck; no console errors |
 
 ### #1 Fever, Roman Urdu by voice -> General Medicine -> slip — PASS
 
 - **Patient** (voice): Assalam o Alaikum, mujhe bukhar hai, ilaaj karwana hai
-- **Assistant**: Wa alaikum assalam! Mujhe sun kar afsos hua. Is ke liye hamara General Medicine department sahi rahega: Dr. Hassan Mirza (fee PKR 2,000) aur Dr. Omar Sheikh (fee PKR 1,800). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Wa alaikum assalam! Mujhe sun kar afsos hua. Is ke liye hamara General Medicine department sahi rahega: Dr. Hassan Mirza (fee PKR 2,000) aur Dr. Omar Sheikh (fee PKR 1,800). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?
 - **Patient** (voice): ji haan
-- **Assistant**: Ji zaroor! General Medicine mein Dr. Hassan Mirza aur Dr. Omar Sheikh hain. Kaun se doctor se milna chahte hain?  [choices: Dr. Hassan Mirza | Dr. Omar Sheikh]
+- **Assistant**: Ji zaroor! General Medicine mein Dr. Hassan Mirza aur Dr. Omar Sheikh hain. Kaun se doctor se milna chahte hain?
 - **Patient** (voice): Dr Hassan Mirza
-- **Assistant**: Dr. Hassan Mirza ke saath. Kaun sa din theek rahega? Dr. Hassan Mirza ke khali waqt Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko hain.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
-- **Patient** (voice): Monday 9 November
-- **Assistant**: Monday 9 November ko mere paas 10:00 AM, 11:30 AM aur 3:00 PM hain. Kaun sa waqt theek rahega?  [choices: 10:00 AM | 11:30 AM | 3:00 PM]
-- **Patient** (voice): 10:00 AM
+- **Assistant**: Dr. Hassan Mirza ke saath. Kaun sa din theek rahega? Dr. Hassan Mirza ke khali waqt Monday 5 October, Wednesday 7 October aur Friday 9 October ko hain.
+- **Patient** (voice): Monday 5 October
+- **Assistant**: Monday 5 October ko mere paas 11:00 AM, 11:30 AM, 12:15 PM aur 12:45 PM hain. Kaun sa waqt theek rahega?
+- **Patient** (voice): 11:00 AM
 - **Assistant**: Aap ka poora naam kya hai?
 - **Patient** (voice): mera naam Ali Raza hai
 - **Assistant**: Aap se mil kar khushi hui, Ali. Aap ka mobile number kya hai? Aahista aahista digits bata dein.
 - **Patient** (voice): zero three zero zero one two three four five six seven
-- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.  [choices: Skip]
+- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.
 - **Patient** (voice): skip
 - **Assistant**: Shukriya! Ji, main aap ki booking kar rahi hoon. Please card check karein, phir haan kahein ya Confirm dabaiye.
 - **Patient** (voice): haan
-- **Assistant**: Aap ki booking ho gayi, Ali! Dr. Hassan Mirza, Monday 9 November 10:00 AM. Aap ka reference 7K3M 9P2Q XA hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
-- **Booked (the slip data, English)**: Ali Raza · Dr. Hassan Mirza (General Medicine) · 2026-11-09 10:00 · ref 7K3M9P2QXA
+- **Assistant**: Aap ki booking ho gayi, Ali! Dr. Hassan Mirza, Monday 5 October 11:00 AM. Aap ka reference WVEZ WVZ8 ET hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
+- **Slip page opened (English)**: Home Book an appointment Confirmation Your appointment is booked Keep your reference. This page is private to you. Save this slip: tap Download or take a screenshot. Show this reference at the clinic. Shuaib Health APPOINTMENT SLIP YOUR APPOINTMENT Mon 5 Oct 2026 11:00 (PKT) Pakistan Standard Time S H U A I B H E A L T H • D E M O • CONFIRMED BOOKED 08 NOV Please arrive by 10:45 VISIT DETAILS Pati
 
 ### #2 Allergy, typed Roman Urdu -> Dermatology -> slip — PASS
 
 - **Patient** (typed): Mujhe allergy hai
-- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Dermatology department sahi rahega: Dr. Maryam Baloch (fee PKR 3,000). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Dermatology department sahi rahega: Dr. Maryam Baloch (fee PKR 3,000). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?
 - **Patient** (typed): ji
-- **Assistant**: Ji zaroor! Kaun sa din theek rahega? Dr. Maryam Baloch ke khali waqt Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko hain.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
-- **Patient** (tap): (taps "Monday 9 November")
-- **Assistant**: Monday 9 November ko mere paas 10:00 AM, 11:30 AM aur 3:00 PM hain. Kaun sa waqt theek rahega?  [choices: 10:00 AM | 11:30 AM | 3:00 PM]
-- **Patient** (tap): (taps "10:00 AM")
+- **Assistant**: Ji zaroor! Kaun sa din theek rahega? Dr. Maryam Baloch ke khali waqt Monday 5 October, Wednesday 7 October aur Friday 9 October ko hain.
+- **Patient** (typed): (taps "Monday 5 October")
+- **Assistant**: Monday 5 October ko mere paas 12:00 PM, 1:30 PM, 3:15 PM aur 4:45 PM hain. Kaun sa waqt theek rahega?
+- **Patient** (typed): (taps "12:00 PM")
 - **Assistant**: Aap ka poora naam kya hai?
 - **Patient** (typed): Sana Khan
 - **Assistant**: Aap se mil kar khushi hui, Sana. Aap ka mobile number kya hai? Aahista aahista digits bata dein.
 - **Patient** (typed): 03001234567
-- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.  [choices: Skip]
+- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.
 - **Patient** (typed): nahi
 - **Assistant**: Shukriya! Ji, main aap ki booking kar rahi hoon. Please card check karein, phir haan kahein ya Confirm dabaiye.
-- **Patient** (tap): (taps Confirm)
-- **Assistant**: Aap ki booking ho gayi, Sana! Dr. Maryam Baloch, Monday 9 November 10:00 AM. Aap ka reference 7K3M 9P2Q XA hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
-- **Booked (the slip data, English)**: Sana Khan · Dr. Maryam Baloch (Dermatology) · 2026-11-09 10:00 · ref 7K3M9P2QXA
+- **Patient** (typed): (taps Confirm)
+- **Assistant**: Aap ki booking ho gayi, Sana! Dr. Maryam Baloch, Monday 5 October 12:00 PM. Aap ka reference XGJK JN8N 65 hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
+- **Slip page opened (English)**: Home Book an appointment Confirmation Your appointment is booked Keep your reference. This page is private to you. Save this slip: tap Download or take a screenshot. Show this reference at the clinic. Shuaib Health APPOINTMENT SLIP YOUR APPOINTMENT Mon 5 Oct 2026 12:00 (PKT) Pakistan Standard Time S H U A I B H E A L T H • D E M O • CONFIRMED BOOKED 08 NOV Please arrive by 11:45 VISIT DETAILS Pati
 
-### #3 Skin rash, spoken in Urdu letters (days, numbers, name) -> Dermatology -> English name — PASS
+### #3 Skin rash, spoken in Urdu letters (days, numbers, name) -> Dermatology -> English slip — PASS
 
-- **Patient** (voice, Urdu letters): میری جلد پر دانے ہیں
-- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Dermatology department sahi rahega: Dr. Maryam Baloch (fee PKR 3,000). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
-- **Patient** (voice, Urdu letters): جی ہاں
-- **Assistant**: Ji zaroor! Kaun sa din theek rahega? Dr. Maryam Baloch ke khali waqt Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko hain.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
-- **Patient** (voice, Urdu letters): منڈے
-- **Assistant**: Monday 9 November ko mere paas 10:00 AM, 11:30 AM aur 3:00 PM hain. Kaun sa waqt theek rahega?  [choices: 10:00 AM | 11:30 AM | 3:00 PM]
-- **Patient** (voice, Urdu letters): دس بجے صبح
+- **Patient** (voice (Urdu letters)): میری جلد پر دانے ہیں
+- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Dermatology department sahi rahega: Dr. Maryam Baloch (fee PKR 3,000). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?
+- **Patient** (voice (Urdu letters)): جی ہاں
+- **Assistant**: Ji zaroor! Kaun sa din theek rahega? Dr. Maryam Baloch ke khali waqt Monday 5 October, Wednesday 7 October aur Friday 9 October ko hain.
+- **Patient** (voice (Urdu letters)): منڈے
+- **Assistant**: Monday 12 October ko mere paas 12:00 PM, 1:30 PM, 3:15 PM aur 4:45 PM hain. Kaun sa waqt theek rahega?
+- **Patient** (voice (Urdu letters)): بارہ بجے شام
 - **Assistant**: Aap ka poora naam kya hai?
-- **Patient** (voice, Urdu letters): میرا نام شعیب علی ہے
-- **Assistant**: Aap se mil kar khushi hui, Shuaib. Maine aap ka naam Shuaib Ali likha hai. Spelling theek hai?  [choices: Haan, theek hai | Nahi, galat hai]
-- **Patient** (voice, Urdu letters): ہاں ٹھیک ہے
+- **Patient** (voice (Urdu letters)): میرا نام شعیب علی ہے
+- **Assistant**: Aap se mil kar khushi hui, Shuaib. Maine aap ka naam Shuaib Ali likha hai. Spelling theek hai?
+- **Patient** (voice (Urdu letters)): ہاں ٹھیک ہے
 - **Assistant**: Aap ka mobile number kya hai? Aahista aahista digits bata dein.
-- **Patient** (voice, Urdu letters): زیرو تھری زیرو زیرو ون ٹو تھری فور فائیو سکس سیون
-- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.  [choices: Skip]
-- **Patient** (voice, Urdu letters): سکپ
+- **Patient** (voice (Urdu letters)): زیرو تھری زیرو زیرو ون ٹو تھری فور فائیو سکس سیون
+- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.
+- **Patient** (voice (Urdu letters)): سکپ
 - **Assistant**: Shukriya! Ji, main aap ki booking kar rahi hoon. Please card check karein, phir haan kahein ya Confirm dabaiye.
-- **Patient** (voice, Urdu letters): ہاں
-- **Assistant**: Aap ki booking ho gayi, Shuaib! Dr. Maryam Baloch, Monday 9 November 10:00 AM. Aap ka reference 7K3M 9P2Q XA hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
-- **Booked (the slip data, English)**: Shuaib Ali · Dr. Maryam Baloch (Dermatology) · 2026-11-09 10:00 · ref 7K3M9P2QXA
+- **Patient** (voice (Urdu letters)): ہاں
+- **Assistant**: Aap ki booking ho gayi, Shuaib! Dr. Maryam Baloch, Monday 12 October 12:00 PM. Aap ka reference BFPE BNGD RK hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
+- **Slip page opened (English)**: Home Book an appointment Confirmation Your appointment is booked Keep your reference. This page is private to you. Save this slip: tap Download or take a screenshot. Show this reference at the clinic. Shuaib Health APPOINTMENT SLIP YOUR APPOINTMENT Mon 12 Oct 2026 12:00 (PKT) Pakistan Standard Time S H U A I B H E A L T H • D E M O • CONFIRMED BOOKED 08 NOV Please arrive by 11:45 VISIT DETAILS Pat
 
-### #4 Teeth cleaning by voice -> Dental -> slip (email with a doctor's first name in it) — PASS
+### #4 Teeth cleaning by voice -> Dental -> slip — PASS
 
 - **Patient** (voice): Daant ki safai karwani hai
-- **Assistant**: Is ke liye hamara Dental department sahi rahega: Dr. Bilal Ansari (fee PKR 2,000). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Is ke liye hamara Dental department sahi rahega: Dr. Bilal Ansari (fee PKR 2,000). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?
 - **Patient** (voice): kar do
-- **Assistant**: Ji zaroor! Kaun sa din theek rahega? Dr. Bilal Ansari ke khali waqt Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko hain.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
-- **Patient** (voice): Tuesday 10 November
-- **Assistant**: Tuesday 10 November ko mere paas 10:00 AM, 11:30 AM aur 3:00 PM hain. Kaun sa waqt theek rahega?  [choices: 10:00 AM | 11:30 AM | 3:00 PM]
-- **Patient** (voice): 10:00 AM
+- **Assistant**: Ji zaroor! Kaun sa din theek rahega? Dr. Bilal Ansari ke khali waqt Tuesday 6 October, Thursday 8 October aur Saturday 10 October ko hain.
+- **Patient** (voice): Thursday 8 October
+- **Assistant**: Thursday 8 October ko mere paas 5:00 PM, 6:15 PM, 7:30 PM aur 8:45 PM hain. Kaun sa waqt theek rahega?
+- **Patient** (voice): 5:00 PM
 - **Assistant**: Aap ka poora naam kya hai?
 - **Patient** (voice): Ayesha Siddiqui
 - **Assistant**: Aap se mil kar khushi hui, Ayesha. Aap ka mobile number kya hai? Aahista aahista digits bata dein.
 - **Patient** (voice): 0333 4567890
-- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.  [choices: Skip]
+- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.
 - **Patient** (voice): ayesha at gmail dot com
 - **Assistant**: Shukriya! Ji, main aap ki booking kar rahi hoon. Please card check karein, phir haan kahein ya Confirm dabaiye.
 - **Patient** (voice): haan
-- **Assistant**: Aap ki booking ho gayi, Ayesha! Dr. Bilal Ansari, Tuesday 10 November 10:00 AM. Aap ka reference 7K3M 9P2Q XA hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
-- **Booked (the slip data, English)**: Ayesha Siddiqui · Dr. Bilal Ansari (Dental) · 2026-11-10 10:00 · ref 7K3M9P2QXA
+- **Assistant**: Aap ki booking ho gayi, Ayesha! Dr. Bilal Ansari, Thursday 8 October 5:00 PM. Aap ka reference EWHZ 5JSQ VT hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
+- **Slip page opened (English)**: Home Book an appointment Confirmation Your appointment is booked Keep your reference. This page is private to you. Save this slip: tap Download or take a screenshot. Show this reference at the clinic. Shuaib Health APPOINTMENT SLIP YOUR APPOINTMENT Thu 8 Oct 2026 17:00 (PKT) Pakistan Standard Time S H U A I B H E A L T H • D E M O • CONFIRMED BOOKED 08 NOV Please arrive by 16:45 VISIT DETAILS Pati
 
 ### #5 English: I need a blood test -> CBC -> slip with the test — PASS
 
 - **Patient** (typed): I need a blood test
-- **Assistant**: Complete Blood Count (CBC) (also called Complete blood picture, CBP) is a blood test. Preparation: No preparation needed. Report: Same day. Price: PKR 800 (sample price). It's done at our Pathology Lab with Dr. Zainab Memon. Shall I book it for you?  [choices: Yes, book it | No, thanks]
+- **Assistant**: Complete Blood Count (CBC) (also called Complete blood picture, CBP) is a blood test. Preparation: No preparation needed. Report: Same day. Price: PKR 800 (sample price). It's done at our Pathology Lab with Dr. Zainab Memon. Shall I book it for you?
 - **Patient** (typed): yes please
-- **Assistant**: Of course! Complete Blood Count (CBC) at our Pathology Lab, with Dr. Zainab Memon. Which day suits you? Dr. Zainab Memon has free times on Monday 9 November, Tuesday 10 November and Wednesday 11 November.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
-- **Patient** (tap): (taps "Monday 9 November")
-- **Assistant**: On Monday 9 November I have 10:00 AM, 11:30 AM and 3:00 PM. Which time suits you?  [choices: 10:00 AM | 11:30 AM | 3:00 PM]
-- **Patient** (tap): (taps "10:00 AM")
+- **Assistant**: Of course! Complete Blood Count (CBC) at our Pathology Lab, with Dr. Zainab Memon. Which day suits you? Dr. Zainab Memon has free times on Monday 5 October, Wednesday 7 October and Friday 9 October.
+- **Patient** (typed): (taps "Monday 5 October")
+- **Assistant**: On Monday 5 October I have 11:00 AM, 11:15 AM, 11:30 AM and 11:45 AM. Which time suits you?
+- **Patient** (typed): (taps "11:00 AM")
 - **Assistant**: May I have your full name, please?
 - **Patient** (typed): Sarah Ahmed
 - **Assistant**: Nice to meet you, Sarah. What is your mobile number? Please say the digits slowly.
 - **Patient** (typed): 0321 7654321
-- **Assistant**: Would you like to add an email? It's optional, you can also say skip.  [choices: Skip]
+- **Assistant**: Would you like to add an email? It's optional, you can also say skip.
 - **Patient** (typed): sarah@example.com
 - **Assistant**: Thank you! I'm making your booking now. Please check the card, then say yes or tap Confirm.
 - **Patient** (typed): yes
-- **Assistant**: You're booked, Sarah! Dr. Zainab Memon, Monday 9 November at 10:00 AM. Your reference is 7K3M 9P2Q XA. Tap Open my slip, download the slip, save it on your phone, and bring it with you to the clinic.
-- **Booked (the slip data, English)**: Sarah Ahmed · Dr. Zainab Memon (Pathology Lab) · 2026-11-09 10:00 · ref 7K3M9P2QXA · Test: Complete Blood Count (CBC)
+- **Assistant**: You're booked, Sarah! Dr. Zainab Memon, Monday 5 October at 11:00 AM. Your reference is TEXP ZTQS 54. Tap Open my slip, download the slip, save it on your phone, and bring it with you to the clinic.
+- **Slip page opened (English)**: Home Book an appointment Confirmation Your appointment is booked Keep your reference. This page is private to you. Save this slip: tap Download or take a screenshot. Show this reference at the clinic. Shuaib Health APPOINTMENT SLIP YOUR APPOINTMENT Mon 5 Oct 2026 11:00 (PKT) Pakistan Standard Time S H U A I B H E A L T H • D E M O • CONFIRMED BOOKED 08 NOV Please arrive by 10:45 VISIT DETAILS Pati
 
 ### #6 High BP by voice -> Cardiology -> slip — PASS
 
 - **Patient** (voice): mera BP high rehta hai
-- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Cardiology department sahi rahega: Dr. Imran Qureshi (fee PKR 3,500). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Cardiology department sahi rahega: Dr. Imran Qureshi (fee PKR 3,500). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?
 - **Patient** (voice): theek hai
-- **Assistant**: Ji zaroor! Kaun sa din theek rahega? Dr. Imran Qureshi ke khali waqt Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko hain.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
-- **Patient** (voice): Wednesday 11 November
-- **Assistant**: Wednesday 11 November ko mere paas 10:00 AM, 11:30 AM aur 3:00 PM hain. Kaun sa waqt theek rahega?  [choices: 10:00 AM | 11:30 AM | 3:00 PM]
-- **Patient** (voice): 11:30 AM
+- **Assistant**: Ji zaroor! Kaun sa din theek rahega? Dr. Imran Qureshi ke khali waqt Monday 5 October, Wednesday 7 October aur Saturday 10 October ko hain.
+- **Patient** (voice): Saturday 10 October
+- **Assistant**: Saturday 10 October ko mere paas 9:00 AM, 10:15 AM, 11:30 AM aur 12:45 PM hain. Kaun sa waqt theek rahega?
+- **Patient** (voice): 10:15 AM
 - **Assistant**: Aap ka poora naam kya hai?
 - **Patient** (voice): mera naam Imtiaz Hussain hai
 - **Assistant**: Aap se mil kar khushi hui, Imtiaz. Aap ka mobile number kya hai? Aahista aahista digits bata dein.
 - **Patient** (voice): zero three double one two three four five six seven eight
-- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.  [choices: Skip]
+- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.
 - **Patient** (voice): nahi
 - **Assistant**: Shukriya! Ji, main aap ki booking kar rahi hoon. Please card check karein, phir haan kahein ya Confirm dabaiye.
 - **Patient** (voice): ji haan
-- **Assistant**: Aap ki booking ho gayi, Imtiaz! Dr. Imran Qureshi, Wednesday 11 November 11:30 AM. Aap ka reference 7K3M 9P2Q XA hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
-- **Booked (the slip data, English)**: Imtiaz Hussain · Dr. Imran Qureshi (Cardiology) · 2026-11-11 11:30 · ref 7K3M9P2QXA
+- **Assistant**: Aap ki booking ho gayi, Imtiaz! Dr. Imran Qureshi, Saturday 10 October 10:15 AM. Aap ka reference 9398 G387 GW hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
+- **Slip page opened (English)**: Home Book an appointment Confirmation Your appointment is booked Keep your reference. This page is private to you. Save this slip: tap Download or take a screenshot. Show this reference at the clinic. Shuaib Health APPOINTMENT SLIP YOUR APPOINTMENT Sat 10 Oct 2026 10:15 (PKT) Pakistan Standard Time S H U A I B H E A L T H • D E M O • CONFIRMED BOOKED 08 NOV Please arrive by 10:00 VISIT DETAILS Pat
 
 ### #7 Child with cough and fever -> Pediatrics -> slip — PASS
 
 - **Patient** (typed): mere bache ko khansi aur bukhar hai
-- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Pediatrics department sahi rahega: Dr. Sana Farooqui (fee PKR 2,500) aur Dr. Faisal Chaudhry (fee PKR 2,200). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Pediatrics department sahi rahega: Dr. Sana Farooqui (fee PKR 2,500) aur Dr. Faisal Chaudhry (fee PKR 2,200). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?
 - **Patient** (typed): haan
-- **Assistant**: Ji zaroor! Pediatrics mein Dr. Sana Farooqui aur Dr. Faisal Chaudhry hain. Kaun se doctor se milna chahte hain?  [choices: Dr. Sana Farooqui | Dr. Faisal Chaudhry]
+- **Assistant**: Ji zaroor! Pediatrics mein Dr. Sana Farooqui aur Dr. Faisal Chaudhry hain. Kaun se doctor se milna chahte hain?
 - **Patient** (typed): Dr Faisal Chaudhry
-- **Assistant**: Dr. Faisal Chaudhry ke saath. Kaun sa din theek rahega? Dr. Faisal Chaudhry ke khali waqt Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko hain.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
-- **Patient** (tap): (taps "Monday 9 November")
-- **Assistant**: Monday 9 November ko mere paas 10:00 AM, 11:30 AM aur 3:00 PM hain. Kaun sa waqt theek rahega?  [choices: 10:00 AM | 11:30 AM | 3:00 PM]
-- **Patient** (tap): (taps "10:00 AM")
+- **Assistant**: Dr. Faisal Chaudhry ke saath. Kaun sa din theek rahega? Dr. Faisal Chaudhry ke khali waqt Wednesday 7 October, Friday 9 October aur Saturday 10 October ko hain.
+- **Patient** (typed): (taps "Wednesday 7 October")
+- **Assistant**: Wednesday 7 October ko mere paas 3:00 PM, 4:30 PM, 6:15 PM aur 7:45 PM hain. Kaun sa waqt theek rahega?
+- **Patient** (typed): (taps "3:00 PM")
 - **Assistant**: Aap ka poora naam kya hai?
 - **Patient** (typed): Hamza Malik
 - **Assistant**: Aap se mil kar khushi hui, Hamza. Aap ka mobile number kya hai? Aahista aahista digits bata dein.
 - **Patient** (typed): 03451112233
-- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.  [choices: Skip]
+- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.
 - **Patient** (typed): skip
 - **Assistant**: Shukriya! Ji, main aap ki booking kar rahi hoon. Please card check karein, phir haan kahein ya Confirm dabaiye.
-- **Patient** (tap): (taps Confirm)
-- **Assistant**: Aap ki booking ho gayi, Hamza! Dr. Faisal Chaudhry, Monday 9 November 10:00 AM. Aap ka reference 7K3M 9P2Q XA hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
-- **Booked (the slip data, English)**: Hamza Malik · Dr. Faisal Chaudhry (Pediatrics) · 2026-11-09 10:00 · ref 7K3M9P2QXA
+- **Patient** (typed): (taps Confirm)
+- **Assistant**: Aap ki booking ho gayi, Hamza! Dr. Faisal Chaudhry, Wednesday 7 October 3:00 PM. Aap ka reference MRQP 992S 2M hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
+- **Slip page opened (English)**: Home Book an appointment Confirmation Your appointment is booked Keep your reference. This page is private to you. Save this slip: tap Download or take a screenshot. Show this reference at the clinic. Shuaib Health APPOINTMENT SLIP YOUR APPOINTMENT Wed 7 Oct 2026 15:00 (PKT) Pakistan Standard Time S H U A I B H E A L T H • D E M O • CONFIRMED BOOKED 08 NOV Please arrive by 14:45 VISIT DETAILS Pati
 
 ### #8 Health package -> lab booking -> slip shows the package — PASS
 
 - **Patient** (typed): Basic health check package karwana hai
-- **Assistant**: Basic Health Check package ki qeemat PKR 4,500 hai. Tayyari: 10–12 hours fasting; plain water is allowed. Bring a first-morning urine sample if you can.. Yeh hamari Pathology Lab mein hota hai. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Basic Health Check package ki qeemat PKR 4,500 hai. Tayyari: 10–12 hours fasting; plain water is allowed. Bring a first-morning urine sample if you can.. Yeh hamari Pathology Lab mein hota hai. Kya main aap ki booking kar doon?
 - **Patient** (typed): haan
-- **Assistant**: Ji zaroor! Basic Health Check, hamari Pathology Lab mein, Dr. Zainab Memon ke saath. Kaun sa din theek rahega? Dr. Zainab Memon ke khali waqt Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko hain.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
-- **Patient** (tap): (taps "Monday 9 November")
-- **Assistant**: Monday 9 November ko mere paas 10:00 AM, 11:30 AM aur 3:00 PM hain. Kaun sa waqt theek rahega?  [choices: 10:00 AM | 11:30 AM | 3:00 PM]
-- **Patient** (tap): (taps "10:00 AM")
+- **Assistant**: Ji zaroor! Basic Health Check, hamari Pathology Lab mein, Dr. Zainab Memon ke saath. Kaun sa din theek rahega? Dr. Zainab Memon ke khali waqt Monday 5 October, Wednesday 7 October aur Friday 9 October ko hain.
+- **Patient** (typed): (taps "Monday 5 October")
+- **Assistant**: Monday 5 October ko mere paas 11:15 AM, 11:30 AM aur 11:45 AM hain. Kaun sa waqt theek rahega?
+- **Patient** (typed): (taps "11:15 AM")
 - **Assistant**: Aap ka poora naam kya hai?
 - **Patient** (typed): Nadia Khan
 - **Assistant**: Aap se mil kar khushi hui, Nadia. Aap ka mobile number kya hai? Aahista aahista digits bata dein.
 - **Patient** (typed): 03009876543
-- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.  [choices: Skip]
+- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.
 - **Patient** (typed): skip
 - **Assistant**: Shukriya! Ji, main aap ki booking kar rahi hoon. Please card check karein, phir haan kahein ya Confirm dabaiye.
-- **Patient** (tap): (taps Confirm)
-- **Assistant**: Aap ki booking ho gayi, Nadia! Dr. Zainab Memon, Monday 9 November 10:00 AM. Aap ka reference 7K3M 9P2Q XA hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
-- **Booked (the slip data, English)**: Nadia Khan · Dr. Zainab Memon (Pathology Lab) · 2026-11-09 10:00 · ref 7K3M9P2QXA · Package: Basic Health Check
+- **Patient** (typed): (taps Confirm)
+- **Assistant**: Aap ki booking ho gayi, Nadia! Dr. Zainab Memon, Monday 5 October 11:15 AM. Aap ka reference MMFX EQYX X7 hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
+- **Slip page opened (English)**: Home Book an appointment Confirmation Your appointment is booked Keep your reference. This page is private to you. Save this slip: tap Download or take a screenshot. Show this reference at the clinic. Shuaib Health APPOINTMENT SLIP YOUR APPOINTMENT Mon 5 Oct 2026 11:15 (PKT) Pakistan Standard Time S H U A I B H E A L T H • D E M O • CONFIRMED BOOKED 08 NOV Please arrive by 11:00 VISIT DETAILS Pati
 
 ### #9 Pregnancy check-up by voice -> Gynecology -> slip — PASS
 
 - **Patient** (voice): pregnancy checkup ke liye lady doctor chahiye
-- **Assistant**: Ji zaroor! Gynecology mein Dr. Ayesha Rahman ke saath (fee PKR 3,000). Kaun sa din theek rahega? Dr. Ayesha Rahman ke khali waqt Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko hain.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
+- **Assistant**: Ji zaroor! Gynecology mein Dr. Ayesha Rahman ke saath (fee PKR 3,000). Kaun sa din theek rahega? Dr. Ayesha Rahman ke khali waqt Tuesday 6 October, Thursday 8 October aur Saturday 10 October ko hain.
 - **Patient** (voice): ji
-- **Assistant**: Aap kis din aana chahenge? Dr. Ayesha Rahman ke paas Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko jagah hai.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
-- **Patient** (voice): Monday 9 November
-- **Assistant**: Monday 9 November ko mere paas 10:00 AM, 11:30 AM aur 3:00 PM hain. Kaun sa waqt theek rahega?  [choices: 10:00 AM | 11:30 AM | 3:00 PM]
-- **Patient** (voice): 3:00 PM
+- **Assistant**: Aap kis din aana chahenge? Dr. Ayesha Rahman ke paas Tuesday 6 October, Thursday 8 October aur Saturday 10 October ko jagah hai.
+- **Patient** (voice): Tuesday 6 October
+- **Assistant**: Tuesday 6 October ko mere paas 11:00 AM, 12:30 PM, 2:15 PM aur 3:45 PM hain. Kaun sa waqt theek rahega?
+- **Patient** (voice): 2:15 PM
 - **Assistant**: Aap ka poora naam kya hai?
 - **Patient** (voice): Rabia Aslam
 - **Assistant**: Aap se mil kar khushi hui, Rabia. Aap ka mobile number kya hai? Aahista aahista digits bata dein.
 - **Patient** (voice): zero three zero one two two three three four four five
-- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.  [choices: Skip]
+- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.
 - **Patient** (voice): skip
 - **Assistant**: Shukriya! Ji, main aap ki booking kar rahi hoon. Please card check karein, phir haan kahein ya Confirm dabaiye.
 - **Patient** (voice): haan ji
-- **Assistant**: Aap ki booking ho gayi, Rabia! Dr. Ayesha Rahman, Monday 9 November 3:00 PM. Aap ka reference 7K3M 9P2Q XA hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
-- **Booked (the slip data, English)**: Rabia Aslam · Dr. Ayesha Rahman (Gynecology) · 2026-11-09 15:00 · ref 7K3M9P2QXA
+- **Assistant**: Aap ki booking ho gayi, Rabia! Dr. Ayesha Rahman, Tuesday 6 October 2:15 PM. Aap ka reference 726A 84WA Z7 hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
+- **Slip page opened (English)**: Home Book an appointment Confirmation Your appointment is booked Keep your reference. This page is private to you. Save this slip: tap Download or take a screenshot. Show this reference at the clinic. Shuaib Health APPOINTMENT SLIP YOUR APPOINTMENT Tue 6 Oct 2026 14:15 (PKT) Pakistan Standard Time S H U A I B H E A L T H • D E M O • CONFIRMED BOOKED 08 NOV Please arrive by 14:00 VISIT DETAILS Pati
 
-### #10 Is the clinic open today? (Sunday: closed, no booking) — PASS
+### #10 Is the clinic open today? (no booking) — PASS
 
 - **Patient** (voice): aaj clinic khula hai?
 - **Assistant**: Aaj Sunday hai, aur aaj clinic band hai. Hum Monday se Saturday 9:00 AM se 9:00 PM tak khule hain. Kya main kisi aur din ki booking kar doon?
@@ -245,41 +246,41 @@ In the transcripts, "voice" lines are what the scripted speech API heard; "Urdu 
 ### #11 Topic change mid-way: allergy -> actually teeth — PASS
 
 - **Patient** (typed): mujhe allergy hai
-- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Dermatology department sahi rahega: Dr. Maryam Baloch (fee PKR 3,000). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Dermatology department sahi rahega: Dr. Maryam Baloch (fee PKR 3,000). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?
 - **Patient** (typed): haan
-- **Assistant**: Ji zaroor! Kaun sa din theek rahega? Dr. Maryam Baloch ke khali waqt Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko hain.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
+- **Assistant**: Ji zaroor! Kaun sa din theek rahega? Dr. Maryam Baloch ke khali waqt Monday 5 October, Wednesday 7 October aur Friday 9 October ko hain.
 - **Patient** (typed): nahi actually mere daant mein dard hai
-- **Assistant**: Theek hai, ab Dental ke liye booking karti hoon. Aap kis din aana chahenge? Dr. Bilal Ansari ke khali waqt Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko hain.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
-- **Patient** (tap): (taps "Monday 9 November")
-- **Assistant**: Monday 9 November ko mere paas 10:00 AM, 11:30 AM aur 3:00 PM hain. Kaun sa waqt theek rahega?  [choices: 10:00 AM | 11:30 AM | 3:00 PM]
-- **Patient** (tap): (taps "10:00 AM")
+- **Assistant**: Theek hai, ab Dental ke liye booking karti hoon. Aap kis din aana chahenge? Dr. Bilal Ansari ke khali waqt Tuesday 6 October, Thursday 8 October aur Saturday 10 October ko hain.
+- **Patient** (typed): (taps "Tuesday 6 October")
+- **Assistant**: Tuesday 6 October ko mere paas 9:00 AM, 10:15 AM, 11:30 AM aur 12:45 PM hain. Kaun sa waqt theek rahega?
+- **Patient** (typed): (taps "9:00 AM")
 - **Assistant**: Aap ka poora naam kya hai?
 - **Patient** (typed): Omar Farooq
 - **Assistant**: Aap se mil kar khushi hui, Omar. Aap ka mobile number kya hai? Aahista aahista digits bata dein.
 - **Patient** (typed): 03125556677
-- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.  [choices: Skip]
+- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.
 - **Patient** (typed): skip
 - **Assistant**: Shukriya! Ji, main aap ki booking kar rahi hoon. Please card check karein, phir haan kahein ya Confirm dabaiye.
 - **Patient** (typed): haan
-- **Assistant**: Aap ki booking ho gayi, Omar! Dr. Bilal Ansari, Monday 9 November 10:00 AM. Aap ka reference 7K3M 9P2Q XA hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
-- **Booked (the slip data, English)**: Omar Farooq · Dr. Bilal Ansari (Dental) · 2026-11-09 10:00 · ref 7K3M9P2QXA
+- **Assistant**: Aap ki booking ho gayi, Omar! Dr. Bilal Ansari, Tuesday 6 October 9:00 AM. Aap ka reference MBF9 K29E HH hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
+- **Slip page opened (English)**: Home Book an appointment Confirmation Your appointment is booked Keep your reference. This page is private to you. Save this slip: tap Download or take a screenshot. Show this reference at the clinic. Shuaib Health APPOINTMENT SLIP YOUR APPOINTMENT Tue 6 Oct 2026 09:00 (PKT) Pakistan Standard Time S H U A I B H E A L T H • D E M O • CONFIRMED BOOKED 08 NOV Please arrive by 08:45 VISIT DETAILS Pati
 
 ### #12 Wrong phone number corrected at the card — PASS
 
 - **Patient** (voice): mujhe sar dard aur zukam hai
-- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara General Medicine department sahi rahega: Dr. Hassan Mirza (fee PKR 2,000) aur Dr. Omar Sheikh (fee PKR 1,800). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara General Medicine department sahi rahega: Dr. Hassan Mirza (fee PKR 2,000) aur Dr. Omar Sheikh (fee PKR 1,800). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?
 - **Patient** (voice): haan
-- **Assistant**: Ji zaroor! General Medicine mein Dr. Hassan Mirza aur Dr. Omar Sheikh hain. Kaun se doctor se milna chahte hain?  [choices: Dr. Hassan Mirza | Dr. Omar Sheikh]
+- **Assistant**: Ji zaroor! General Medicine mein Dr. Hassan Mirza aur Dr. Omar Sheikh hain. Kaun se doctor se milna chahte hain?
 - **Patient** (voice): Dr. Omar Sheikh
-- **Assistant**: Dr. Omar Sheikh ke saath. Kaun sa din theek rahega? Dr. Omar Sheikh ke khali waqt Monday 9 November, Tuesday 10 November aur Wednesday 11 November ko hain.  [choices: Monday 9 November | Tuesday 10 November | Wednesday 11 November]
-- **Patient** (voice): Monday 9 November
-- **Assistant**: Monday 9 November ko mere paas 10:00 AM, 11:30 AM aur 3:00 PM hain. Kaun sa waqt theek rahega?  [choices: 10:00 AM | 11:30 AM | 3:00 PM]
-- **Patient** (voice): 10:00 AM
+- **Assistant**: Dr. Omar Sheikh ke saath. Kaun sa din theek rahega? Dr. Omar Sheikh ke khali waqt Tuesday 6 October, Thursday 8 October aur Saturday 10 October ko hain.
+- **Patient** (voice): Tuesday 6 October
+- **Assistant**: Tuesday 6 October ko mere paas 2:00 PM, 3:30 PM, 6:15 PM aur 7:45 PM hain. Kaun sa waqt theek rahega?
+- **Patient** (voice): 2:00 PM
 - **Assistant**: Aap ka poora naam kya hai?
 - **Patient** (voice): Kamran Akmal
 - **Assistant**: Aap se mil kar khushi hui, Kamran. Aap ka mobile number kya hai? Aahista aahista digits bata dein.
 - **Patient** (voice): 0300 1111111
-- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.  [choices: Skip]
+- **Assistant**: Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.
 - **Patient** (voice): skip
 - **Assistant**: Shukriya! Ji, main aap ki booking kar rahi hoon. Please card check karein, phir haan kahein ya Confirm dabaiye.
 - **Patient** (voice): number galat hai
@@ -287,15 +288,15 @@ In the transcripts, "voice" lines are what the scripted speech API heard; "Urdu 
 - **Patient** (voice): 0300 2222222
 - **Assistant**: Shukriya! Ji, main aap ki booking kar rahi hoon. Please card check karein, phir haan kahein ya Confirm dabaiye.
 - **Patient** (voice): haan
-- **Assistant**: Aap ki booking ho gayi, Kamran! Dr. Omar Sheikh, Monday 9 November 10:00 AM. Aap ka reference 7K3M 9P2Q XA hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
-- **Booked (the slip data, English)**: Kamran Akmal · Dr. Omar Sheikh (General Medicine) · 2026-11-09 10:00 · ref 7K3M9P2QXA
+- **Assistant**: Aap ki booking ho gayi, Kamran! Dr. Omar Sheikh, Tuesday 6 October 2:00 PM. Aap ka reference 2QHZ PH9W 7J hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.
+- **Slip page opened (English)**: Home Book an appointment Confirmation Your appointment is booked Keep your reference. This page is private to you. Save this slip: tap Download or take a screenshot. Show this reference at the clinic. Shuaib Health APPOINTMENT SLIP YOUR APPOINTMENT Tue 6 Oct 2026 14:00 (PKT) Pakistan Standard Time S H U A I B H E A L T H • D E M O • CONFIRMED BOOKED 08 NOV Please arrive by 13:45 VISIT DETAILS Pati
 
 ### #13 'Rehne do' stops the booking (nothing booked) — PASS
 
 - **Patient** (voice): mujhe khansi hai
-- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara General Medicine department sahi rahega: Dr. Hassan Mirza (fee PKR 2,000) aur Dr. Omar Sheikh (fee PKR 1,800). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara General Medicine department sahi rahega: Dr. Hassan Mirza (fee PKR 2,000) aur Dr. Omar Sheikh (fee PKR 1,800). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?
 - **Patient** (voice): ji
-- **Assistant**: Ji zaroor! General Medicine mein Dr. Hassan Mirza aur Dr. Omar Sheikh hain. Kaun se doctor se milna chahte hain?  [choices: Dr. Hassan Mirza | Dr. Omar Sheikh]
+- **Assistant**: Ji zaroor! General Medicine mein Dr. Hassan Mirza aur Dr. Omar Sheikh hain. Kaun se doctor se milna chahte hain?
 - **Patient** (voice): rehne do
 - **Assistant**: Koi baat nahi, maine booking rok di hai. Kuch book nahi hua. Kya aur kisi cheez mein madad karoon?
 
@@ -314,26 +315,26 @@ In the transcripts, "voice" lines are what the scripted speech API heard; "Urdu 
 ### #16 Echo case: its own apology heard back in Urdu letters is ignored — PASS
 
 - **Patient** (voice): Qawwali
-- **Assistant**: I'd like to help. Could you tell me what the problem is, or what you'd like to get done? You can also tap a choice below.  [choices: Fever or flu | Teeth | Skin or allergy | Blood test]
-- **Patient** (echo): (the mic hears the assistant's own voice) I'd like to help. Could you tell me what the problem اس, or what you'd like to get done? You can also tap a choice below.
+- **Assistant**: Maaf kijiye, main theek se sun nahi saki. Dobara bataiye, aap Urdu mein bhi bol sakte hain.
+- **Patient** (voice (Urdu letters)): معاف کیجیے میں ٹھیک سے سن نہیں سکی دوبارہ بتائیے آپ اردو میں بھی بول سکتے ہیں
 - **Patient** (voice): mujhe bukhar hai
-- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara General Medicine department sahi rahega: Dr. Hassan Mirza (fee PKR 2,000) aur Dr. Omar Sheikh (fee PKR 1,800). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara General Medicine department sahi rahega: Dr. Hassan Mirza (fee PKR 2,000) aur Dr. Omar Sheikh (fee PKR 1,800). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?
 
 ### #17 Not offered (eyes): honest, with a General Medicine check-up offered — PASS
 
 - **Patient** (voice): meri aankh mein takleef hai
-- **Assistant**: Maaf kijiye, hamare clinic mein aankhon ka ilaaj nahi hota. Hamare General Medicine ke doctors pehla check-up kar sakte hain: Dr. Hassan Mirza (fee PKR 2,000) aur Dr. Omar Sheikh (fee PKR 1,800). Kya main booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Maaf kijiye, hamare clinic mein aankhon ka ilaaj nahi hota. Hamare General Medicine ke doctors pehla check-up kar sakte hain: Dr. Hassan Mirza (fee PKR 2,000) aur Dr. Omar Sheikh (fee PKR 1,800). Kya main booking kar doon?
 - **Patient** (voice): nahi shukriya
 - **Assistant**: Koi baat nahi. Kya aur kisi cheez mein madad karoon?
 
-### #18 Unclear three times: one apology at most, calm choices, then a problem is understood — PASS
+### #18 Unclear twice: one apology at most, calm choices, then a problem is understood — PASS
 
 - **Patient** (voice): hmm hmm
-- **Assistant**: I'd like to help. Could you tell me what the problem is, or what you'd like to get done? You can also tap a choice below.  [choices: Fever or flu | Teeth | Skin or allergy | Blood test]
+- **Assistant**: Maaf kijiye, main theek se sun nahi saki. Dobara bataiye, aap Urdu mein bhi bol sakte hain.
 - **Patient** (voice): pata nahi
-- **Assistant**: Main madad karna chahti hoon. Zara bataiye, takleef kya hai ya kya karwana hai? Aap neeche se bhi chun sakte hain.  [choices: Bukhar ya zukam | Daant | Jild ya allergy | Blood test]
+- **Assistant**: Main madad karna chahti hoon. Zara bataiye, takleef kya hai ya kya karwana hai? Aap neeche se bhi chun sakte hain.
 - **Patient** (voice): pata nahi
-- **Assistant**: Koi jaldi nahi. Neeche diye options mein se chun lein, ya jawab likh dein.  [choices: Bukhar ya zukam | Daant | Jild ya allergy | Blood test]
+- **Assistant**: Koi jaldi nahi. Neeche diye options mein se chun lein, ya jawab likh dein.
 - **Patient** (voice): skin ki problem hai
-- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Dermatology department sahi rahega: Dr. Maryam Baloch (fee PKR 3,000). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?  [choices: Ji haan, booking karein | Nahi, shukriya]
+- **Assistant**: Mujhe sun kar afsos hua. Is ke liye hamara Dermatology department sahi rahega: Dr. Maryam Baloch (fee PKR 3,000). Yeh sirf rehnumai hai, diagnosis nahi. Kya main aap ki booking kar doon?
 

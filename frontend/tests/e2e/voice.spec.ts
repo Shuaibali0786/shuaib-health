@@ -10,11 +10,13 @@ const truthy = (v: string | undefined) => ["true", "1", "yes", "on"].includes((v
 const ON = truthy(process.env.ASSISTANT_ENABLED) && truthy(process.env.VOICE_ENABLED);
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
+/** The round mic inside the one "Ask us" button (owner decision 2026-11-08: no separate "Talk to us" bubble). */
+const micButton = (page: Page) => page.getByRole("button", { name: "Talk by voice, in English or Urdu" });
+
 async function openVoice(page: Page) {
   await page.goto("/");
-  const bubble = page.getByRole("button", { name: /Talk to us/ });
-  await expect(bubble).toBeVisible({ timeout: 8000 });
-  await bubble.click();
+  await expect(micButton(page)).toBeVisible({ timeout: 8000 });
+  await micButton(page).click();
   const dialog = page.getByRole("dialog", { name: /Ask / });
   await expect(dialog).toBeVisible();
   await expect(listening(dialog)).toBeVisible({ timeout: 8000 });
@@ -24,6 +26,8 @@ async function openVoice(page: Page) {
 const listening = (dialog: ReturnType<Page["getByRole"]>) => dialog.getByRole("status").filter({ hasText: "Listening..." });
 
 async function say(page: Page, text: string, expected: string | RegExp) {
+  // The mic is closed while the assistant speaks: answer once it is listening again, like a patient would.
+  await expect(page.getByRole("status").filter({ hasText: "Listening..." })).toBeVisible({ timeout: 20000 });
   await hear(page, text);
   await expect(page.getByRole("log")).toContainText(expected, { timeout: 8000 });
 }
@@ -68,11 +72,9 @@ test.describe("voice receptionist", () => {
     const response = await page.goto("/");
     // The microphone stays blocked for everyone when voice is off.
     expect(response?.headers()["permissions-policy"] ?? "").toContain("microphone=()");
-    await expect(page.getByRole("button", { name: /Talk to us/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Talk to us|Talk by voice/ })).toHaveCount(0);
     // With the flags off (the CI build) there is no chat button, so nothing voice-related can be reached.
     await expect(page.getByRole("button", { name: /voice mode|dictate/i })).toHaveCount(0);
-    await page.waitForTimeout(1500); // longer than the bubble's delay: it must still not appear
-    await expect(page.getByRole("button", { name: /Talk to us/ })).toHaveCount(0);
   });
 
   test("lets this site (and only this site) use the microphone: Permissions-Policy microphone=(self)", async ({ page }) => {
@@ -130,7 +132,7 @@ test.describe("voice receptionist", () => {
     test.skip(!ON, "run with ASSISTANT_ENABLED=true VOICE_ENABLED=true");
     await installFakeWebSpeech(page, { micError: "NotAllowedError" });
     await page.goto("/");
-    await page.getByRole("button", { name: /Talk to us/ }).click({ timeout: 8000 });
+    await micButton(page).click({ timeout: 8000 });
     const dialog = page.getByRole("dialog", { name: /Ask / });
     await expect(dialog.getByText("The microphone is blocked")).toBeVisible();
     await expect(dialog.getByText(/Cookies and site permissions/)).toBeVisible();
@@ -168,7 +170,7 @@ test.describe("voice receptionist", () => {
     await say(page, time, /full name/);
     await say(page, "my name is Sara Noor", /mobile number/);
     await say(page, "zero three one one one two three four five six seven", /email/);
-    await say(page, "skip", /Please check, then say yes or tap Confirm/);
+    await say(page, "skip", /Please check the card, then say yes or tap Confirm/);
 
     const card = dialog.getByTestId("voice-summary");
     await expect(card).toContainText("Sara Noor");
@@ -339,7 +341,7 @@ test.describe("voice receptionist", () => {
     const slip = dialog.getByTestId("voice-slip");
     await expect(slip).toBeVisible({ timeout: 10000 });
     await expect(log).toContainText("Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.");
-    const link = slip.getByRole("link", { name: /^Meri slip kholein/ });
+    const link = slip.getByRole("link", { name: OPEN_SLIP });
     const [slipPage] = await Promise.all([page.context().waitForEvent("page"), link.click()]);
     await slipPage.waitForLoadState();
     await expect(slipPage.getByRole("button", { name: /Download your slip/ })).toBeVisible({ timeout: 15000 });
@@ -355,6 +357,7 @@ test.describe("voice receptionist", () => {
     await say(page, "I want to book an appointment with Dr Bilal", /Which day/);
     await say(page, "my father has chest pain and cannot breathe", /Please call/);
     await expect(dialog.getByRole("log")).toContainText("1122");
+    await expect(listening(dialog)).toBeVisible({ timeout: 15000 });
     await hear(page, "yes");
     await expect(dialog.getByTestId("voice-slip")).toHaveCount(0);
   });
@@ -369,7 +372,22 @@ test.describe("voice receptionist", () => {
     expect(box && viewport && box.width <= viewport.width && box.height <= viewport.height).toBe(true);
     await expect(dialog.getByTestId("voice-orb")).toHaveAttribute("data-state", "listening");
     await page.goto("/");
-    const animation = await page.getByRole("button", { name: /Talk to us/ }).evaluate((el) => getComputedStyle(el.parentElement as Element).animationName);
-    expect(animation).toBe("none");
+    // The mic's glow and the hero cards' float are both still with reduced motion.
+    expect(await micButton(page).evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
+    expect(await page.locator(".hero-float").first().evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
+  });
+
+  test("the hero fact cards never sit under the Ask us button, and float gently with motion allowed", async ({ page, isMobile }) => {
+    test.skip(!ON || isMobile, "desktop layout, flags on");
+    await page.goto("/");
+    const dock = await page.locator(".assistant-dock").boundingBox();
+    const cards = page.locator(".hero-float");
+    expect(await cards.count()).toBe(3);
+    for (let i = 0; i < 3; i += 1) {
+      const card = await cards.nth(i).boundingBox();
+      const overlaps = dock && card && card.x < dock.x + dock.width && card.x + card.width > dock.x && card.y < dock.y + dock.height && card.y + card.height > dock.y;
+      expect(overlaps, `card ${i + 1}`).toBeFalsy();
+    }
+    expect(await cards.first().evaluate((el) => getComputedStyle(el).animationName)).toBe("hero-float");
   });
 });
