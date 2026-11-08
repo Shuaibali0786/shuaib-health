@@ -1,29 +1,33 @@
 # Runbook: the voice receptionist (Feature 013, Phase 1)
 
-Status: **built, OFF by default**. Production stays off until Shuaib approves. It costs **$0**: it uses the visitor's own browser for listening and speaking. No audio is recorded, stored or sent to any service this product controls.
+Status: **built, OFF by default**. Production stays off until Shuaib approves. With the default browser voice it costs **$0**: the visitor's own browser listens and speaks. The optional premium voice (Azure Speech, free F0 tier) is OFF until keys are added. No audio is ever recorded or stored by this product.
 
 ## What Phase 1 is
-- A glowing "Talk to us · English / اردو" bubble above "Ask us".
-- Mic (dictation into the chat box) and Voice mode (the orb) beside Send.
-- Voice Q&A in English and Roman Urdu, in the Patient and Clinic owner tabs, from the same free engine and public knowledge pack as the text chat.
-- Hands-free **doctor booking** through the same public booking route as the website form: read-back, a spoken (or tapped) "yes", the slip with QR and Download PDF.
+- A glowing "Talk to us · English / اردو" bubble above "Ask us"; Mic (dictation) and Voice mode beside Send.
+- **Voice mode, simple and calm:** the orb, a status line ("Listening...", "Thinking...", "Speaking..."), live captions, **one big mic button** (tap to talk / tap again to stop) and a red **End** button. Talking over the assistant stops it automatically (barge-in). "Audio is never recorded" is small text in the header.
+- **Short welcome, then it listens by itself.** English: "Welcome to Shuaib Health! I'm your AI assistant. How can I help you today?" Roman Urdu (when the browser prefers Urdu): "Assalam o Alaikum! Shuaib Health mein khush aamdeed. Main aap ki AI assistant hoon, bataiye kya madad karoon?"
+- **One warm female voice for the whole conversation**, chosen once from the welcome's language and never switched. **Automatic language:** English in, English out; Roman Urdu in, Roman Urdu out; never mixed in one reply.
+- **A real booking conversation, by voice or by typing** (one conversation, one memory): "mujhe CBC test karwana hai" → what the test is, preparation, report time, price and the lab (from the public catalog) → "Kya main aap ki booking kar doon?" → one item at a time: day and time (real free slots), full name, phone, email (optional) → read-back (phone digit by digit) → books only after the patient's own "haan / yes" → a card with the reference and **"View / Download slip"**, which opens the **same slip page the website form creates** → "Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein." Doctor and department questions end with the same offer.
+- Lab tests are booked as a visit to the Pathology Lab (the lab's doctor), with the test as the reason, through the same public booking route as the website form.
 - Safety guards on every turn (emergencies first, no private data, no diagnosis or doses, no prompt reveal, no booking without the caller's own yes).
-
-**No backend change and no migration.** Everything is in the website (`frontend/`).
 
 ## Not in Phase 1 (Phase 2, see ADR-0015)
 Email-code lookup, cancel by voice, the slip email, the four patient-access endpoints and migration `0006_patient_access`. Until then the assistant says it cannot look up or change an existing booking and gives the clinic number.
 
-## The switch
-| Variable | Where | Meaning |
+## The switches
+| Variable | Project | Meaning |
 |---|---|---|
-| `ASSISTANT_ENABLED` | website, build time | must already be `true` |
-| `VOICE_ENABLED` | website, build time | `true` / `1` / `yes` / `on` turns voice on. Missing = off. |
+| `ASSISTANT_ENABLED` | website (`shuaib-health-web`), build time | must already be `true` |
+| `VOICE_ENABLED` | website, build time | `true` turns voice on. Missing = off. |
+| `VOICE_PROVIDER` | website, build time | `browser` (default, free) or `azure` (premium voice; falls back to the browser silently) |
+| `AZURE_SPEECH_KEY` | API (`shuaib-health-api`), **Sensitive** | the Speech resource's Key 1. Never reaches the browser. |
+| `AZURE_SPEECH_REGION` | API | the resource's region, for example `southeastasia` |
+| `SPEECH_TOKEN_PER_IP_PER_HOUR` | API, optional | tokens per visitor per hour (default 30) |
 
-Both are read at **build** time (like `ASSISTANT_ENABLED`), so change the value and **redeploy**.
+Website variables are read at **build** time: change the value and **redeploy**.
 
 ### Turn on for the Vercel Preview only (to try it)
-Add these for **Preview**, scoped to the branch (Vercel → `shuaib-health-web` → Settings → Environment Variables, or `vercel env add NAME preview <branch>`), then redeploy the preview. Production is untouched.
+Add for **Preview**, scoped to the branch (`vercel env add NAME preview <branch>`), then redeploy the preview. Production is untouched.
 
 | Variable | Value |
 |---|---|
@@ -33,38 +37,44 @@ Add these for **Preview**, scoped to the branch (Vercel → `shuaib-health-web` 
 
 `BOOKING_PROXY_SECRET` and `API_PROTECTION_BYPASS` already exist for all Previews. Delete the branch-scoped variables when the branch is done.
 
+### The premium voice (Azure Speech, free F0) — 🔑 owner
+1. Azure portal → **Create a resource** → **Speech** (Azure AI services). Pricing tier **Free F0**. Region **Southeast Asia** (close to our Vercel region `sin1`; it has `en-US-JennyNeural` and `ur-PK-UzmaNeural`). A subscription can have only one free Speech resource.
+2. Resource → **Keys and Endpoint** → copy **Key 1** and the **Location/Region**.
+3. Vercel → `shuaib-health-api` → Environment Variables: `AZURE_SPEECH_KEY` (Sensitive) and `AZURE_SPEECH_REGION` (`southeastasia`), for Preview first. Redeploy the API.
+4. Vercel → `shuaib-health-web`: `VOICE_PROVIDER=azure` (Preview first). Redeploy the website.
+5. Check on the preview: the voice is Jenny (English) or Uzma (Roman Urdu); listening works in Edge.
+6. To switch off: remove `VOICE_PROVIDER` (or set `browser`) and redeploy. Removing the key also switches it off (the token endpoint answers 404 and the browser voice takes over).
+
+**Free F0 limits** (Microsoft, checked 2026-11-08; [pricing](https://azure.microsoft.com/pricing/details/speech/), [quotas](https://learn.microsoft.com/azure/ai-services/speech-service/speech-services-quotas-and-limits)):
+- Speech to text: **5 audio hours a month**. Text to speech (neural): **0.5 million characters a month**.
+- **Only 1 listening session at a time** (real-time speech to text, not adjustable on F0). A second visitor listening at the same moment is handed to the browser's own listening, silently.
+- Text to speech: **20 requests per 60 seconds** (not adjustable on F0). Each reply is one request.
+- On F0 nothing is billed: past the limits the service refuses, and this site falls back to the browser voice. Never switch the resource to S0 (paid) without approval.
+
+How it is wired: the API endpoint `POST /api/v1/speech/token` (proxy secret, rate-limited per hashed IP) asks Azure for a 10-minute token; the website route `POST /api/speech/token` passes only that token to the browser. The Speech SDK loads only when voice mode opens with `VOICE_PROVIDER=azure`. The CSP then allows only `https://*.tts.speech.microsoft.com`, `wss://*.tts.speech.microsoft.com`, `wss://*.stt.speech.microsoft.com` and `media-src blob:` (for the audio).
+
 ### Turn on in production (🔑 owner, after approval)
 Add `VOICE_ENABLED=true` for **Production** and redeploy. First complete `frontend/tests/voice/manual-checklist.md` on a preview build.
 
 ### Roll back
 Set `VOICE_ENABLED` to `false` (or remove it) and redeploy (about 1–2 minutes), or use Vercel **Instant Rollback**. The text chat is unaffected.
 
-## How it works (for the next developer)
-- `src/voice/session.ts`: one voice conversation (turn-taking, barge-in, echo guard, silence prompts, the "yes" gate). Framework-free, tested with a scripted speech port.
-- `src/voice/router.ts`: safety guards first, then an active booking, then a new booking request, then the same `AgentProvider` as the text chat.
-- `src/voice/safety.ts`: the guard patterns. `src/voice/bookingDialog.ts`: the booking state machine (pure; the network is injected).
-- `src/voice/browserSpeech.ts`: the browser adapter. `src/voice/fakeSpeech.ts`: the scripted adapter for tests.
-- `src/components/agent/voice/*`: the orb (`orbEngine.ts` draws, `Orb.tsx` mounts it), captions, controls, mic help, summary card, slip card.
-- The booking uses `fetchSlots` and `postBooking` from `lib/booking/client.ts`: **the same endpoints and rules as the website form** (rate limits, idempotency, one active-booking cap). Nothing was added or loosened.
-
-## Plugging in a paid provider later (by configuration)
-- **Voice**: write another `SpeechPort` (see `src/voice/types.ts`), choose it where `createBrowserSpeech()` is called in `VoiceMode.tsx` and `useDictation.ts`. The conversation code does not change.
-- **Codes by SMS or WhatsApp** (Phase 2): a new `CodeSender` on the backend, chosen by `LOOKUP_CODE_CHANNEL` (see ADR-0015 and `specs/013-voice-receptionist/contracts/patient-access-api.md`).
-
 ## Microphone and the Permissions-Policy header
-The site sends `Permissions-Policy: microphone=()` (blocked) by default. With `VOICE_ENABLED` on it sends `microphone=(self)`: only this site's own pages may ask, never a frame or another origin (`src/lib/security-headers.ts`, set in `next.config.ts`). The permission request is made inside the tap that opens voice mode. If the browser refuses, the panel shows step-by-step help for Edge and Windows (site permission, Edge's Microphone setting, Windows Privacy & security).
+The site sends `Permissions-Policy: microphone=()` (blocked) by default. With `VOICE_ENABLED` on it sends `microphone=(self)`: only this site's own pages may ask, never a frame or another origin (`src/lib/security-headers.ts`, set in `next.config.ts`). The permission request is made inside the tap that opens voice mode. If the browser refuses, the panel shows step-by-step help for Edge and Windows. If Edge cannot reach its own listening service, the panel says listening works most reliably in Chrome and that typing works (until the premium voice is on).
 
-## Voices
-- **Automatic** (default): the warmest voices on the device. English sentences use a natural English voice (Aria or Jenny for female, Guy or Andrew for male); greetings and Roman Urdu sentences use a natural Urdu voice (Uzma, Asad) with the words rewritten in Urdu script for that voice. Without an Urdu voice, Roman Urdu is read by Indian English.
-- **Voice menu** in voice mode lists every English, Urdu and Hindi voice on the device (natural first); picking one reads a sample and then reads everything. Female / Male returns to Automatic.
-- Speaking rate is 0.95, with a short rest between sentences. Money, days, times zones and phone numbers are rewritten for speech (`src/voice/speechText.ts`).
+## How it works (for the next developer)
+- `src/voice/router.ts`: safety guards first, then an active booking, then offers and new booking requests (lab test → explanation → offer), then the same `AgentProvider` as the text chat. `Conversation` holds one conversation's memory, shared by typing and voice.
+- `src/voice/session.ts`: one voice conversation (welcome, one locked voice, turn-taking, barge-in, echo guard, silence prompts, the "yes" gate).
+- `src/voice/bookingDialog.ts`: the booking state machine (pure; the network is injected). Order: doctor, day, time, name, phone, email.
+- `src/voice/speechPort.ts` chooses `browserSpeech.ts` or `azureSpeech.ts` (which falls back to the browser). `fakeSpeech.ts` is the scripted adapter for tests.
+- `src/components/agent/voice/*`: the orb, captions, mic help, summary card, booked card.
 
 ## Known limits
-- Browser support: Edge and Chrome (desktop and Android) are best. Safari/iPhone recognition is partial. Firefox has none, so voice mode speaks only and asks people to type.
-- Speech recognition in Chrome and Edge is done by the browser vendor's own service, so it needs an internet connection. The privacy line says "we never record or store your audio", which is true for this site.
-- Replies are English or **Roman Urdu**. Roman Urdu is read by an Urdu voice when the device has one (words rewritten in Urdu script, `src/voice/urduSpeech.ts`, a starter list), otherwise by an English voice. Full Urdu-script replies are Phase 2.
-- Dates and times are the clinic's days, taken from the server's slot list.
+- Browser listening: Chrome (desktop and Android) is best; Edge's own service is often unreachable on Windows; Safari/iPhone is partial; Firefox has none (voice mode then speaks only and asks people to type). The premium voice removes these limits.
+- The one voice is chosen from the welcome's language (the browser's preferred language). A Roman Urdu caller on an English browser gets Roman Urdu replies read by the English voice; with the premium voice and an Urdu browser, Uzma reads everything.
+- Roman Urdu is rewritten into Urdu script only for an Urdu voice (`src/voice/urduSpeech.ts`, a starter word list).
 
 ## Tests
-`cd frontend && npx vitest run tests/unit/voice-*` (unit and scripted conversations), and
-`ASSISTANT_ENABLED=true VOICE_ENABLED=true npx playwright test voice --workers=1` (browser, mock API, scripted Web Speech). Booking tests use the mock API, never production.
+`cd frontend && npx vitest run tests/unit/voice-*` (unit, scripted conversations, Azure adapter with a fake SDK),
+`ASSISTANT_ENABLED=true VOICE_ENABLED=true npx playwright test voice --workers=1` (browser, mock API, scripted Web Speech), and
+`cd backend && uv run pytest tests/api/test_speech_token.py`. Booking tests use the mock API, never production.

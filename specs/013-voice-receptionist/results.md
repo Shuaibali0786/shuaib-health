@@ -47,3 +47,11 @@ Booking tests ran against the **mock API / scripted routes only**, never product
 - Email-code lookup, cancel, slip email, 4 endpoints, migration `0006_patient_access`, Resend: see ADR-0015 and `contracts/patient-access-api.md`.
 - **Existing booking-view endpoint left as it is:** `GET /appointments/{reference}` shows the last 3 phone digits (`0300****567`) to anyone holding the reference, so "reference + last 4" adds about one digit. Decide how to tighten it when Phase 2 starts (it changes the confirmation page).
 - Urdu-script replies and Urdu voices; adopt the voice safety guards in the text chat too; add the voice e2e to CI with the flags on.
+
+## Update 2 (owner feedback, 2026-11-08): simple luxury voice, real booking, premium voice provider
+- **Controls:** one big mic button (tap to talk / stop) and End; Mute, Interrupt, EN/Urdu, Female/Male and the Voice menu were removed. Barge-in is automatic. Status: Listening... / Thinking... / Speaking...
+- **One voice per conversation** (warm female), chosen from the welcome's language; **automatic language**, never mixed in a reply. Short welcome, then it listens.
+- **Booking conversation** for voice and typing: lab test explanation → offer → day, time, name, phone, email one at a time → read-back → yes → card with the website slip link. Lab tests are booked as a Pathology Lab visit with the test as the reason (same public booking route).
+- **Edge listening error:** "Voice listening works most reliably in the Chrome browser… You can also type below." (The word "Google" is blocked by the repo's brand-name rule.)
+- **Premium voice (Azure Speech F0), OFF until keys are added:** new API endpoint `POST /api/v1/speech/token` (rate-limited, key server-side), website route `/api/speech/token`, Speech SDK 1.53.0 (MIT, loaded only when used), CSP for the speech domains only when on, silent fallback to the browser voice. New dependency justified: browser recognition fails in Edge and on many phones; real-time neural speech needs the SDK's WebSocket protocol.
+- **Tests:** 11 booking scripts (English booking, Roman Urdu booking, mid-way correction, misheard phone number, Edge error in session and e2e), Azure adapter with a fake SDK, token route, CSP, backend token endpoint (7). Unit 1,850 pass; voice e2e 26 pass; affected default e2e 101 pass.
