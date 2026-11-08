@@ -1,0 +1,14 @@
+{
+  "name": "Happy path in Roman Urdu: department first, spoken digits with 'double', fractions of an hour",
+  "turns": [
+    { "say": "mujhe skin ke doctor se milna hai", "expect": ["poora naam"] },
+    { "say": "mera naam Ayesha Khan hai", "expect": ["Ayesha", "mobile number"] },
+    { "say": "sifar teen sifar sifar double paanch ek do teen char paanch", "expect": ["wajah"] },
+    { "say": "khujli hai", "expect": ["Kaun sa din"] },
+    { "say": "kal", "expect": ["Monday 9 November", "Kaun sa waqt"] },
+    { "say": "saade gyarah", "expect": ["email"] },
+    { "say": "nahi", "expect": ["Main dohrati hoon", "0300 551 2345", "confirm kar doon"], "submits": 0 },
+    { "say": "ji haan", "expect": ["Aap ki booking ho gayi", "7K3M 9P2Q XA"], "submits": 1 }
+  ],
+  "final": { "bookings": 1, "payload": { "doctorSlug": "dr-maryam-baloch", "startsAt": "2026-11-09T06:30:00Z", "fullName": "Ayesha Khan", "mobile": "+923005512345", "email": null, "reason": "khujli hai" } }
+}

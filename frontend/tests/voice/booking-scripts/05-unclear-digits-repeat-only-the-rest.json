@@ -1,0 +1,15 @@
+{
+  "name": "Only part of the number was heard: the assistant asks only for the rest",
+  "turns": [
+    { "say": "book an appointment with Dr Bilal", "expect": ["full name"] },
+    { "say": "Sara Noor", "expect": ["mobile"] },
+    { "say": "zero three one one one two three", "expect": ["I heard 0311 123", "rest of the number"], "forbid": ["visit for"] },
+    { "say": "four five six seven", "expect": ["visit for"] },
+    { "say": "toothache", "expect": ["Which day"] },
+    { "say": "tuesday", "expect": ["Tuesday 10 November"] },
+    { "say": "10", "expect": ["email"] },
+    { "say": "skip", "expect": ["0311 123 4567", "Shall I confirm"] },
+    { "say": "yes", "expect": ["You're booked"], "submits": 1 }
+  ],
+  "final": { "bookings": 1, "payload": { "mobile": "+923111234567", "startsAt": "2026-11-10T05:00:00Z" } }
+}

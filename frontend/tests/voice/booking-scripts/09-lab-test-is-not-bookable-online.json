@@ -1,0 +1,9 @@
+{
+  "name": "A lab test cannot be booked online: say so, offer a doctor booking or the clinic number, and continue only on 'yes'",
+  "turns": [
+    { "say": "I want to book a CBC test", "expect": ["can't be booked online", "doctor's appointment", "+92 21 0000 0001"], "forbid": ["full name"], "submits": 0 },
+    { "say": "yes", "expect": ["full name"], "submits": 0 },
+    { "say": "Sara Noor", "expect": ["mobile"] }
+  ],
+  "final": { "bookings": 0 }
+}

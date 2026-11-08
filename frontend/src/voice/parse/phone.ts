@@ -45,6 +45,38 @@ export function spokenDigits(text: string): string {
   return out;
 }
 
+/**
+ * The sentence without a spoken phone number: a run of digit words and digits that adds up to seven digits or
+ * more is removed, so the rest ("book me with Dr Bilal on friday") can be read on its own.
+ */
+export function withoutPhone(text: string): string {
+  const tokens = text.split(/(\s+)/);
+  const kept: string[] = [];
+  let run: string[] = [];
+  let count = 0;
+  const flush = () => {
+    if (count < 7) kept.push(...run);
+    run = [];
+    count = 0;
+  };
+  for (const token of tokens) {
+    const bare = token.toLowerCase().replace(/[,.\-()·+]/g, "");
+    const digits = spokenDigits(bare).replace(/\D/g, "");
+    const isDigitToken = bare !== "" && (/^\d+$/.test(bare) || bare in WORD_DIGITS || bare in REPEAT);
+    if (isDigitToken) {
+      run.push(token);
+      count += digits.length;
+    } else if (run.length > 0 && /^\s+$/.test(token)) {
+      run.push(token);
+    } else {
+      flush();
+      kept.push(token);
+    }
+  }
+  flush();
+  return kept.join("").replace(/\s+/g, " ").trim();
+}
+
 export type PhoneHeard =
   | { status: "complete"; e164: string }
   | { status: "partial"; digits: string }
@@ -61,11 +93,11 @@ export function extractPhone(text: string, partial = ""): PhoneHeard {
   const heard = spokenDigits(text).replace(/(?!^)\+/g, "");
   const digits = heard.replace(/\+/g, "");
   if (digits.length < 2) return { status: "none" };
-  const alone = normalizePkMobile(heard);
+  const alone = normalizePkMobile(heard) ?? (/^3\d{9}$/.test(digits) ? normalizePkMobile(`0${digits}`) : null);
   if (alone) return { status: "complete", e164: alone };
   const restart = STARTS_A_NUMBER.test(heard.replace("+", "")) && digits.length >= 4;
   const joined = restart || !partial ? digits : partial + digits;
-  const combined = normalizePkMobile(joined);
+  const combined = normalizePkMobile(joined) ?? (/^3\d{9}$/.test(joined) ? normalizePkMobile(`0${joined}`) : null);
   if (combined) return { status: "complete", e164: combined };
   if (joined.length > 13) return { status: "invalid", digits: joined };
   // A full-length number that is not a mobile number (for example a landline) is wrong, not partial.

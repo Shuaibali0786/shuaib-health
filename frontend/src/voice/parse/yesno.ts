@@ -15,7 +15,7 @@ const FILLER = new Set(
 );
 // Any of these means "not yet / not that / I am unsure".
 const NO = new Set("no nope nah nahi nahin na mat cancel stop galat wrong".split(" "));
-const DOUBT = new Set("not dont don't wait ruko hold but lekin magar par change badal badlo hmm hm hmmm um uh umm maybe shayad actually except however instead pehle".split(" "));
+const DOUBT = new Set("not dont don didn isn wait ruko hold but lekin magar par change badal badlo hmm hm hmmm um uh umm maybe shayad actually except however instead pehle".split(" "));
 
 export function parseYesNo(text: string): YesNo {
   const words = cleanText(text).split(" ").filter(Boolean);

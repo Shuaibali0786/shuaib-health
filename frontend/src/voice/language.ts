@@ -10,14 +10,21 @@ import type { VoiceLang } from "./types";
 
 export const hasUrduScript = (text: string): boolean => /[؀-ۿ]/.test(text);
 
+// Everyday English function words. A turn is "clearly English" only when it has a few of them, so a name, a
+// phone number or a time ("sifar teen sifar sifar...", "Ali Raza") keeps the style of the conversation.
+const ENGLISH_MARKERS = new Set(
+  "the is are was you your what how when where which who why can could would should do does please want need like with for from about this that have has any some tell show give my me our we it its and or but of to in on at book appointment doctor doctors fee fees hours open timings".split(" "),
+);
+
 /**
- * The style to reply in. Roman Urdu words or Urdu letters give Roman Urdu; clear English of four or more
- * words gives English; a very short turn ("Ali Raza", "yes") keeps the previous style.
+ * The style to reply in. Roman Urdu words or Urdu letters give Roman Urdu; a turn with several English
+ * function words gives English; anything else (a name, digits, "yes") keeps the previous style.
  */
 export function replyLanguage(text: string, previous: VoiceLang): VoiceLang {
   if (hasUrduScript(text)) return "roman";
   if (detectLang(text) === "roman") return "roman";
-  return cleanText(text).split(" ").filter(Boolean).length >= 4 ? "en" : previous;
+  const words = cleanText(text).split(" ").filter(Boolean);
+  return words.filter((w) => ENGLISH_MARKERS.has(w)).length >= 2 ? "en" : previous;
 }
 
 const URDU_DIGITS = "۰۱۲۳۴۵۶۷۸۹";

@@ -125,6 +125,12 @@ describe("names, emails and reasons", () => {
     expect(extractName("ji Ali Raza", true)).toBe("Ali Raza");
     expect(extractName("Ali Raza", false)).toBeNull();
   });
+  it("does not mistake a sentence for a name", () => {
+    expect(extractName("I am looking for a doctor", false)).toBeNull();
+    expect(extractName("main kal aaunga", false)).toBeNull();
+    expect(extractName("I'm fine thank you", true)).toBeNull();
+    expect(extractName("main Ali hoon", false)).toBe("Ali");
+  });
   it("refuses digits and symbols in a name", () => {
     expect(extractName("my name is ali123", false)).toBeNull();
     expect(extractName("<script>", true)).toBeNull();

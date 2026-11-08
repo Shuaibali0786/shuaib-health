@@ -1,0 +1,18 @@
+{
+  "name": "'hmm', 'ok' and 'wait' at the read-back never book; only a clear yes does",
+  "turns": [
+    { "say": "book an appointment with Dr Bilal", "expect": ["full name"] },
+    { "say": "Sara Noor", "expect": ["mobile"] },
+    { "say": "03111234567", "expect": ["visit for"] },
+    { "say": "toothache", "expect": ["Which day"] },
+    { "say": "monday", "expect": ["Monday 9 November"] },
+    { "say": "10", "expect": ["email"] },
+    { "say": "skip", "expect": ["Shall I confirm"], "submits": 0 },
+    { "say": "hmm", "expect": ["Please say yes"], "submits": 0 },
+    { "say": "ok", "expect": ["Please say yes"], "submits": 0 },
+    { "say": "wait", "expect": ["Please say yes"], "submits": 0 },
+    { "say": "yes but change the doctor", "forbid": ["You're booked"], "submits": 0 },
+    { "say": "nahi", "forbid": ["You're booked"], "submits": 0 }
+  ],
+  "final": { "bookings": 0 }
+}

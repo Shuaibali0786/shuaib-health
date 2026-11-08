@@ -1,0 +1,15 @@
+{
+  "name": "'The phone number is wrong' clears only the phone, asks again, and never asks for anything else twice",
+  "turns": [
+    { "say": "book an appointment with Dr Bilal", "expect": ["full name"] },
+    { "say": "Sara Noor", "expect": ["mobile"] },
+    { "say": "03111234567", "expect": ["visit for"] },
+    { "say": "toothache", "expect": ["Which day"] },
+    { "say": "monday at 3 pm", "expect": ["email"] },
+    { "say": "skip", "expect": ["0311 123 4567", "Shall I confirm"], "submits": 0 },
+    { "say": "my phone number is wrong", "expect": ["mobile number"], "forbid": ["full name", "visit for", "Which day", "email"], "submits": 0 },
+    { "say": "03211234567", "expect": ["0321 123 4567", "Shall I confirm"], "forbid": ["0311"], "submits": 0 },
+    { "say": "yes", "expect": ["You're booked"], "submits": 1 }
+  ],
+  "final": { "bookings": 1, "payload": { "mobile": "+923211234567", "fullName": "Sara Noor", "startsAt": "2026-11-09T10:00:00Z" } }
+}

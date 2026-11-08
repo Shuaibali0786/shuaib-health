@@ -15,24 +15,39 @@ export function cleanName(raw: string): string | null {
   return name.length >= 2 && name.length <= 80 && NAME_CHARS.test(name) && /\p{L}{2}/u.test(name) ? name : null;
 }
 
-const INTRO = /(?:my name is|my name's|name is|i am|i'm|im|this is|mera naam|meraa naam|naam|main)\s+([^,.;!?]+)/i;
+// Words that mean the candidate is a sentence, not a name ("I am looking for a doctor", "main kal aaunga").
+const NOT_A_NAME = new Set(
+  "looking here calling trying fine good great sick ill not having feeling going want need needs interested patient new old a an the for to with from in at on doctor dr appointment booking book please ok okay sure yes no and my is am are was ke ki ka ko se mein jana jaana chahta chahti hoon aaunga aaungi bimar bimaar theek kal aaj abhi bohat bahut dard bukhar aana aani lena leni milna milni hai hain kar karna karni dikhana dikhani".split(" "),
+);
+
+const INTROS: RegExp[] = [
+  /(?:my name is|my name's|name is|this is|i am|i'm|im)\s+([^,.;!?]+)/i,
+  /(?:mera naam|meraa naam|mera name|apna naam)\s+([^,.;!?]+?)(?:\s+(?:hai|hy|he))?\s*(?:[,.;!?]|$)/i,
+  /\bmain\s+([^,.;!?]+?)\s+(?:hoon|hun|bol raha hoon|bol rahi hoon)\b/i,
+];
+
+const looksLikeName = (candidate: string): boolean => {
+  const words = candidate.toLowerCase().split(/\s+/).filter(Boolean);
+  return words.length >= 1 && words.length <= 4 && !words.some((w) => NOT_A_NAME.has(w));
+};
 
 /**
  * A name from one utterance. With `asked` (the caller was just asked for their name) a bare answer such as
  * "Ali Raza" is accepted; otherwise only an introduction ("my name is …", "mera naam … hai") counts.
  */
 export function extractName(text: string, asked: boolean): string | null {
-  const intro = INTRO.exec(text);
-  if (intro?.[1]) {
-    const stripped = intro[1].replace(TRAILING, "").replace(/\s+(hai|hoon|hun)$/i, "");
-    const name = cleanName(stripped);
-    if (name && name.split(" ").length <= 5) return name;
+  for (const pattern of INTROS) {
+    const found = pattern.exec(text);
+    if (!found?.[1]) continue;
+    const name = cleanName(found[1].replace(TRAILING, ""));
+    if (name && looksLikeName(name)) return name;
   }
   if (!asked) return null;
   const words = text.trim().replace(/[,.!?]+/g, " ").split(/\s+/).filter(Boolean);
   const kept = words.filter((w) => !FILLER_WORDS.has(w.toLowerCase()));
-  if (kept.length === 0 || kept.length > 5) return null;
-  return cleanName(kept.join(" "));
+  if (kept.length === 0 || kept.length > 4) return null;
+  const name = cleanName(kept.join(" "));
+  return name && looksLikeName(name) ? name : null;
 }
 
 const DIGIT_WORD: Record<string, string> = { zero: "0", one: "1", two: "2", three: "3", four: "4", five: "5", six: "6", seven: "7", eight: "8", nine: "9" };
