@@ -140,6 +140,13 @@ export class VoiceSession {
     this.beginListening();
   }
 
+  /** Starts listening again (after the quiet-time stop, or a microphone problem that was fixed). */
+  resume(): void {
+    this.muted = false;
+    this.silenceCount = 0;
+    this.beginListening();
+  }
+
   setMuted(muted: boolean): void {
     this.muted = muted;
     if (muted) {

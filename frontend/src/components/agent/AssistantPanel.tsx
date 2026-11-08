@@ -1,7 +1,7 @@
 "use client";
 
-import { Send, X } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { AudioLines, Mic, Send, X } from "lucide-react";
+import { Suspense, lazy, useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { QUICK_REPLIES, welcomeMessage } from "@/agent/localEngine";
 import { MAX_QUESTION } from "@/agent/normalize";
@@ -10,8 +10,31 @@ import { getProvider, type ProviderId } from "@/agent/registry";
 import { createThrottle } from "@/agent/throttle";
 import type { AgentLink, AgentMode, KnowledgePack } from "@/agent/types";
 import { cn } from "@/lib/cn";
+import { createBrowserSpeech } from "@/voice/browserSpeech";
+import type { Notice } from "@/voice/session";
+import type { Turn } from "@/voice/types";
 
-export type AssistantPanelProps = { pack: KnowledgePack; provider?: ProviderId; onClose: () => void };
+import { MicHelp } from "./voice/MicHelp";
+import { useDictation } from "./voice/useDictation";
+import type { VoicePrefs } from "./voice/VoiceMode";
+
+// Voice mode (orb, controls, booking) loads only when someone asks for it, so the chat itself stays light.
+const VoiceMode = lazy(() => import("./voice/VoiceMode"));
+
+export const DEFAULT_VOICE_PREFS: VoicePrefs = { listenLang: "en", gender: "female", opened: false };
+
+export type AssistantPanelProps = {
+  pack: KnowledgePack;
+  provider?: ProviderId;
+  onClose: () => void;
+  /** Feature 013 (VOICE_ENABLED): show the Mic and Voice mode buttons. Off by default. */
+  voice?: boolean;
+  /** Open straight into voice mode (the "Talk to us" bubble). */
+  startInVoice?: boolean;
+  /** Voice choices kept while the page stays open: language, voice, and whether the greeting was heard. */
+  voicePrefs?: VoicePrefs;
+  onVoicePrefs?: (next: Partial<VoicePrefs>) => void;
+};
 
 type Message = { id: number; from: "you" | "assistant"; text: string; links?: AgentLink[] };
 
@@ -22,8 +45,11 @@ const greetingFor = (mode: AgentMode, pack: KnowledgePack) => (mode === "guide" 
  * The chat panel (Feature 010): a dialog with an optional Patient / Product guide switch (demo only), the
  * conversation (announced politely to screen readers), suggestion chips and a short input. The conversation
  * lives only in this component's memory: nothing is stored or sent anywhere.
+ *
+ * Feature 013 adds, behind a flag: a Mic button (dictation into the box) and a Voice mode button (the orb, live
+ * captions and hands-free booking). Typed and spoken turns share this one conversation.
  */
-export function AssistantPanel({ pack, provider: providerId = "local", onClose }: AssistantPanelProps) {
+export function AssistantPanel({ pack, provider: providerId = "local", onClose, voice = false, startInVoice = false, voicePrefs = DEFAULT_VOICE_PREFS, onVoicePrefs }: AssistantPanelProps) {
   const provider = useMemo(() => getProvider(pack, providerId), [pack, providerId]);
   const throttle = useMemo(() => createThrottle(), []);
   const [mode, setMode] = useState<AgentMode>("patient");
@@ -31,12 +57,26 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose }
   const [suggestions, setSuggestions] = useState<string[]>(QUICK_REPLIES.en);
   const [draft, setDraft] = useState("");
   const [paused, setPaused] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(voice && startInVoice);
+  const [caps, setCaps] = useState({ listen: false, speak: false });
+  const [dictationNotice, setDictationNotice] = useState<Notice | null>(null);
   const next = useRef(1);
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
+  const voiceSubmit = useRef<((text: string) => void) | null>(null);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
   const titleId = useId();
+  const prefs = voicePrefs;
+  const setPrefs = (patch: Partial<VoicePrefs>) => onVoicePrefs?.(patch);
 
   useEffect(() => input.current?.focus(), []);
+  // What this browser can do, checked once after mount (never during the server render).
+  useEffect(() => {
+    if (!voice) return;
+    const port = createBrowserSpeech();
+    setCaps({ listen: port.canListen, speak: port.canSpeak });
+  }, [voice]);
   // Escape closes the chat wherever focus is (the Send button disables itself after sending).
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
@@ -47,7 +87,9 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose }
   }, [onClose]);
   useEffect(() => {
     if (log.current) log.current.scrollTop = log.current.scrollHeight;
-  }, [messages]);
+  }, [messages, voiceOn]);
+
+  const dictation = useDictation({ lang: prefs.listenLang, getDraft: () => draftRef.current, setDraft, onNotice: setDictationNotice });
 
   function push(message: Omit<Message, "id">) {
     const id = next.current++;
@@ -64,6 +106,12 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose }
   async function ask(question: string) {
     const text = question.trim().slice(0, MAX_QUESTION);
     if (!text || paused) return;
+    // In voice mode a typed message is one more turn of the same spoken conversation (the text fallback).
+    if (voiceOn && voiceSubmit.current) {
+      voiceSubmit.current(text);
+      setDraft("");
+      return;
+    }
     const allowed = throttle.take();
     if (!allowed.ok) {
       push({ from: "assistant", text: allowed.reason === "session" ? "That is the question limit for this visit. Please reload the page or contact the clinic." : "Please wait a moment before asking again." });
@@ -86,19 +134,57 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose }
     void ask(draft);
   }
 
+  function onVoiceTurn(turn: Turn) {
+    push({ from: turn.from, text: turn.text, links: turn.links });
+  }
+
+  const showMic = voice && caps.listen;
+  const showVoice = voice && (caps.listen || caps.speak);
+
+  const renderLog = (extras?: ReactNode): ReactNode => (
+    <div ref={log} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4" role="log" aria-live="polite" aria-label="Conversation">
+      {messages.map((message) => (
+        <div key={message.id} className={cn("flex", message.from === "you" ? "justify-end" : "justify-start")}>
+          <div className={cn("max-w-[85%] rounded-card px-3.5 py-2.5 text-sm", message.from === "you" ? "bg-navy-900 text-white" : "border border-border bg-surface text-ink")}>
+            <span className="sr-only">{message.from === "you" ? "You: " : "Assistant: "}</span>
+            <p>{message.text}</p>
+            {message.links?.length ? (
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {message.links.map((link) => (
+                  <li key={link.href}>
+                    {/* A plain anchor: no prefetch, so a link to the staff app never loads its code here. */}
+                    <a href={link.href} className="inline-flex min-h-9 items-center rounded-pill border border-teal-700 bg-white px-3 text-xs font-semibold text-teal-700 hover:bg-teal-50">
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        </div>
+      ))}
+      {extras}
+    </div>
+  );
+
   return (
     <div
       role="dialog"
       aria-modal="false"
       aria-labelledby={titleId}
-      className="assistant-panel fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col overflow-hidden rounded-t-card border border-border bg-white shadow-lift md:inset-x-auto md:right-6 md:bottom-6 md:w-[24rem] md:rounded-card"
+      className={cn(
+        "assistant-panel fixed z-50 flex flex-col overflow-hidden border border-border bg-white shadow-lift",
+        voiceOn
+          ? "inset-0 h-dvh md:inset-auto md:right-6 md:bottom-6 md:h-[min(46rem,92dvh)] md:w-[26rem] md:rounded-card"
+          : "inset-x-0 bottom-0 max-h-[85dvh] rounded-t-card md:inset-x-auto md:right-6 md:bottom-6 md:w-[24rem] md:rounded-card",
+      )}
     >
       <div className="flex items-center gap-3 border-b-2 border-gold-300 bg-navy-900 px-4 py-3 text-white">
         <div className="min-w-0 flex-1">
           <h2 id={titleId} className="text-base font-semibold text-white">
             Ask {pack.clinic.name}
           </h2>
-          <p className="text-xs text-white/80">Instant answers from the clinic&apos;s own information</p>
+          <p className="text-xs text-white/80">{voiceOn ? "Voice mode · an AI for a demo clinic · audio is never recorded" : "Instant answers from the clinic's own information"}</p>
         </div>
         <button type="button" onClick={onClose} className="inline-flex size-11 items-center justify-center rounded-control hover:bg-white/10" aria-label="Close chat">
           <X className="size-5" aria-hidden="true" />
@@ -121,36 +207,45 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose }
         </div>
       ) : null}
 
-      <div ref={log} className="flex-1 space-y-3 overflow-y-auto px-4 py-4" role="log" aria-live="polite" aria-label="Conversation">
-        {messages.map((message) => (
-          <div key={message.id} className={cn("flex", message.from === "you" ? "justify-end" : "justify-start")}>
-            <div className={cn("max-w-[85%] rounded-card px-3.5 py-2.5 text-sm", message.from === "you" ? "bg-navy-900 text-white" : "border border-border bg-surface text-ink")}>
-              <span className="sr-only">{message.from === "you" ? "You: " : "Assistant: "}</span>
-              <p>{message.text}</p>
-              {message.links?.length ? (
-                <ul className="mt-2 flex flex-wrap gap-2">
-                  {message.links.map((link) => (
-                    <li key={link.href}>
-                      {/* A plain anchor: no prefetch, so a link to the staff app never loads its code here. */}
-                      <a href={link.href} className="inline-flex min-h-9 items-center rounded-pill border border-teal-700 bg-white px-3 text-xs font-semibold text-teal-700 hover:bg-teal-50">
-                        {link.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+      {voiceOn ? (
+        <Suspense fallback={<div className="flex-1 p-6 text-center text-sm text-ink">Starting voice mode…</div>}>
+          <VoiceMode
+            key={mode}
+            pack={pack}
+            mode={mode}
+            provider={provider}
+            prefs={prefs}
+            onPrefs={setPrefs}
+            onTurn={onVoiceTurn}
+            onEnd={() => {
+              setVoiceOn(false);
+              input.current?.focus();
+            }}
+            registerSubmit={(fn) => {
+              voiceSubmit.current = fn;
+            }}
+            onChangeRequest={() => input.current?.focus()}
+            renderLog={renderLog}
+          />
+        </Suspense>
+      ) : (
+        <>
+          {renderLog()}
+          {suggestions.length ? (
+            <div className="flex gap-2 overflow-x-auto px-4 pb-2" role="group" aria-label="Suggested questions">
+              {suggestions.map((s) => (
+                <button key={s} type="button" onClick={() => void ask(s)} disabled={paused} className="min-h-11 shrink-0 rounded-pill border border-border bg-white px-3 text-sm whitespace-nowrap text-navy-900 hover:bg-surface disabled:opacity-50">
+                  {s}
+                </button>
+              ))}
             </div>
-          </div>
-        ))}
-      </div>
+          ) : null}
+        </>
+      )}
 
-      {suggestions.length ? (
-        <div className="flex gap-2 overflow-x-auto px-4 pb-2" role="group" aria-label="Suggested questions">
-          {suggestions.map((s) => (
-            <button key={s} type="button" onClick={() => void ask(s)} disabled={paused} className="min-h-11 shrink-0 rounded-pill border border-border bg-white px-3 text-sm whitespace-nowrap text-navy-900 hover:bg-surface disabled:opacity-50">
-              {s}
-            </button>
-          ))}
+      {!voiceOn && dictationNotice ? (
+        <div className="pb-2">
+          <MicHelp notice={dictationNotice} onAction={() => { setDictationNotice(null); dictation.toggle(); }} onDismiss={() => setDictationNotice(null)} />
         </div>
       ) : null}
 
@@ -165,15 +260,35 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose }
           onChange={(e) => setDraft(e.target.value)}
           maxLength={MAX_QUESTION}
           autoComplete="off"
-          placeholder={paused ? "One moment…" : "Type your question"}
+          placeholder={paused ? "One moment…" : dictation.active ? "Listening… speak now" : voiceOn ? "Or type here if you prefer" : "Type your question"}
           disabled={paused}
           className="min-h-11 min-w-0 flex-1 rounded-control border border-border-strong px-3 text-base text-ink"
         />
-        <button type="submit" disabled={paused || !draft.trim()} className="inline-flex size-11 items-center justify-center rounded-control bg-navy-900 text-white disabled:opacity-50" aria-label="Send">
+        {showMic && !voiceOn ? (
+          <button
+            type="button"
+            onClick={dictation.toggle}
+            aria-pressed={dictation.active}
+            aria-label={dictation.active ? "Stop dictation" : "Dictate your question with the microphone"}
+            className={cn("inline-flex size-11 shrink-0 items-center justify-center rounded-control border border-border-strong", dictation.active ? "bg-teal-700 text-white" : "bg-white text-navy-900 hover:bg-surface")}
+          >
+            <Mic className="size-5" aria-hidden="true" />
+          </button>
+        ) : null}
+        {showVoice && !voiceOn ? (
+          <button type="button" onClick={() => setVoiceOn(true)} aria-label="Start voice mode, talk with the assistant" className="inline-flex size-11 shrink-0 items-center justify-center rounded-control bg-navy-900 text-teal-300">
+            <AudioLines className="size-5" aria-hidden="true" />
+          </button>
+        ) : null}
+        <button type="submit" disabled={paused || !draft.trim()} className="inline-flex size-11 shrink-0 items-center justify-center rounded-control bg-navy-900 text-white disabled:opacity-50" aria-label="Send">
           <Send className="size-5" aria-hidden="true" />
         </button>
       </form>
-      <p className="bg-surface px-4 py-2 text-center text-xs text-muted">Portfolio demo — not a real clinic, not medical advice. Please don&apos;t share personal details.</p>
+      <p className="bg-surface px-4 py-2 text-center text-xs text-ink">
+        {voiceOn
+          ? "Portfolio demo — not a real clinic, not medical advice. A voice booking is a demo booking: please use sample details, not your real ones."
+          : "Portfolio demo — not a real clinic, not medical advice. Please don't share personal details."}
+      </p>
     </div>
   );
 }

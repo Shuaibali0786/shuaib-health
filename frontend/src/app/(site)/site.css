@@ -170,3 +170,28 @@
     transition: background-color 160ms ease, color 160ms ease;
   }
 }
+
+/* Feature 013: the "Talk to us" voice bubble above the Ask us button glows gently. With reduced motion it stays still. */
+.voice-bubble {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--color-teal-300) 45%, transparent),
+    0 8px 24px color-mix(in srgb, var(--color-teal-500) 28%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .voice-bubble {
+    animation: voice-bubble-glow 3.2s ease-in-out infinite;
+  }
+}
+@keyframes voice-bubble-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--color-teal-300) 35%, transparent),
+      0 8px 20px color-mix(in srgb, var(--color-teal-500) 20%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px color-mix(in srgb, var(--color-teal-300) 55%, transparent),
+      0 8px 30px color-mix(in srgb, var(--color-teal-500) 40%, transparent);
+  }
+}

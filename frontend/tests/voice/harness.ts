@@ -38,6 +38,28 @@ export function fakeSlots(doctorSlug: string, taken: ReadonlySet<string> = new S
   return { doctorSlug, timeZone: "Asia/Karachi", windowDays: 14, generatedAt: NOW.toISOString().replace(".000Z", "Z"), days };
 }
 
+/** What the booking route answers for a successful booking (the masked view the website receives). */
+export function bookedView(pack: KnowledgePack, payload: BookingPayload) {
+  const doctor = pack.doctors.find((d) => d.slug === payload.doctorSlug);
+  const local = new Date(new Date(payload.startsAt).getTime() + 5 * 3600_000).toISOString();
+  return {
+    reference: "7K3M9P2QXA",
+    status: "confirmed",
+    doctor: { slug: payload.doctorSlug, fullName: doctor?.name ?? "Dr", specialty: doctor?.specialty ?? "" },
+    department: { slug: doctor?.departmentSlug ?? "x", name: doctor?.departmentName ?? "X" },
+    startsAt: payload.startsAt,
+    endsAt: payload.startsAt,
+    localDate: local.slice(0, 10),
+    localTime: local.slice(11, 16),
+    timeZone: "Asia/Karachi",
+    feePkr: doctor?.feePkr ?? 0,
+    patientNameMasked: "A**** R****",
+    mobileMasked: "0300****567",
+    bookedAt: NOW.toISOString().replace(".000Z", "Z"),
+    isSample: true,
+  };
+}
+
 export type SubmitMode = "ok" | "taken-once" | "limit" | "rate" | "down-once" | "throw-once" | "rejected";
 
 export function makeWorld(options: { mode?: SubmitMode; lang?: VoiceLang; guide?: boolean; unavailable?: boolean } = {}) {
@@ -71,28 +93,7 @@ export function makeWorld(options: { mode?: SubmitMode; lang?: VoiceLang; guide?
           retryAfter: null,
         };
       }
-      const doctor = pack.doctors.find((d) => d.slug === payload.doctorSlug);
-      const local = new Date(new Date(payload.startsAt).getTime() + 5 * 3600_000).toISOString();
-      return {
-        status: 201,
-        retryAfter: null,
-        body: {
-          reference: "7K3M9P2QXA",
-          status: "confirmed",
-          doctor: { slug: payload.doctorSlug, fullName: doctor?.name ?? "Dr", specialty: doctor?.specialty ?? "" },
-          department: { slug: doctor?.departmentSlug ?? "x", name: doctor?.departmentName ?? "X" },
-          startsAt: payload.startsAt,
-          endsAt: payload.startsAt,
-          localDate: local.slice(0, 10),
-          localTime: local.slice(11, 16),
-          timeZone: "Asia/Karachi",
-          feePkr: doctor?.feePkr ?? 0,
-          patientNameMasked: "A**** R****",
-          mobileMasked: "0300****567",
-          bookedAt: NOW.toISOString().replace(".000Z", "Z"),
-          isSample: true,
-        },
-      };
+      return { status: 201, retryAfter: null, body: bookedView(pack, payload) };
     },
   };
 
