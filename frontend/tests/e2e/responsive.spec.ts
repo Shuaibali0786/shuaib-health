@@ -109,7 +109,7 @@ test.describe("responsive layout: no horizontal scrolling", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     for (const path of ["/", "/departments"]) {
       await page.goto(path);
-      const rows = await page.locator("section[aria-labelledby='departments-title'] ul > li, section[aria-label='Departments'] ul > li").evaluateAll((items) => {
+      const rows = await page.locator("section[aria-labelledby='departments-title'] ul > li, section[aria-labelledby='departments-list-title'] ul > li").evaluateAll((items) => {
         const boxes = items.map((item) => item.getBoundingClientRect());
         const list = items[0]!.parentElement!.getBoundingClientRect();
         const lastTop = Math.max(...boxes.map((box) => Math.round(box.top)));

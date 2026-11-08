@@ -100,7 +100,7 @@ const staticPages = (homeTitle: string): PageManifestEntry[] => [
   {
     path: ROUTES.bookAppointment,
     title: "Book an appointment",
-    description: "Book an appointment with a sample doctor (portfolio demo).",
+    description: "Pick a department, a sample doctor, a date and a free time, and get a booking slip with a QR code (portfolio demo).",
     kind: "static",
     // A task flow, not a search landing page; kept out of the sitemap on purpose.
     inSitemap: false,

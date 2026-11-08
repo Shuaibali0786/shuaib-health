@@ -33,7 +33,11 @@ export default async function DepartmentsPage() {
           <span>Everything on these pages is sample content for the demo.</span>
         </p>
       </PageHeader>
-      <Section tone="background" spacing="compact" aria-label="Departments">
+      <Section tone="background" spacing="compact" labelledBy="departments-list-title">
+        {/* Visually hidden: gives the cards (h3) a parent h2, so the outline is h1 > h2 > h3 (Lighthouse heading-order, 2026-11-07). */}
+        <h2 id="departments-list-title" className="sr-only">
+          Departments
+        </h2>
         {departments.ok ? (
           <ul className={DEPARTMENT_LIST}>
             {departments.data.map((department) => (

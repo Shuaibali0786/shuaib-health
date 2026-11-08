@@ -36,7 +36,11 @@ export default async function LabTestsPage() {
           <span>All prices are sample prices for the demo, in PKR.</span>
         </p>
       </PageHeader>
-      <Section tone="background" spacing="compact" aria-label="Lab tests">
+      <Section tone="background" spacing="compact" labelledBy="lab-tests-list-title">
+        {/* Visually hidden: gives the cards (h3) a parent h2, so the outline is h1 > h2 > h3 (Lighthouse heading-order, 2026-11-07). */}
+        <h2 id="lab-tests-list-title" className="sr-only">
+          Lab tests
+        </h2>
         {tests.ok && categories.ok ? (
           <Suspense fallback={<LabTestBrowserFallback tests={tests.data} categories={categories.data} />}>
             <LabTestBrowser tests={tests.data} categories={categories.data} />

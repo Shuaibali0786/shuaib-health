@@ -16,6 +16,15 @@ interface OgCardOptions {
  * Image generation cannot read CSS variables, so the brand colours are written out here
  * (navy-900 and teal-700 from tokens.css; the mark's colours come from brand-marks.ts); tests/unit/tokens.test.ts checks they match.
  */
+/**
+ * Social card for a site section (listing pages, legal pages, booking, presets): the section name as the eyebrow
+ * and the clinic name and tagline as the title. Every page that sets its own `openGraph` metadata replaces the
+ * site-wide card it would otherwise inherit, so each section folder has a small opengraph-image file that calls this.
+ */
+export function sectionCard(section: string, site: { name: string; tagline?: string | null }): ImageResponse {
+  return ogCard({ eyebrow: section, title: site.name, subtitle: site.tagline || undefined });
+}
+
 export function ogCard({ eyebrow, title, subtitle }: OgCardOptions): ImageResponse {
   return new ImageResponse(
     (

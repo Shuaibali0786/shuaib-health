@@ -1,0 +1,1513 @@
+{
+ "rows": [
+  {
+   "p": "/",
+   "mobile": {
+    "perf": 96,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.6",
+    "cls": "0.00",
+    "tbt": 112
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 3
+   }
+  },
+  {
+   "p": "/about",
+   "mobile": {
+    "perf": 99,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 52
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.4",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/doctors",
+   "mobile": {
+    "perf": 96,
+    "a11y": 98,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.2",
+    "cls": "0.00",
+    "tbt": 182
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 98,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 9
+   }
+  },
+  {
+   "p": "/departments",
+   "mobile": {
+    "perf": 98,
+    "a11y": 98,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.2",
+    "cls": "0.00",
+    "tbt": 107
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 98,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests",
+   "mobile": {
+    "perf": 97,
+    "a11y": 98,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 130
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 98,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/health-packages",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 117
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/health-tips",
+   "mobile": {
+    "perf": 97,
+    "a11y": 98,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 141
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 98,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/contact",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.5",
+    "cls": "0.00",
+    "tbt": 119
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/faq",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 94
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/privacy",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.01",
+    "tbt": 126
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/terms",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.2",
+    "cls": "0.00",
+    "tbt": 87
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/doctors/dr-hassan-mirza",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 96
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/doctors/dr-imran-qureshi",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 115
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/doctors/dr-sana-farooqui",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 98
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/doctors/dr-ayesha-rahman",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 95
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/doctors/dr-maryam-baloch",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 89
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/doctors/dr-bilal-ansari",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 91
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/doctors/dr-zainab-memon",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 98
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/doctors/dr-omar-sheikh",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 95
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/doctors/dr-faisal-chaudhry",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 100
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/departments/general-medicine",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 101
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/departments/cardiology",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 98
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/departments/pediatrics",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 131
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/departments/gynecology",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 96
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/departments/dermatology",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 97
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/departments/dental",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 85
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/departments/pathology-lab",
+   "mobile": {
+    "perf": 96,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 140
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/complete-blood-count",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.2",
+    "cls": "0.00",
+    "tbt": 106
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/esr",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 86
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/blood-group-rh",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 81
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/fasting-blood-sugar",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 92
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/hba1c",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 86
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/random-blood-sugar",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 93
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/lipid-profile",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 94
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/hs-crp",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 91
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/liver-function-tests",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.2",
+    "cls": "0.00",
+    "tbt": 108
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/hepatitis-b-surface-antigen",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.2",
+    "cls": "0.00",
+    "tbt": 93
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/hepatitis-c-antibody",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 92
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/serum-creatinine",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 92
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/blood-urea",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 83
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/uric-acid",
+   "mobile": {
+    "perf": 99,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 84
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/tsh",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 91
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/free-t4",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 86
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/free-t3",
+   "mobile": {
+    "perf": 99,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "1.8",
+    "cls": "0.00",
+    "tbt": 93
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/vitamin-d",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 100
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/vitamin-b12",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 87
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/folate",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 80
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.4",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/prolactin",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 92
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/total-testosterone",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 88
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/fsh",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 97
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/urine-routine-examination",
+   "mobile": {
+    "perf": 99,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "1.8",
+    "cls": "0.00",
+    "tbt": 83
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/urine-culture-sensitivity",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 107
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.4",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/lab-tests/urine-pregnancy-test",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.1",
+    "cls": "0.00",
+    "tbt": 98
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.3",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/health-tips/staying-hydrated",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 84
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/health-tips/healthy-sleep-habits",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 90
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/health-tips/balanced-plate",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.4",
+    "cls": "0.00",
+    "tbt": 104
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/health-tips/daily-walk",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.4",
+    "cls": "0.00",
+    "tbt": 96
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/health-tips/hand-hygiene",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 85
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/health-tips/managing-stress",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 101
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/book-appointment",
+   "mobile": {
+    "perf": 95,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "2.5",
+    "cls": "0.00",
+    "tbt": 169
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 66,
+    "lcp": "0.3",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/demo/specialties",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 135
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/demo/specialties/dental",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 86
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/demo/specialties/skin-aesthetic",
+   "mobile": {
+    "perf": 98,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 91
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/demo/specialties/diagnostic-lab",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.01",
+    "tbt": 77
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  },
+  {
+   "p": "/demo/specialties/multi-speciality",
+   "mobile": {
+    "perf": 97,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "2.3",
+    "cls": "0.00",
+    "tbt": 104
+   },
+   "desktop": {
+    "perf": 100,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 69,
+    "lcp": "0.5",
+    "cls": "0.00",
+    "tbt": 0
+   }
+  }
+ ],
+ "failAudits": {
+  "seo:is-crawlable": [
+   "/(m)",
+   "/(d)",
+   "/about(m)",
+   "/about(d)",
+   "/doctors(m)",
+   "/doctors(d)",
+   "/departments(m)",
+   "/departments(d)",
+   "/lab-tests(m)",
+   "/lab-tests(d)",
+   "/health-packages(m)",
+   "/health-packages(d)",
+   "/health-tips(m)",
+   "/health-tips(d)",
+   "/contact(m)",
+   "/contact(d)",
+   "/faq(m)",
+   "/faq(d)",
+   "/privacy(m)",
+   "/privacy(d)",
+   "/terms(m)",
+   "/terms(d)",
+   "/doctors/dr-hassan-mirza(m)",
+   "/doctors/dr-hassan-mirza(d)",
+   "/doctors/dr-imran-qureshi(m)",
+   "/doctors/dr-imran-qureshi(d)",
+   "/doctors/dr-sana-farooqui(m)",
+   "/doctors/dr-sana-farooqui(d)",
+   "/doctors/dr-ayesha-rahman(m)",
+   "/doctors/dr-ayesha-rahman(d)",
+   "/doctors/dr-maryam-baloch(m)",
+   "/doctors/dr-maryam-baloch(d)",
+   "/doctors/dr-bilal-ansari(m)",
+   "/doctors/dr-bilal-ansari(d)",
+   "/doctors/dr-zainab-memon(m)",
+   "/doctors/dr-zainab-memon(d)",
+   "/doctors/dr-omar-sheikh(m)",
+   "/doctors/dr-omar-sheikh(d)",
+   "/doctors/dr-faisal-chaudhry(m)",
+   "/doctors/dr-faisal-chaudhry(d)",
+   "/departments/general-medicine(m)",
+   "/departments/general-medicine(d)",
+   "/departments/cardiology(m)",
+   "/departments/cardiology(d)",
+   "/departments/pediatrics(m)",
+   "/departments/pediatrics(d)",
+   "/departments/gynecology(m)",
+   "/departments/gynecology(d)",
+   "/departments/dermatology(m)",
+   "/departments/dermatology(d)",
+   "/departments/dental(m)",
+   "/departments/dental(d)",
+   "/departments/pathology-lab(m)",
+   "/departments/pathology-lab(d)",
+   "/lab-tests/complete-blood-count(m)",
+   "/lab-tests/complete-blood-count(d)",
+   "/lab-tests/esr(m)",
+   "/lab-tests/esr(d)",
+   "/lab-tests/blood-group-rh(m)",
+   "/lab-tests/blood-group-rh(d)",
+   "/lab-tests/fasting-blood-sugar(m)",
+   "/lab-tests/fasting-blood-sugar(d)",
+   "/lab-tests/hba1c(m)",
+   "/lab-tests/hba1c(d)",
+   "/lab-tests/random-blood-sugar(m)",
+   "/lab-tests/random-blood-sugar(d)",
+   "/lab-tests/lipid-profile(m)",
+   "/lab-tests/lipid-profile(d)",
+   "/lab-tests/hs-crp(m)",
+   "/lab-tests/hs-crp(d)",
+   "/lab-tests/liver-function-tests(m)",
+   "/lab-tests/liver-function-tests(d)",
+   "/lab-tests/hepatitis-b-surface-antigen(m)",
+   "/lab-tests/hepatitis-b-surface-antigen(d)",
+   "/lab-tests/hepatitis-c-antibody(m)",
+   "/lab-tests/hepatitis-c-antibody(d)",
+   "/lab-tests/serum-creatinine(m)",
+   "/lab-tests/serum-creatinine(d)",
+   "/lab-tests/blood-urea(m)",
+   "/lab-tests/blood-urea(d)",
+   "/lab-tests/uric-acid(m)",
+   "/lab-tests/uric-acid(d)",
+   "/lab-tests/tsh(m)",
+   "/lab-tests/tsh(d)",
+   "/lab-tests/free-t4(m)",
+   "/lab-tests/free-t4(d)",
+   "/lab-tests/free-t3(m)",
+   "/lab-tests/free-t3(d)",
+   "/lab-tests/vitamin-d(m)",
+   "/lab-tests/vitamin-d(d)",
+   "/lab-tests/vitamin-b12(m)",
+   "/lab-tests/vitamin-b12(d)",
+   "/lab-tests/folate(m)",
+   "/lab-tests/folate(d)",
+   "/lab-tests/prolactin(m)",
+   "/lab-tests/prolactin(d)",
+   "/lab-tests/total-testosterone(m)",
+   "/lab-tests/total-testosterone(d)",
+   "/lab-tests/fsh(m)",
+   "/lab-tests/fsh(d)",
+   "/lab-tests/urine-routine-examination(m)",
+   "/lab-tests/urine-routine-examination(d)",
+   "/lab-tests/urine-culture-sensitivity(m)",
+   "/lab-tests/urine-culture-sensitivity(d)",
+   "/lab-tests/urine-pregnancy-test(m)",
+   "/lab-tests/urine-pregnancy-test(d)",
+   "/health-tips/staying-hydrated(m)",
+   "/health-tips/staying-hydrated(d)",
+   "/health-tips/healthy-sleep-habits(m)",
+   "/health-tips/healthy-sleep-habits(d)",
+   "/health-tips/balanced-plate(m)",
+   "/health-tips/balanced-plate(d)",
+   "/health-tips/daily-walk(m)",
+   "/health-tips/daily-walk(d)",
+   "/health-tips/hand-hygiene(m)",
+   "/health-tips/hand-hygiene(d)",
+   "/health-tips/managing-stress(m)",
+   "/health-tips/managing-stress(d)",
+   "/book-appointment(m)",
+   "/book-appointment(d)",
+   "/demo/specialties(m)",
+   "/demo/specialties(d)",
+   "/demo/specialties/dental(m)",
+   "/demo/specialties/dental(d)",
+   "/demo/specialties/skin-aesthetic(m)",
+   "/demo/specialties/skin-aesthetic(d)",
+   "/demo/specialties/diagnostic-lab(m)",
+   "/demo/specialties/diagnostic-lab(d)",
+   "/demo/specialties/multi-speciality(m)",
+   "/demo/specialties/multi-speciality(d)"
+  ],
+  "accessibility:heading-order": [
+   "/doctors(m)",
+   "/doctors(d)",
+   "/departments(m)",
+   "/departments(d)",
+   "/lab-tests(m)",
+   "/lab-tests(d)",
+   "/health-tips(m)",
+   "/health-tips(d)"
+  ]
+ }
+}

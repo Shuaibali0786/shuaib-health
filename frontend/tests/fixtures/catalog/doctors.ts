@@ -124,7 +124,7 @@ export const doctors: Doctor[] = [
     fullName: "Dr. Bilal Ansari",
     departmentId: "dept-dental",
     specialty: "Dental",
-    photo: doctorPhoto("dr-bilal-ansari", "Stock photo of a model presented as sample doctor Dr. Bilal Ansari: a man in glasses with short dark hair and light stubble, in a white coat over a dark blue shirt with a stethoscope around his neck, against a light background"),
+    photo: doctorPhoto("dr-bilal-ansari", "Stock photo of a model presented as sample doctor Dr. Bilal Ansari: a young man in glasses with short dark hair, in a white coat over a white shirt and dark tie, with a stethoscope around his neck and arms crossed, against a light background"),
     feePkr: 2000,
     qualifications: ["BDS", "MCPS (Operative Dentistry)"],
     experienceYears: 11,

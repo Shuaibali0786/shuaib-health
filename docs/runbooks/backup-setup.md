@@ -14,7 +14,7 @@ Daily encrypted off-platform backups, 14 days kept. Everything here is **owner-r
 
 Before step 3, confirm the `backup_ro` role exists on the `production` branch with read-only grants (done in T055; its password was reset after the 12 Oct screenshot incident, so use the **new** connection string).
 
-## Steps
+## B. Daily encrypted backup: setup steps
 1. **T083 + T084 + T085**: read `scripts/backups/setup-backup-repo.ps1`, then run it from the repo root:
    `powershell -ExecutionPolicy Bypass -File scripts\backups\setup-backup-repo.ps1`
    It creates the key, the private repo with the workflow (`backup-workflow.yml.example`), the two secrets, and starts one run.
@@ -22,6 +22,36 @@ Before step 3, confirm the `backup_ro` role exists on the `production` branch wi
 3. Check that **a failed run emails you**: GitHub -> Settings -> Notifications -> Actions: email on failed workflows must be on. (Optional test: temporarily set a wrong `NEON_BACKUP_URL` secret, run once, confirm the email, then restore the right value.)
 4. **T086** restore drill: `restore-drill.md`. Claude guides live and records `results/restore-drill.md`.
 5. **T087** copy the verified `.dump.age` into the Drive folder (encrypted, so Drive only holds ciphertext). Repeat monthly; keep 3.
+
+## Two layers of backup (what protects what)
+| Layer | Covers | Kept for | Cost |
+|---|---|---|---|
+| **A. Neon instant restore** (built in, nothing to set up) | "I broke data in the last few hours" | Free plan: up to **6 hours**, max 1 GB of change history per project | free |
+| **B. Daily encrypted `pg_dump`** (this runbook, steps 1-5) | anything older than 6 hours; Neon account loss | 14 days in GitHub + 3 monthly copies in Drive | free |
+
+Neon limits checked on 7 Nov 2026 in the Neon docs (History window, Backups). Re-check them in the console before relying on them.
+
+## A. Neon instant restore (owner, Neon console)
+Use this only for a mistake made **less than 6 hours ago**. It rewrites the whole branch, so stop and ask first if unsure.
+1. Note the time just **before** the mistake (UTC).
+2. 🔑 Neon console → project `shuaib-health-prod` → **Restore** (or Branches → `production` → Restore). Pick "point in time" and enter that time.
+3. Prefer **"Preview"/"Time Travel"** first: run the read-only `scripts/backups/drill-counts.sql` against the chosen time to confirm it is the right moment.
+4. Restore. Neon keeps the pre-restore state as a **backup branch**, so the restore itself can be undone. Do not delete that branch until the site is checked.
+5. Run `smoke-test.md`. Then write an incident note (`docs/incidents/TEMPLATE.md`).
+
+Older than 6 hours: use layer B (part C below, but restore into a **new** branch and then switch the app only after review, with Claude's help).
+
+## C. Monthly restore drill (owner, about 30 minutes, first Saturday of each month)
+Script: `scripts/backups/restore-drill.ps1` (read it first; it decrypts, restores into a scratch branch, runs the read-only counts, and always deletes the decrypted file). Full narrative: `restore-drill.md`.
+1. GitHub → `shuaib-health-backups` → Actions → newest green `backup` run → download and unzip the artifact.
+2. Neon console → Branches → create `restore-drill-YYYYMMDD` from `production`.
+3. Copy the age private key from the password manager to a temporary file (default path the script expects: `%USERPROFILE%\.shuaib-health-age\key.txt`).
+4. `powershell -ExecutionPolicy Bypass -File scripts\backups\restore-drill.ps1 -Backup <path-to>.dump.age`, answer the prompts (the URL prompt is hidden).
+5. Run `scripts/backups/drill-counts.sql` against `production` with the read-only role and compare: everything matches except bookings/audit rows created after the backup time.
+6. Delete the scratch branch; delete the temporary key copy; keep the `.dump.age` in Drive (step 5 of the setup list).
+7. Add one line to `specs/007-launch-ready/results/restore-drill.md`: date, backup date, minutes, pass/fail.
+
+Pass: under 30 minutes, counts match, one known booking found, scratch branch and decrypted files gone.
 
 ## Limits to know
 - GitHub Actions minutes for a **private** repo are limited on the free plan; one daily dump is a few minutes a month. Watch it in `free-tier-usage` (T097).

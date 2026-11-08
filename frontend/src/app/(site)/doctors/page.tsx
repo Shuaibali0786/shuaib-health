@@ -37,7 +37,11 @@ export default async function DoctorsPage() {
           <span>These doctors, photos, fees and schedules are invented for the demo.</span>
         </p>
       </PageHeader>
-      <Section tone="background" spacing="compact" aria-label="Doctors">
+      <Section tone="background" spacing="compact" labelledBy="doctors-list-title">
+        {/* Visually hidden: gives the cards (h3) a parent h2, so the outline is h1 > h2 > h3 (Lighthouse heading-order, 2026-11-07). */}
+        <h2 id="doctors-list-title" className="sr-only">
+          Doctors
+        </h2>
         {doctors.ok ? (
           <Suspense fallback={<DoctorBrowserFallback doctors={doctors.data} departments={departmentOptions} />}>
             <DoctorBrowser doctors={doctors.data} departments={departmentOptions} />
