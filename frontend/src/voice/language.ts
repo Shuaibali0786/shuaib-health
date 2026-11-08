@@ -23,9 +23,13 @@ const ENGLISH_MARKERS = new Set(
 export function replyLanguage(text: string, previous: VoiceLang): VoiceLang {
   if (hasUrduScript(text)) return "roman";
   if (detectLang(text) === "roman") return "roman";
-  const words = cleanText(text).split(" ").filter(Boolean);
+  const words = [...new Set(cleanText(text).split(" ").filter(Boolean))];
+  // Roman Urdu that the shared detector does not list ("rehne do", "chhor do", "galat hai").
+  if (words.some((w) => ROMAN_EXTRA.has(w))) return "roman";
   return words.filter((w) => ENGLISH_MARKERS.has(w)).length >= 2 ? "en" : previous;
 }
+
+const ROMAN_EXTRA = new Set("rehne rehnay chhor chor chhoro mat galat ghalat sahi theek thik haan han ji jee nahin acha achha accha chalo zaroor bilkul shukriya bhai behen beta abbu ammi bacha bache bachay daane dane jild khansi zukam bukhar sar safai daant".split(" "));
 
 const URDU_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";

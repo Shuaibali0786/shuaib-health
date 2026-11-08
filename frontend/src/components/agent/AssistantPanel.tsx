@@ -14,6 +14,7 @@ import { createAttemptKey } from "@/lib/booking/idempotency";
 import type { AppointmentView } from "@/lib/booking/schemas";
 import { cn } from "@/lib/cn";
 import type { BookingState } from "@/voice/bookingDialog";
+import { askBrainOverHttp } from "@/voice/brain";
 import { createBrowserSpeech } from "@/voice/browserSpeech";
 import { primeMicrophone, type MicResult } from "@/voice/microphone";
 import { Conversation, type RouterResult } from "@/voice/router";
@@ -49,6 +50,8 @@ export type AssistantPanelProps = {
   micCheck?: Promise<MicResult> | null;
   /** The speech provider (VOICE_PROVIDER): the free browser voice, or the premium one with a silent fallback. */
   voiceProvider?: "browser" | "azure";
+  /** VOICE_BRAIN: "gemini" asks the optional AI brain (server-side key) about turns the rules did not understand. */
+  voiceBrain?: "rules" | "gemini";
 };
 
 type Message = { id: number; from: "you" | "assistant"; text: string; links?: AgentLink[] };
@@ -64,7 +67,7 @@ const greetingFor = (mode: AgentMode, pack: KnowledgePack) => (mode === "guide" 
  * Feature 013 adds, behind a flag: a Mic button (dictation into the box) and a Voice mode button (the orb, live
  * captions and hands-free booking). Typed and spoken turns share this one conversation.
  */
-export function AssistantPanel({ pack, provider: providerId = "local", onClose, voice = false, startInVoice = false, voicePrefs = DEFAULT_VOICE_PREFS, onVoicePrefs, micCheck: initialMicCheck = null, voiceProvider = "browser" }: AssistantPanelProps) {
+export function AssistantPanel({ pack, provider: providerId = "local", onClose, voice = false, startInVoice = false, voicePrefs = DEFAULT_VOICE_PREFS, onVoicePrefs, micCheck: initialMicCheck = null, voiceProvider = "browser", voiceBrain = "rules" }: AssistantPanelProps) {
   const provider = useMemo(() => getProvider(pack, providerId), [pack, providerId]);
   // A booking takes about ten turns, so with voice on the typed limit is as wide as voice mode's (it only stops runaway loops).
   const throttle = useMemo(() => (voice ? createThrottle(Date.now, 24, 150) : createThrottle()), [voice]);
@@ -106,8 +109,9 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
           submit: (payload, key) => postBooking(payload, key),
           newKey: createAttemptKey,
         },
+        brain: voiceBrain === "gemini" ? askBrainOverHttp : undefined,
       }),
-    [pack, mode, provider],
+    [pack, mode, provider, voiceBrain],
   );
   const next = useRef(1);
   /** The chat still shows only the written welcome (voice mode's spoken welcome then replaces it). */

@@ -14,6 +14,7 @@ import { formatPkr } from "@/lib/format";
 import { bookingStep, currentQuestion, newBookingState, type BookingState, type DialogDeps } from "./bookingDialog";
 import { clinicNow, dayName, doctorsOf, findDepartment, findDoctors, findLabTest, findPackage, labDepartment, labItem, mentionsLabTest, mentionsPackage, openDayNames, openingOn, resolveLabTest } from "./entities";
 import { hasUrduScript, replyLanguage, urduToLatin } from "./language";
+import type { Brain } from "./brain";
 import { findProblem, type Problem } from "./problems";
 import { declines } from "./parse/name";
 import { parseDate, speakTime } from "./parse/date";
@@ -39,6 +40,8 @@ export type RouterContext = {
   bookingsMade: number;
   /** The assistant just asked "which test?" or "what is the problem?": a short answer ("blood ki") is read in that light. */
   awaiting: Awaiting;
+  /** The optional AI brain (VOICE_BRAIN=gemini): asked only when the rules did not understand a patient turn. */
+  brain?: Brain;
 };
 
 export type Awaiting = "test" | "problem" | null;
@@ -117,7 +120,9 @@ export function startChoices(pack: KnowledgePack, lang: VoiceLang): string[] {
 
 function engineAnswer(ctx: RouterContext, mapped: string, lang: VoiceLang): Promise<Omit<RouterResult, "booking" | "offer" | "lang">> {
   return ctx.provider.answer({ mode: ctx.mode, question: mapped.slice(0, 300) }).then((answer) => {
-    if ((answer.intent === "unknown" || answer.intent === "guide_unknown") && (parseYesNo(mapped) !== "unclear" || /^(ok|okay|ji|hmm|theek hai|acha|accha|achha|thanks|thank you|shukriya)$/i.test(cleanText(mapped)))) {
+    const short = cleanText(mapped).split(" ").length <= 3;
+    // "Ok", "theek hai", "haan" with nothing open: a short acknowledgement. ("Pata nahi" / "no" is not: it is asked kindly below.)
+    if ((answer.intent === "unknown" || answer.intent === "guide_unknown") && ((short && parseYesNo(mapped) === "yes") || /^(ok|okay|ji|theek hai|acha|accha|achha|thanks|thank you|shukriya)$/i.test(cleanText(mapped)))) {
       return { intent: "ack", text: T(lang, "Alright! Is there anything else I can help you with?", "Theek hai! Kuch aur madad chahiye?") };
     }
     if (answer.intent === "unknown" && ctx.mode === "patient" && !QUESTION.test(mapped.trim())) {
@@ -264,7 +269,15 @@ async function startBooking(ctx: RouterContext, input: RouterInput, lang: VoiceL
   const item = labItem(ctx.pack, prefill.labTestSlug ?? null);
   const lab = item ? labDepartment(ctx.pack) : null;
   const doctor = prefill.doctorSlug ? ctx.pack.doctors.find((d) => d.slug === prefill.doctorSlug)?.name : undefined;
-  const what = item && lab ? T(lang, `${item.name} at our ${lab.name}${doctor ? `, with ${doctor}` : ""}.`, `${item.name}, hamari ${lab.name} mein${doctor ? `, ${doctor} ke saath` : ""}.`) : "";
+  const doc = prefill.doctorSlug ? ctx.pack.doctors.find((d) => d.slug === prefill.doctorSlug) : undefined;
+  const what =
+    item && lab
+      ? T(lang, `${item.name} at our ${lab.name}${doctor ? `, with ${doctor}` : ""}.`, `${item.name}, hamari ${lab.name} mein${doctor ? `, ${doctor} ke saath` : ""}.`)
+      : doc && !text
+        ? ""
+        : doc
+          ? T(lang, `${doc.departmentName}, with ${doc.name} (fee ${formatPkr(doc.feePkr)}).`, `${doc.departmentName} mein ${doc.name} ke saath (fee ${formatPkr(doc.feePkr)}).`)
+          : "";
   const head = [opener, lead, what].filter(Boolean).join(" ");
   return {
     lang,
@@ -332,7 +345,9 @@ function doctorsWithFees(ctx: RouterContext, slug: string, lang: VoiceLang): str
 function suggestDepartment(ctx: RouterContext, slug: string, lang: VoiceLang, greet = "", topic = ""): RouterResult {
   const dept = ctx.pack.departments.find((d) => d.slug === slug)?.name ?? slug;
   const docs = doctorsWithFees(ctx, slug, lang);
-  const sorry = topic ? T(lang, "I'm sorry to hear that.", "Mujhe sun kar afsos hua.") : "";
+  // Sympathy only for pain or illness, never for a cleaning, a check-up or a pregnancy.
+  const unwell = /\b(dard|pain|ache|problem|masla|bukhar|fever|khansi|cough|zukam|flu|allergy|daane|rash|kharish|khujli|itch\w*|takleef|bimar|sick|ulti|vomit\w*|dast|chakkar|dizz\w*|high|infection)\b/.test(cleanText(topic));
+  const sorry = unwell ? T(lang, "I'm sorry to hear that.", "Mujhe sun kar afsos hua.") : "";
   return {
     lang,
     booking: null,
@@ -441,6 +456,31 @@ const oneBookingOnly = (lang: VoiceLang) =>
   );
 const bookLink = (lang: VoiceLang) => ({ label: T(lang, "Book an appointment", "Appointment book karein"), href: "/book-appointment" });
 
+/** The AI brain's one action, turned into the same replies the rules give (slugs checked against our catalog). */
+async function brainReply(ctx: RouterContext, text: string, lang: VoiceLang, base: Pick<RouterResult, "lang" | "booking" | "offer">): Promise<RouterResult | null> {
+  const decision = await ctx.brain?.(text, lang).catch(() => null);
+  if (!decision) return null;
+  const yesNo = [T(lang, "Yes, book it", "Ji haan, booking karein"), T(lang, "No, thanks", "Nahi, shukriya")];
+  switch (decision.action) {
+    case "suggest_department":
+      return ctx.pack.doctors.some((d) => d.departmentSlug === decision.slug) ? { ...suggestDepartment(ctx, decision.slug, lang), intent: "brain_department" } : null;
+    case "offer_lab_test": {
+      const t = ctx.pack.labTests.find((x) => x.slug === decision.slug);
+      return t && ctx.bookingsMade === 0 ? { ...base, offer: { kind: "lab", testSlug: t.slug }, intent: "brain_lab", text: labExplanation(ctx, t, lang), links: [{ label: t.name, href: `/lab-tests/${t.slug}` }], options: yesNo } : null;
+    }
+    case "offer_package": {
+      const p = ctx.pack.packages.find((x) => x.slug === decision.slug);
+      return p && ctx.bookingsMade === 0 ? { ...base, offer: { kind: "lab", testSlug: p.slug }, intent: "brain_package", text: packageExplanation(ctx, p, lang), options: yesNo } : null;
+    }
+    case "clinic_answer":
+      return /[؀-ۿ]|https?:/i.test(decision.text) ? null : { ...base, offer: null, intent: "brain_answer", text: decision.text.slice(0, 400) };
+    case "ask_problem":
+      return { ...base, ...askProblem(ctx, lang) };
+    default:
+      return null;
+  }
+}
+
 /**
  * A yes to an OFFER ("Kya main booking kar doon?"): looser than the final booking yes, because nothing is booked by it
  * (the booking still needs the patient's own "haan" or Confirm after the filled card). "Ji", "ok", "acha", "kar do".
@@ -458,10 +498,11 @@ function topicChange(ctx: RouterContext, booking: BookingState, mapped: string):
   if (extractPhone(mapped, "").status === "complete" || parseYesNo(mapped) === "yes") return null;
   const d = booking.draft;
   const pkg = findPackage(mapped, ctx.pack);
-  const test = pkg ? null : resolveLabTest(mapped, ctx.pack);
+  const problem = findProblem(mapped, ctx.pack);
+  const talksTest = /\b(tests?|lab|report|sample|cbc|hba1c|tsh|lipid)\b/.test(cleanText(mapped));
+  const test = pkg || (problem?.kind === "department" && !talksTest) ? null : resolveLabTest(mapped, ctx.pack);
   const itemSlug = pkg?.slug ?? test?.slug ?? null;
   if (itemSlug) return itemSlug === d.labTestSlug ? null : prefillFor(ctx, { kind: "lab", testSlug: itemSlug });
-  const problem = findProblem(mapped, ctx.pack);
   const slug = (problem?.kind === "department" ? problem.slug : null) ?? findDepartment(mapped, ctx.pack, { symptoms: false });
   if (!slug || slug === d.departmentSlug) return null;
   // A doctor named in the same turn is handled by the booking itself.
@@ -579,7 +620,7 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
       const t = resolveLabTest(mapped, ctx.pack);
       if (t) return bookingAsked ? (limit() ?? startBooking(ctx, input, lang, prefillFor(ctx, { kind: "lab", testSlug: t.slug }), "")) : labOffer(t);
       if (ctx.awaiting === "problem") {
-        if (problem?.kind === "department") return suggestDepartment(ctx, problem.slug, lang, greet, problem.topic);
+        if (problem?.kind === "department") return suggestDepartment(ctx, problem.slug, lang, greet, mapped);
         if (problem?.kind === "not_offered") return notOffered(ctx, problem, lang, greet);
         const dept = findDepartment(mapped, ctx.pack);
         if (dept) return suggestDepartment(ctx, dept, lang, greet);
@@ -599,7 +640,10 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     }
 
     // 3e. A booking request. A test named with it ("booking karo blood test ki") books the lab straight away.
-    const test = resolveLabTest(mapped, ctx.pack);
+    // "Pregnancy checkup ke liye lady doctor" is the gynaecologist, not the urine pregnancy TEST: a problem word picks a
+    // lab test only when the patient talks about a test.
+    const talksTest = /\b(tests?|lab|report|sample|cbc|hba1c|tsh|lipid|x ?ray)\b/.test(cleanText(mapped));
+    const test = problem?.kind === "department" && !talksTest ? null : resolveLabTest(mapped, ctx.pack);
     if (bookingAsked || (complains(mapped) && /\b(booking|book|appointment)\b/.test(cleanText(mapped)))) {
       const stop = limit();
       if (stop) return stop;
@@ -617,7 +661,7 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     // lipid profile?" is a question, not a request: the engine answers it below.)
     if (pkg) return limit() ?? packageOffer(pkg);
     if (mentionsPackage(mapped) && !problem) return askPackage(ctx, lang, base);
-    const named = mentionsLabTest(mapped, ctx.pack) ? findLabTest(mapped, ctx.pack) : null;
+    const named = mentionsLabTest(mapped, ctx.pack) && (talksTest || problem?.kind !== "department") ? findLabTest(mapped, ctx.pack) : null;
     if (named && WANTS.test(cleanText(mapped)) && !QUESTION.test(mapped.trim())) return limit() ?? labOffer(named);
     if (wantsTest(mapped) && !QUESTION.test(mapped.trim())) return test ? (limit() ?? labOffer(test)) : askTest(ctx, lang);
 
@@ -628,7 +672,7 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     // A statement of a problem ("skin pe daane hain") or a test or price question is not a department suggestion here.
     const aboutTestOrPrice = /\b(tests?|report|price|prices|qeemat|fee|fees|cost|charges|tell me|about|batao|bataiye|bata do|info|information|details)\b/.test(cleanText(mapped));
     if (problem?.kind === "department" && !QUESTION.test(mapped.trim()) && !aboutTestOrPrice && findDoctors(mapped, ctx.pack).length === 0) {
-      return suggestDepartment(ctx, problem.slug, lang, greet, problem.topic);
+      return suggestDepartment(ctx, problem.slug, lang, greet, mapped);
     }
     if (problem?.kind === "not_offered" && !aboutTestOrPrice) return notOffered(ctx, problem, lang, greet);
 
@@ -651,6 +695,11 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     };
   }
   const answer = await engineAnswer(ctx, mapped, lang);
+  // The optional AI brain (VOICE_BRAIN=gemini, OFF by default): only for a patient turn the rules did not understand.
+  if (ctx.mode === "patient" && answer.intent === "unknown" && ctx.brain) {
+    const understood = await brainReply(ctx, mapped, lang, base);
+    if (understood) return understood;
+  }
   if (ctx.mode === "patient" && answer.intent === "greeting") {
     // A greeting alone: short and warm, then wait (the long product welcome is for the written chat).
     const hello = greetingBack(input.text, lang) || T(lang, "Hello!", "Assalam o Alaikum!");
@@ -673,8 +722,8 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
 export class Conversation {
   readonly ctx: RouterContext;
 
-  constructor(init: { pack: KnowledgePack; mode: AgentMode; provider: AgentProvider; deps: DialogDeps; lang?: VoiceLang }) {
-    this.ctx = { pack: init.pack, mode: init.mode, lang: init.lang ?? "en", provider: init.provider, deps: init.deps, booking: null, offer: null, bookingsMade: 0, awaiting: null };
+  constructor(init: { pack: KnowledgePack; mode: AgentMode; provider: AgentProvider; deps: DialogDeps; lang?: VoiceLang; brain?: Brain }) {
+    this.ctx = { pack: init.pack, mode: init.mode, lang: init.lang ?? "en", provider: init.provider, deps: init.deps, booking: null, offer: null, bookingsMade: 0, awaiting: null, brain: init.brain };
   }
 
   /** What the assistant said, newest last (for "never the same sentence twice in a row"). */

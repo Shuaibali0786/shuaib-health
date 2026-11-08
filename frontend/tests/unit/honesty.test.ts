@@ -102,7 +102,7 @@ describe("no third-party brands", () => {
 describe("no backend dependency (constitution V)", () => {
   it("src contains no fetch() call except the catalog API client, the booking proxy, the booking flow's browser client, the staff app's two call sites and the assistant's optional AI provider (off by default)", () => {
     const offenders = codeFiles
-      .filter((file) => !["/src/lib/api/http.ts", "/src/lib/booking/backend.ts", "/src/lib/booking/client.ts", "/src/admin/lib/client.ts", "/src/admin/lib/server.ts", "/src/agent/remoteProvider.ts"].includes(file.path))
+      .filter((file) => !["/src/lib/api/http.ts", "/src/lib/booking/backend.ts", "/src/lib/booking/client.ts", "/src/admin/lib/client.ts", "/src/admin/lib/server.ts", "/src/agent/remoteProvider.ts", "/src/voice/brain.ts", "/src/lib/voiceBrainGemini.ts"].includes(file.path))
       .filter((file) => /\bfetch\s*\(/.test(file.code))
       .map((file) => file.path);
     expect(offenders).toEqual([]);

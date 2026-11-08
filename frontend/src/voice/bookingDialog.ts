@@ -261,6 +261,11 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
   let rest = withoutPhone(text);
   if (name) for (const part of name.split(" ")) rest = rest.replace(new RegExp(part, "gi"), " ");
 
+  // While a personal detail is asked (name, phone, email), the answer is only that detail: "ayesha at gmail dot com"
+  // must not pick Dr. Ayesha, and "0300..." is not a time. A clear change ("date galat hai, friday karo") still counts.
+  const detailOnly = (asking === "fullName" || asking === "email" || asking === "phone" || asking === "nameCheck") && !WRONG.test(text.toLowerCase());
+  if (detailOnly) return { state, changes, phoneProblem, ambiguousDoctors };
+
   // A lab test named at any point ("CBC", "blood test", "khoon ka test") books the lab and its doctor: never asked again.
   if (!draft().doctorSlug && !draft().labTestSlug) {
     const test = resolveLabTest(rest, pack);

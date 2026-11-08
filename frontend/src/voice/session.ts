@@ -100,7 +100,8 @@ export function isEcho(heard: string, recent: string[]): boolean {
   };
   const h = scriptWords(heard);
   const hLatin = scriptWords(urduToLatin(heard));
-  return recent.some((said) => {
+  // Each sentence on its own, and all of them in order (an echo often runs across two sentences).
+  return [...recent, recent.join(" ")].some((said) => {
     const s = scriptWords(said);
     const sLatin = scriptWords(urduToLatin(said));
     const share = Math.max(covered(h, s), covered(hLatin, sLatin), covered(hLatin, s));

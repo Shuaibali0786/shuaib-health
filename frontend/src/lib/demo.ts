@@ -56,3 +56,20 @@ export function isVoiceEnabled(): boolean {
 export function getVoiceProvider(): "browser" | "azure" {
   return isVoiceEnabled() && process.env.VOICE_PROVIDER?.trim().toLowerCase() === "azure" ? "azure" : "browser";
 }
+
+/**
+ * VOICE_BRAIN (Feature 013): "rules" (the default, free, local) or "gemini" (Google Gemini free tier, used only to
+ * UNDERSTAND a turn the rules could not; booking is still done only by our own code after the patient's Confirm).
+ * The key, GEMINI_API_KEY, is read on the server only and never reaches the browser. Missing key = rules, silently.
+ */
+export function getVoiceBrain(): "rules" | "gemini" {
+  return isVoiceEnabled() && process.env.VOICE_BRAIN?.trim().toLowerCase() === "gemini" ? "gemini" : "rules";
+}
+
+/** Server only: the Gemini key and model, or null when the AI brain is off or has no key (then the rules answer). */
+export function getGeminiSettings(): { key: string; model: string } | null {
+  const key = process.env.GEMINI_API_KEY?.trim();
+  if (getVoiceBrain() !== "gemini" || !key) return null;
+  const model = (process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash").replace(/[^a-z0-9.-]/gi, "");
+  return { key, model };
+}
