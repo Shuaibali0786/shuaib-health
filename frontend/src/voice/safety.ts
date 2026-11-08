@@ -56,20 +56,21 @@ const PRIVATE = ANY(
   "whoever booked", "who (else )?(has|have|had|booked|is booked|got)", "who is booked", "is [a-z]+ booked", "list (all |the |today s |todays )?(bookings|appointments|patients|users)", "all (bookings|appointments|patients)",
   "show (me )?(all |the |today s )?(bookings|appointments|patients|schedule of patients)", "bookings (made )?today", "patient (list|records?|data|details|names?|info)", "other patients?", "dusre (marizon|mareezon|patient)",
   "staff (email|password|list|names?|login|account)", "admin (email|password|login|panel|dashboard)", "command centre", "dashboard (data|login|password)", "reset (the )?(staff|admin) password", "two factor", "2fa",
-  "kis ne book", "kis ki booking", "kiska number", "kiski booking", "dusre ki booking", "sab bookings", "patients ki list", "mareez ki list", "mareezon ki list",
+  "kis ne book", "kis ki booking", "kiska number", "kiski booking", "dusre ki booking", "sab bookings", "patients ki list", "mareez ki list", "mareezon ki list", "dusre (mareez|marizon|mareezon|patient|patients)",
+  "(email|password|phone|number|login|address) of (the |our |this )?(clinic )?(admin|administrator|staff|manager|owner|receptionist)", "(admin|manager|staff|owner|receptionist) (ka|ki) (email|number|phone|password)",
   "spell (out )?the email", "read (me )?the (patient|full) (name|number)", "full (phone|number|name|email)",
 );
 const LOOKUP = ANY(
   "(find|check|look ?up|search|see|show|get|tell me) (my |the |our |his |her )?(booking|appointment|reservation)", "my (booking|appointment) (status|details|time)", "booking (status|check|lookup|dhoondo|dekho|check karni)",
   "(cancel|reschedule|change|move|modify|delete|edit|postpone) (my |the |an? )?(existing )?(booking|appointment)", "(booking|appointment) (cancel|badal|change|reschedule)",
-  "(otp|one time (code|password)|verification code|6 digit code|six digit code|code (is|hai))", "send (me )?(a |the )?code", "meri booking", "mera appointment", "booking ka status", "reference (number )?(lost|bhool|kho|yaad nahi)", "lost (my )?reference", "forgot (my )?reference",
-  "last (4|four) digits", "brute ?force", "try (all )?codes", "guess (the )?(code|reference)",
+  "(otp|one time (code|password)|verification code|6 digit code|six digit code|code (is|hai))", "send (me )?(a |the )?code", "mera appointment (cancel|check|status|kab|dekh|badal)", "booking ka status", "reference (number )?(lost|bhool|kho|yaad nahi)", "lost (my )?reference", "forgot (my )?reference",
+  "meri booking (cancel|check|status|dekh|badal|ka status|ka time|ki details)", "(booking|appointment) (ko )?cancel (kar|karna|karo|karein)", "last (4|four) digits", "brute ?force", "try (all )?codes", "guess (the )?(code|reference)",
 );
 const DOSE = ANY("dose", "dosage", "how many (tablets?|pills?|mg|capsules?|drops?|spoons?)", "kitni (goli|goliyan|dawai|dose|tablet)", "kitne (mg|tablet|goli)", "paracetamol", "panadol", "ibuprofen", "brufen", "aspirin", "antibiotics?", "insulin", "which medicine", "konsi dawai", "kaun si dawai", "what (medicine|medication|tablet) (should|can|do)", "can i take", "should i take", "give my (child|baby|son|daughter|kid)", "mg\\b");
 const RESULTS = ANY(
   "my (hba1c|sugar|cholesterol|blood pressure|bp|creatinine|hemoglobin|haemoglobin|tsh|report|result|results|test result|lab result|scan|x ray|xray|ecg|mri)\\b.{0,30}\\b(is|are|was|came|shows|show|reading|hai|aaya|aayi|aya)",
   "is (this|it|that|my) .{0,25}(normal|bad|high|low|serious|dangerous|okay|fine|ok)", "interpret", "read (my )?(report|result|scan)", "what does (my|this) (report|result|reading)", "report (mein|me) .{0,25}(high|low|zyada|kam|normal)", "(normal|theek) hai (ya|kya)", "should i (worry|be worried)",
-  "kya yeh (serious|khatarnak)", "chinta", "hba1c", "reading",
+  "kya yeh (serious|khatarnak)",
 );
 const DIAGNOSIS = ANY("do i have", "what (disease|illness|condition|infection)", "diagnose", "diagnosis", "what is wrong with me", "kya mujhe .{0,30}(hai|hua)", "mujhe kya (hua|bimari)", "konsi bimari", "kaun si bimari", "is it (cancer|diabetes|covid|dengue|typhoid|malaria)", "kya yeh (cancer|diabetes|dengue|typhoid)", "which doctor is better", "who is the best doctor", "behtar doctor", "best doctor");
 const IS_HUMAN = ANY("are you (a )?(real |actual )?(human|person|man|woman|robot|bot|ai|machine)", "kya aap (insaan|human|robot|bot)", "aap (insaan|robot) hain", "is this a (bot|robot|machine)", "am i talking to a (human|person|real)");

@@ -64,6 +64,9 @@ export function wantsBooking(text: string): boolean {
   return SEE_DOCTOR.test(clean) && !INFO_QUESTION.test(clean);
 }
 
+// "Which departments do you have?" is asked often by voice; the text engine does not list them, so the voice layer does.
+const DEPARTMENT_LIST = /\b(departments?|specialt(?:y|ies)|specialit(?:y|ies)|vibhag)\b.*\b(have|hain|available|offer|list|kaun|konse|kon se|which|what)\b|\b(which|what|kaun|konse|kon se|list)\b.*\b(departments?|specialt(?:y|ies)|specialit(?:y|ies))\b/;
+
 const QUESTION = /^(what|how|when|where|which|who|why|is|are|do|does|can|kya|kab|kitni|kitna|kitne|kahan|kaun|kaise|kaisay|kyun)\b|\?\s*$/i;
 
 function engineAnswer(ctx: RouterContext, mapped: string, lang: VoiceLang): Promise<Omit<RouterResult, "booking" | "offerDoctor" | "lang">> {
@@ -156,6 +159,18 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
   }
 
   // 4. Everything else is the same answer engine as the text chat.
+  if (ctx.mode === "patient" && DEPARTMENT_LIST.test(cleanText(mapped))) {
+    const names = ctx.pack.departments.filter((d) => ctx.pack.doctors.some((doc) => doc.departmentSlug === d.slug)).map((d) => d.name);
+    return {
+      ...base,
+      offerDoctor: false,
+      intent: "departments",
+      text: T(lang, `We have ${names.length} departments with doctors: ${names.join(", ")}. Which one do you need?`, `Hamare paas ${names.length} departments mein doctors hain: ${names.join(", ")}. Aap ko kaun sa chahiye?`),
+      links: [{ label: T(lang, "All departments", "Tamam departments"), href: "/departments" }],
+    };
+  }
   const answer = await engineAnswer(ctx, mapped, lang);
-  return { ...base, ...answer, offerDoctor: false };
+  // A voice caller who asks how booking works is offered the booking right now.
+  const nudge = answer.intent === "booking" && ctx.mode === "patient" ? ` ${T(lang, "I can do it for you right now. Just say: book an appointment.", "Main abhi aap ke liye kar sakti hoon. Bas kahein: appointment book karein.")}` : "";
+  return { ...base, ...answer, text: `${answer.text}${nudge}`, offerDoctor: false };
 }
