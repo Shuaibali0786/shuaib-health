@@ -37,6 +37,31 @@ async function freeSlot(page: Page, doctor: string) {
   return { dayNumber: Number((day?.date ?? "").slice(8, 10)), time: day?.slots[0]?.localTime ?? "10:00" };
 }
 
+/** Collects page errors and console errors, so every flow can prove it ran clean. */
+function watchErrors(page: Page): string[] {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(`console: ${message.text()}`);
+  });
+  return errors;
+}
+
+/** After a turn the panel must settle: never stuck on "Thinking..." or "Speaking...". */
+async function expectSettled(dialog: ReturnType<Page["getByRole"]>) {
+  await expect(dialog.getByRole("status").filter({ hasText: /Thinking|Speaking/ })).toHaveCount(0, { timeout: 20000 });
+}
+
+/** The conversation still works after the booking: a question is answered, End leaves voice mode cleanly. */
+async function finishCleanly(page: Page, dialog: ReturnType<Page["getByRole"]>, errors: string[]) {
+  await expectSettled(dialog);
+  await say(page, "What are your timings?", /Mon–Sat|Monday to Saturday|khula hai/);
+  await expectSettled(dialog);
+  await dialog.getByRole("button", { name: "End", exact: true }).click();
+  await expect(dialog.getByTestId("voice-mode")).toHaveCount(0);
+  expect(errors).toEqual([]);
+}
+
 test.describe("voice receptionist", () => {
   test("is absent when the flags are off (default)", async ({ page }) => {
     test.skip(ON, "flags are on in this run");
@@ -128,8 +153,13 @@ test.describe("voice receptionist", () => {
     await expect(dialog.getByRole("log")).toContainText("Mon–Sat");
   });
 
-  test("English booking by voice: one item at a time, read-back, spoken yes, card with the website slip link", async ({ page }) => {
+  // --- The three full flows (Chromium, the Chrome engine): no dead ends, no errors, no stuck states --------------------
+
+  const OPEN_SLIP = /^(Open my slip|Meri slip kholein)/;
+
+  test("FLOW 1, English by voice: doctor, day, time, name, mobile, email, the card, a spoken yes, Open my slip", async ({ page }) => {
     test.skip(!ON, "run with ASSISTANT_ENABLED=true VOICE_ENABLED=true");
+    const errors = watchErrors(page);
     await installFakeWebSpeech(page);
     const { dayNumber, time } = await freeSlot(page, "dr-bilal-ansari");
     const dialog = await openVoice(page);
@@ -138,40 +168,122 @@ test.describe("voice receptionist", () => {
     await say(page, time, /full name/);
     await say(page, "my name is Sara Noor", /mobile number/);
     await say(page, "zero three one one one two three four five six seven", /email/);
-    await say(page, "skip", /Shall I confirm/);
+    await say(page, "skip", /If everything is correct, say yes or tap Confirm/);
 
-    const summary = dialog.getByTestId("voice-summary");
-    await expect(summary).toContainText("Sara Noor");
-    await expect(summary).toContainText("0311 123 4567");
-    await expect(summary).toContainText("Waiting for your yes");
+    const card = dialog.getByTestId("voice-summary");
+    await expect(card).toContainText("Sara Noor");
+    await expect(card).toContainText("0311 123 4567");
+    await expect(card).toContainText("Dr. Bilal Ansari");
+    await expect(card.getByRole("button", { name: "Confirm" })).toBeVisible();
+    await expect(card.getByRole("button", { name: "Change" })).toBeVisible();
+    await expect.poll(() => spokenText(page), { timeout: 10000 }).toContain("Please check these details");
     await expect.poll(() => spokenText(page), { timeout: 10000 }).toContain("zero three one one, one two three, four five six seven");
     await expect(dialog.getByTestId("voice-slip")).toHaveCount(0); // nothing is booked before the yes
     const axe = await new AxeBuilder({ page }).include("[role='dialog']").withTags(WCAG).analyze();
     expect(axe.violations.map((v) => `${v.id} on ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
 
-    // Say yes only once the read-back has been spoken to the end (a "yes" over the read-back never books).
+    // Say yes only once the details have been read to the end (a "yes" over them never books).
     await expect(listening(dialog)).toBeVisible({ timeout: 15000 });
     await hear(page, "yes");
     const slip = dialog.getByTestId("voice-slip");
     await expect(slip).toBeVisible({ timeout: 10000 });
     await expect(slip.getByTestId("voice-reference")).toHaveText(/^[0-9A-Z]{4} [0-9A-Z]{4} [0-9A-Z]{2}$/);
-    const link = slip.getByRole("link", { name: /View \/ Download slip/ });
-    await expect(link).toHaveAttribute("href", /^\/book-appointment\/confirmed\//);
-    await expect(link).toHaveAttribute("target", "_blank");
-    // The link opens the SAME slip page the website form creates.
+    const link = slip.getByRole("link", { name: OPEN_SLIP });
+    await expect(link).toHaveAttribute("href", /^\/book-appointment\/confirmed\/[^?]+$/);
+    // The button opens the SAME slip page the website form creates.
     const [slipPage] = await Promise.all([page.context().waitForEvent("page"), link.click()]);
     await slipPage.waitForLoadState();
     await expect(slipPage.getByRole("button", { name: /Download your slip/ })).toBeVisible({ timeout: 15000 });
+    await expect(slipPage.getByText("Dr. Bilal Ansari").first()).toBeVisible();
     await slipPage.close();
     await expect.poll(() => spokenText(page), { timeout: 10000 }).toMatch(/Your reference is [0-9A-Z]/);
     await say(page, "book another appointment", /one booking per conversation/);
+    await finishCleanly(page, dialog, errors);
   });
 
-  test("Roman Urdu booking by typing: CBC test -> explanation -> haan -> details -> ji haan -> slip link", async ({ page }) => {
+  test("FLOW 2, Roman Urdu: CBC test explained, offer, haan, details, the card with the TEST and its price, tap Confirm, Meri slip kholein", async ({ page }) => {
     test.skip(!ON, "run with ASSISTANT_ENABLED=true VOICE_ENABLED=true");
-    const lab = await page.request.get("/api/booking/slots/dr-zainab-memon");
-    expect(lab.ok()).toBe(true);
+    const errors = watchErrors(page);
+    await installFakeWebSpeech(page);
     const { dayNumber, time } = await freeSlot(page, "dr-zainab-memon");
+    const dialog = await openVoice(page);
+    await say(page, "mujhe CBC test karwana hai", /Kya main aap ki booking kar doon\?/);
+    await expect(dialog.getByRole("log")).toContainText("Pathology Lab");
+    await expect(dialog.getByRole("log")).toContainText("PKR 800");
+    await say(page, "haan", /Kaun sa din/);
+    await say(page, `${dayNumber} tareekh`, /Kaun sa waqt/);
+    await say(page, time, /poora naam/);
+    await say(page, "mera naam Ayesha Khan hai", /mobile number/);
+    await say(page, "sifar teen sifar sifar double paanch ek do teen char paanch", /email/);
+    await say(page, "nahi", /Confirm dabaiye/);
+
+    const card = dialog.getByTestId("voice-summary");
+    await expect(card).toContainText("Complete Blood Count (CBC) - PKR 800 (sample)");
+    await expect(card).toContainText("0300 551 2345");
+    await expect(card).not.toContainText("PKR 1,500");
+    await expect(card.getByRole("button", { name: "Confirm" })).toBeVisible();
+    // Voice and tap both work: this time the patient taps Confirm.
+    await card.getByRole("button", { name: "Confirm" }).click();
+    const slip = dialog.getByTestId("voice-slip");
+    await expect(slip).toBeVisible({ timeout: 10000 });
+    await expect(dialog.getByRole("log")).toContainText("Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein.");
+    await expect(slip.getByTestId("voice-booked-test")).toContainText("Complete Blood Count (CBC) - PKR 800 (sample)");
+    const link = slip.getByRole("link", { name: OPEN_SLIP });
+    await expect(link).toHaveAttribute("href", /\?test=complete-blood-count$/);
+    // The slip page shows the TEST and its price (and the PDF too), not the doctor's visit fee.
+    const [slipPage] = await Promise.all([page.context().waitForEvent("page"), link.click()]);
+    await slipPage.waitForLoadState();
+    await expect(slipPage.getByRole("button", { name: /Download your slip/ })).toBeVisible({ timeout: 15000 });
+    const slipCard = slipPage.getByRole("article");
+    await expect(slipCard).toContainText("Complete Blood Count");
+    await expect(slipCard).toContainText("PKR 800 (sample)");
+    await expect(slipCard).not.toContainText("Fee");
+    await slipPage.close();
+    await finishCleanly(page, dialog, errors);
+  });
+
+  test("FLOW 3, a correction mid-way: spoken 'number ghalat hai', then Change on one item; each fixes only that item and shows the card again", async ({ page }) => {
+    test.skip(!ON, "run with ASSISTANT_ENABLED=true VOICE_ENABLED=true");
+    const errors = watchErrors(page);
+    await installFakeWebSpeech(page);
+    const { dayNumber, time } = await freeSlot(page, "dr-bilal-ansari");
+    const dialog = await openVoice(page);
+    await say(page, "Dr Bilal se appointment chahiye", /Kaun sa din/);
+    await say(page, `${dayNumber} tareekh`, /Kaun sa waqt/);
+    await say(page, time, /poora naam/);
+    await say(page, "mera naam Ali Raza hai", /mobile number/);
+    await say(page, "zero three zero zero one two three four five six seven", /email/);
+    await say(page, "skip", /Confirm dabaiye/);
+    const card = dialog.getByTestId("voice-summary");
+    await expect(card).toContainText("0300 123 4567");
+
+    // 1) A spoken correction: only the number is asked again, then the card is shown again with the new number.
+    await expect(listening(dialog)).toBeVisible({ timeout: 15000 });
+    await say(page, "number ghalat hai", /mobile number/);
+    await say(page, "zero three two one one two three four five six seven", /Confirm dabaiye/);
+    await expect(card).toContainText("0321 123 4567");
+    await expect(card).toContainText("Ali Raza");
+
+    // 2) Change by tapping: pick the name only.
+    await card.getByRole("button", { name: "Change" }).click();
+    await card.getByRole("button", { name: "Naam" }).click();
+    await expect(dialog.getByRole("log")).toContainText("poora naam kya hai?", { timeout: 8000 });
+    await say(page, "mera naam Ali Hassan hai", /Confirm dabaiye/);
+    await expect(card).toContainText("Ali Hassan");
+    await expect(card).toContainText("0321 123 4567");
+    await expect(dialog.getByTestId("voice-slip")).toHaveCount(0); // still nothing booked
+
+    await expect(listening(dialog)).toBeVisible({ timeout: 15000 });
+    await hear(page, "haan");
+    await expect(dialog.getByTestId("voice-slip")).toBeVisible({ timeout: 10000 });
+    await expect(dialog.getByTestId("voice-slip").getByRole("link", { name: OPEN_SLIP })).toBeVisible();
+    await finishCleanly(page, dialog, errors);
+  });
+
+  test("typing books too, and a 'never mind' ends the booking cleanly (no dead end)", async ({ page }) => {
+    test.skip(!ON, "run with ASSISTANT_ENABLED=true VOICE_ENABLED=true");
+    const errors = watchErrors(page);
+    const { dayNumber, time } = await freeSlot(page, "dr-bilal-ansari");
     await page.goto("/");
     await page.getByRole("button", { name: "Ask us" }).click();
     const dialog = page.getByRole("dialog", { name: /Ask / });
@@ -181,15 +293,18 @@ test.describe("voice receptionist", () => {
       await box.press("Enter");
       await expect(dialog.getByRole("log")).toContainText(expected, { timeout: 8000 });
     };
-    await type("mujhe CBC test karwana hai", "Kya main aap ki booking kar doon?");
-    await type("haan", "Kaun sa din");
-    await type(`${dayNumber} tareekh`, "Kaun sa waqt");
-    await type(time, "poora naam");
-    await type("mera naam Ayesha Khan hai", "mobile number");
-    await type("03005512345", "email");
-    await type("nahi", "confirm kar doon");
-    await type("ji haan", "Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein.");
-    await expect(dialog.getByTestId("voice-slip").getByRole("link", { name: /Slip dekhein/ })).toHaveAttribute("href", /^\/book-appointment\/confirmed\//);
+    await type("I want to book an appointment with Dr Bilal", /Which day/);
+    await type("never mind", /I've stopped the booking/);
+    await expect(dialog.getByTestId("voice-summary")).toHaveCount(0);
+    await type("I want to book an appointment with Dr Bilal", /Which day/);
+    await type(`${dayNumber}th`, /Which time/);
+    await type(time, /full name/);
+    await type("Sara Noor", /mobile/);
+    await type("03111234567", /email/);
+    await type("skip", /tap Confirm/);
+    await dialog.getByTestId("voice-summary").getByRole("button", { name: "Confirm" }).click();
+    await expect(dialog.getByTestId("voice-slip")).toBeVisible({ timeout: 10000 });
+    expect(errors).toEqual([]);
   });
 
   test("an emergency spoken mid-booking gives the number first and stops the booking", async ({ page }) => {

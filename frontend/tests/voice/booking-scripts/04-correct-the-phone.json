@@ -5,9 +5,9 @@
     { "say": "monday at 3 pm", "expect": ["full name"] },
     { "say": "Sara Noor", "expect": ["mobile"] },
     { "say": "03111234567", "expect": ["email"] },
-    { "say": "skip", "expect": ["0311 123 4567", "Shall I confirm"], "submits": 0 },
+    { "say": "skip", "expect": ["zero three one one, one two three, four five six seven", "tap Confirm"], "submits": 0 },
     { "say": "my phone number is wrong", "expect": ["mobile number"], "forbid": ["full name", "Which day", "email"], "submits": 0 },
-    { "say": "03211234567", "expect": ["0321 123 4567", "Shall I confirm"], "forbid": ["0311"], "submits": 0 },
+    { "say": "03211234567", "expect": ["zero three two one, one two three, four five six seven", "tap Confirm"], "forbid": ["zero three one one"], "submits": 0 },
     { "say": "yes", "expect": ["You're booked"], "submits": 1 }
   ],
   "final": { "bookings": 1, "payload": { "mobile": "+923211234567", "fullName": "Sara Noor", "startsAt": "2026-11-09T10:00:00Z" } }

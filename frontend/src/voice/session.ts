@@ -11,6 +11,7 @@ import type { BookingState } from "./bookingDialog";
 import { splitSentences } from "./chunk";
 import { CHECKING, STILL_THERE, TAP_TO_TALK, T, welcomeLine } from "./phrases";
 import type { Conversation, RouterResult } from "./router";
+import { replyLanguage } from "./language";
 import { forSpeech } from "./speechText";
 import type { SpeechPort, Turn, VoiceInfo, VoiceLang, VoiceState } from "./types";
 import { urduSpeech } from "./urduSpeech";
@@ -50,6 +51,7 @@ export type SessionOptions = {
 const SILENCE_MS = 8000;
 const ACK_AFTER_MS = 1000;
 const ECHO_OVERLAP = 0.6;
+const ECHO_MIN_WORDS = 4;
 /** A little slower than the default: warmer, easier to follow. */
 const SPEECH_RATE = 0.95;
 const GREETING = /^(assalam|wa alaikum|salam)/i;
@@ -78,8 +80,8 @@ export class VoiceSession {
   private ended = false;
   private stopped = false;
   private voices: VoiceInfo[] = [];
-  private voicesLoaded = false;
-  /** The one voice for the whole conversation, chosen once and never switched. */
+  private voicesPromise: Promise<void> | null = null;
+  /** The one voice for the whole conversation: chosen from the caller's first sentence, then never switched. */
   private voice: { info: VoiceInfo | null; lang: string; urdu: boolean } | null = null;
   private turnId = 1;
 
@@ -221,7 +223,9 @@ export class VoiceSession {
     if (!text) return;
     if (this.state === "speaking" || this.speaking > 0) {
       if (this.readBackActive) this.overlapped = true;
-      if (overlap(text, this.recent.join(" ")) >= ECHO_OVERLAP) return; // its own voice, not the caller
+      // Its own voice coming back in is a long run of its own words. A short answer ("11:30", "haan") is the patient
+      // answering early, even if those words were just said: it cuts in and counts.
+      if (words(text).length >= ECHO_MIN_WORDS && overlap(text, this.recent.join(" ")) >= ECHO_OVERLAP) return;
       this.interrupt();
     }
     void this.enqueueTurn(text, false);
@@ -279,6 +283,9 @@ export class VoiceSession {
     const allowed = this.throttle.take();
     this.events.onTurn({ id: this.turnId++, from: "you", text, voice: !fromText });
     const lang = this.conversation.ctx.lang;
+    // The first sentence decides the language and the voice, once. (The welcome used the English female voice.)
+    await this.loadVoices();
+    this.lockVoiceFrom(text);
     if (!allowed.ok) {
       const wait =
         allowed.reason === "session"
@@ -325,23 +332,29 @@ export class VoiceSession {
 
   // --- Speaking -----------------------------------------------------------------------------------------
 
-  private async loadVoices(): Promise<void> {
-    if (this.voicesLoaded) return;
-    this.voicesLoaded = true;
-    try {
-      this.voices = await this.port.voices();
-    } catch {
-      this.voices = [];
-    }
+  private loadVoices(): Promise<void> {
+    this.voicesPromise ??= this.port
+      .voices()
+      .then((list) => {
+        this.voices = list;
+      })
+      .catch(() => {
+        this.voices = [];
+      });
+    return this.voicesPromise;
   }
 
-  /** The one warm female voice for this conversation: chosen from the welcome's language, then never changed. */
-  private lockedVoice(): { info: VoiceInfo | null; lang: string; urdu: boolean } {
-    if (this.voice) return this.voice;
+  /** The best warm female voice for a language: an Urdu voice for Roman Urdu when the device has one, else an English one. */
+  private pick(lang: VoiceLang): { info: VoiceInfo | null; lang: string; urdu: boolean } {
     const set = pickVoiceSet(this.voices, "female");
-    const info = this.welcomeLang === "roman" ? (set.urdu ?? set.romanFallback ?? set.english) : (set.english ?? set.romanFallback ?? set.urdu);
-    this.voice = { info, lang: info?.lang ?? (this.welcomeLang === "roman" ? "en-IN" : "en-US"), urdu: Boolean(info?.lang.toLowerCase().startsWith("ur")) };
-    return this.voice;
+    const info = lang === "roman" ? (set.urdu ?? set.romanFallback ?? set.english) : (set.english ?? set.romanFallback ?? set.urdu);
+    return { info, lang: info?.lang ?? (lang === "roman" ? "en-IN" : "en-US"), urdu: Boolean(info?.lang.toLowerCase().startsWith("ur")) };
+  }
+
+  /** From the caller's first sentence: choose the language and the one voice, and keep it for the whole conversation. */
+  private lockVoiceFrom(text: string): void {
+    if (this.voice) return;
+    this.voice = this.pick(replyLanguage(text, "en"));
   }
 
   /** Shows a message in the chat and speaks it. */
@@ -359,7 +372,8 @@ export class VoiceSession {
       return;
     }
     await this.loadVoices();
-    const voice = this.lockedVoice();
+    // The welcome is spoken in the English female voice; after the caller's first sentence the chosen voice is used.
+    const voice = this.voice ?? this.pick("en");
     const sentences = splitSentences(text);
     if (sentences.length === 0) return;
 

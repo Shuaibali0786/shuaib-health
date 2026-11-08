@@ -4,7 +4,7 @@ import { SampleBadge } from "@/components/ui/SampleBadge";
 import { arriveByTime, formatLocalDateWithYear, timeZoneLabel } from "@/lib/booking/labels";
 import { qrModules, qrPath } from "@/lib/booking/qr";
 import type { AppointmentView } from "@/lib/booking/schemas";
-import { ARRIVE_EARLY_MINUTES, SLIP_BRING, SLIP_DEMO_FOOTER, formatBookedOn, zoneLabel } from "@/lib/booking/slip";
+import { ARRIVE_EARLY_MINUTES, SLIP_BRING, SLIP_DEMO_FOOTER, formatBookedOn, zoneLabel, type SlipLabTest } from "@/lib/booking/slip";
 import { formatPkr } from "@/lib/format";
 import type { SiteConfig } from "@/types/content";
 
@@ -31,7 +31,7 @@ type SlipSite = Pick<SiteConfig, "name" | "address" | "generalPhone" | "emergenc
  * The luxury appointment slip (FR-057a): the same design as the downloaded PDF. It shows the masked
  * confirmation only; the full name, mobile number, email and reason are never shown again.
  */
-export function ConfirmationCard({ view, site }: { view: AppointmentView; site: SlipSite }) {
+export function ConfirmationCard({ view, site, labTest }: { view: AppointmentView; site: SlipSite; labTest?: SlipLabTest }) {
   const zone = zoneLabel(view.timeZone);
   const emergency = site.emergencyPhone;
   return (
@@ -83,8 +83,19 @@ export function ConfirmationCard({ view, site }: { view: AppointmentView; site: 
             </dd>
             <dt className="text-muted">Department</dt>
             <dd>{view.department.name}</dd>
-            <dt className="text-muted">Fee</dt>
-            <dd>{formatPkr(view.feePkr)} (sample)</dd>
+            {labTest ? (
+              <>
+                <dt className="text-muted">Test</dt>
+                <dd>
+                  <span className="font-semibold">{labTest.name}</span> - {formatPkr(labTest.pricePkr)} (sample)
+                </dd>
+              </>
+            ) : (
+              <>
+                <dt className="text-muted">Fee</dt>
+                <dd>{formatPkr(view.feePkr)} (sample)</dd>
+              </>
+            )}
             {site.address.length > 0 ? (
               <>
                 <dt className="text-muted">Clinic</dt>

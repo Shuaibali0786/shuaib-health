@@ -58,6 +58,8 @@ export type BookingDraft = {
   phonePartial: string;
   reason: string | null;
   reasonAnswered: boolean;
+  /** The lab test being booked (through the Pathology Lab doctor); the card, read-back and slip show it and its price. */
+  labTestSlug: string | null;
   doctorSlug: string | null;
   departmentSlug: string | null;
   /** Clinic-local date, YYYY-MM-DD. */
@@ -77,6 +79,7 @@ export const EMPTY_DRAFT: BookingDraft = {
   phonePartial: "",
   reason: null,
   reasonAnswered: false,
+  labTestSlug: null,
   doctorSlug: null,
   departmentSlug: null,
   date: null,

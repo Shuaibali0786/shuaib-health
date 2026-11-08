@@ -100,7 +100,7 @@ describe("never invents a slot", () => {
     await w.say("monday");
     const out = await w.say("2:45 pm");
     expect(out.text).toContain("isn't free");
-    expect(out.text).not.toContain("Shall I confirm");
+    expect(out.text).not.toContain("tap Confirm");
     expect(w.submits).toHaveLength(0);
   });
 
@@ -126,7 +126,7 @@ describe("corrections and memory", () => {
     const w = await untilReadBack();
     const name = await w.say("my name is Sara Khan");
     expect(name.text).toContain("Done, Sara Khan.");
-    expect(name.text).toContain("Shall I confirm");
+    expect(name.text).toContain("tap Confirm");
     const doctor = await w.say("make it Dr Maryam");
     expect(doctor.text).toContain("Done, Dr. Maryam Baloch.");
     expect(w.submits).toHaveLength(0);

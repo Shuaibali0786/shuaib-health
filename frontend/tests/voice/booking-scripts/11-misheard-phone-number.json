@@ -8,7 +8,7 @@
     { "say": "0300 1234 56789", "expect": ["mobile number nahi lag raha", "Dobara"], "forbid": ["email", "poora naam"], "submits": 0 },
     { "say": "021 3456 7890", "expect": ["mobile number nahi lag raha"], "submits": 0 },
     { "say": "zero three zero zero one two three four five six seven", "expect": ["email"] },
-    { "say": "skip", "expect": ["0300 123 4567", "confirm kar doon"], "submits": 0 },
+    { "say": "skip", "expect": ["zero three zero zero, one two three, four five six seven", "Confirm dabaiye"], "submits": 0 },
     { "say": "haan kar dein", "expect": ["Aap ki booking ho gayi"], "submits": 1 }
   ],
   "final": { "bookings": 1, "payload": { "mobile": "+923001234567", "fullName": "Ali Raza", "startsAt": "2026-11-13T06:30:00Z" } }

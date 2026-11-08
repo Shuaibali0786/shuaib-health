@@ -7,7 +7,7 @@
     { "say": "Sara Noor", "expect": ["mobile"] },
     { "say": "zero three one one one two three", "expect": ["I heard 0311 123", "rest of the number"], "forbid": ["email"] },
     { "say": "four five six seven", "expect": ["email"] },
-    { "say": "skip", "expect": ["0311 123 4567", "Shall I confirm"] },
+    { "say": "skip", "expect": ["zero three one one, one two three, four five six seven", "tap Confirm"] },
     { "say": "yes", "expect": ["You're booked"], "submits": 1 }
   ],
   "final": { "bookings": 1, "payload": { "mobile": "+923111234567", "startsAt": "2026-11-10T05:00:00Z" } }

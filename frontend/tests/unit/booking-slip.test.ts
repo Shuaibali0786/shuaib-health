@@ -84,6 +84,14 @@ describe("slip PDF", () => {
     }
   });
 
+  it("for a lab test shows the test and its price instead of the doctor's fee", () => {
+    const lab = pdfText(buildSlipPdf(view, clinic, fonts, { name: "Complete Blood Count (CBC)", pricePkr: 800 }));
+    // Parentheses are escaped inside PDF strings.
+    expect(lab).toContain("Complete Blood Count \\(CBC\\) - PKR 800 \\(sample\\)");
+    expect(lab).not.toContain("PKR 2,500");
+    expect(pdfText(buildSlipPdf(view, clinic, fonts))).toContain("PKR 2,500");
+  });
+
   it("never contains unmasked patient details", () => {
     expect(pdf).not.toMatch(FORBIDDEN);
   });

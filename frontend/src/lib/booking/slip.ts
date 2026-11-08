@@ -13,6 +13,12 @@ export { zoneLabel } from "./labels";
 
 const KARACHI = "Asia/Karachi";
 
+/** A lab test booked through the Pathology Lab: the slip shows the test and its price instead of the doctor's fee. */
+export interface SlipLabTest {
+  name: string;
+  pricePkr: number;
+}
+
 export interface SlipClinic {
   name: string;
   address: string[];
@@ -207,7 +213,7 @@ function logoMark(ops: string[], x: number, top: number, size: number, tone: "wa
   }
 }
 
-export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic, fonts: SlipFonts): Uint8Array<ArrayBuffer> {
+export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic, fonts: SlipFonts, labTest?: SlipLabTest): Uint8Array<ArrayBuffer> {
   const ops: string[] = [];
   const rgb = (r: number, g: number, b: number) => `${num(r / 255)} ${num(g / 255)} ${num(b / 255)}`;
   const NAVY = rgb(11, 37, 69);
@@ -342,7 +348,8 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic, fonts: S
   row("Mobile", view.mobileMasked);
   row("Doctor", view.doctor.fullName, view.doctor.specialty);
   row("Department", view.department.name);
-  row("Fee", `${formatPkr(view.feePkr)} (sample)`);
+  if (labTest) row("Test", `${labTest.name} - ${formatPkr(labTest.pricePkr)} (sample)`);
+  else row("Fee", `${formatPkr(view.feePkr)} (sample)`);
   if (clinic.address.length > 0 || clinic.phoneDisplay !== "") {
     text("Clinic", MARGIN, top, "F1", 9, MUTED);
     const lines = [...clinic.address.flatMap((line) => wrap(line, "F1", 10, valueWidth)), ...(clinic.phoneDisplay !== "" ? [clinic.phoneDisplay] : [])];

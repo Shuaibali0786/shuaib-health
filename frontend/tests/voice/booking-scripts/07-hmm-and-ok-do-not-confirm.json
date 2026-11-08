@@ -6,7 +6,7 @@
     { "say": "10", "expect": ["full name"] },
     { "say": "Sara Noor", "expect": ["mobile"] },
     { "say": "03111234567", "expect": ["email"] },
-    { "say": "skip", "expect": ["Shall I confirm"], "submits": 0 },
+    { "say": "skip", "expect": ["tap Confirm"], "submits": 0 },
     { "say": "hmm", "expect": ["Please say yes"], "submits": 0 },
     { "say": "ok", "expect": ["Please say yes"], "submits": 0 },
     { "say": "wait", "expect": ["Please say yes"], "submits": 0 },

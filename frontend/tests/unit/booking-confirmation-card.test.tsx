@@ -28,6 +28,17 @@ const site = {
 };
 
 describe("confirmation card", () => {
+  it("shows the doctor's fee by default, and for a lab test booked by voice the TEST and its price instead", () => {
+    const { unmount } = render(<ConfirmationCard view={view} site={site} />);
+    expect(screen.getByRole("article")).toHaveTextContent("PKR 2,500 (sample)");
+    unmount();
+    render(<ConfirmationCard view={view} site={site} labTest={{ name: "Complete Blood Count (CBC)", pricePkr: 800 }} />);
+    const card = screen.getByRole("article");
+    expect(card).toHaveTextContent("Complete Blood Count (CBC)");
+    expect(card).toHaveTextContent("PKR 800 (sample)");
+    expect(card).not.toHaveTextContent("PKR 2,500");
+  });
+
   it("shows the date with year, time in PKT and the arrive-by time", () => {
     render(<ConfirmationCard view={view} site={site} />);
     const card = screen.getByRole("article");

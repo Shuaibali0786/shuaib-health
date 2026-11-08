@@ -111,7 +111,7 @@ describe("the chat", () => {
     expect(within(dialog).getByRole("log").textContent).not.toMatch(/Mon–Sat/);
   });
 
-  it("books by typing too: 'mujhe CBC test karwana hai' -> explanation -> haan -> one item at a time -> ji haan -> slip link", async () => {
+  it("Roman Urdu by typing: CBC test -> explanation -> haan -> one item at a time -> card with the TEST and its price -> Confirm -> Open my slip", async () => {
     const user = userEvent.setup();
     render(<AssistantLauncher pack={pack} voice />);
     await user.click(screen.getByRole("button", { name: "Ask us" }));
@@ -128,15 +128,62 @@ describe("the chat", () => {
     await type("saade gyarah", "poora naam");
     await type("mera naam Ayesha Khan hai", "mobile number");
     await type("03005512345", "email");
-    expect(within(dialog).getByTestId("voice-summary")).toHaveTextContent("Ayesha Khan");
-    await type("nahi", "confirm kar doon");
+    await type("nahi", "Confirm dabaiye");
+    const card = within(dialog).getByTestId("voice-summary");
+    // The card shows every detail, and the TEST with its price (not the doctor's visit fee).
+    expect(card).toHaveTextContent("Complete Blood Count (CBC) - PKR 800 (sample)");
+    expect(card).toHaveTextContent("Dr. Zainab Memon");
+    expect(card).toHaveTextContent("Monday 9 November");
+    expect(card).toHaveTextContent("Ayesha Khan");
+    expect(card).toHaveTextContent("0300 551 2345");
+    expect(card).not.toHaveTextContent("PKR 1,500");
+    expect(card).not.toHaveTextContent("Fee");
     expect(g.__posts).toHaveLength(0);
-    await type("ji haan", "Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein.");
+    // Tapping Confirm is the patient's own yes (in their language).
+    await user.click(within(card).getByRole("button", { name: "Confirm" }));
+    await waitFor(() => expect(log).toHaveTextContent("Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein."));
     expect(g.__posts).toHaveLength(1);
     const slip = within(dialog).getByTestId("voice-slip");
-    const link = within(slip).getByRole("link", { name: /Slip dekhein \/ download karein/ });
-    expect(link).toHaveAttribute("href", "/book-appointment/confirmed/7K3M9P2QXA");
-    expect(link).toHaveAttribute("target", "_blank");
+    expect(within(slip).getByTestId("voice-booked-test")).toHaveTextContent("Complete Blood Count (CBC) - PKR 800 (sample)");
+    const open = within(slip).getByRole("link", { name: /Meri slip kholein/ });
+    expect(open).toHaveAttribute("href", "/book-appointment/confirmed/7K3M9P2QXA?test=complete-blood-count");
+    expect(open).toHaveAttribute("target", "_blank");
+  }, 30000);
+
+  it("English by typing: Change fixes only the chosen item and shows the card again", async () => {
+    const user = userEvent.setup();
+    render(<AssistantLauncher pack={pack} voice />);
+    await user.click(screen.getByRole("button", { name: "Ask us" }));
+    const dialog = await screen.findByRole("dialog");
+    const log = within(dialog).getByRole("log");
+    const type = async (text: string, expected: string | RegExp) => {
+      await user.type(within(dialog).getByLabelText("Your question"), `${text}{Enter}`);
+      await waitFor(() => expect(log).toHaveTextContent(expected));
+    };
+    await type("I want to book an appointment with Dr Bilal", "Which day");
+    await type("friday at 11:30", "full name");
+    await type("Sara Noor", "mobile");
+    await type("03111234567", "email");
+    await type("skip", "If everything is correct, say yes or tap Confirm.");
+    let card = within(dialog).getByTestId("voice-summary");
+    expect(card).toHaveTextContent("0311 123 4567");
+    expect(card).toHaveTextContent("Fee");
+    // Change -> Mobile: only the number is asked again, then the card comes back with the new number.
+    await user.click(within(card).getByRole("button", { name: "Change" }));
+    await user.click(within(card).getByRole("button", { name: "Mobile" }));
+    await waitFor(() => expect(log).toHaveTextContent("What is your mobile number?"));
+    expect(log.textContent).not.toMatch(/full name[sS]*full name/);
+    await type("03211234567", "If everything is correct");
+    card = within(dialog).getByTestId("voice-summary");
+    expect(card).toHaveTextContent("0321 123 4567");
+    expect(card).toHaveTextContent("Sara Noor");
+    expect(card).toHaveTextContent("Friday 13 November");
+    expect(g.__posts).toHaveLength(0);
+    await user.click(within(card).getByRole("button", { name: "Confirm" }));
+    const slip = await within(dialog).findByTestId("voice-slip");
+    expect(g.__posts).toHaveLength(1);
+    expect(within(slip).getByRole("link", { name: /^Open my slip/ })).toHaveAttribute("href", "/book-appointment/confirmed/7K3M9P2QXA");
+    expect(within(slip).queryByTestId("voice-booked-test")).toBeNull();
   }, 30000);
 });
 
@@ -204,14 +251,14 @@ describe("voice mode", () => {
       ["monday at 3 pm", /full name/],
       ["my name is Sara Noor", /mobile number/],
       ["zero three one one one two three four five six seven", /email/],
-      ["skip", /Shall I confirm/],
+      ["skip", /tap Confirm/],
     ] as const) {
       act(() => port().hear(text));
       await waitFor(() => expect(log).toHaveTextContent(expected));
     }
     const summary = within(dialog).getByTestId("voice-summary");
     expect(summary).toHaveTextContent("0311 123 4567");
-    expect(summary).toHaveTextContent("Waiting for your yes");
+    expect(summary).toHaveTextContent("Please check");
     expect(g.__posts).toHaveLength(0);
     // The read-back is spoken sentence by sentence: say yes once it has finished.
     await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."), { timeout: 8000 });
@@ -219,7 +266,7 @@ describe("voice mode", () => {
     const slip = await within(dialog).findByTestId("voice-slip");
     expect(g.__posts).toHaveLength(1);
     expect(within(slip).getByTestId("voice-reference")).toHaveTextContent("7K3M 9P2Q XA");
-    expect(within(slip).getByRole("link", { name: /View \/ Download slip/ })).toHaveAttribute("href", "/book-appointment/confirmed/7K3M9P2QXA");
-    expect(log).toHaveTextContent("Tap the link below to view and download your slip");
+    expect(within(slip).getByRole("link", { name: /^Open my slip/ })).toHaveAttribute("href", "/book-appointment/confirmed/7K3M9P2QXA");
+    expect(log).toHaveTextContent("Tap the Open my slip button, download your slip");
   }, 30000);
 });

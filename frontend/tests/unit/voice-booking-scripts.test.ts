@@ -25,8 +25,10 @@ describe("voice booking scripts", () => {
     for (const [index, turn] of script.turns.entries()) {
       const out = await world.say(turn.say, { confirmable: turn.confirmable ?? true });
       const where = `${file} turn ${index + 1} ("${turn.say}") -> "${out.text}"`;
-      for (const piece of turn.expect ?? []) expect(out.text.toLowerCase(), where).toContain(piece.toLowerCase());
-      for (const piece of turn.forbid ?? []) expect(out.text.toLowerCase(), where).not.toContain(piece.toLowerCase());
+      // What the patient sees (the chat) and what is read aloud (the read-back has the phone digit by digit).
+      const heard = `${out.text} ${out.spoken ?? ""}`.toLowerCase();
+      for (const piece of turn.expect ?? []) expect(heard, where).toContain(piece.toLowerCase());
+      for (const piece of turn.forbid ?? []) expect(heard, where).not.toContain(piece.toLowerCase());
       if (turn.submits !== undefined) expect(world.submits.length, where).toBe(turn.submits);
     }
     expect(world.ctx.bookingsMade).toBe(script.final.bookings);

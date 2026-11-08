@@ -85,13 +85,49 @@ describe("the welcome", () => {
     expect(t.boundaries).toBeGreaterThan(0);
   });
 
-  it("Roman Urdu: the Urdu welcome in the Urdu voice, with the words in Urdu script for that voice", async () => {
-    const t = build({ welcomeLang: "roman" });
+  it("the welcome is always in the English female voice; a Roman Urdu first sentence then picks the Urdu voice (words in Urdu script) and keeps it", async () => {
+    const t = build();
     void t.session.start();
     await settle(t.port);
-    expect(t.turns[0]?.text).toBe("Assalam o Alaikum! Shuaib Health mein khush aamdeed. Main aap ki AI assistant hoon, bataiye kya madad karoon?");
-    expect(t.port.spoken[0]?.voice).toContain("Uzma");
-    expect(t.port.spoken[0]?.text).toContain("السلام علیکم");
+    expect(t.port.spoken[0]?.voice).toContain("Jenny");
+    const welcomed = t.port.spoken.length;
+    t.port.hear("Assalam o Alaikum, Dr Ayesha ki fee kitni hai?");
+    await settle(t.port);
+    const after = t.port.spoken.slice(welcomed);
+    expect(after.length).toBeGreaterThan(0);
+    expect(after.every((s) => s.voice?.includes("Uzma"))).toBe(true);
+    expect(after.some((s) => s.text.includes("السلام علیکم") || s.text.includes("کی") || s.text.includes("کتنی"))).toBe(true);
+    // One voice for the rest of the call, even when the patient later speaks English.
+    t.port.hear("What are your timings?");
+    await settle(t.port);
+    expect(t.port.spoken.slice(welcomed).every((s) => s.voice?.includes("Uzma"))).toBe(true);
+    expect(t.turns.at(-1)?.text).toContain("We are open");
+  });
+
+  it("an English first sentence keeps the English female voice even if Roman Urdu follows", async () => {
+    const t = build();
+    void t.session.start();
+    await settle(t.port);
+    t.port.hear("What are your timings?");
+    await settle(t.port);
+    t.port.hear("Lab kab khulti hai?");
+    await settle(t.port);
+    expect(new Set(t.port.spoken.map((s) => s.voice))).toEqual(new Set([t.port.spoken[0]?.voice]));
+    expect(t.port.spoken[0]?.voice).toContain("Jenny");
+  });
+
+  it("without an Urdu voice, a Roman Urdu first sentence uses the English female voice that suits it, and keeps it", async () => {
+    const noUrdu = createFakeSpeech({ voices: EDGE.filter((v) => !v.lang.startsWith("ur")) });
+    const t = build({ port: noUrdu });
+    void t.session.start();
+    await settle(t.port);
+    const welcomed = t.port.spoken.length;
+    t.port.hear("mujhe CBC test karwana hai");
+    await settle(t.port);
+    const after = t.port.spoken.slice(welcomed).map((s) => s.voice);
+    expect(after.length).toBeGreaterThan(0);
+    expect(new Set(after).size).toBe(1);
+    expect(after[0]).toContain("Neerja");
   });
 
   it("does not welcome again when the caller already heard it, and still listens", async () => {
@@ -176,6 +212,21 @@ describe("barge-in, echo and the one mic button", () => {
     expect(t.turns).toHaveLength(before);
   });
 
+  it("a short answer given while the assistant is still listing the times (even if it repeats a time it just said) is the patient answering early: it cuts in and counts", async () => {
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    t.port.hear("book an appointment with Dr Bilal");
+    await settle(t.port);
+    t.port.hear("friday");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(t.port.speakingNow).not.toBeNull(); // "On Friday 13 November I have 9:00 AM, 11:30 AM..." is being read
+    t.port.hear("11:30");
+    await settle(t.port);
+    expect(t.turns.filter((x) => x.from === "you").at(-1)?.text).toBe("11:30");
+    expect(t.conversation.ctx.booking?.draft.time).toBe("11:30");
+  });
+
   it("the mic button: a tap while it speaks cuts in; a tap while listening stops; another tap listens again", async () => {
     const t = await speakingSession();
     t.session.toggleMic();
@@ -254,7 +305,7 @@ describe("the safe yes gate, end to end", () => {
       t.port.hear(s);
       await settle(t.port);
     }
-    expect(said(t.port)).toContain("Shall I confirm");
+    expect(said(t.port)).toContain("tap Confirm");
     expect(t.world.submits).toHaveLength(0);
     t.port.hear("yes");
     await settle(t.port);

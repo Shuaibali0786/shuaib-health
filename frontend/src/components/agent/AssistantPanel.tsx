@@ -22,7 +22,7 @@ import type { Turn, VoiceLang } from "@/voice/types";
 
 import { BookedCard } from "./voice/BookedCard";
 import { MicHelp } from "./voice/MicHelp";
-import { SummaryCard } from "./voice/SummaryCard";
+import { CORRECTION_TEXT, SummaryCard, type CorrectionField } from "./voice/SummaryCard";
 import { useDictation } from "./voice/useDictation";
 import type { VoicePrefs } from "./voice/VoiceMode";
 
@@ -33,8 +33,6 @@ export const DEFAULT_VOICE_PREFS: VoicePrefs = { opened: false };
 
 const SLOTS_TIMEOUT_MS = 10_000;
 
-/** The welcome's language: Roman Urdu when the browser prefers Urdu, otherwise English. */
-const browserWelcomeLang = (): VoiceLang => (typeof navigator !== "undefined" && (navigator.languages ?? [navigator.language]).some((l) => /^ur/i.test(l)) ? "roman" : "en");
 
 export type AssistantPanelProps = {
   pack: KnowledgePack;
@@ -68,7 +66,8 @@ const greetingFor = (mode: AgentMode, pack: KnowledgePack) => (mode === "guide" 
  */
 export function AssistantPanel({ pack, provider: providerId = "local", onClose, voice = false, startInVoice = false, voicePrefs = DEFAULT_VOICE_PREFS, onVoicePrefs, micCheck: initialMicCheck = null, voiceProvider = "browser" }: AssistantPanelProps) {
   const provider = useMemo(() => getProvider(pack, providerId), [pack, providerId]);
-  const throttle = useMemo(() => createThrottle(), []);
+  // A booking takes about ten turns, so with voice on the typed limit is as wide as voice mode's (it only stops runaway loops).
+  const throttle = useMemo(() => (voice ? createThrottle(Date.now, 24, 150) : createThrottle()), [voice]);
   const [mode, setMode] = useState<AgentMode>("patient");
   const [messages, setMessages] = useState<Message[]>(() => [{ id: 0, from: "assistant", text: welcomeMessage(pack) }]);
   const [suggestions, setSuggestions] = useState<string[]>(QUICK_REPLIES.en);
@@ -85,8 +84,8 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
   const [dictationNotice, setDictationNotice] = useState<Notice | null>(null);
   const [booking, setBooking] = useState<BookingState | null>(null);
   const [booked, setBooked] = useState<AppointmentView | null>(null);
+  const [bookedTest, setBookedTest] = useState<RouterResult["bookedTest"]>(undefined);
   const [replyLang, setReplyLang] = useState<VoiceLang>("en");
-  const [welcomeLang] = useState<VoiceLang>(browserWelcomeLang);
   // One conversation for typed and spoken turns (the same memory, booking and language), per Patient / owner tab.
   const conversation = useMemo(
     () =>
@@ -147,12 +146,16 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     setSuggestions(to === "guide" ? GUIDE_SUGGESTIONS : QUICK_REPLIES.en);
     setBooking(null);
     setBooked(null);
+    setBookedTest(undefined);
   }
 
   /** What a turn (typed or spoken) changed: the booking card, the slip card, the reply language. */
   function onResult(result: RouterResult) {
     setBooking(result.booking && result.booking.phase !== "booked" && result.booking.phase !== "failed" ? result.booking : null);
-    if (result.booked) setBooked(result.booked);
+    if (result.booked) {
+      setBooked(result.booked);
+      setBookedTest(result.bookedTest);
+    }
     setReplyLang(result.lang);
   }
 
@@ -203,12 +206,14 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
   const showVoice = voice && (caps.listen || caps.speak);
 
   // The booking card (while details are collected) and the slip card (once booked), inside the conversation.
-  const confirmByTap = () => (voiceOn && voiceSubmit.current ? voiceSubmit.current("yes") : void ask("yes"));
+  // Tapping Confirm is the patient's own yes; tapping Change on one item says that item is wrong (the same as saying it).
+  const confirmByTap = () => void ask(replyLang === "roman" ? "haan" : "yes");
+  const correctByTap = (field: CorrectionField) => void ask(CORRECTION_TEXT[replyLang][field]);
   const cards: ReactNode =
     booking || booked ? (
       <>
-        {booking ? <SummaryCard state={booking} pack={pack} onConfirm={confirmByTap} onChange={() => input.current?.focus()} /> : null}
-        {booked ? <BookedCard view={booked} lang={replyLang} /> : null}
+        {booking ? <SummaryCard key={booking.phase} state={booking} pack={pack} lang={replyLang} onConfirm={confirmByTap} onCorrect={correctByTap} /> : null}
+        {booked ? <BookedCard view={booked} lang={replyLang} test={bookedTest} /> : null}
       </>
     ) : null;
 
@@ -283,7 +288,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
           <VoiceMode
             key={mode}
             conversation={conversation}
-            welcomeLang={welcomeLang}
+            welcomeLang="en"
             provider={voiceProvider}
             prefs={prefs}
             onPrefs={setPrefs}

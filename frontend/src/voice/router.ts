@@ -44,6 +44,8 @@ export type RouterResult = {
   booking: BookingState | null;
   offer: Offer | null;
   booked?: AppointmentView;
+  /** For a lab booking: the test (and its public price) that the booked card and the slip show. */
+  bookedTest?: { slug: string; name: string; pricePkr: number };
   /** The reply is a booking read-back (or a re-ask): the session arms the "yes" after it is spoken. */
   readBack?: boolean;
   /** An emergency: the session stops everything and speaks this first. */
@@ -153,7 +155,7 @@ function prefillFor(ctx: RouterContext, offer: Offer): Partial<BookingDraft> {
     const test = ctx.pack.labTests.find((t) => t.slug === offer.testSlug);
     const lab = labDepartment(ctx.pack);
     const only = lab?.doctors.length === 1 ? lab.doctors[0] : undefined;
-    return { departmentSlug: lab?.slug ?? null, doctorSlug: only?.slug ?? null, reason: test ? `${test.name} test` : null };
+    return { departmentSlug: lab?.slug ?? null, doctorSlug: only?.slug ?? null, reason: test ? `${test.name} test` : null, labTestSlug: test?.slug ?? null };
   }
   if (offer.kind === "doctor") {
     const doctor = ctx.pack.doctors.find((d) => d.slug === offer.doctorSlug);
@@ -194,6 +196,14 @@ async function startBooking(ctx: RouterContext, input: RouterInput, lang: VoiceL
   };
 }
 
+function testOf(pack: KnowledgePack, slug: string | null): RouterResult["bookedTest"] {
+  const test = slug ? pack.labTests.find((t) => t.slug === slug) : undefined;
+  return test ? { slug: test.slug, name: test.name, pricePkr: test.pricePkr } : undefined;
+}
+
+// "Never mind" while a booking is being collected: stop it cleanly, so the conversation never gets stuck.
+const ABANDON = /^(please )?(cancel|stop|never ?mind|forget it|leave it|chhor do|chor do|rehne do|rehne den|nahi chahiye|mat karo|band karo)( (this|it|the|my) (booking|appointment))?$/;
+
 const oneBookingOnly = (lang: VoiceLang) =>
   T(
     lang,
@@ -207,6 +217,11 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
   const mapped = urduToLatin(input.text);
   const lang = replyLanguage(input.text, ctx.lang);
   const base = { lang, booking: ctx.booking, offer: ctx.offer };
+
+  // 0. "Never mind" while a booking is open ends it (before the guards: it says nothing and changes nothing else).
+  if (ctx.mode === "patient" && ctx.booking && ["collecting", "awaiting_yes", "failed"].includes(ctx.booking.phase) && ABANDON.test(cleanText(mapped))) {
+    return { ...base, booking: null, offer: null, intent: "booking_abandoned", text: T(lang, "No problem, I've stopped the booking. Is there anything else I can help you with?", "Koi baat nahi, maine booking rok di hai. Kya aur kisi cheez mein madad karoon?") };
+  }
 
   // 1. Safety first. It cannot be switched off by any dialog state.
   const guarded = guardTurn(mapped, ctx.pack, lang);
@@ -241,6 +256,7 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
       spoken: out.spoken,
       links: out.links,
       booked: out.booked,
+      bookedTest: out.booked ? testOf(ctx.pack, out.state.draft.labTestSlug) : undefined,
       readBack: out.readBack,
     };
   }

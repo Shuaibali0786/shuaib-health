@@ -97,7 +97,7 @@ const FIELD_LABELS = {
   email: ["email", "mail"],
   reason: ["reason", "wajah"],
 } as const;
-const WRONG = /\b(galat|wrong|incorrect|change|badal|badlo|badalna|mistake|not right|theek nahi|thik nahi)\b/;
+const WRONG = /\b(galat|ghalat|ghalti|wrong|incorrect|change|badal|badlo|badalna|mistake|not right|theek nahi|thik nahi)\b/;
 
 const first = (name: string) => name.split(" ")[0] ?? name;
 const doctorOf = (pack: KnowledgePack, slug: string | null) => (slug ? pack.doctors.find((d) => d.slug === slug) : undefined);
@@ -393,24 +393,30 @@ function readBack(state: BookingState, deps: DialogDeps, lang: VoiceLang): { tex
   const dept = deps.pack.departments.find((x) => x.slug === (doc?.departmentSlug ?? d.departmentSlug))?.name ?? "";
   const when = `${speakDate(d.date as string)} ${T(lang, "at", "")} ${speakTime(d.time as string)}`.replace(/\s+/g, " ");
   const fee = doc ? formatPkr(doc.feePkr) : "";
+  const test = d.labTestSlug ? deps.pack.labTests.find((t) => t.slug === d.labTestSlug) : undefined;
   const phone = d.phone as string;
-  const rules = T(lang, "Saying yes means you accept the clinic's booking rules, which are on our website.", "Haan kehne ka matlab hai ke aap clinic ke booking rules maante hain, jo hamari website par hain.");
-  const ask = T(lang, "Shall I confirm?", "Kya main confirm kar doon?");
-  const head = T(lang, "Let me read it back.", "Main dohrati hoon.");
+  const rules = T(lang, "Confirming means you accept the clinic's booking rules, which are on our website.", "Confirm karne ka matlab hai ke aap clinic ke booking rules maante hain, jo hamari website par hain.");
+  const head = T(lang, "Please check these details.", "Barah-e-meherbani yeh tafseelat check karein.");
   const lines = (spokenPhone: boolean, spokenEmail: boolean) =>
     [
       T(lang, `Name: ${d.fullName}.`, `Naam: ${d.fullName}.`),
       T(lang, `Phone: ${spokenPhone ? speakPhone(phone) : groupPhone(phone)}.`, `Phone: ${spokenPhone ? speakPhone(phone) : groupPhone(phone)}.`),
       T(lang, `Doctor: ${doc?.name ?? ""}${dept ? `, ${dept}` : ""}.`, `Doctor: ${doc?.name ?? ""}${dept ? `, ${dept}` : ""}.`),
       T(lang, `When: ${when}.`, `Kab: ${when}.`),
-      d.reason ? T(lang, `Reason: ${d.reason}.`, `Wajah: ${d.reason}.`) : "",
+      d.reason && !test ? T(lang, `Reason: ${d.reason}.`, `Wajah: ${d.reason}.`) : "",
       d.email ? T(lang, `Email: ${spokenEmail ? speakEmail(d.email) : d.email}.`, `Email: ${spokenEmail ? speakEmail(d.email) : d.email}.`) : "",
-      fee ? T(lang, `Visit fee: ${fee} (sample price).`, `Visit fee: ${fee} (sample qeemat).`) : "",
+      test ? T(lang, `Test: ${test.name}, ${formatPkr(test.pricePkr)} (sample price).`, `Test: ${test.name}, ${formatPkr(test.pricePkr)} (sample qeemat).`) : fee ? T(lang, `Fee: ${fee} (sample price).`, `Fee: ${fee} (sample qeemat).`) : "",
     ]
       .filter(Boolean)
       .join(" ");
-  return { text: `${head} ${lines(false, false)} ${rules} ${ask}`, spoken: `${head} ${lines(true, true)} ${rules} ${ask}` };
+  // The chat shows the filled card and one short line; the details are also read aloud (phone digit by digit).
+  const ask = confirmLine(lang);
+  return { text: ask, spoken: `${head} ${lines(true, true)} ${rules} ${ask}` };
 }
+
+/** The line that asks the patient to check the card and confirm (by voice or by tapping Confirm). */
+export const confirmLine = (lang: VoiceLang): string =>
+  T(lang, "Please check these details. If everything is correct, say yes or tap Confirm.", "Barah-e-meherbani yeh tafseelat check karein. Agar sab theek hai to haan kahein ya Confirm dabaiye.");
 
 // --- One turn ---------------------------------------------------------------------------------------------
 
@@ -474,7 +480,7 @@ export async function bookingStep(start: BookingState, input: Input, deps: Dialo
     if (answer === "yes") {
       if (!input.confirmable) {
         // The caller spoke while the read-back was still being read (or it could be an echo): ask again, never book.
-        const again = T(lang, "Just to be sure, shall I confirm this booking?", "Pakka karne ke liye, kya main yeh booking confirm kar doon?");
+        const again = T(lang, "Just to be sure: please say yes or tap Confirm.", "Pakka karne ke liye: haan kahein ya Confirm dabaiye.");
         return reply(state, again, { readBack: true });
       }
       return submit(state, deps, lang);
@@ -489,7 +495,7 @@ export async function bookingStep(start: BookingState, input: Input, deps: Dialo
       state = { ...state, phase: "collecting", asking: null, key: null };
       return reply(state, T(lang, "No problem, I won't book it. What would you like to change?", "Koi baat nahi, main book nahi karungi. Aap kya badalna chahenge?"));
     }
-    return reply(state, T(lang, "Please say yes to confirm, or tell me what to change.", "Confirm karne ke liye haan kahein, ya bata dein ke kya badalna hai."), { readBack: true });
+    return reply(state, T(lang, "Please say yes or tap Confirm, or tell me what to change.", "Haan kahein ya Confirm dabaiye, ya bata dein ke kya badalna hai."), { readBack: true });
   }
 
   const applied = applyUtterance(state, text, deps);
@@ -542,7 +548,7 @@ async function submit(start: BookingState, deps: DialogDeps, lang: VoiceLang): P
       const base = (ref: string) =>
         T(
           lang,
-          `You're booked, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Your reference is ${ref}. Tap the link below to view and download your slip, and bring it with you to the clinic.`,
+          `You're booked, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Your reference is ${ref}. Tap the Open my slip button, download your slip, and bring it with you to the clinic.`,
           `Aap ki booking ho gayi, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Aap ka reference ${ref} hai. Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein.`,
         );
       return reply(done, base(groupReference(v.reference)), { spoken: base(speakReference(v.reference)), booked: v });

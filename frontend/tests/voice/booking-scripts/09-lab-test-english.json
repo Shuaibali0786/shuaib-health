@@ -9,7 +9,7 @@
     { "say": "11:30", "expect": ["full name"] },
     { "say": "Sara Noor", "expect": ["mobile"] },
     { "say": "03111234567", "expect": ["email"] },
-    { "say": "skip", "expect": ["Lipid Profile test", "Shall I confirm"] },
+    { "say": "skip", "expect": ["Test: Lipid Profile", "tap Confirm"] },
     { "say": "yes", "expect": ["You're booked"], "submits": 1 }
   ],
   "final": { "bookings": 1, "payload": { "doctorSlug": "dr-zainab-memon", "reason": "Lipid Profile test", "startsAt": "2026-11-10T06:30:00Z" } }
