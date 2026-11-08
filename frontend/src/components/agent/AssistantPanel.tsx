@@ -86,6 +86,8 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
   const [booked, setBooked] = useState<AppointmentView | null>(null);
   const [bookedTest, setBookedTest] = useState<RouterResult["bookedTest"]>(undefined);
   const [replyLang, setReplyLang] = useState<VoiceLang>("en");
+  // Short answers to tap for the last question (free times, departments, tests). Tapping one says it.
+  const [options, setOptions] = useState<string[]>([]);
   // One conversation for typed and spoken turns (the same memory, booking and language), per Patient / owner tab.
   const conversation = useMemo(
     () =>
@@ -108,6 +110,8 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     [pack, mode, provider],
   );
   const next = useRef(1);
+  /** The chat still shows only the written welcome (voice mode's spoken welcome then replaces it). */
+  const greetingOnly = useRef(true);
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
   const voiceSubmit = useRef<((text: string) => void) | null>(null);
@@ -135,6 +139,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
   const dictation = useDictation({ lang: "en", getDraft: () => draftRef.current, setDraft, onNotice: setDictationNotice });
 
   function push(message: Omit<Message, "id">) {
+    greetingOnly.current = false;
     const id = next.current++;
     setMessages((list) => [...list, { ...message, id }]);
   }
@@ -143,10 +148,12 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     if (to === mode) return;
     setMode(to);
     setMessages([{ id: next.current++, from: "assistant", text: greetingFor(to, pack) }]);
+    greetingOnly.current = true;
     setSuggestions(to === "guide" ? GUIDE_SUGGESTIONS : QUICK_REPLIES.en);
     setBooking(null);
     setBooked(null);
     setBookedTest(undefined);
+    setOptions([]);
   }
 
   /** What a turn (typed or spoken) changed: the booking card, the slip card, the reply language. */
@@ -157,6 +164,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
       setBookedTest(result.bookedTest);
     }
     setReplyLang(result.lang);
+    setOptions(result.options ?? []);
   }
 
   async function ask(question: string) {
@@ -199,6 +207,13 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
   }
 
   function onVoiceTurn(turn: Turn) {
+    if (turn.from === "you") setOptions([]);
+    // Voice mode's spoken welcome replaces the written one, so the chat never shows two welcomes.
+    if (turn.from === "assistant" && greetingOnly.current) {
+      greetingOnly.current = false;
+      setMessages([{ id: next.current++, from: "assistant", text: turn.text, links: turn.links }]);
+      return;
+    }
     push({ from: turn.from, text: turn.text, links: turn.links });
   }
 
@@ -209,11 +224,24 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
   // Tapping Confirm is the patient's own yes; tapping Change on one item says that item is wrong (the same as saying it).
   const confirmByTap = () => void ask(replyLang === "roman" ? "haan" : "yes");
   const correctByTap = (field: CorrectionField) => void ask(CORRECTION_TEXT[replyLang][field]);
+  const choose = (option: string) => {
+    setOptions([]);
+    void ask(option);
+  };
   const cards: ReactNode =
-    booking || booked ? (
+    booking || booked || options.length ? (
       <>
         {booking ? <SummaryCard key={booking.phase} state={booking} pack={pack} lang={replyLang} onConfirm={confirmByTap} onCorrect={correctByTap} /> : null}
         {booked ? <BookedCard view={booked} lang={replyLang} test={bookedTest} /> : null}
+        {options.length ? (
+          <div role="group" aria-label={replyLang === "roman" ? "Jawab chunein" : "Choose an answer"} data-testid="assistant-options" className="flex flex-wrap gap-2">
+            {options.map((option) => (
+              <button key={option} type="button" onClick={() => choose(option)} disabled={paused} className="min-h-11 rounded-pill border border-teal-700 bg-white px-3.5 text-sm font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-50">
+                {option}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </>
     ) : null;
 

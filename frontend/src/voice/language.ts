@@ -32,6 +32,37 @@ const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 
 const WORDS: Record<string, string> = {
   ڈاکٹر: "doctor",
+  علاج: "ilaaj",
+  کروانا: "karwana",
+  کروانی: "karwani",
+  کرانا: "karwana",
+  کروانے: "karwana",
+  بلڈ: "blood",
+  خونی: "khooni",
+  کرو: "karo",
+  کر: "kar",
+  سکتی: "sakti",
+  سکتے: "sakte",
+  ہو: "ho",
+  کلینک: "clinic",
+  چھٹی: "chutti",
+  کھلی: "khuli",
+  تکلیف: "takleef",
+  الرجی: "allergy",
+  شوگر: "sugar",
+  ڈاٹ: "dot",
+  ایٹ: "at",
+  ریٹ: "rate",
+  دی: "the",
+  جیمیل: "gmail",
+  کام: "com",
+  بک: "book",
+  کروں: "karoon",
+  چاہتا: "chahta",
+  چاہتی: "chahti",
+  ٹیسٹنگ: "testing",
+  مسئلہ: "masla",
+  دانتوں: "daant",
   ڈاکٹرز: "doctors",
   وقت: "waqt",
   ٹائمنگ: "timing",
@@ -164,6 +195,9 @@ export function urduToLatin(text: string): string {
   });
   return digits
     .join("")
+    .replace(/سی\s*بی\s*سی/g, "cbc")
+    .replace(/ای\s*میل/g, "email")
+    .replace(/جی\s*میل/g, "gmail")
     .replace(/[؟۔،]/g, " ")
     .split(/\s+/)
     .filter(Boolean)

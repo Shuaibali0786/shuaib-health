@@ -44,7 +44,7 @@ export function BookedCard({ view, lang, test }: { view: AppointmentView; lang: 
         <span className="sr-only">{T(lang, "(opens in a new tab)", "(naye tab mein khulega)")}</span>
       </a>
       <p className="mt-2 text-xs text-ink">
-        {T(lang, "Tap the button, download your slip, and bring it with you to the clinic.", "Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein.")}
+        {T(lang, "Download the slip, save it on your phone, and bring it with you to the clinic.", "Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.")}
       </p>
     </section>
   );

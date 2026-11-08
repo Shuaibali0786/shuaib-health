@@ -30,7 +30,7 @@ const SYMPTOM =
 const CHILD = /\b(child|children|kid|kids|baby|infant|bacha|bachay|bachi|bachey|bachon|beta|beti|son|daughter|toddler)\b/;
 const SYMPTOM_DEPARTMENTS: Array<{ slug: string; words: RegExp }> = [
   { slug: "dental", words: /\b(tooth|teeth|toothache|daant|dant|gum|gums|cavity|jaw)\b/ },
-  { slug: "dermatology", words: /\b(skin|rash|itch|itching|khujli|kharish|acne|pimples?|eczema|allergy on skin|daane)\b/ },
+  { slug: "dermatology", words: /\b(skin|rash|itch|itching|khujli|kharish|acne|pimples?|eczema|allergy|allergies|allergic|daane)\b/ },
   { slug: "gynecology", words: /\b(pregnan\w*|period|periods|menstrual|haamla)\b/ },
   { slug: "cardiology", words: /\b(palpitations?|bp|blood pressure|heartbeat)\b/ },
 ];

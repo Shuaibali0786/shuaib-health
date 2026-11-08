@@ -1,0 +1,22 @@
+{
+  "name": "Owner test: 'are booking karo blood Khooni' is a blood test booking, in Roman Urdu",
+  "turns": [
+    {
+      "say": "are booking karo blood Khooni",
+      "expect": [
+        "main aap ki booking kar rahi hoon",
+        "Complete Blood Count (CBC)",
+        "Kaun sa din"
+      ],
+      "forbid": [
+        "Which day",
+        "nahi maloom",
+        "I don't know",
+        "Sample Road"
+      ]
+    }
+  ],
+  "final": {
+    "bookings": 0
+  }
+}

@@ -83,7 +83,7 @@ export function SummaryCard({ state, pack, lang, onConfirm, onCorrect }: Props) 
       </dl>
       {waiting ? (
         <>
-          <p className="mt-3 text-sm font-semibold text-navy-900">{T(lang, "Please check these details. If everything is correct, say yes or tap Confirm.", "Barah-e-meherbani yeh tafseelat check karein. Agar sab theek hai to haan kahein ya Confirm dabaiye.")}</p>
+          <p className="mt-3 text-sm font-semibold text-navy-900">{T(lang, "Please check, then say yes or tap Confirm.", "Barah-e-meherbani check karein, phir haan kahein ya Confirm dabaiye.")}</p>
           <div className="mt-2 flex gap-2">
             <button type="button" onClick={onConfirm} className="inline-flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-control bg-navy-900 px-4 text-base font-semibold text-white">
               <Check className="size-5" aria-hidden="true" />

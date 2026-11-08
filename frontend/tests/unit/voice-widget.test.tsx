@@ -141,7 +141,7 @@ describe("the chat", () => {
     expect(g.__posts).toHaveLength(0);
     // Tapping Confirm is the patient's own yes (in their language).
     await user.click(within(card).getByRole("button", { name: "Confirm" }));
-    await waitFor(() => expect(log).toHaveTextContent("Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein."));
+    await waitFor(() => expect(log).toHaveTextContent("Slip download karke mobile mein save karein aur clinic aate waqt saath laayein."));
     expect(g.__posts).toHaveLength(1);
     const slip = within(dialog).getByTestId("voice-slip");
     expect(within(slip).getByTestId("voice-booked-test")).toHaveTextContent("Complete Blood Count (CBC) - PKR 800 (sample)");
@@ -164,7 +164,7 @@ describe("the chat", () => {
     await type("friday at 11:30", "full name");
     await type("Sara Noor", "mobile");
     await type("03111234567", "email");
-    await type("skip", "If everything is correct, say yes or tap Confirm.");
+    await type("skip", "Please check, then say yes or tap Confirm.");
     let card = within(dialog).getByTestId("voice-summary");
     expect(card).toHaveTextContent("0311 123 4567");
     expect(card).toHaveTextContent("Fee");
@@ -173,7 +173,7 @@ describe("the chat", () => {
     await user.click(within(card).getByRole("button", { name: "Mobile" }));
     await waitFor(() => expect(log).toHaveTextContent("What is your mobile number?"));
     expect(log.textContent).not.toMatch(/full name[sS]*full name/);
-    await type("03211234567", "If everything is correct");
+    await type("03211234567", "Please check, then say yes");
     card = within(dialog).getByTestId("voice-summary");
     expect(card).toHaveTextContent("0321 123 4567");
     expect(card).toHaveTextContent("Sara Noor");
@@ -187,7 +187,52 @@ describe("the chat", () => {
   }, 30000);
 });
 
+describe("the owner's real messages, typed", () => {
+  it("'boking karo blod ki test karnekiay' starts the blood test booking with tappable days; tapping one moves on", async () => {
+    const user = userEvent.setup();
+    render(<AssistantLauncher pack={pack} voice />);
+    await user.click(screen.getByRole("button", { name: "Ask us" }));
+    const dialog = await screen.findByRole("dialog");
+    const log = within(dialog).getByRole("log");
+    await user.type(within(dialog).getByLabelText("Your question"), "boking karo blod ki test karnekiay{Enter}");
+    await waitFor(() => expect(log).toHaveTextContent("Kaun sa din"));
+    expect(log).toHaveTextContent("Pathology Lab");
+    expect(log).not.toHaveTextContent("kis doctor");
+    const choices = within(dialog).getByTestId("assistant-options");
+    const firstDay = within(choices).getAllByRole("button")[0] as HTMLElement;
+    await user.click(firstDay);
+    await waitFor(() => expect(log).toHaveTextContent("Kaun sa waqt"));
+    const times = within(within(dialog).getByTestId("assistant-options")).getAllByRole("button");
+    expect(times.length).toBeGreaterThanOrEqual(2);
+    await user.click(times[0] as HTMLElement);
+    await waitFor(() => expect(log).toHaveTextContent("poora naam"));
+    expect(within(dialog).queryByTestId("assistant-options")).toBeNull();
+  }, 30000);
+
+  it("'mujhy elaj karwana hia' asks what the problem is, never 'I don't know'", async () => {
+    const user = userEvent.setup();
+    render(<AssistantLauncher pack={pack} voice />);
+    await user.click(screen.getByRole("button", { name: "Ask us" }));
+    const dialog = await screen.findByRole("dialog");
+    const log = within(dialog).getByRole("log");
+    await user.type(within(dialog).getByLabelText("Your question"), "mujhy elaj karwana hia{Enter}");
+    await waitFor(() => expect(log).toHaveTextContent("Aap ko kya takleef hai"));
+    expect(log).not.toHaveTextContent("nahi maloom");
+    await user.click(within(within(dialog).getByTestId("assistant-options")).getByRole("button", { name: "Daant (Dental)" }));
+    await waitFor(() => expect(log).toHaveTextContent("Dental department"));
+  }, 30000);
+});
+
 describe("voice mode", () => {
+  it("shows ONE welcome: the spoken welcome replaces the written one", async () => {
+    const user = userEvent.setup();
+    const dialog = await openVoiceByBubble(user);
+    await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
+    const log = within(dialog).getByRole("log");
+    expect(log.textContent?.match(/Welcome to Shuaib Health/g)?.length).toBe(1);
+    expect(log).not.toHaveTextContent("Hello! Welcome");
+  });
+
   it("opens from the bubble: orb, status, the welcome, and only a mic button and End", async () => {
     const user = userEvent.setup();
     const dialog = await openVoiceByBubble(user);
@@ -267,6 +312,6 @@ describe("voice mode", () => {
     expect(g.__posts).toHaveLength(1);
     expect(within(slip).getByTestId("voice-reference")).toHaveTextContent("7K3M 9P2Q XA");
     expect(within(slip).getByRole("link", { name: /^Open my slip/ })).toHaveAttribute("href", "/book-appointment/confirmed/7K3M9P2QXA");
-    expect(log).toHaveTextContent("Tap the Open my slip button, download your slip");
+    expect(log).toHaveTextContent("Tap Open my slip, download the slip, save it on your phone");
   }, 30000);
 });

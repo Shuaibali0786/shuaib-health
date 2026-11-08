@@ -73,7 +73,10 @@ export class VoiceSession {
   // A booking by voice takes about ten turns, so the limit is wider than the typed chat's 8 a minute. It only stops runaway loops.
   private readonly throttle = createThrottle(Date.now, 24, 150);
   private readonly pauseMs: number;
-  private readonly listenCode: string;
+  /** The language the browser listens in: English first, Urdu (ur-PK) once the caller speaks Urdu or English listening hears nonsense. */
+  private listenLang: string;
+  /** The listening language was already switched since the last understood turn (switch once, then ask again). */
+  private switchedSinceUnderstood = false;
   private readonly welcomeLang: VoiceLang;
 
   private state: VoiceState = "idle";
@@ -108,7 +111,7 @@ export class VoiceSession {
     this.welcomeLang = options.welcomeLang ?? "en";
     this.openingDone = Boolean(options.skipOpening);
     this.pauseMs = options.pauseMs ?? 220;
-    this.listenCode = options.listenCode ?? "en-IN";
+    this.listenLang = options.listenCode ?? "en-US";
     if (!this.openingDone) this.conversation.ctx.lang = this.welcomeLang;
   }
 
@@ -198,12 +201,16 @@ export class VoiceSession {
     }
     if (this.speaking > 0) return;
     this.setState("listening");
-    this.port.listen(this.listenCode, {
+    this.listenNow();
+    this.armSilence();
+  }
+
+  private listenNow(): void {
+    this.port.listen(this.listenLang, {
       onInterim: (text) => this.onInterim(text),
       onFinal: (text) => this.onFinal(text),
       onError: (code) => this.onListenError(code),
     });
-    this.armSilence();
   }
 
   private onInterim(text: string): void {
@@ -319,6 +326,27 @@ export class VoiceSession {
     this.ackTimer = null;
     if (this.ended) return;
 
+    // Listening follows the caller's language: Roman Urdu or Urdu script switches to Urdu listening (ur-PK, which Chrome
+    // supports). A spoken turn nothing could be made of usually means the wrong listening language ("CBC test karwana"
+    // heard in English becomes "Qawwali"): switch once and ask again, instead of saying "I don't know".
+    const garbled = !fromText && (result.intent === "unknown" || result.intent === "guide_unknown");
+    if (garbled && !this.switchedSinceUnderstood) {
+      const toUrdu = this.listenLang.startsWith("en");
+      this.setListenLang(toUrdu ? "ur-PK" : "en-US");
+      this.switchedSinceUnderstood = true;
+      this.conversation.ctx.lang = toUrdu ? "roman" : "en";
+      result = {
+        ...result,
+        lang: this.conversation.ctx.lang,
+        intent: "heard_again",
+        links: undefined,
+        spoken: undefined,
+        text: toUrdu ? "Maaf kijiye, main theek se sun nahi saki. Dobara bataiye, aap Urdu mein bhi bol sakte hain." : "Sorry, I didn't catch that. Please say it again, in English or Urdu.",
+      };
+    } else if (!garbled) {
+      this.switchedSinceUnderstood = false;
+      if (result.lang === "roman" && this.listenLang.startsWith("en")) this.setListenLang("ur-PK");
+    }
     this.events.onResult(result);
     if (result.urgent) {
       // An emergency stops everything else: cut off any acknowledgement and speak the number now.
@@ -419,6 +447,24 @@ export class VoiceSession {
       return;
     }
     this.beginListening();
+  }
+
+  /** The language listening uses from the next time it starts (stopping now, so the switch takes effect right away). */
+  private setListenLang(code: string): void {
+    if (this.listenLang === code) return;
+    this.listenLang = code;
+    this.port.stopListening();
+    if (this.state === "listening") {
+      this.beginListening();
+      return;
+    }
+    // While it thinks or speaks, keep listening (in the new language) so the caller can still answer early or cut in.
+    if (!this.ended && !this.stopped && this.port.canListen) this.listenNow();
+  }
+
+  /** The listening language now (for the panel and tests). */
+  get listeningIn(): string {
+    return this.listenLang;
   }
 
   private setState(state: VoiceState): void {

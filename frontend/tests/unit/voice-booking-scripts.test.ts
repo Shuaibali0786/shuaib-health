@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 
 import { makeWorld, type SubmitMode } from "../voice/harness";
 
-type ScriptTurn = { say: string; confirmable?: boolean; expect?: string[]; forbid?: string[]; submits?: number };
+type ScriptTurn = { say: string; confirmable?: boolean; expect?: string[]; forbid?: string[]; submits?: number; /** Tappable choices that must be offered. */ options?: string[] };
 type Script = { name: string; mode?: SubmitMode; turns: ScriptTurn[]; final: { bookings: number; payload?: Record<string, unknown> } };
 
 const DIR = join(__dirname, "..", "voice", "booking-scripts");
@@ -29,6 +29,7 @@ describe("voice booking scripts", () => {
       const heard = `${out.text} ${out.spoken ?? ""}`.toLowerCase();
       for (const piece of turn.expect ?? []) expect(heard, where).toContain(piece.toLowerCase());
       for (const piece of turn.forbid ?? []) expect(heard, where).not.toContain(piece.toLowerCase());
+      for (const option of turn.options ?? []) expect(out.options ?? [], where).toContain(option);
       if (turn.submits !== undefined) expect(world.submits.length, where).toBe(turn.submits);
     }
     expect(world.ctx.bookingsMade).toBe(script.final.bookings);

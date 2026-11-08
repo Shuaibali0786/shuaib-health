@@ -15,8 +15,25 @@ function spellNumber(match: string): string {
     .join(", ");
 }
 
-export function forSpeech(sentence: string): string {
+/**
+ * What is never read aloud: links (they stay as buttons in the chat), markdown, and price footnotes such as
+ * "(sample price)" that are for reading, not hearing.
+ */
+export function speakable(sentence: string): string {
   return sentence
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/\bhttps?:\/\/\S+/gi, " ")
+    .replace(/\bwww\.\S+/gi, " ")
+    .replace(/(^|\s)\/[a-z0-9][\w/-]*(?=[\s.,;!?]|$)/gi, "$1")
+    .replace(/\s*\((?:all |sab )?sample(?: price| prices| qeemat| qeematein)?\)/gi, "")
+    .replace(/\*\*|__|`+/g, "")
+    .replace(/^\s*(?:[-*•]|\d+\.)\s+/gm, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function forSpeech(sentence: string): string {
+  return speakable(sentence)
     .replace(/\+?\d{2,}(?:[\s-]\d{2,}){2,}/g, spellNumber)
     .replace(/\bPKR\s*(\d[\d,]*)/g, "$1 rupees")
     .replace(/\bPKT\b/g, "Pakistan time")

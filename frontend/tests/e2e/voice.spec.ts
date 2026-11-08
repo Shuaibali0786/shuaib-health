@@ -168,7 +168,7 @@ test.describe("voice receptionist", () => {
     await say(page, time, /full name/);
     await say(page, "my name is Sara Noor", /mobile number/);
     await say(page, "zero three one one one two three four five six seven", /email/);
-    await say(page, "skip", /If everything is correct, say yes or tap Confirm/);
+    await say(page, "skip", /Please check, then say yes or tap Confirm/);
 
     const card = dialog.getByTestId("voice-summary");
     await expect(card).toContainText("Sara Noor");
@@ -207,10 +207,10 @@ test.describe("voice receptionist", () => {
     await installFakeWebSpeech(page);
     const { dayNumber, time } = await freeSlot(page, "dr-zainab-memon");
     const dialog = await openVoice(page);
-    await say(page, "mujhe CBC test karwana hai", /Kya main aap ki booking kar doon\?/);
+    // The owner's own words: a test named with a booking request goes straight to the lab booking (no doctor question).
+    await say(page, "hay Mujhe CBC ki test karwani Kya Meri booking kar sakti ho", /Kaun sa din/);
     await expect(dialog.getByRole("log")).toContainText("Pathology Lab");
-    await expect(dialog.getByRole("log")).toContainText("PKR 800");
-    await say(page, "haan", /Kaun sa din/);
+    await expect(dialog.getByRole("log")).not.toContainText("kis doctor");
     await say(page, `${dayNumber} tareekh`, /Kaun sa waqt/);
     await say(page, time, /poora naam/);
     await say(page, "mera naam Ayesha Khan hai", /mobile number/);
@@ -226,7 +226,7 @@ test.describe("voice receptionist", () => {
     await card.getByRole("button", { name: "Confirm" }).click();
     const slip = dialog.getByTestId("voice-slip");
     await expect(slip).toBeVisible({ timeout: 10000 });
-    await expect(dialog.getByRole("log")).toContainText("Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein.");
+    await expect(dialog.getByRole("log")).toContainText("Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.");
     await expect(slip.getByTestId("voice-booked-test")).toContainText("Complete Blood Count (CBC) - PKR 800 (sample)");
     const link = slip.getByRole("link", { name: OPEN_SLIP });
     await expect(link).toHaveAttribute("href", /\?test=complete-blood-count$/);
@@ -304,6 +304,47 @@ test.describe("voice receptionist", () => {
     await type("skip", /tap Confirm/);
     await dialog.getByTestId("voice-summary").getByRole("button", { name: "Confirm" }).click();
     await expect(dialog.getByTestId("voice-slip")).toBeVisible({ timeout: 10000 });
+    expect(errors).toEqual([]);
+  });
+
+  test("FLOW 4, Roman Urdu typed with the owner's own messages: test karwani, bllod ki, haan, tap a day and a time, phone + email in one sentence, Confirm, slip", async ({ page }) => {
+    test.skip(!ON, "run with ASSISTANT_ENABLED=true VOICE_ENABLED=true");
+    const errors = watchErrors(page);
+    await page.goto("/");
+    await page.getByRole("button", { name: "Ask us" }).click();
+    const dialog = page.getByRole("dialog", { name: /Ask / });
+    const box = dialog.getByRole("textbox", { name: "Your question" });
+    const log = dialog.getByRole("log");
+    const type = async (text: string, expected: string | RegExp) => {
+      await box.fill(text);
+      await box.press("Enter");
+      await expect(log).toContainText(expected, { timeout: 8000 });
+    };
+    await type("mujhy test karwani hia", "Kaun sa test karwana hai");
+    await type("bllod ki", "Kya main aap ki booking kar doon?");
+    await type("haan", "Kaun sa din");
+    const choices = dialog.getByTestId("assistant-options");
+    await choices.getByRole("button").first().click();
+    await expect(log).toContainText("Kaun sa waqt", { timeout: 8000 });
+    await dialog.getByTestId("assistant-options").getByRole("button").first().click();
+    await expect(log).toContainText("poora naam", { timeout: 8000 });
+    await type("Ayesha Khan", "mobile number");
+    await type("Mera phone number 0324 5211332 aur email share@gmail.com hai", "Confirm dabaiye");
+    const card = dialog.getByTestId("voice-summary");
+    await expect(card).toContainText("0324 521 1332");
+    await expect(card).toContainText("share@gmail.com");
+    await expect(card).toContainText("Complete Blood Count (CBC) - PKR 800 (sample)");
+    await expect(log).not.toContainText("Sample Road");
+    await card.getByRole("button", { name: "Confirm" }).click();
+    const slip = dialog.getByTestId("voice-slip");
+    await expect(slip).toBeVisible({ timeout: 10000 });
+    await expect(log).toContainText("Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.");
+    const link = slip.getByRole("link", { name: /^Meri slip kholein/ });
+    const [slipPage] = await Promise.all([page.context().waitForEvent("page"), link.click()]);
+    await slipPage.waitForLoadState();
+    await expect(slipPage.getByRole("button", { name: /Download your slip/ })).toBeVisible({ timeout: 15000 });
+    await expect(slipPage.getByRole("article")).toContainText("PKR 800 (sample)");
+    await slipPage.close();
     expect(errors).toEqual([]);
   });
 

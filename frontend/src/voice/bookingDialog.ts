@@ -14,7 +14,7 @@ import type { BookingAnswer } from "@/lib/booking/client";
 import { formatPkr } from "@/lib/format";
 
 import { groupPhone, groupReference, speakEmail, speakPhone, speakReference } from "./chunk";
-import { doctorsOf, findDepartment, findDoctors } from "./entities";
+import { clinicClosedOn, doctorsOf, findDepartment, findDoctors, labDepartment, resolveLabTest } from "./entities";
 import { T } from "./phrases";
 import { parseDate, speakDate, speakTime } from "./parse/date";
 import { cleanReason, declines, extractEmail, extractName } from "./parse/name";
@@ -22,6 +22,7 @@ import { extractPhone, spokenDigits, withoutPhone } from "./parse/phone";
 import { parseTimes } from "./parse/time";
 import { parseYesNo } from "./parse/yesno";
 import { EMPTY_DRAFT, type BookingDraft, type BookingPhase, type VoiceLang } from "./types";
+import { complains } from "./understand";
 
 export type Ask = "fullName" | "phone" | "reason" | "doctor" | "date" | "time" | "email" | "partOfDay" | null;
 
@@ -37,6 +38,8 @@ export type BookingState = {
   /** The server's own clock (from the slot list), so "the 13th" and "tomorrow" mean the clinic's days, not the phone's. */
   serverNow: string | null;
   booked: AppointmentView | null;
+  /** How many turns in a row did not answer the question being asked (two or more: offer tappable choices). */
+  misses: number;
 };
 
 /**
@@ -52,6 +55,7 @@ export const newBookingState = (prefill: Partial<BookingDraft> = {}): BookingSta
   key: null,
   booked: null,
   serverNow: null,
+  misses: 0,
 });
 
 export type DialogDeps = {
@@ -84,6 +88,8 @@ export type DialogReply = {
   booked?: AppointmentView;
   /** True when this reply is the read-back, so the session can arm the "yes" after it is spoken. */
   readBack?: boolean;
+  /** Two to four short answers the patient can tap (or say) instead of answering in their own words. */
+  options?: string[];
 };
 
 type Input = { text: string; lang: VoiceLang; /** The caller's turn did not overlap the read-back being spoken. */ confirmable: boolean };
@@ -224,6 +230,17 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps): Ap
   let rest = withoutPhone(text);
   if (name) for (const part of name.split(" ")) rest = rest.replace(new RegExp(part, "gi"), " ");
 
+  // A lab test named at any point ("CBC", "blood test", "khoon ka test") books the lab and its doctor: never asked again.
+  if (!draft().doctorSlug && !draft().labTestSlug) {
+    const test = resolveLabTest(rest, pack);
+    const lab = test ? labDepartment(pack) : null;
+    if (test && lab) {
+      const only = lab.doctors.length === 1 ? lab.doctors[0] : undefined;
+      state = withDraft(state, { departmentSlug: lab.slug, doctorSlug: only?.slug ?? null, labTestSlug: test.slug, reason: `${test.name} test`, startsAt: null });
+      if (only) changes.push({ field: "doctor", was: false });
+    }
+  }
+
   // Doctor or department.
   {
     const doctors = findDoctors(rest, pack);
@@ -285,6 +302,11 @@ type Settled = { state: BookingState; message: string | null };
 async function settle(start: BookingState, deps: DialogDeps, lang: VoiceLang): Promise<Settled> {
   let state = start;
   const { doctorSlug, date } = state.draft;
+  // A day the clinic is closed (Sunday) is never kept, even before a doctor is chosen.
+  if (date && clinicClosedOn(deps.pack, date)) {
+    state = { ...withDraft(state, { date: null, time: null, startsAt: null }), pendingTimes: [] };
+    return { state, message: T(lang, `The clinic is closed on ${speakDate(date)}.`, `${speakDate(date)} ko clinic band hai.`) };
+  }
   if (!doctorSlug) return { state, message: null };
   const loaded = await slotsFor(state, doctorSlug, deps);
   state = loaded.state;
@@ -416,7 +438,7 @@ function readBack(state: BookingState, deps: DialogDeps, lang: VoiceLang): { tex
 
 /** The line that asks the patient to check the card and confirm (by voice or by tapping Confirm). */
 export const confirmLine = (lang: VoiceLang): string =>
-  T(lang, "Please check these details. If everything is correct, say yes or tap Confirm.", "Barah-e-meherbani yeh tafseelat check karein. Agar sab theek hai to haan kahein ya Confirm dabaiye.");
+  T(lang, "Please check, then say yes or tap Confirm.", "Barah-e-meherbani check karein, phir haan kahein ya Confirm dabaiye.");
 
 // --- One turn ---------------------------------------------------------------------------------------------
 
@@ -451,6 +473,9 @@ function welcomeSentence(applied: Applied, state: BookingState, deps: DialogDeps
   if (newName && state.draft.fullName) return T(lang, `Nice to meet you, ${first(state.draft.fullName)}.`, `Aap se mil kar khushi hui, ${first(state.draft.fullName)}.`);
   const newDoctor = applied.changes.find((c) => c.field === "doctor" && !c.was);
   const doc = doctorOf(deps.pack, state.draft.doctorSlug);
+  const test = state.draft.labTestSlug ? deps.pack.labTests.find((t) => t.slug === state.draft.labTestSlug) : undefined;
+  const lab = test ? labDepartment(deps.pack) : null;
+  if (newDoctor && doc && test && lab) return T(lang, `${test.name} at our ${lab.name}, with ${doc.name}.`, `${test.name}, hamari ${lab.name} mein, ${doc.name} ke saath.`);
   if (newDoctor && doc) return T(lang, `With ${doc.name}.`, `${doc.name} ke saath.`);
   return "";
 }
@@ -499,14 +524,50 @@ export async function bookingStep(start: BookingState, input: Input, deps: Dialo
   }
 
   const applied = applyUtterance(state, text, deps);
-  return collect(applied.state, applied, deps, lang);
+  return collect(applied.state, applied, deps, lang, text);
 }
 
-async function collect(start: BookingState, applied: Applied, deps: DialogDeps, lang: VoiceLang): Promise<DialogReply> {
+/** Short answers to tap (or say) for the question being asked: departments, the next open days, or free times. */
+function optionsFor(state: BookingState, deps: DialogDeps, lang: VoiceLang, ask: Ask): string[] {
+  const { pack } = deps;
+  const d = state.draft;
+  const slots = d.doctorSlug ? state.slots[d.doctorSlug] : undefined;
+  if (ask === "doctor") {
+    const team = d.departmentSlug ? doctorsOf(d.departmentSlug, pack) : [];
+    if (team.length > 1) return team.slice(0, 4).map((x) => x.name);
+    const lab = labDepartment(pack);
+    const preferred = ["general-medicine", "dental", "dermatology", "pediatrics", "gynecology", "cardiology"];
+    const depts = preferred.filter((slug) => pack.doctors.some((x) => x.departmentSlug === slug)).map((slug) => pack.departments.find((x) => x.slug === slug)?.name ?? "").filter(Boolean);
+    const test = lab && pack.labTests.some((t) => /complete-blood-count/.test(t.slug)) ? ["Blood test (CBC)"] : [];
+    return [...test, ...depts].slice(0, 4);
+  }
+  if (ask === "date" && slots) return openDays(slots).slice(0, 3).map(speakDate);
+  if (ask === "time" && slots && d.date) {
+    const day = dayOf(slots, d.date);
+    return day ? spread(day.slots.map((s) => s.localTime)).map(speakTime) : [];
+  }
+  if (ask === "partOfDay") return [...state.pendingTimes].sort().map(speakTime);
+  if (ask === "email") return ["Skip"];
+  return [];
+}
+
+const MISSED_HINT: Partial<Record<NonNullable<Ask>, [string, string]>> = {
+  fullName: ["For example: Ali Raza.", "Misal ke taur par: Ali Raza."],
+  phone: ["For example: 0300 1234567.", "Misal ke taur par: 0300 1234567."],
+};
+
+async function collect(start: BookingState, applied: Applied, deps: DialogDeps, lang: VoiceLang, text = ""): Promise<DialogReply> {
   const settled = await settle(start, deps, lang);
   let state = settled.state;
   const ask = nextAsk(state);
-  const lead = [changeSentence(applied, state, deps, lang) || welcomeSentence(applied, state, deps, lang), settled.message ?? ""].filter(Boolean).join(" ");
+  // The same question again with nothing new heard is a miss. Twice (or a frustrated "why aren't you booking?"):
+  // apologise and show choices instead of repeating the same sentence.
+  const missed = ask !== null && ask === start.asking && start.phase === "collecting" && applied.changes.length === 0 && !applied.phoneProblem && !settled.message;
+  const angry = complains(text);
+  const misses = missed || angry ? Math.max(start.misses + 1, angry ? 2 : 0) : 0;
+  state = { ...state, misses };
+  const sorry = misses >= 2 ? (angry ? T(lang, "Sorry about that! I'm booking it for you now.", "Maaf kijiye! Main aap ki booking kar rahi hoon.") : T(lang, "Sorry, I didn't quite get that.", "Maaf kijiye, main theek se samajh nahi saki.")) : "";
+  const lead = [sorry, changeSentence(applied, state, deps, lang) || welcomeSentence(applied, state, deps, lang), settled.message ?? ""].filter(Boolean).join(" ");
 
   if (ask === null) {
     const rb = readBack(state, deps, lang);
@@ -514,7 +575,9 @@ async function collect(start: BookingState, applied: Applied, deps: DialogDeps, 
     return reply(state, [lead, rb.text].filter(Boolean).join(" "), { spoken: [lead, rb.spoken].filter(Boolean).join(" "), readBack: true });
   }
   state = { ...state, phase: "collecting", asking: ask };
-  return reply(state, [lead, question(state, deps, lang, ask, applied.phoneProblem, applied.ambiguousDoctors)].filter(Boolean).join(" "));
+  const options = optionsFor(state, deps, lang, ask);
+  const hint = misses >= 2 ? (options.length ? T(lang, "You can also tap one of the choices below.", "Aap neeche diye gaye options mein se chun bhi sakte hain.") : (MISSED_HINT[ask as NonNullable<Ask>]?.[lang === "roman" ? 1 : 0] ?? "")) : "";
+  return reply(state, [lead, question(state, deps, lang, ask, applied.phoneProblem, applied.ambiguousDoctors), hint].filter(Boolean).join(" "), options.length ? { options } : {});
 }
 
 async function submit(start: BookingState, deps: DialogDeps, lang: VoiceLang): Promise<DialogReply> {
@@ -548,8 +611,8 @@ async function submit(start: BookingState, deps: DialogDeps, lang: VoiceLang): P
       const base = (ref: string) =>
         T(
           lang,
-          `You're booked, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Your reference is ${ref}. Tap the Open my slip button, download your slip, and bring it with you to the clinic.`,
-          `Aap ki booking ho gayi, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Aap ka reference ${ref} hai. Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein.`,
+          `You're booked, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Your reference is ${ref}. Tap Open my slip, download the slip, save it on your phone, and bring it with you to the clinic.`,
+          `Aap ki booking ho gayi, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Aap ka reference ${ref} hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.`,
         );
       return reply(done, base(groupReference(v.reference)), { spoken: base(speakReference(v.reference)), booked: v });
     }

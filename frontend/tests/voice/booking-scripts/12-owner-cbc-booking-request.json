@@ -1,0 +1,82 @@
+{
+  "name": "Owner test: 'hay Mujhe CBC ki test karwani Kya Meri booking kar sakti ho' books the lab straight away (never asks for a doctor), then phone + email in one sentence, haan, slip",
+  "turns": [
+    {
+      "say": "hay Mujhe CBC ki test karwani Kya Meri booking kar sakti ho",
+      "expect": [
+        "main aap ki booking kar rahi hoon, bas ek minute",
+        "Complete Blood Count (CBC)",
+        "Pathology Lab",
+        "Dr. Zainab Memon",
+        "Kaun sa din"
+      ],
+      "options": [
+        "Monday 9 November"
+      ],
+      "forbid": [
+        "kis doctor",
+        "nahi maloom",
+        "I don't know",
+        "Sample Road"
+      ],
+      "submits": 0
+    },
+    {
+      "say": "kal",
+      "expect": [
+        "Monday 9 November",
+        "Kaun sa waqt"
+      ],
+      "options": [
+        "11:30 AM"
+      ]
+    },
+    {
+      "say": "11:30 AM",
+      "expect": [
+        "poora naam"
+      ]
+    },
+    {
+      "say": "Ayesha Khan",
+      "expect": [
+        "mobile number"
+      ]
+    },
+    {
+      "say": "Mera phone number 0324 5211332 aur email share@gmail.com hai",
+      "expect": [
+        "check karein",
+        "haan kahein ya Confirm dabaiye",
+        "zero three two four, five two one, one three three two"
+      ],
+      "forbid": [
+        "email dena",
+        "nahi maloom",
+        "I don't know",
+        "Sample Road"
+      ],
+      "submits": 0
+    },
+    {
+      "say": "haan",
+      "expect": [
+        "Aap ki booking ho gayi",
+        "Open my slip",
+        "Slip download karke mobile mein save karein aur clinic aate waqt saath laayein."
+      ],
+      "submits": 1
+    }
+  ],
+  "final": {
+    "bookings": 1,
+    "payload": {
+      "doctorSlug": "dr-zainab-memon",
+      "startsAt": "2026-11-09T06:30:00Z",
+      "fullName": "Ayesha Khan",
+      "mobile": "+923245211332",
+      "email": "share@gmail.com",
+      "reason": "Complete Blood Count (CBC) test"
+    }
+  }
+}

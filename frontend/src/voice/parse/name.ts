@@ -17,7 +17,7 @@ export function cleanName(raw: string): string | null {
 
 // Words that mean the candidate is a sentence, not a name ("I am looking for a doctor", "main kal aaunga").
 const NOT_A_NAME = new Set(
-  "looking here calling trying fine good great sick ill not having feeling going want need needs interested patient new old a an the for to with from in at on doctor dr appointment booking book please ok okay sure yes no and my is am are was ke ki ka ko se mein jana jaana chahta chahti hoon aaunga aaungi bimar bimaar theek kal aaj abhi bohat bahut dard bukhar aana aani lena leni milna milni hai hain kar karna karni dikhana dikhani".split(" "),
+  "looking here calling trying fine good great sick ill not having feeling going want need needs interested patient new old a an the for to with from in at on doctor dr appointment booking book please ok okay sure yes no and my is am are was ke ki ka ko se mein jana jaana chahta chahti hoon aaunga aaungi bimar bimaar theek kal aaj abhi bohat bahut dard bukhar aana aani lena leni milna milni hai hain kar karna karni dikhana dikhani aap aapko apko aapse ap tum tumhe tumko main hum yaar yar bol raha rahi rahe keh kyun kyon kyu nahi nahin kya booking boking test blood khoon ilaaj elaj clinic chahiye karo karwana karwani sakti sakte".split(" "),
 );
 
 const INTROS: RegExp[] = [

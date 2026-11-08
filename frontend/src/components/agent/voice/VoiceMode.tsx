@@ -56,6 +56,7 @@ const STATE_LABEL: Record<VoiceState, string> = {
 export default function VoiceMode({ conversation, welcomeLang, provider, prefs, onPrefs, onTurn, onResult, onEnd, registerSubmit, micCheck, renderLog, cards }: VoiceModeProps) {
   const [state, setState] = useState<VoiceState>("idle");
   const [interim, setInterim] = useState("");
+  const [heard, setHeard] = useState("");
   const [caption, setCaption] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const orb = useRef<OrbHandle>(null);
@@ -80,6 +81,7 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
         onInterim: setInterim,
         onTurn: (turn) => {
           setInterim("");
+          if (turn.from === "you" && turn.voice) setHeard(turn.text);
           latest.current.onTurn(turn);
         },
         onSpeaking: setCaption,
@@ -120,7 +122,7 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
         <p ref={status} tabIndex={-1} role="status" aria-live="polite" className="-mt-1 rounded-pill bg-white px-3 py-1 text-sm font-semibold text-navy-900 shadow-soft outline-none">
           {STATE_LABEL[state]}
         </p>
-        <Captions you={interim} assistant={caption} />
+        <Captions you={interim} assistant={caption} heard={heard} />
         <MicHelp
           notice={notice}
           onAction={() => {

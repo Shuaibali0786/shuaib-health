@@ -85,7 +85,7 @@ describe("the Voice menu list", () => {
 
 describe("text made ready for speech", () => {
   it("says money, times zones, day names and dashes naturally", () => {
-    expect(forSpeech("Consultation fee: PKR 3,000 (sample price).")).toBe("Consultation fee: 3,000 rupees (sample price).");
+    expect(forSpeech("Consultation fee: PKR 3,000 (sample price).")).toBe("Consultation fee: 3,000 rupees.");
     expect(forSpeech("We are open Mon–Sat, 9 AM – 9 PM PKT.")).toBe("We are open Monday to Saturday, 9 AM to 9 PM Pakistan time.");
   });
   it("reads a phone number digit by digit and drops symbols", () => {

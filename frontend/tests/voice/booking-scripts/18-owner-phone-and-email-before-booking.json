@@ -1,0 +1,64 @@
+{
+  "name": "Owner test: phone + email in one sentence before any booking are kept (never answered with the clinic address); the booking then asks only for what is missing",
+  "turns": [
+    {
+      "say": "Mera phone number 0324 5211332 aur email share@gmail.com hai",
+      "expect": [
+        "tafseelat note kar li",
+        "kis doctor ya department"
+      ],
+      "forbid": [
+        "Sample Road",
+        "location",
+        "nahi maloom",
+        "I don't know",
+        "Sample Road"
+      ]
+    },
+    {
+      "say": "Blood test (CBC)",
+      "expect": [
+        "Kaun sa din"
+      ]
+    },
+    {
+      "say": "Monday 9 November",
+      "expect": [
+        "Kaun sa waqt"
+      ]
+    },
+    {
+      "say": "3:00 PM",
+      "expect": [
+        "poora naam"
+      ]
+    },
+    {
+      "say": "Sara Noor",
+      "expect": [
+        "Confirm dabaiye"
+      ],
+      "forbid": [
+        "mobile number kya hai",
+        "email dena"
+      ],
+      "submits": 0
+    },
+    {
+      "say": "haan",
+      "expect": [
+        "Aap ki booking ho gayi"
+      ],
+      "submits": 1
+    }
+  ],
+  "final": {
+    "bookings": 1,
+    "payload": {
+      "doctorSlug": "dr-zainab-memon",
+      "mobile": "+923245211332",
+      "email": "share@gmail.com",
+      "startsAt": "2026-11-09T10:00:00Z"
+    }
+  }
+}

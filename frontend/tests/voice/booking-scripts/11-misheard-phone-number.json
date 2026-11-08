@@ -1,7 +1,7 @@
 {
   "name": "A misheard phone number (too many digits, then a landline) is refused and asked again; nothing else is asked twice",
   "turns": [
-    { "say": "Dr Bilal se appointment chahiye", "expect": ["Ji zaroor", "Kaun sa din"] },
+    { "say": "Dr Bilal se appointment chahiye", "expect": ["main aap ki booking kar rahi hoon", "Kaun sa din"] },
     { "say": "jumma ko", "expect": ["Friday 13 November", "Kaun sa waqt"] },
     { "say": "11:30", "expect": ["poora naam"] },
     { "say": "mera naam Ali Raza hai", "expect": ["mobile number"] },

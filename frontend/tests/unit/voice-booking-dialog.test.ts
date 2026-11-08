@@ -95,7 +95,7 @@ describe("never invents a slot", () => {
   it("refuses a Sunday, a day outside the window and a time that is not free", async () => {
     const w = makeWorld();
     await w.say("book an appointment with Dr Bilal");
-    expect((await w.say("sunday")).text).toContain("isn't available");
+    expect((await w.say("sunday")).text).toContain("The clinic is closed on Sunday");
     expect((await w.say("5th december")).text).toContain("next 14 days");
     await w.say("monday");
     const out = await w.say("2:45 pm");

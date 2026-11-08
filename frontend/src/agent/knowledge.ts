@@ -50,6 +50,8 @@ export function buildKnowledgePack(input: {
       address: [...input.site.address],
       hours: hoursText(input.site.openingHours),
       labHours: hoursText(input.site.labHours),
+      openingRules: input.site.openingHours.map((rule) => ({ days: [...rule.days], opens: rule.opens, closes: rule.closes })),
+      timeZone: input.site.timeZone,
     },
     departments: input.departments.map((d) => ({ slug: d.slug, name: d.name, summary: d.summary })),
     doctors: input.doctors.map((d) => {

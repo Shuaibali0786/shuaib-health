@@ -80,7 +80,7 @@ describe("the welcome", () => {
     expect(said(t.port)).not.toMatch(/record/i); // "audio is never recorded" is small text, not spoken
     expect(t.port.spoken[0]?.voice).toContain("Jenny");
     expect(t.port.listening).toBe(true);
-    expect(t.port.listenLang).toBe("en-IN");
+    expect(t.port.listenLang).toBe("en-US");
     expect(t.states.at(-1)).toBe("listening");
     expect(t.boundaries).toBeGreaterThan(0);
   });
@@ -386,5 +386,96 @@ describe("limits and tabs", () => {
     t.port.hear("book an appointment");
     await settle(t.port);
     expect(t.session.booking).toBeNull();
+  });
+});
+
+// The owner's real test (2026-11-08), heard by voice: each message leads to the right answer or the next booking step.
+describe("the owner's real messages, heard by voice", () => {
+  const CASES: Array<[string, RegExp]> = [
+    ["hay Mujhe CBC ki test karwani Kya Meri booking kar sakti ho", /booking kar rahi hoon[\s\S]*Pathology Lab[\s\S]*Kaun sa din/],
+    ["mujhy elaj karwana hia", /Aap ko kya takleef hai/],
+    ["mujhy test karwani hia", /Kaun sa test karwana hai/],
+    ["boking karo blod ki test karnekiay", /Complete Blood Count[\s\S]*Kaun sa din/],
+    ["kia aaj clenic off hia", /Aaj Sunday hai, aur aaj clinic band hai/],
+    ["are booking karo blood Khooni", /booking kar rahi hoon[\s\S]*Kaun sa din/],
+    ["Mera phone number 0324 5211332 aur email share@gmail.com hai", /tafseelat note kar li/],
+    ["yaar main aapko bol raha hun booking kyon nahin kar rahi ho", /booking kar rahi hoon/],
+  ];
+  it.each(CASES)("%s", async (heard, expected) => {
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    t.port.hear(heard);
+    await settle(t.port);
+    const reply = t.turns.filter((x) => x.from === "assistant").at(-1)?.text ?? "";
+    expect(reply).toMatch(expected);
+    expect(reply).not.toMatch(/nahi maloom|I don't know|Sample Road/);
+  });
+
+  it("'bllod ki' after 'which test?' is the CBC, and the spoken reply never reads '(sample qeemat)' or a link", async () => {
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    t.port.hear("mujhy test karwani hia");
+    await settle(t.port);
+    t.port.hear("bllod ki");
+    await settle(t.port);
+    expect(t.turns.filter((x) => x.from === "assistant").at(-1)?.text).toContain("Complete Blood Count");
+    expect(said(t.port)).not.toMatch(/sample qeemat|sample price|\/lab-tests|https?:/);
+  });
+});
+
+describe("listening language", () => {
+  it("starts in English (en-US); nonsense heard in English ('Qawwali') switches to Urdu listening (ur-PK) and asks again, kindly", async () => {
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    expect(t.port.listenLang).toBe("en-US");
+    t.port.hear("Qawwali");
+    await settle(t.port);
+    expect(t.port.listenLang).toBe("ur-PK");
+    const reply = t.turns.filter((x) => x.from === "assistant").at(-1)?.text ?? "";
+    expect(reply).toContain("Dobara bataiye");
+    expect(reply).not.toMatch(/nahi maloom|I don't know/);
+  });
+
+  it("Urdu script from Urdu listening is understood: 'مجھے سی بی سی ٹیسٹ کروانا ہے کیا میری بکنگ کر سکتی ہو' starts the CBC booking", async () => {
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    t.port.hear("Qawwali");
+    await settle(t.port);
+    t.port.hear("مجھے سی بی سی ٹیسٹ کروانا ہے کیا میری بکنگ کر سکتی ہو");
+    await settle(t.port);
+    expect(t.turns.filter((x) => x.from === "assistant").at(-1)?.text).toMatch(/Complete Blood Count[\s\S]*Kaun sa din/);
+    expect(t.port.listenLang).toBe("ur-PK");
+  });
+
+  it("a Roman Urdu turn switches listening to Urdu, an English conversation stays in English", async () => {
+    const roman = build({ skipOpening: true });
+    void roman.session.start();
+    await settle(roman.port);
+    roman.port.hear("aaj clinic khula hai?");
+    await settle(roman.port);
+    expect(roman.port.listenLang).toBe("ur-PK");
+
+    const english = build({ skipOpening: true });
+    void english.session.start();
+    await settle(english.port);
+    english.port.hear("What are your timings?");
+    await settle(english.port);
+    expect(english.port.listenLang).toBe("en-US");
+  });
+
+  it("nonsense twice in a row does not loop: the second time it gives the normal answer", async () => {
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    t.port.hear("Qawwali");
+    await settle(t.port);
+    t.port.hear("ladki dekh Khani");
+    await settle(t.port);
+    expect(t.port.listenLang).toBe("ur-PK");
+    expect(t.turns.filter((x) => x.from === "assistant").length).toBe(2);
   });
 });

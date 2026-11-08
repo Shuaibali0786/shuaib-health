@@ -35,12 +35,12 @@ export function findDoctors(text: string, pack: KnowledgePack): PackDoctor[] {
 
 // Everyday words that point at a department, by department slug.
 const DEPARTMENT_WORDS: Record<string, string[]> = {
-  dermatology: ["skin", "jild", "daane", "acne", "rash", "dermatologist"],
+  dermatology: ["skin", "jild", "daane", "acne", "rash", "dermatologist", "allergy", "allergies", "khujli", "kharish", "itching"],
   dental: ["dental", "dentist", "teeth", "tooth", "daant", "dant"],
   cardiology: ["heart", "cardiologist", "dil"],
   pediatrics: ["child", "children", "kids", "kid", "baby", "bacha", "bachay", "bachi", "paediatric", "pediatrician"],
   gynecology: ["gynae", "gynaecologist", "gynecologist", "women", "lady", "pregnancy", "pregnant"],
-  "general-medicine": ["general", "physician", "family"],
+  "general-medicine": ["general", "physician", "family", "fever", "bukhar", "flu", "zukam", "khansi", "cough", "checkup"],
 };
 
 /** The department slug a caller means (by name, everyday word or symptom), or null. The lab is never offered: lab tests are not booked here. */
@@ -88,4 +88,49 @@ export function labDepartment(pack: KnowledgePack): { slug: string; name: string
   const dept = pack.departments.find((d) => /lab|patholog/i.test(d.slug) || /lab|patholog/i.test(d.name));
   if (!dept) return null;
   return { slug: dept.slug, name: dept.name, doctors: doctorsOf(dept.slug, pack) };
+}
+
+/**
+ * The lab test a caller means, including everyday words: "blood test", "blood ki", "khoon ka test" (canonical "blood")
+ * mean the basic blood test, the CBC. A named test always wins. Null when no test is meant.
+ */
+export function resolveLabTest(text: string, pack: KnowledgePack): PackLabTest | null {
+  const named = findLabTest(text, pack);
+  if (named) return named;
+  const clean = cleanText(text);
+  if (!/\bblood\b/.test(clean) || /\b(pressure|bp|group|sugar|glucose)\b/.test(clean)) return null;
+  return pack.labTests.find((t) => /complete-blood-count|\bcbc\b/i.test(`${t.slug} ${t.aka.join(" ")} ${t.name}`)) ?? null;
+}
+
+const WEEKDAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+const DAY_NAMES: Record<string, string> = { sun: "Sunday", mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday" };
+
+/** The clinic's weekday ("mon") and time ("14:05") right now, in the clinic's own time zone. */
+export function clinicNow(pack: KnowledgePack, now: Date): { day: string; time: string; date: string } {
+  const zone = pack.clinic.timeZone || "Asia/Karachi";
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: zone, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return { day: get("weekday").slice(0, 3).toLowerCase(), time: `${get("hour")}:${get("minute")}`, date: `${get("year")}-${get("month")}-${get("day")}` };
+}
+
+/** The opening rule for a weekday, or null when the clinic is closed that day. Unknown hours count as open. */
+export function openingOn(pack: KnowledgePack, day: string): { opens: string; closes: string } | null | undefined {
+  const rules = pack.clinic.openingRules ?? [];
+  if (rules.length === 0) return undefined;
+  const rule = rules.find((r) => r.days.includes(day));
+  return rule ? { opens: rule.opens, closes: rule.closes } : null;
+}
+
+/** True when the clinic is closed all day on this ISO date ("2026-11-08" is a Sunday). */
+export function clinicClosedOn(pack: KnowledgePack, isoDate: string): boolean {
+  const day = WEEKDAYS[new Date(`${isoDate}T12:00:00Z`).getUTCDay()] as string;
+  return openingOn(pack, day) === null;
+}
+
+export const dayName = (day: string): string => DAY_NAMES[day] ?? day;
+
+/** The open weekdays, Monday first, as names ("Monday to Saturday" is built by the caller). */
+export function openDayNames(pack: KnowledgePack): string[] {
+  const open = new Set((pack.clinic.openingRules ?? []).flatMap((r) => r.days));
+  return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].filter((d) => open.has(d)).map(dayName);
 }

@@ -1,0 +1,48 @@
+{
+  "name": "Owner test: 'kia aaj clenic off hia' on a Sunday says the clinic is closed today, with the open days; Sunday is never offered for a booking",
+  "turns": [
+    {
+      "say": "kia aaj clenic off hia",
+      "expect": [
+        "Aaj Sunday hai",
+        "aaj clinic band hai",
+        "Monday se Saturday"
+      ],
+      "forbid": [
+        "nahi maloom",
+        "I don't know",
+        "Sample Road"
+      ]
+    },
+    {
+      "say": "haan",
+      "expect": [
+        "booking kar rahi hoon",
+        "kis doctor ya department"
+      ],
+      "options": [
+        "Blood test (CBC)"
+      ]
+    },
+    {
+      "say": "Blood test (CBC)",
+      "expect": [
+        "Pathology Lab",
+        "Kaun sa din"
+      ]
+    },
+    {
+      "say": "aaj",
+      "expect": [
+        "Sunday 8 November ko clinic band hai",
+        "Kaun sa din"
+      ],
+      "forbid": [
+        "Sunday 8 November ko mere paas"
+      ]
+    }
+  ],
+  "final": {
+    "bookings": 0
+  }
+}

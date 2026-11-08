@@ -4,7 +4,7 @@
     { "say": "I want to get a CBC test", "expect": ["blood test", "Preparation", "PKR 800", "Pathology Lab", "Shall I book it for you?"], "forbid": ["Kya main"], "submits": 0 },
     { "say": "no", "expect": ["No problem"], "submits": 0 },
     { "say": "how much is the lipid profile?", "expect": ["Lipid Profile", "Shall I book it for you?"] },
-    { "say": "yes please", "expect": ["Of course", "Which day"] },
+    { "say": "yes please", "expect": ["booking that for you", "Which day"] },
     { "say": "tuesday", "expect": ["Tuesday 10 November"] },
     { "say": "11:30", "expect": ["full name"] },
     { "say": "Sara Noor", "expect": ["mobile"] },
