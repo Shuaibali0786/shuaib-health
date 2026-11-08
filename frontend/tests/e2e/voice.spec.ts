@@ -31,8 +31,10 @@ test.describe("voice receptionist", () => {
     test.skip(ON, "flags are on in this run");
     await page.goto("/");
     await expect(page.getByRole("button", { name: /Talk to us/ })).toHaveCount(0);
-    await page.getByRole("button", { name: "Ask us" }).click().catch(() => undefined);
-    await expect(page.getByRole("button", { name: /voice mode/i })).toHaveCount(0);
+    // With the flags off (the CI build) there is no chat button, so nothing voice-related can be reached.
+    await expect(page.getByRole("button", { name: /voice mode|dictate/i })).toHaveCount(0);
+    await page.waitForTimeout(1500); // longer than the bubble's delay: it must still not appear
+    await expect(page.getByRole("button", { name: /Talk to us/ })).toHaveCount(0);
   });
 
   test("answers by voice, shows captions and controls, and passes axe", async ({ page }) => {
