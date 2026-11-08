@@ -9,20 +9,32 @@ import { GUIDE_SUGGESTIONS } from "@/agent/productGuide";
 import { getProvider, type ProviderId } from "@/agent/registry";
 import { createThrottle } from "@/agent/throttle";
 import type { AgentLink, AgentMode, KnowledgePack } from "@/agent/types";
+import { fetchSlots, postBooking } from "@/lib/booking/client";
+import { createAttemptKey } from "@/lib/booking/idempotency";
+import type { AppointmentView } from "@/lib/booking/schemas";
 import { cn } from "@/lib/cn";
+import type { BookingState } from "@/voice/bookingDialog";
 import { createBrowserSpeech } from "@/voice/browserSpeech";
 import { primeMicrophone, type MicResult } from "@/voice/microphone";
+import { Conversation, type RouterResult } from "@/voice/router";
 import type { Notice } from "@/voice/session";
-import type { Turn } from "@/voice/types";
+import type { Turn, VoiceLang } from "@/voice/types";
 
+import { BookedCard } from "./voice/BookedCard";
 import { MicHelp } from "./voice/MicHelp";
+import { SummaryCard } from "./voice/SummaryCard";
 import { useDictation } from "./voice/useDictation";
 import type { VoicePrefs } from "./voice/VoiceMode";
 
 // Voice mode (orb, controls, booking) loads only when someone asks for it, so the chat itself stays light.
 const VoiceMode = lazy(() => import("./voice/VoiceMode"));
 
-export const DEFAULT_VOICE_PREFS: VoicePrefs = { listenLang: "en", gender: "female", opened: false };
+export const DEFAULT_VOICE_PREFS: VoicePrefs = { opened: false };
+
+const SLOTS_TIMEOUT_MS = 10_000;
+
+/** The welcome's language: Roman Urdu when the browser prefers Urdu, otherwise English. */
+const browserWelcomeLang = (): VoiceLang => (typeof navigator !== "undefined" && (navigator.languages ?? [navigator.language]).some((l) => /^ur/i.test(l)) ? "roman" : "en");
 
 export type AssistantPanelProps = {
   pack: KnowledgePack;
@@ -32,11 +44,13 @@ export type AssistantPanelProps = {
   voice?: boolean;
   /** Open straight into voice mode (the "Talk to us" bubble). */
   startInVoice?: boolean;
-  /** Voice choices kept while the page stays open: language, voice, and whether the greeting was heard. */
+  /** Kept while the page stays open: whether the welcome was already heard. */
   voicePrefs?: VoicePrefs;
   onVoicePrefs?: (next: Partial<VoicePrefs>) => void;
   /** The microphone request already made by the tap that opened voice mode (the bubble). */
   micCheck?: Promise<MicResult> | null;
+  /** The speech provider (VOICE_PROVIDER): the free browser voice, or the premium one with a silent fallback. */
+  voiceProvider?: "browser" | "azure";
 };
 
 type Message = { id: number; from: "you" | "assistant"; text: string; links?: AgentLink[] };
@@ -52,7 +66,7 @@ const greetingFor = (mode: AgentMode, pack: KnowledgePack) => (mode === "guide" 
  * Feature 013 adds, behind a flag: a Mic button (dictation into the box) and a Voice mode button (the orb, live
  * captions and hands-free booking). Typed and spoken turns share this one conversation.
  */
-export function AssistantPanel({ pack, provider: providerId = "local", onClose, voice = false, startInVoice = false, voicePrefs = DEFAULT_VOICE_PREFS, onVoicePrefs, micCheck: initialMicCheck = null }: AssistantPanelProps) {
+export function AssistantPanel({ pack, provider: providerId = "local", onClose, voice = false, startInVoice = false, voicePrefs = DEFAULT_VOICE_PREFS, onVoicePrefs, micCheck: initialMicCheck = null, voiceProvider = "browser" }: AssistantPanelProps) {
   const provider = useMemo(() => getProvider(pack, providerId), [pack, providerId]);
   const throttle = useMemo(() => createThrottle(), []);
   const [mode, setMode] = useState<AgentMode>("patient");
@@ -69,6 +83,31 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     return { listen: port.canListen, speak: port.canSpeak };
   });
   const [dictationNotice, setDictationNotice] = useState<Notice | null>(null);
+  const [booking, setBooking] = useState<BookingState | null>(null);
+  const [booked, setBooked] = useState<AppointmentView | null>(null);
+  const [replyLang, setReplyLang] = useState<VoiceLang>("en");
+  const [welcomeLang] = useState<VoiceLang>(browserWelcomeLang);
+  // One conversation for typed and spoken turns (the same memory, booking and language), per Patient / owner tab.
+  const conversation = useMemo(
+    () =>
+      new Conversation({
+        pack,
+        mode,
+        provider,
+        deps: {
+          pack,
+          now: () => new Date(),
+          fetchSlots: (slug) => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), SLOTS_TIMEOUT_MS);
+            return fetchSlots(slug, controller.signal).finally(() => clearTimeout(timer));
+          },
+          submit: (payload, key) => postBooking(payload, key),
+          newKey: createAttemptKey,
+        },
+      }),
+    [pack, mode, provider],
+  );
   const next = useRef(1);
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
@@ -94,7 +133,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     if (log.current) log.current.scrollTop = log.current.scrollHeight;
   }, [messages, voiceOn]);
 
-  const dictation = useDictation({ lang: prefs.listenLang, getDraft: () => draftRef.current, setDraft, onNotice: setDictationNotice });
+  const dictation = useDictation({ lang: "en", getDraft: () => draftRef.current, setDraft, onNotice: setDictationNotice });
 
   function push(message: Omit<Message, "id">) {
     const id = next.current++;
@@ -106,6 +145,15 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     setMode(to);
     setMessages([{ id: next.current++, from: "assistant", text: greetingFor(to, pack) }]);
     setSuggestions(to === "guide" ? GUIDE_SUGGESTIONS : QUICK_REPLIES.en);
+    setBooking(null);
+    setBooked(null);
+  }
+
+  /** What a turn (typed or spoken) changed: the booking card, the slip card, the reply language. */
+  function onResult(result: RouterResult) {
+    setBooking(result.booking && result.booking.phase !== "booked" && result.booking.phase !== "failed" ? result.booking : null);
+    if (result.booked) setBooked(result.booked);
+    setReplyLang(result.lang);
   }
 
   async function ask(question: string) {
@@ -128,9 +176,17 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     }
     push({ from: "you", text });
     setDraft("");
-    const reply = await provider.answer({ mode, question: text });
-    push({ from: "assistant", text: reply.text, links: reply.links });
-    setSuggestions(reply.suggestions ?? []);
+    if (voice) {
+      // With voice on, the typed chat is the same conversation: it can also book, one item at a time.
+      const result = await conversation.turn(text, { confirmable: true });
+      onResult(result);
+      push({ from: "assistant", text: result.text, links: result.links });
+      setSuggestions(result.suggestions ?? []);
+    } else {
+      const reply = await provider.answer({ mode, question: text });
+      push({ from: "assistant", text: reply.text, links: reply.links });
+      setSuggestions(reply.suggestions ?? []);
+    }
     input.current?.focus();
   }
 
@@ -145,6 +201,16 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
 
   const showMic = voice && caps.listen;
   const showVoice = voice && (caps.listen || caps.speak);
+
+  // The booking card (while details are collected) and the slip card (once booked), inside the conversation.
+  const confirmByTap = () => (voiceOn && voiceSubmit.current ? voiceSubmit.current("yes") : void ask("yes"));
+  const cards: ReactNode =
+    booking || booked ? (
+      <>
+        {booking ? <SummaryCard state={booking} pack={pack} onConfirm={confirmByTap} onChange={() => input.current?.focus()} /> : null}
+        {booked ? <BookedCard view={booked} lang={replyLang} /> : null}
+      </>
+    ) : null;
 
   const renderLog = (extras?: ReactNode): ReactNode => (
     <div ref={log} className="min-h-[6.5rem] flex-1 space-y-3 overflow-y-auto px-4 py-4" role="log" aria-live="polite" aria-label="Conversation">
@@ -216,12 +282,13 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
         <Suspense fallback={<div className="flex-1 p-6 text-center text-sm text-ink">Starting voice mode…</div>}>
           <VoiceMode
             key={mode}
-            pack={pack}
-            mode={mode}
-            provider={provider}
+            conversation={conversation}
+            welcomeLang={welcomeLang}
+            provider={voiceProvider}
             prefs={prefs}
             onPrefs={setPrefs}
             onTurn={onVoiceTurn}
+            onResult={onResult}
             onEnd={() => {
               setVoiceOn(false);
               input.current?.focus();
@@ -230,13 +297,13 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
               voiceSubmit.current = fn;
             }}
             micCheck={micCheck}
-            onChangeRequest={() => input.current?.focus()}
             renderLog={renderLog}
+            cards={cards}
           />
         </Suspense>
       ) : (
         <>
-          {renderLog()}
+          {renderLog(cards)}
           {suggestions.length ? (
             <div className="flex gap-2 overflow-x-auto px-4 pb-2" role="group" aria-label="Suggested questions">
               {suggestions.map((s) => (

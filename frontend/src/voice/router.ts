@@ -8,13 +8,16 @@ import { cleanText } from "@/agent/normalize";
 import type { AgentLink, AgentMode, AgentProvider, KnowledgePack } from "@/agent/types";
 import type { AppointmentView } from "@/lib/booking/schemas";
 
+import { departmentForSymptoms } from "@/agent/localEngine";
+import { formatPkr } from "@/lib/format";
+
 import { bookingStep, currentQuestion, newBookingState, type BookingState, type DialogDeps } from "./bookingDialog";
-import { mentionsLabTest } from "./entities";
+import { doctorsOf, findDepartment, findDoctors, findLabTest, labDepartment, mentionsLabTest } from "./entities";
 import { replyLanguage, urduToLatin } from "./language";
 import { parseYesNo } from "./parse/yesno";
 import { DONT_KNOW, T } from "./phrases";
 import { guardTurn } from "./safety";
-import type { VoiceLang } from "./types";
+import type { BookingDraft, VoiceLang } from "./types";
 
 export type RouterContext = {
   pack: KnowledgePack;
@@ -23,8 +26,8 @@ export type RouterContext = {
   provider: AgentProvider;
   deps: DialogDeps;
   booking: BookingState | null;
-  /** The assistant offered a doctor booking (after a lab-test request) and is waiting for a yes. */
-  offerDoctor: boolean;
+  /** Something the assistant offered to book (a lab test, a doctor, a department), waiting for a yes. */
+  offer: Offer | null;
   /** Bookings already made in this conversation (the limit is one). */
   bookingsMade: number;
 };
@@ -39,7 +42,7 @@ export type RouterResult = {
   links?: AgentLink[];
   suggestions?: string[];
   booking: BookingState | null;
-  offerDoctor: boolean;
+  offer: Offer | null;
   booked?: AppointmentView;
   /** The reply is a booking read-back (or a re-ask): the session arms the "yes" after it is spoken. */
   readBack?: boolean;
@@ -69,7 +72,7 @@ const DEPARTMENT_LIST = /\b(departments?|specialt(?:y|ies)|specialit(?:y|ies)|vi
 
 const QUESTION = /^(what|how|when|where|which|who|why|is|are|do|does|can|kya|kab|kitni|kitna|kitne|kahan|kaun|kaise|kaisay|kyun)\b|\?\s*$/i;
 
-function engineAnswer(ctx: RouterContext, mapped: string, lang: VoiceLang): Promise<Omit<RouterResult, "booking" | "offerDoctor" | "lang">> {
+function engineAnswer(ctx: RouterContext, mapped: string, lang: VoiceLang): Promise<Omit<RouterResult, "booking" | "offer" | "lang">> {
   return ctx.provider.answer({ mode: ctx.mode, question: mapped.slice(0, 300) }).then((answer) => {
     if ((answer.intent === "unknown" || answer.intent === "guide_unknown") && (parseYesNo(mapped) !== "unclear" || /^(ok|okay|ji|hmm|theek hai|acha|accha|achha|thanks|thank you|shukriya)$/i.test(cleanText(mapped)))) {
       return { intent: "ack", text: T(lang, "Alright! Is there anything else I can help you with?", "Theek hai! Kuch aur madad chahiye?") };
@@ -81,11 +84,129 @@ function engineAnswer(ctx: RouterContext, mapped: string, lang: VoiceLang): Prom
   });
 }
 
+/** Something the assistant offered to book, waiting for the caller's yes. */
+export type Offer = { kind: "lab"; testSlug: string } | { kind: "doctor"; doctorSlug: string } | { kind: "department"; departmentSlug: string };
+
+// The catalog's lab wording is English; for a Roman Urdu reply the common phrases are said in Roman Urdu, so one
+// reply never mixes the two languages. Anything not listed is kept as it is.
+const ROMAN_PREP: Record<string, string> = {
+  "no preparation needed": "Koi tayyari zaroori nahi",
+  "8 hours fasting; plain water is allowed": "8 ghante ka faqa; saada paani pi sakte hain",
+  "8–10 hours fasting; plain water is allowed": "8–10 ghante ka faqa; saada paani pi sakte hain",
+  "10–12 hours fasting; plain water is allowed": "10–12 ghante ka faqa; saada paani pi sakte hain",
+  "morning sample preferred; ask the lab for timing": "Subah ka sample behtar hai; waqt lab se pooch lein",
+  "first-morning urine sample preferred": "Subah ka pehla peshab ka sample behtar hai",
+};
+const ROMAN_SAMPLE: Record<string, string> = { blood: "khoon", urine: "peshab", "blood (fasting)": "khoon (faqe ke saath)" };
+const ROMAN_REPORT: Record<string, string> = {
+  "same day": "usi din",
+  "24 hours": "24 ghante mein",
+  "24–48 hours": "24–48 ghante mein",
+  "within 2 hours": "2 ghante ke andar",
+  "within 1 hour": "1 ghante ke andar",
+  "2–3 working days": "2–3 kaam ke dinon mein",
+};
+const romanOf = (map: Record<string, string>, value: string) => map[value.trim().toLowerCase()] ?? value;
+
+function labExplanation(ctx: RouterContext, test: KnowledgePack["labTests"][number], lang: VoiceLang): string {
+  const lab = labDepartment(ctx.pack);
+  const doctor = lab?.doctors.length === 1 ? lab.doctors[0] : undefined;
+  // Other names, but not ones already in the test's name ("CBC" in "Complete Blood Count (CBC)").
+  const aka = test.aka.filter((a) => a && !test.name.toLowerCase().includes(a.toLowerCase())).slice(0, 2);
+  const price = formatPkr(test.pricePkr);
+  if (lang === "roman") {
+    return [
+      `${test.name}${aka.length ? ` (${aka.join(", ")})` : ""} ${romanOf(ROMAN_SAMPLE, test.sampleType)} ka test hai.`,
+      test.preparation ? `Tayyari: ${romanOf(ROMAN_PREP, test.preparation)}.` : "",
+      test.reportTime ? `Report ${romanOf(ROMAN_REPORT, test.reportTime)} milti hai.` : "",
+      `Qeemat ${price} hai (sample qeemat).`,
+      lab ? `Yeh hamari ${lab.name} mein hota hai${doctor ? `, ${doctor.name} ke saath` : ""}.` : "",
+      "Kya main aap ki booking kar doon?",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+  return [
+    `${test.name}${aka.length ? ` (also called ${aka.join(", ")})` : ""} is a ${test.sampleType.toLowerCase()} test.`,
+    test.preparation ? `Preparation: ${test.preparation}.` : "",
+    test.reportTime ? `Report: ${test.reportTime}.` : "",
+    `Price: ${price} (sample price).`,
+    lab ? `It's done at our ${lab.name}${doctor ? ` with ${doctor.name}` : ""}.` : "",
+    "Shall I book it for you?",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function offerQuestion(ctx: RouterContext, offer: Offer, lang: VoiceLang): string {
+  if (offer.kind === "lab") return T(lang, "Shall I book it for you?", "Kya main aap ki booking kar doon?");
+  if (offer.kind === "doctor") {
+    const name = ctx.pack.doctors.find((d) => d.slug === offer.doctorSlug)?.name ?? "";
+    return T(lang, `Shall I book an appointment with ${name}?`, `Kya main ${name} ke saath aap ki booking kar doon?`);
+  }
+  const dept = ctx.pack.departments.find((d) => d.slug === offer.departmentSlug)?.name ?? "";
+  return T(lang, `Shall I book an appointment in ${dept}?`, `Kya main ${dept} mein aap ki booking kar doon?`);
+}
+
+function prefillFor(ctx: RouterContext, offer: Offer): Partial<BookingDraft> {
+  if (offer.kind === "lab") {
+    const test = ctx.pack.labTests.find((t) => t.slug === offer.testSlug);
+    const lab = labDepartment(ctx.pack);
+    const only = lab?.doctors.length === 1 ? lab.doctors[0] : undefined;
+    return { departmentSlug: lab?.slug ?? null, doctorSlug: only?.slug ?? null, reason: test ? `${test.name} test` : null };
+  }
+  if (offer.kind === "doctor") {
+    const doctor = ctx.pack.doctors.find((d) => d.slug === offer.doctorSlug);
+    return { doctorSlug: offer.doctorSlug, departmentSlug: doctor?.departmentSlug ?? null };
+  }
+  const team = doctorsOf(offer.departmentSlug, ctx.pack);
+  return { departmentSlug: offer.departmentSlug, doctorSlug: team.length === 1 ? (team[0]?.slug ?? null) : null };
+}
+
+/** An offer that fits the engine's answer (a doctor, a department or a lab test was talked about), or null. */
+function offerFor(ctx: RouterContext, intent: string, mapped: string): Offer | null {
+  if (intent === "lab_test") {
+    const test = findLabTest(mapped, ctx.pack);
+    return test ? { kind: "lab", testSlug: test.slug } : null;
+  }
+  if (intent === "doctor") {
+    const doctors = findDoctors(mapped, ctx.pack);
+    return doctors.length === 1 && doctors[0] ? { kind: "doctor", doctorSlug: doctors[0].slug } : null;
+  }
+  if (intent === "department" || intent === "symptom") {
+    const slug = findDepartment(mapped, ctx.pack);
+    return slug ? { kind: "department", departmentSlug: slug } : null;
+  }
+  return null;
+}
+
+async function startBooking(ctx: RouterContext, input: RouterInput, lang: VoiceLang, prefill: Partial<BookingDraft>, text: string): Promise<RouterResult> {
+  const out = await bookingStep(newBookingState(prefill), { text, lang, confirmable: input.confirmable }, ctx.deps);
+  const opener = T(lang, "Of course, I'll book that for you. This is a demo, so please use sample details.", "Ji zaroor, main aap ke liye booking kar deti hoon. Yeh ek demo hai, is liye sample details istemal karein.");
+  return {
+    lang,
+    booking: out.state,
+    offer: null,
+    intent: out.readBack ? "booking_read_back" : "booking_start",
+    text: `${opener} ${out.text}`,
+    spoken: out.spoken ? `${opener} ${out.spoken}` : undefined,
+    readBack: out.readBack,
+  };
+}
+
+const oneBookingOnly = (lang: VoiceLang) =>
+  T(
+    lang,
+    "I can make one booking per conversation, and you've already booked. For another appointment please use the booking page or call the clinic.",
+    "Main ek conversation mein ek hi booking kar sakti hoon, aur aap book kar chuke hain. Doosre appointment ke liye booking page istemal karein ya clinic ko call karein.",
+  );
+const bookLink = (lang: VoiceLang) => ({ label: T(lang, "Book an appointment", "Appointment book karein"), href: "/book-appointment" });
+
 /** Routes one turn. Never throws for ordinary input; network problems inside the booking dialog are handled there. */
 export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise<RouterResult> {
   const mapped = urduToLatin(input.text);
   const lang = replyLanguage(input.text, ctx.lang);
-  const base = { lang, booking: ctx.booking, offerDoctor: ctx.offerDoctor };
+  const base = { lang, booking: ctx.booking, offer: ctx.offer };
 
   // 1. Safety first. It cannot be switched off by any dialog state.
   const guarded = guardTurn(mapped, ctx.pack, lang);
@@ -93,7 +214,7 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     let booking = ctx.booking;
     // An emergency or crisis stops a booking in progress: nothing can be confirmed until the caller starts again.
     if (guarded.pausesBooking && booking && booking.phase !== "booked") booking = { ...booking, phase: "collecting", asking: null, key: null };
-    return { ...base, booking, offerDoctor: false, intent: guarded.reply.intent, text: guarded.reply.text, links: guarded.reply.links, urgent: guarded.pausesBooking };
+    return { ...base, booking, offer: null, intent: guarded.reply.intent, text: guarded.reply.text, links: guarded.reply.links, urgent: guarded.pausesBooking };
   }
 
   const patient = ctx.mode === "patient";
@@ -103,7 +224,7 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
   if (active && ctx.booking) {
     const asking = ctx.booking.phase === "collecting" && ctx.booking.asking !== null;
     // A side question ("what is the fee?") is answered, then the booking question is asked again.
-    if (asking && QUESTION.test(mapped.trim()) && !/\b(name|naam|number|phone|mobile)\b/i.test(mapped) && parseYesNo(mapped) === "unclear") {
+    if (asking && QUESTION.test(mapped.trim()) && !/(name|naam|number|phone|mobile)/i.test(mapped) && parseYesNo(mapped) === "unclear") {
       const answer = await engineAnswer(ctx, mapped, lang);
       if (answer.intent !== "unknown") {
         const again = currentQuestion(ctx.booking, ctx.deps, lang);
@@ -114,7 +235,7 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     return {
       ...base,
       booking: out.state,
-      offerDoctor: false,
+      offer: null,
       intent: out.booked ? "booking_done" : out.readBack ? "booking_read_back" : "booking",
       text: out.text,
       spoken: out.spoken,
@@ -124,38 +245,27 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     };
   }
 
-  // 3. A new booking request (Patient tab only).
-  const accepted = patient && ctx.offerDoctor && parseYesNo(mapped) === "yes";
-  if (patient && (accepted || wantsBooking(mapped))) {
-    if (ctx.bookingsMade >= 1) {
-      const out = await bookingStep(ctx.booking ?? newBookingState(), { text: mapped, lang, confirmable: input.confirmable }, ctx.deps);
-      return { ...base, intent: "booking_limit", text: T(lang, "I can make one booking per conversation, and you've already booked. For another appointment please use the booking page or call the clinic.", "Main ek conversation mein ek hi booking kar sakti hoon, aur aap book kar chuke hain. Doosre appointment ke liye booking page istemal karein ya clinic ko call karein."), links: out.links ?? [{ label: T(lang, "Book an appointment", "Appointment book karein"), href: "/book-appointment" }], offerDoctor: false };
+  if (patient) {
+    const answer = parseYesNo(mapped);
+    // 3a. The caller accepts or declines something the assistant offered to book.
+    if (ctx.offer && answer === "yes") {
+      if (ctx.bookingsMade >= 1) return { ...base, offer: null, intent: "booking_limit", text: oneBookingOnly(lang), links: [bookLink(lang)] };
+      return startBooking(ctx, input, lang, prefillFor(ctx, ctx.offer), "");
     }
-    if (!accepted && mentionsLabTest(mapped, ctx.pack)) {
-      return {
-        ...base,
-        offerDoctor: true,
-        intent: "lab_not_bookable",
-        text: T(
-          lang,
-          `Lab tests can't be booked online yet. I can book a doctor's appointment for you, or you can call the clinic on ${ctx.pack.clinic.phone} to arrange the test. Would you like a doctor booking?`,
-          `Lab tests abhi online book nahi ho sakte. Main doctor ka appointment book kar sakti hoon, ya aap test ke liye clinic ko ${ctx.pack.clinic.phone} par call karein. Kya doctor ki booking karoon?`,
-        ),
-        links: [{ label: T(lang, "Lab tests", "Lab tests"), href: "/lab-tests" }],
-      };
+    if (ctx.offer && answer === "no") {
+      return { ...base, offer: null, intent: "offer_declined", text: T(lang, "No problem. Is there anything else I can help you with?", "Koi baat nahi. Kya aur kisi cheez mein madad karoon?") };
     }
-    const start = newBookingState();
-    const out = await bookingStep(start, { text: accepted ? "" : mapped, lang, confirmable: input.confirmable }, ctx.deps);
-    const opener = T(lang, "Ji zaroor, I'll book that for you. This is a demo, so please use sample details.", "Ji zaroor, main aap ke liye booking kar deti hoon. Yeh ek demo hai, is liye sample details istemal karein.");
-    return {
-      ...base,
-      booking: out.state,
-      offerDoctor: false,
-      intent: out.readBack ? "booking_read_back" : "booking_start",
-      text: `${opener} ${out.text}`,
-      spoken: out.spoken ? `${opener} ${out.spoken}` : undefined,
-      readBack: out.readBack,
-    };
+
+    // 3b. A new booking request (or "I want a CBC test").
+    const test = mentionsLabTest(mapped, ctx.pack) ? findLabTest(mapped, ctx.pack) : null;
+    // ("Do I need to fast for the lipid profile?" is a question, not a request: the engine answers it below.)
+    if (wantsBooking(mapped) || (test && WANTS.test(cleanText(mapped)) && !QUESTION.test(mapped.trim()))) {
+      if (ctx.bookingsMade >= 1) return { ...base, offer: null, intent: "booking_limit", text: oneBookingOnly(lang), links: [bookLink(lang)] };
+      // A lab test: say what it is (from the catalog) and offer to book it, before asking anything.
+      if (test) return { ...base, offer: { kind: "lab", testSlug: test.slug }, intent: "lab_offer", text: labExplanation(ctx, test, lang), links: [{ label: test.name, href: `/lab-tests/${test.slug}` }] };
+      const symptoms = departmentForSymptoms(mapped, ctx.pack);
+      return startBooking(ctx, input, lang, symptoms ? { reason: mapped.slice(0, 300) } : {}, mapped);
+    }
   }
 
   // 4. Everything else is the same answer engine as the text chat.
@@ -163,14 +273,40 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     const names = ctx.pack.departments.filter((d) => ctx.pack.doctors.some((doc) => doc.departmentSlug === d.slug)).map((d) => d.name);
     return {
       ...base,
-      offerDoctor: false,
+      offer: null,
       intent: "departments",
       text: T(lang, `We have ${names.length} departments with doctors: ${names.join(", ")}. Which one do you need?`, `Hamare paas ${names.length} departments mein doctors hain: ${names.join(", ")}. Aap ko kaun sa chahiye?`),
       links: [{ label: T(lang, "All departments", "Tamam departments"), href: "/departments" }],
     };
   }
   const answer = await engineAnswer(ctx, mapped, lang);
-  // A voice caller who asks how booking works is offered the booking right now.
-  const nudge = answer.intent === "booking" && ctx.mode === "patient" ? ` ${T(lang, "I can do it for you right now. Just say: book an appointment.", "Main abhi aap ke liye kar sakti hoon. Bas kahein: appointment book karein.")}` : "";
-  return { ...base, ...answer, text: `${answer.text}${nudge}`, offerDoctor: false };
+  // After an answer about a doctor, a department or a test, offer to book it (one booking per conversation).
+  const offer = ctx.mode === "patient" && ctx.bookingsMade === 0 ? offerFor(ctx, answer.intent, mapped) : null;
+  const nudge = offer
+    ? ` ${offerQuestion(ctx, offer, lang)}`
+    : answer.intent === "booking" && ctx.mode === "patient"
+      ? ` ${T(lang, "I can do it for you right now. Just say: book an appointment.", "Main abhi aap ke liye kar sakti hoon. Bas kahein: appointment book karein.")}`
+      : "";
+  return { ...base, ...answer, text: `${answer.text}${nudge}`, offer };
+}
+
+/**
+ * One conversation's memory, shared by the typed chat and voice mode (FR-003, FR-020): the booking being collected,
+ * an open offer, the language, and how many bookings were made. It lives in memory only and is gone with the chat.
+ */
+export class Conversation {
+  readonly ctx: RouterContext;
+
+  constructor(init: { pack: KnowledgePack; mode: AgentMode; provider: AgentProvider; deps: DialogDeps; lang?: VoiceLang }) {
+    this.ctx = { pack: init.pack, mode: init.mode, lang: init.lang ?? "en", provider: init.provider, deps: init.deps, booking: null, offer: null, bookingsMade: 0 };
+  }
+
+  async turn(text: string, options: { confirmable: boolean }): Promise<RouterResult> {
+    const out = await routeTurn(this.ctx, { text, confirmable: options.confirmable });
+    this.ctx.booking = out.booking;
+    this.ctx.offer = out.offer;
+    this.ctx.lang = out.lang;
+    if (out.booked) this.ctx.bookingsMade += 1;
+    return out;
+  }
 }

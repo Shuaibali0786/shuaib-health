@@ -37,18 +37,15 @@ const COPY: Record<Notice, Copy> = {
     body: "I will show my answers as text instead.",
   },
   network: {
-    title: "The speech service isn't reachable",
-    body: "Your browser's listening service needs an internet connection. Check your connection, or type your message below.",
+    // Edge on Windows often cannot reach its own listening service; Chrome's works. Until the premium voice is on.
+    title: "Voice listening works most reliably in the Chrome browser",
+    body: "This browser could not reach its listening service. You can also type below, and I will still answer aloud.",
     action: "Try again",
   },
   tap_to_talk: {
     title: "I stopped listening",
     body: "It was quiet for a while. Tap the button when you're ready to continue.",
     action: "Start listening",
-  },
-  no_urdu_voice: {
-    title: "No Urdu voice on this device",
-    body: "I will show the text and read it with an English voice. Edge on Windows has free natural Urdu voices (Uzma and Asad) you can add in Settings, then Time & language, then Speech.",
   },
 };
 

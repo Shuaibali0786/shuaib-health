@@ -47,3 +47,12 @@ export function isVoiceEnabled(): boolean {
   const raw = process.env.VOICE_ENABLED?.trim().toLowerCase();
   return isAssistantEnabled() && (raw === "true" || raw === "1" || raw === "yes" || raw === "on");
 }
+
+/**
+ * VOICE_PROVIDER (Feature 013): "browser" (the default, free) or "azure" (premium neural voices and listening). Azure
+ * also needs AZURE_SPEECH_KEY and AZURE_SPEECH_REGION on the API, which hands out short-lived tokens; whenever it is
+ * not available the voice falls back to the browser silently. Read at build time; only meaningful with voice on.
+ */
+export function getVoiceProvider(): "browser" | "azure" {
+  return isVoiceEnabled() && process.env.VOICE_PROVIDER?.trim().toLowerCase() === "azure" ? "azure" : "browser";
+}

@@ -39,7 +39,20 @@ export type BookingState = {
   booked: AppointmentView | null;
 };
 
-export const newBookingState = (): BookingState => ({ phase: "collecting", draft: EMPTY_DRAFT, asking: null, slots: {}, pendingTimes: [], key: null, booked: null, serverNow: null });
+/**
+ * A fresh booking. `prefill` carries what the conversation already knows (the doctor or department, or the lab test as
+ * the reason). The reason is never asked for: it comes from the conversation, or stays empty (it is optional).
+ */
+export const newBookingState = (prefill: Partial<BookingDraft> = {}): BookingState => ({
+  phase: "collecting",
+  draft: { ...EMPTY_DRAFT, reasonAnswered: true, ...prefill },
+  asking: null,
+  slots: {},
+  pendingTimes: [],
+  key: null,
+  booked: null,
+  serverNow: null,
+});
 
 export type DialogDeps = {
   pack: KnowledgePack;
@@ -318,12 +331,12 @@ async function settle(start: BookingState, deps: DialogDeps, lang: VoiceLang): P
 
 function nextAsk(state: BookingState): Ask {
   const d = state.draft;
-  if (!d.fullName) return "fullName";
-  if (!d.phone) return "phone";
-  if (!d.reasonAnswered) return "reason";
+  // One item at a time, in the order a receptionist asks: who to see, when, then the patient's details.
   if (!d.doctorSlug) return "doctor";
   if (!d.date) return "date";
   if (!d.startsAt) return state.pendingTimes.length > 1 ? "partOfDay" : "time";
+  if (!d.fullName) return "fullName";
+  if (!d.phone) return "phone";
   if (!d.emailAnswered) return "email";
   return null;
 }
@@ -392,7 +405,7 @@ function readBack(state: BookingState, deps: DialogDeps, lang: VoiceLang): { tex
       T(lang, `When: ${when}.`, `Kab: ${when}.`),
       d.reason ? T(lang, `Reason: ${d.reason}.`, `Wajah: ${d.reason}.`) : "",
       d.email ? T(lang, `Email: ${spokenEmail ? speakEmail(d.email) : d.email}.`, `Email: ${spokenEmail ? speakEmail(d.email) : d.email}.`) : "",
-      fee ? T(lang, `Consultation fee: ${fee} (sample price).`, `Consultation fee: ${fee} (sample qeemat).`) : "",
+      fee ? T(lang, `Visit fee: ${fee} (sample price).`, `Visit fee: ${fee} (sample qeemat).`) : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -529,8 +542,8 @@ async function submit(start: BookingState, deps: DialogDeps, lang: VoiceLang): P
       const base = (ref: string) =>
         T(
           lang,
-          `You're booked, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Your reference is ${ref}. Please arrive 15 minutes early and bring your CNIC and any old reports. Your slip is on the screen, with a QR code and a download button.`,
-          `Aap ki booking ho gayi, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Aap ka reference ${ref} hai. Barah-e-meherbani 15 minute pehle aayein aur CNIC aur purani reports saath laayein. Aap ki slip screen par hai, QR code aur download button ke saath.`,
+          `You're booked, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Your reference is ${ref}. Tap the link below to view and download your slip, and bring it with you to the clinic.`,
+          `Aap ki booking ho gayi, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Aap ka reference ${ref} hai. Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein.`,
         );
       return reply(done, base(groupReference(v.reference)), { spoken: base(speakReference(v.reference)), booked: v });
     }

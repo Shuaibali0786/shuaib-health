@@ -74,6 +74,8 @@ export function createBrowserSpeech(win: SpeechWindow | undefined = typeof windo
         wanted = false;
         handlers.onError("unavailable");
       } else if (event.error === "network") {
+        // Edge often cannot reach its listening service at all: stop instead of retrying in a loop.
+        wanted = false;
         handlers.onError("network");
       } else if (event.error === "no-speech") {
         handlers.onError("silence");

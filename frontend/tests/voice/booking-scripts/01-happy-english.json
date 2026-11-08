@@ -1,14 +1,13 @@
 {
-  "name": "Happy path in English, with an email and a read-back",
+  "name": "English booking: doctor, day, time, then name, phone, email, one at a time; read-back; yes; slip link",
   "turns": [
-    { "say": "I want to book an appointment with Dr Maryam", "expect": ["full name"], "submits": 0 },
-    { "say": "my name is Ali Raza", "expect": ["Ali", "mobile number"] },
-    { "say": "zero three zero zero one two three four five six seven", "expect": ["visit for"] },
-    { "say": "skin allergy", "expect": ["Which day"] },
+    { "say": "I want to book an appointment with Dr Maryam", "expect": ["Of course", "Which day"], "forbid": ["Ji zaroor"], "submits": 0 },
     { "say": "friday", "expect": ["Friday 13 November", "11:30 AM"] },
-    { "say": "11:30", "expect": ["email", "skip"] },
+    { "say": "11:30", "expect": ["full name"] },
+    { "say": "my name is Ali Raza", "expect": ["Ali", "mobile number"] },
+    { "say": "zero three zero zero one two three four five six seven", "expect": ["email", "skip"] },
     { "say": "ali dot raza at gmail dot com", "expect": ["read it back", "0300 123 4567", "ali.raza@gmail.com", "Shall I confirm"], "submits": 0 },
-    { "say": "yes", "expect": ["You're booked", "7K3M 9P2Q XA", "15 minutes early", "CNIC"], "submits": 1 }
+    { "say": "yes", "expect": ["You're booked", "7K3M 9P2Q XA", "Tap the link", "bring it with you"], "forbid": ["Aap", "laayein"], "submits": 1 }
   ],
-  "final": { "bookings": 1, "payload": { "doctorSlug": "dr-maryam-baloch", "startsAt": "2026-11-13T06:30:00Z", "fullName": "Ali Raza", "mobile": "+923001234567", "email": "ali.raza@gmail.com", "reason": "skin allergy", "acceptRules": true, "trap": null } }
+  "final": { "bookings": 1, "payload": { "doctorSlug": "dr-maryam-baloch", "startsAt": "2026-11-13T06:30:00Z", "fullName": "Ali Raza", "mobile": "+923001234567", "email": "ali.raza@gmail.com", "acceptRules": true, "trap": null } }
 }

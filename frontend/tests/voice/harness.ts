@@ -6,8 +6,8 @@ import type { KnowledgePack } from "@/agent/types";
 import type { BookingAnswer } from "@/lib/booking/client";
 import type { DoctorSlots } from "@/lib/booking/schemas";
 import { faqGroups } from "@/data/faq";
-import { newBookingState, type BookingPayload, type BookingState, type DialogDeps } from "@/voice/bookingDialog";
-import { routeTurn, type RouterContext, type RouterResult } from "@/voice/router";
+import { newBookingState, type BookingPayload, type DialogDeps } from "@/voice/bookingDialog";
+import { Conversation, type RouterResult } from "@/voice/router";
 import type { VoiceLang } from "@/voice/types";
 
 import { departments } from "../fixtures/catalog/departments";
@@ -97,18 +97,15 @@ export function makeWorld(options: { mode?: SubmitMode; lang?: VoiceLang; guide?
     },
   };
 
-  const ctx: RouterContext = { pack, mode: options.guide ? "guide" : "patient", lang: options.lang ?? "en", provider: getProvider(pack, "local"), deps, booking: null as BookingState | null, offerDoctor: false, bookingsMade: 0 };
+  const conversation = new Conversation({ pack, mode: options.guide ? "guide" : "patient", provider: getProvider(pack, "local"), deps, lang: options.lang ?? "en" });
+  const ctx = conversation.ctx;
   const log: RouterResult[] = [];
 
   async function say(text: string, opts: { confirmable?: boolean } = {}): Promise<RouterResult> {
-    const out = await routeTurn(ctx, { text, confirmable: opts.confirmable ?? true });
-    ctx.booking = out.booking;
-    ctx.offerDoctor = out.offerDoctor;
-    ctx.lang = out.lang;
-    if (out.booked) ctx.bookingsMade += 1;
+    const out = await conversation.turn(text, { confirmable: opts.confirmable ?? true });
     log.push(out);
     return out;
   }
 
-  return { pack, ctx, deps, submits, say, log, newBooking: newBookingState };
+  return { pack, ctx, conversation, deps, submits, say, log, newBooking: newBookingState };
 }

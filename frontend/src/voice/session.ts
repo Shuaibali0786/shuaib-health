@@ -1,26 +1,22 @@
 // One voice conversation: turn-taking, barge-in, silence prompts and the safe "yes" gate (Feature 013).
 //
 // Framework-free on purpose, so it is tested end to end with a scripted SpeechPort. The React panel only draws
-// what this emits. Audio is never recorded or stored here; the transcript lives in this object and is gone when
-// the conversation ends.
+// what this emits. Audio is never recorded or stored here. The conversation's memory (the booking, the language)
+// is the shared `Conversation`, so typed and spoken turns are one conversation.
 
-import { cleanText } from "@/agent/normalize";
+import { cleanText, detectLang } from "@/agent/normalize";
 import { createThrottle } from "@/agent/throttle";
-import type { AgentMode, AgentProvider, KnowledgePack } from "@/agent/types";
-import type { AppointmentView } from "@/lib/booking/schemas";
 
-import type { BookingState, DialogDeps } from "./bookingDialog";
+import type { BookingState } from "./bookingDialog";
 import { splitSentences } from "./chunk";
-import { CHECKING, NO_URDU_VOICE, STILL_THERE, TAP_TO_TALK, T, openingLines } from "./phrases";
-import { routeTurn, type RouterContext, type RouterResult } from "./router";
-import type { ListenLang, SpeechPort, Turn, VoiceGender, VoiceInfo, VoiceLang, VoiceState } from "./types";
-import { detectLang } from "@/agent/normalize";
-
+import { CHECKING, STILL_THERE, TAP_TO_TALK, T, welcomeLine } from "./phrases";
+import type { Conversation, RouterResult } from "./router";
 import { forSpeech } from "./speechText";
+import type { SpeechPort, Turn, VoiceInfo, VoiceLang, VoiceState } from "./types";
 import { urduSpeech } from "./urduSpeech";
-import { chooseVoice, pickVoiceSet } from "./voicePicker";
+import { pickVoiceSet } from "./voicePicker";
 
-export type Notice = "mic_denied" | "mic_unavailable" | "listen_unsupported" | "speak_unsupported" | "network" | "tap_to_talk" | "no_urdu_voice";
+export type Notice = "mic_denied" | "mic_unavailable" | "listen_unsupported" | "speak_unsupported" | "network" | "tap_to_talk";
 
 export type SessionEvents = {
   onState(state: VoiceState): void;
@@ -32,26 +28,23 @@ export type SessionEvents = {
   onSpeaking(sentence: string | null): void;
   /** A word was spoken: pulse the orb's waves. */
   onBoundary(): void;
-  /** The booking being collected, for the summary card (null when none). */
-  onBooking(state: BookingState | null): void;
-  onBooked(view: AppointmentView): void;
+  /** Whatever the turn changed: the booking card and the slip card read this. */
+  onResult(result: RouterResult): void;
   onNotice(notice: Notice): void;
-  onLang(lang: VoiceLang): void;
 };
 
 export type SessionOptions = {
   port: SpeechPort;
-  pack: KnowledgePack;
-  mode: AgentMode;
-  provider: AgentProvider;
-  deps: DialogDeps;
+  conversation: Conversation;
   events: SessionEvents;
-  listenLang?: ListenLang;
-  gender?: VoiceGender;
-  /** Skip the greeting (the caller already heard it in this conversation). */
+  /** The language of the welcome, and so of the one voice used for the whole conversation. */
+  welcomeLang?: VoiceLang;
+  /** Skip the welcome (the caller already heard it in this conversation). */
   skipOpening?: boolean;
   /** A short rest between sentences, in milliseconds (default 220). Zero in tests. */
   pauseMs?: number;
+  /** What the browser listens for. Indian English hears English and Roman Urdu (spoken Hinglish) best. */
+  listenCode?: string;
 };
 
 const SILENCE_MS = 8000;
@@ -59,9 +52,7 @@ const ACK_AFTER_MS = 1000;
 const ECHO_OVERLAP = 0.6;
 /** A little slower than the default: warmer, easier to follow. */
 const SPEECH_RATE = 0.95;
-const GREETING = /^(assalam|wa\s?alaikum|salam)/i;
-
-const LISTEN_CODE: Record<ListenLang, string> = { en: "en-PK", ur: "ur-PK" };
+const GREETING = /^(assalam|wa alaikum|salam)/i;
 
 const words = (text: string) => cleanText(text).split(" ").filter(Boolean);
 
@@ -76,17 +67,20 @@ function overlap(heard: string, spoken: string): number {
 export class VoiceSession {
   private readonly port: SpeechPort;
   private readonly events: SessionEvents;
-  private readonly ctx: RouterContext;
+  private readonly conversation: Conversation;
   // A booking by voice takes about ten turns, so the limit is wider than the typed chat's 8 a minute. It only stops runaway loops.
   private readonly throttle = createThrottle(Date.now, 24, 150);
+  private readonly pauseMs: number;
+  private readonly listenCode: string;
+  private readonly welcomeLang: VoiceLang;
 
   private state: VoiceState = "idle";
-  private muted = false;
   private ended = false;
-  private listenLang: ListenLang;
-  private gender: VoiceGender;
+  private stopped = false;
   private voices: VoiceInfo[] = [];
   private voicesLoaded = false;
+  /** The one voice for the whole conversation, chosen once and never switched. */
+  private voice: { info: VoiceInfo | null; lang: string; urdu: boolean } | null = null;
   private turnId = 1;
 
   /** Bumped by every interruption: speech started before it stops at the next sentence. */
@@ -103,30 +97,30 @@ export class VoiceSession {
   private readBackActive = false;
   /** The caller spoke during the read-back (or cut it off): a "yes" from that turn must not book. */
   private overlapped = false;
-  private noUrduNoted = false;
-  private voiceOverride: VoiceInfo | null = null;
-  private readonly pauseMs: number;
   private openingDone: boolean;
 
   constructor(options: SessionOptions) {
     this.port = options.port;
     this.events = options.events;
-    this.listenLang = options.listenLang ?? "en";
-    this.gender = options.gender ?? "female";
+    this.conversation = options.conversation;
+    this.welcomeLang = options.welcomeLang ?? "en";
     this.openingDone = Boolean(options.skipOpening);
     this.pauseMs = options.pauseMs ?? 220;
-    this.ctx = { pack: options.pack, mode: options.mode, lang: "en", provider: options.provider, deps: options.deps, booking: null, offerDoctor: false, bookingsMade: 0 };
+    this.listenCode = options.listenCode ?? "en-IN";
+    if (!this.openingDone) this.conversation.ctx.lang = this.welcomeLang;
   }
 
   // --- Public controls ----------------------------------------------------------------------------------
 
+  /** Welcome (once), then listen straight away. */
   async start(): Promise<void> {
     if (!this.port.canSpeak && !this.port.canListen) return;
     await this.loadVoices();
     if (!this.port.canListen) this.events.onNotice("listen_unsupported");
     if (!this.openingDone) {
       this.openingDone = true;
-      await this.say(openingLines(this.ctx.pack, this.ctx.lang), { assistantTurn: true });
+      await this.say(welcomeLine(this.conversation.ctx.pack, this.welcomeLang), { assistantTurn: true });
+      return; // speaking ends in beginListening()
     }
     this.beginListening();
   }
@@ -141,7 +135,30 @@ export class VoiceSession {
     this.setState("idle");
   }
 
-  /** Stops the assistant mid-sentence and listens (the Interrupt button, or the caller talking over it). */
+  /** The one mic button: tap to talk, tap again to stop. While the assistant speaks, a tap cuts in and listens. */
+  toggleMic(): void {
+    if (this.state === "speaking" || this.speaking > 0) {
+      this.interrupt();
+      return;
+    }
+    if (this.state === "listening") {
+      this.stopped = true;
+      this.port.stopListening();
+      this.clearTimers();
+      this.setState("idle");
+      return;
+    }
+    this.resume();
+  }
+
+  /** Starts listening again (after the caller stopped it, the quiet-time stop, or a microphone problem was fixed). */
+  resume(): void {
+    this.stopped = false;
+    this.silenceCount = 0;
+    this.beginListening();
+  }
+
+  /** Stops the assistant mid-sentence and listens (the caller talking over it, or a tap on the mic). */
   interrupt(): void {
     if (this.speaking === 0 && this.state !== "speaking") return;
     this.generation += 1;
@@ -150,53 +167,8 @@ export class VoiceSession {
     this.port.cancelSpeech();
     this.events.onSpeaking(null);
     this.speaking = 0;
+    this.stopped = false;
     this.beginListening();
-  }
-
-  /** Starts listening again (after the quiet-time stop, or a microphone problem that was fixed). */
-  resume(): void {
-    this.muted = false;
-    this.silenceCount = 0;
-    this.beginListening();
-  }
-
-  setMuted(muted: boolean): void {
-    this.muted = muted;
-    if (muted) {
-      this.port.stopListening();
-      this.clearTimers();
-      this.setState("paused");
-    } else {
-      this.silenceCount = 0;
-      this.beginListening();
-    }
-  }
-
-  setListenLang(lang: ListenLang): void {
-    this.listenLang = lang;
-    if (this.state === "listening") this.beginListening(true);
-  }
-
-  setGender(gender: VoiceGender): void {
-    this.gender = gender;
-    this.voiceOverride = null; // choosing Female or Male goes back to the automatic voices
-  }
-
-  /** A voice picked in the Voice menu reads everything; null returns to the automatic choice. */
-  setVoice(voice: VoiceInfo | null): void {
-    this.voiceOverride = voice;
-  }
-
-  /** Speaks a short bilingual sample in the current voice, so the person can hear it. */
-  async sample(): Promise<void> {
-    if (this.state === "speaking") this.interrupt();
-    await this.speak(`Assalam o Alaikum! Main ${this.ctx.pack.clinic.name} ki assistant hoon. I'm happy to help you today.`, { readBack: false, lang: "roman", keepIdle: this.state !== "listening" });
-  }
-
-  /** The voices this device offers (for the Voice menu). */
-  async availableVoices(): Promise<VoiceInfo[]> {
-    await this.loadVoices();
-    return this.voices;
   }
 
   /** A typed message from the panel's text box (the text fallback). It counts as the caller's own turn. */
@@ -207,7 +179,7 @@ export class VoiceSession {
   }
 
   get booking(): BookingState | null {
-    return this.ctx.booking;
+    return this.conversation.ctx.booking;
   }
 
   get currentState(): VoiceState {
@@ -216,26 +188,26 @@ export class VoiceSession {
 
   // --- Listening ----------------------------------------------------------------------------------------
 
-  private beginListening(restart = false): void {
-    if (this.ended || this.muted) return;
+  private beginListening(): void {
+    if (this.ended || this.stopped) return;
     if (!this.port.canListen) {
       this.setState("idle");
       return;
     }
     if (this.speaking > 0) return;
     this.setState("listening");
-    this.port.listen(LISTEN_CODE[this.listenLang], {
+    this.port.listen(this.listenCode, {
       onInterim: (text) => this.onInterim(text),
       onFinal: (text) => this.onFinal(text),
       onError: (code) => this.onListenError(code),
     });
-    if (!restart || this.silenceTimer === null) this.armSilence();
+    this.armSilence();
   }
 
   private onInterim(text: string): void {
     this.silenceCount = 0;
     if (this.state === "speaking" || this.speaking > 0) {
-      // Talking over the assistant. Its own voice coming back in must not interrupt it.
+      // Talking over the assistant stops it (barge-in). Its own voice coming back in must not.
       if (this.readBackActive) this.overlapped = true;
       if (words(text).length >= 2 && overlap(text, this.recent.join(" ")) < ECHO_OVERLAP) this.interrupt();
       return;
@@ -256,32 +228,30 @@ export class VoiceSession {
   }
 
   private onListenError(code: "denied" | "unavailable" | "silence" | "network"): void {
-    if (code === "denied") {
-      this.events.onNotice("mic_denied");
-      this.setState("idle");
-    } else if (code === "unavailable") {
-      this.events.onNotice("mic_unavailable");
-      this.setState("idle");
-    } else if (code === "network") {
-      this.events.onNotice("network");
-    }
+    if (code === "silence") return;
+    this.port.stopListening();
+    this.clearSilence();
+    this.events.onNotice(code === "denied" ? "mic_denied" : code === "network" ? "network" : "mic_unavailable");
+    this.setState("idle");
   }
 
   // --- Silence ------------------------------------------------------------------------------------------
 
   private armSilence(): void {
     this.clearSilence();
-    if (this.ended || this.muted || this.state !== "listening") return;
+    if (this.ended || this.stopped || this.state !== "listening") return;
     this.silenceTimer = setTimeout(() => {
       this.silenceTimer = null;
-      if (this.ended || this.muted || this.state !== "listening") return;
+      if (this.ended || this.stopped || this.state !== "listening") return;
       this.silenceCount += 1;
+      const lang = this.conversation.ctx.lang;
       if (this.silenceCount === 1) {
-        void this.say(STILL_THERE(this.ctx.lang), { assistantTurn: false });
+        void this.say(STILL_THERE(lang), { assistantTurn: false });
       } else {
         this.port.stopListening();
+        this.stopped = true;
         this.events.onNotice("tap_to_talk");
-        void this.say(TAP_TO_TALK(this.ctx.lang), { assistantTurn: false, keepIdle: true });
+        void this.say(TAP_TO_TALK(lang), { assistantTurn: false, keepIdle: true });
       }
     }, SILENCE_MS);
   }
@@ -308,8 +278,12 @@ export class VoiceSession {
     if (this.ended || !text) return;
     const allowed = this.throttle.take();
     this.events.onTurn({ id: this.turnId++, from: "you", text, voice: !fromText });
+    const lang = this.conversation.ctx.lang;
     if (!allowed.ok) {
-      const wait = T(this.ctx.lang, allowed.reason === "session" ? "That is the question limit for this visit. Please reload the page or call the clinic." : "Please give me a moment before the next question.", allowed.reason === "session" ? "Is visit ke sawalon ki had poori ho gayi. Page dobara kholein ya clinic ko call karein." : "Agla sawal poochne se pehle zara intezaar karein.");
+      const wait =
+        allowed.reason === "session"
+          ? T(lang, "That is the question limit for this visit. Please reload the page or call the clinic.", "Is visit ke sawalon ki had poori ho gayi. Page dobara kholein ya clinic ko call karein.")
+          : T(lang, "Please give me a moment before the next question.", "Agla sawal poochne se pehle zara intezaar karein.");
       await this.say(wait, { assistantTurn: true });
       return;
     }
@@ -322,34 +296,23 @@ export class VoiceSession {
     this.setState("thinking");
     this.ackTimer = setTimeout(() => {
       this.ackTimer = null;
-      if (this.state === "thinking") void this.speak(CHECKING(this.ctx.lang), { readBack: false });
+      if (this.state === "thinking") void this.speak(CHECKING(this.conversation.ctx.lang), { readBack: false });
     }, ACK_AFTER_MS);
 
     let result: RouterResult;
     try {
-      result = await routeTurn(this.ctx, { text, confirmable });
+      result = await this.conversation.turn(text, { confirmable });
     } catch {
       if (this.ackTimer) clearTimeout(this.ackTimer);
       this.ackTimer = null;
-      await this.say(T(this.ctx.lang, "Sorry, something went wrong on my side. Please try again, or call the clinic.", "Maaf kijiye, mujh se kuch ghalat ho gaya. Dobara koshish karein ya clinic ko call karein."), { assistantTurn: true });
+      await this.say(T(lang, "Sorry, something went wrong on my side. Please try again, or call the clinic.", "Maaf kijiye, mujh se kuch ghalat ho gaya. Dobara koshish karein ya clinic ko call karein."), { assistantTurn: true });
       return;
     }
     if (this.ackTimer) clearTimeout(this.ackTimer);
     this.ackTimer = null;
     if (this.ended) return;
 
-    this.ctx.booking = result.booking;
-    this.ctx.offerDoctor = result.offerDoctor;
-    if (result.lang !== this.ctx.lang) {
-      this.ctx.lang = result.lang;
-      this.events.onLang(result.lang);
-    }
-    this.events.onBooking(result.booking);
-    if (result.booked) {
-      this.ctx.bookingsMade += 1;
-      this.events.onBooked(result.booked);
-    }
-
+    this.events.onResult(result);
     if (result.urgent) {
       // An emergency stops everything else: cut off any acknowledgement and speak the number now.
       this.generation += 1;
@@ -372,13 +335,22 @@ export class VoiceSession {
     }
   }
 
+  /** The one warm female voice for this conversation: chosen from the welcome's language, then never changed. */
+  private lockedVoice(): { info: VoiceInfo | null; lang: string; urdu: boolean } {
+    if (this.voice) return this.voice;
+    const set = pickVoiceSet(this.voices, "female");
+    const info = this.welcomeLang === "roman" ? (set.urdu ?? set.romanFallback ?? set.english) : (set.english ?? set.romanFallback ?? set.urdu);
+    this.voice = { info, lang: info?.lang ?? (this.welcomeLang === "roman" ? "en-IN" : "en-US"), urdu: Boolean(info?.lang.toLowerCase().startsWith("ur")) };
+    return this.voice;
+  }
+
   /** Shows a message in the chat and speaks it. */
   private async say(text: string, options: { assistantTurn: boolean; keepIdle?: boolean }): Promise<void> {
     if (options.assistantTurn) this.events.onTurn({ id: this.turnId++, from: "assistant", text, voice: true });
     await this.speak(text, { readBack: false, keepIdle: options.keepIdle });
   }
 
-  private async speak(text: string, options: { readBack: boolean; keepIdle?: boolean; lang?: VoiceLang }): Promise<void> {
+  private async speak(text: string, options: { readBack: boolean; keepIdle?: boolean }): Promise<void> {
     if (this.ended || !this.port.canSpeak) {
       if (!this.port.canSpeak && !this.ended) {
         this.events.onNotice("speak_unsupported");
@@ -387,15 +359,8 @@ export class VoiceSession {
       return;
     }
     await this.loadVoices();
-    const lang = options.lang ?? this.ctx.lang;
-    const set = pickVoiceSet(this.voices, this.gender);
-    let sentences = splitSentences(text);
-    // Urdu chosen, but the device has no Urdu voice: say so once, politely (the text is always shown).
-    if (this.listenLang === "ur" && !set.urdu && !this.voiceOverride && !this.noUrduNoted) {
-      this.noUrduNoted = true;
-      this.events.onNotice("no_urdu_voice");
-      sentences = [...splitSentences(NO_URDU_VOICE(lang)), ...sentences];
-    }
+    const voice = this.lockedVoice();
+    const sentences = splitSentences(text);
     if (sentences.length === 0) return;
 
     const generation = this.generation;
@@ -412,13 +377,12 @@ export class VoiceSession {
         cancelled = true;
         break;
       }
-      // Greetings and Roman Urdu sentences go to the Urdu voice, English sentences to the English voice.
-      const roman = GREETING.test(sentence) || (lang === "roman" && detectLang(sentence) === "roman");
-      const choice = chooseVoice(set, roman, this.voiceOverride);
       const clean = forSpeech(sentence);
-      const spoken = choice.urduScript ? urduSpeech(clean) : clean;
+      // An Urdu voice reads Urdu script best, so a Roman Urdu sentence is rewritten for it (the caption stays Roman).
+      const romanUrdu = GREETING.test(sentence) || detectLang(sentence) === "roman";
+      const spoken = voice.urdu && romanUrdu ? urduSpeech(clean) : clean;
       cancelled = await new Promise<boolean>((resolve) => {
-        this.port.speak([spoken], { lang: choice.langTag, voice: choice.voice, rate: SPEECH_RATE }, {
+        this.port.speak([spoken], { lang: voice.lang, voice: voice.info, rate: SPEECH_RATE }, {
           onStart: () => {
             this.recent = [...this.recent.slice(-3), sentence, clean];
             this.events.onSpeaking(sentence);
@@ -436,7 +400,7 @@ export class VoiceSession {
     this.events.onSpeaking(null);
     if (options.readBack) this.readBackActive = false;
     if (this.speaking > 0) return;
-    if (options.keepIdle) {
+    if (options.keepIdle || this.stopped) {
       this.setState("idle");
       return;
     }

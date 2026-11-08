@@ -63,7 +63,8 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
   });
 
   it("uses an external URL only for the OpenStreetMap embed, the GitHub credit and the WhatsApp share link", () => {
-    const allowed = /openstreetmap\.org|github\.com\/Shuaibali0786|schema\.org|w3\.org\/(2000\/svg|1999\/xlink)|localhost|^https:\/\/wa\.me\/\?text=/;
+    // XML namespaces (SVG, XLink, and SSML for the premium voice, Feature 013) are names, not links.
+    const allowed = /openstreetmap\.org|github\.com\/Shuaibali0786|schema\.org|w3\.org\/(2000\/svg|1999\/xlink|2001\/10\/synthesis)|localhost|^https:\/\/wa\.me\/\?text=/;
     const found = files.flatMap((file) =>
       (file.code.match(/https?:\/\/[^\s"'`)]+/g) ?? []).filter((url) => !allowed.test(url)).map((url) => `${file.path}: ${url}`),
     );

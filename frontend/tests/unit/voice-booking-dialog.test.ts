@@ -5,7 +5,7 @@ import { makeWorld, type SubmitMode } from "../voice/harness";
 
 async function untilReadBack(mode: SubmitMode = "ok", extra: { guide?: boolean } = {}) {
   const w = makeWorld({ mode, ...extra });
-  for (const t of ["book an appointment with Dr Bilal", "Sara Noor", "03111234567", "toothache", "friday at 11:30", "skip"]) await w.say(t);
+  for (const t of ["book an appointment with Dr Bilal", "friday at 11:30", "Sara Noor", "03111234567", "skip"]) await w.say(t);
   return w;
 }
 
@@ -85,10 +85,7 @@ describe("failures", () => {
 
   it("when the doctor's free times cannot be loaded it says so and does not invent any", async () => {
     const w = makeWorld({ unavailable: true });
-    await w.say("book an appointment with Dr Bilal");
-    await w.say("Sara Noor");
-    await w.say("03111234567");
-    const out = await w.say("toothache");
+    const out = await w.say("book an appointment with Dr Bilal");
     expect(out.text).toMatch(/couldn't load|call the clinic/i);
     expect(w.submits).toHaveLength(0);
   });
@@ -97,7 +94,7 @@ describe("failures", () => {
 describe("never invents a slot", () => {
   it("refuses a Sunday, a day outside the window and a time that is not free", async () => {
     const w = makeWorld();
-    for (const t of ["book an appointment with Dr Bilal", "Sara Noor", "03111234567", "toothache"]) await w.say(t);
+    await w.say("book an appointment with Dr Bilal");
     expect((await w.say("sunday")).text).toContain("isn't available");
     expect((await w.say("5th december")).text).toContain("next 14 days");
     await w.say("monday");
@@ -109,10 +106,10 @@ describe("never invents a slot", () => {
 
   it("asks 'morning or evening?' when two free times fit, and does not guess", async () => {
     const w = makeWorld();
-    for (const t of ["book an appointment with Dr Bilal", "Sara Noor", "03111234567", "toothache", "friday"]) await w.say(t);
-    // 14:00 and 02:00: only 14:00 is free, so it resolves. 11 -> 11:30 only. Use a case with two free readings.
+    for (const t of ["book an appointment with Dr Bilal", "friday"]) await w.say(t);
+    // Only 11:30 in the morning is free (not 23:30), so it resolves without asking.
     const out = await w.say("11:30");
-    expect(out.text).toContain("email");
+    expect(out.text).toContain("full name");
   });
 });
 
@@ -120,11 +117,9 @@ describe("corrections and memory", () => {
   it("never asks again for something already said, even given all at once", async () => {
     const w = makeWorld();
     const first = await w.say("I'm Ali Raza, my number is 03001234567, book me with Dr Bilal on friday at 11:30 for a toothache");
-    // name, phone, doctor, date and time are in; only the reason is still asked.
-    expect(first.text).toMatch(/visit for/i);
+    // name, phone, doctor, date and time are in; only the optional email is still asked.
+    expect(first.text).toMatch(/email/i);
     expect(first.text).not.toMatch(/full name|mobile number|Which day|Which time/);
-    const second = await w.say("toothache");
-    expect(second.text).toMatch(/email/i);
   });
 
   it("applies a correction to the name or the doctor and confirms it in one sentence", async () => {
@@ -142,7 +137,7 @@ describe("corrections and memory", () => {
     await w.say("book an appointment with Dr Bilal");
     const out = await w.say("what are your timings?");
     expect(out.text).toMatch(/open/i);
-    expect(out.text).toContain("full name");
+    expect(out.text).toContain("Which day");
   });
 });
 

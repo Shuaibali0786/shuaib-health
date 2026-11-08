@@ -68,3 +68,24 @@ export function mentionsLabTest(text: string, pack: KnowledgePack): boolean {
   const words = clean.split(" ");
   return pack.labTests.some((t) => [t.name, ...t.aka].some((label) => nameTokens(label).filter((w) => w.length >= 3).some((w) => words.includes(w) && !["test", "blood", "complete", "count"].includes(w)))) || /\bcbc\b|\bhba1c\b|\bcholesterol\b|\btsh\b/.test(clean);
 }
+
+type PackLabTest = KnowledgePack["labTests"][number];
+
+/** The lab test a caller names ("CBC", "thyroid test", "lipid profile"), from the public catalog only. */
+export function findLabTest(text: string, pack: KnowledgePack): PackLabTest | null {
+  const words = cleanText(text).split(" ").filter((w) => w.length >= 3 && !["test", "tests", "blood", "complete", "count", "profile", "karwana", "karwani", "karana"].includes(w));
+  let top: { test: PackLabTest; score: number } | null = null;
+  for (const test of pack.labTests) {
+    const names = [test.name, test.slug, ...test.aka].flatMap((label) => nameTokens(label));
+    const score = words.filter((w) => names.some((n) => same(w, n))).length;
+    if (score > 0 && (!top || score > top.score)) top = { test, score };
+  }
+  return top?.test ?? null;
+}
+
+/** The department that does lab tests (the pathology lab) and its doctors, when the catalog has one. */
+export function labDepartment(pack: KnowledgePack): { slug: string; name: string; doctors: PackDoctor[] } | null {
+  const dept = pack.departments.find((d) => /lab|patholog/i.test(d.slug) || /lab|patholog/i.test(d.name));
+  if (!dept) return null;
+  return { slug: dept.slug, name: dept.name, doctors: doctorsOf(dept.slug, pack) };
+}

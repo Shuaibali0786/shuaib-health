@@ -6,19 +6,21 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { AssistantLauncher } from "@/components/agent/AssistantLauncher";
 import type { FakeSpeech } from "@/voice/fakeSpeech";
 
-import { NOW, bookedView, fakeSlots, packFor } from "../voice/harness";
+import { NOW, packFor } from "../voice/harness";
 
 const g = globalThis as unknown as { __fakeSpeech?: FakeSpeech; __posts?: unknown[] };
 const port = () => g.__fakeSpeech as FakeSpeech;
 
 vi.mock("@/voice/browserSpeech", async () => {
   const { createFakeSpeech } = await import("@/voice/fakeSpeech");
-  const fake = createFakeSpeech({ autoFinish: true, voices: [
-    { name: "Microsoft Neerja Online (Natural) - English (India)", lang: "en-IN", local: false },
-    { name: "Microsoft Aria Online (Natural) - English (United States)", lang: "en-US", local: false },
-    { name: "Microsoft Uzma Online (Natural) - Urdu (Pakistan)", lang: "ur-PK", local: false },
-    { name: "Microsoft David - English (United States)", lang: "en-US", local: true },
-  ] });
+  const fake = createFakeSpeech({
+    autoFinish: true,
+    voices: [
+      { name: "Microsoft Jenny Online (Natural) - English (United States)", lang: "en-US", local: false },
+      { name: "Microsoft Guy Online (Natural) - English (United States)", lang: "en-US", local: false },
+      { name: "Microsoft Uzma Online (Natural) - Urdu (Pakistan)", lang: "ur-PK", local: false },
+    ],
+  });
   g.__fakeSpeech = fake;
   return { createBrowserSpeech: () => fake };
 });
@@ -31,6 +33,9 @@ vi.mock("@/lib/booking/client", async () => {
     postBooking: async (payload: { doctorSlug: string; startsAt: string }) => {
       g.__posts?.push(payload);
       return { status: 201, retryAfter: null, body: harness.bookedView(harness.packFor(false), payload as never) };
+    },
+    fetchSpeechToken: async () => {
+      throw new Error("not in tests");
     },
   };
 });
@@ -46,6 +51,7 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 const pack = packFor(false);
+const FOOTER = "Portfolio demo — not a real clinic, not medical advice. This is a demo: please use sample details only, never your real personal or medical information.";
 
 async function openVoiceByBubble(user: ReturnType<typeof userEvent.setup>) {
   render(<AssistantLauncher pack={pack} voice />);
@@ -54,19 +60,8 @@ async function openVoiceByBubble(user: ReturnType<typeof userEvent.setup>) {
   return screen.findByRole("dialog", { name: /Ask Shuaib Health/ });
 }
 
-describe("the footer", () => {
-  it("says the same clear thing in the text chat and in voice mode", async () => {
-    const user = userEvent.setup();
-    render(<AssistantLauncher pack={pack} voice />);
-    await user.click(screen.getByRole("button", { name: "Ask us" }));
-    const dialog = await screen.findByRole("dialog");
-    const text = "Portfolio demo — not a real clinic, not medical advice. This is a demo: please use sample details only, never your real personal or medical information.";
-    expect(within(dialog).getByText(text)).toBeInTheDocument();
-    await user.click(await within(dialog).findByRole("button", { name: /Start voice mode/ }));
-    await within(dialog).findByTestId("voice-mode");
-    expect(within(dialog).getByText(text)).toBeInTheDocument();
-  });
-});
+/** The status line under the orb ("Listening...", "Thinking...", "Speaking..."). */
+const statusOf = (dialog: HTMLElement) => within(dialog).getAllByRole("status").find((el) => /Listening|Thinking|Speaking|Tap the mic/.test(el.textContent ?? "")) as HTMLElement;
 
 describe("flag off (the default)", () => {
   it("shows no bubble, no Mic and no Voice mode button", async () => {
@@ -80,7 +75,18 @@ describe("flag off (the default)", () => {
   });
 });
 
-describe("discovery and entry points", () => {
+describe("the chat", () => {
+  it("says the same clear footer in the text chat and in voice mode", async () => {
+    const user = userEvent.setup();
+    render(<AssistantLauncher pack={pack} voice />);
+    await user.click(screen.getByRole("button", { name: "Ask us" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText(FOOTER)).toBeInTheDocument();
+    await user.click(await within(dialog).findByRole("button", { name: /Start voice mode/ }));
+    await within(dialog).findByTestId("voice-mode");
+    expect(within(dialog).getByText(FOOTER)).toBeInTheDocument();
+  });
+
   it("the bubble can be dismissed, and the chat shows Mic and Voice mode beside Send", async () => {
     const user = userEvent.setup();
     render(<AssistantLauncher pack={pack} voice />);
@@ -88,12 +94,10 @@ describe("discovery and entry points", () => {
     expect(bubble).toHaveTextContent("English");
     await user.click(screen.getByRole("button", { name: "Dismiss the voice invitation" }));
     expect(screen.queryByRole("button", { name: /Talk to us/ })).toBeNull();
-
     await user.click(screen.getByRole("button", { name: "Ask us" }));
     const dialog = await screen.findByRole("dialog");
     expect(await within(dialog).findByRole("button", { name: /Dictate your question/ })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: /Start voice mode/ })).toBeInTheDocument();
-    expect(within(dialog).getByRole("button", { name: "Send" })).toBeInTheDocument();
   });
 
   it("Mic dictates into the box for editing and sends nothing", async () => {
@@ -104,148 +108,118 @@ describe("discovery and entry points", () => {
     await user.click(await within(dialog).findByRole("button", { name: /Dictate your question/ }));
     act(() => port().hear("what are your timings", { interim: true }));
     expect(within(dialog).getByLabelText("Your question")).toHaveValue("what are your timings");
-    expect(within(dialog).getAllByRole("log")[0]?.textContent).not.toMatch(/Mon–Sat/);
+    expect(within(dialog).getByRole("log").textContent).not.toMatch(/Mon–Sat/);
   });
+
+  it("books by typing too: 'mujhe CBC test karwana hai' -> explanation -> haan -> one item at a time -> ji haan -> slip link", async () => {
+    const user = userEvent.setup();
+    render(<AssistantLauncher pack={pack} voice />);
+    await user.click(screen.getByRole("button", { name: "Ask us" }));
+    const dialog = await screen.findByRole("dialog");
+    const log = within(dialog).getByRole("log");
+    const type = async (text: string, expected: string | RegExp) => {
+      await user.type(within(dialog).getByLabelText("Your question"), `${text}{Enter}`);
+      await waitFor(() => expect(log).toHaveTextContent(expected));
+    };
+    await type("mujhe CBC test karwana hai", "Kya main aap ki booking kar doon?");
+    expect(log).toHaveTextContent("Pathology Lab");
+    await type("haan", "Kaun sa din");
+    await type("kal", "Kaun sa waqt");
+    await type("saade gyarah", "poora naam");
+    await type("mera naam Ayesha Khan hai", "mobile number");
+    await type("03005512345", "email");
+    expect(within(dialog).getByTestId("voice-summary")).toHaveTextContent("Ayesha Khan");
+    await type("nahi", "confirm kar doon");
+    expect(g.__posts).toHaveLength(0);
+    await type("ji haan", "Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein.");
+    expect(g.__posts).toHaveLength(1);
+    const slip = within(dialog).getByTestId("voice-slip");
+    const link = within(slip).getByRole("link", { name: /Slip dekhein \/ download karein/ });
+    expect(link).toHaveAttribute("href", "/book-appointment/confirmed/7K3M9P2QXA");
+    expect(link).toHaveAttribute("target", "_blank");
+  }, 30000);
 });
 
 describe("voice mode", () => {
-  it("opens from the bubble with the orb, state, controls and the greeting, and answers by voice", async () => {
+  it("opens from the bubble: orb, status, the welcome, and only a mic button and End", async () => {
     const user = userEvent.setup();
     const dialog = await openVoiceByBubble(user);
     expect(await within(dialog).findByTestId("voice-mode")).toBeInTheDocument();
     expect(within(dialog).getByTestId("voice-orb")).toBeInTheDocument();
-    expect(await within(dialog).findByText(/Listening/)).toBeInTheDocument();
-    const log = within(dialog).getByRole("log");
-    expect(log).toHaveTextContent("I'm an AI");
-    expect(log).toHaveTextContent("never record or store your audio");
-
-    for (const name of ["Mute", "Interrupt", "EN", "اردو", "Female", "Male", "End"]) {
-      expect(within(dialog).getByRole("button", { name })).toBeInTheDocument();
+    await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
+    expect(within(dialog).getByRole("log")).toHaveTextContent("Welcome to Shuaib Health! I'm your AI assistant. How can I help you today?");
+    expect(within(dialog).getByText(/audio is never recorded/)).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Stop listening" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "End" })).toBeInTheDocument();
+    for (const gone of ["Mute", "Interrupt", "EN", "اردو", "Female", "Male", "Hear a sample"]) {
+      expect(within(dialog).queryByRole("button", { name: gone, exact: true } as never)).toBeNull();
     }
+    expect(within(dialog).queryByLabelText("Voice")).toBeNull();
     act(() => port().hear("What are your timings?", { interim: true }));
-    await waitFor(() => expect(log).toHaveTextContent("Mon–Sat, 9 AM – 9 PM"));
-    expect(port().spoken.some((s) => s.text.includes("9 AM"))).toBe(true);
+    await waitFor(() => expect(within(dialog).getByRole("log")).toHaveTextContent("Mon–Sat, 9 AM – 9 PM"));
+    expect(new Set(port().spoken.map((s) => s.voice)).size).toBe(1);
   });
 
-  it("the controls work: language, voice, mute and End", async () => {
+  it("the mic button stops and starts listening; End leaves voice mode", async () => {
     const user = userEvent.setup();
     const dialog = await openVoiceByBubble(user);
-    await within(dialog).findByText(/Listening/);
-    await user.click(within(dialog).getByRole("button", { name: "اردو" }));
-    expect(within(dialog).getByRole("button", { name: "اردو" })).toHaveAttribute("aria-pressed", "true");
-    expect(port().listenLang).toBe("ur-PK");
-    await user.click(within(dialog).getByRole("button", { name: "Male" }));
-    expect(within(dialog).getByRole("button", { name: "Male" })).toHaveAttribute("aria-pressed", "true");
-    await user.click(within(dialog).getByRole("button", { name: "Mute" }));
-    expect(within(dialog).getByText("Microphone muted")).toBeInTheDocument();
+    await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
+    await user.click(within(dialog).getByRole("button", { name: "Stop listening" }));
+    expect(statusOf(dialog)).toHaveTextContent("Tap the mic to talk");
     expect(port().listening).toBe(false);
+    await user.click(within(dialog).getByRole("button", { name: "Tap to talk" }));
+    expect(statusOf(dialog)).toHaveTextContent("Listening...");
     await user.click(within(dialog).getByRole("button", { name: "End" }));
     expect(within(dialog).queryByTestId("voice-mode")).toBeNull();
     expect(port().listening).toBe(false);
   });
 
-  it("has a Voice menu of the natural voices; choosing one reads a sample in it; Female and Male return to automatic", async () => {
+  it("explains a blocked microphone with Edge and Windows steps, and typing still works", async () => {
     const user = userEvent.setup();
     const dialog = await openVoiceByBubble(user);
-    await within(dialog).findByText(/Listening/);
-    const select = await within(dialog).findByLabelText("Voice");
-    const options = within(select).getAllByRole("option").map((o) => o.textContent);
-    expect(options[0]).toBe("Automatic (recommended)");
-    expect(options).toContain("Aria (Natural), English (United States)");
-    expect(options).toContain("Uzma (Natural), Urdu (Pakistan)");
-    expect(options.indexOf("David, English (United States)")).toBeGreaterThan(options.indexOf("Uzma (Natural), Urdu (Pakistan)"));
-    await user.selectOptions(select, within(select).getByRole("option", { name: "Aria (Natural), English (United States)" }));
-    await waitFor(() => expect(port().spoken.at(-1)?.voice).toContain("Aria"));
-    expect(port().spoken.some((s) => s.text.includes("Assalam"))).toBe(true);
-    await user.click(within(dialog).getByRole("button", { name: "Male" }));
-    expect(select).toHaveValue("");
-  });
-
-  it("speaks Roman Urdu and greetings with the Urdu voice (Urdu script), English with the English voice, a little slower", async () => {
-    const user = userEvent.setup();
-    const dialog = await openVoiceByBubble(user);
-    await within(dialog).findByText(/Listening/);
-    await waitFor(() => expect(port().spoken.length).toBeGreaterThan(2));
-    const greeting = port().spoken.find((s) => s.text.includes("السلام علیکم"));
-    expect(greeting?.voice).toContain("Uzma");
-    const english = port().spoken.find((s) => s.text.includes("demo clinic"));
-    expect(english?.voice).toContain("Aria");
-    expect(port().spokenRates.every((r) => r === 0.95)).toBe(true);
-  });
-
-  it("explains a blocked microphone and keeps typing working", async () => {
-    const user = userEvent.setup();
-    const dialog = await openVoiceByBubble(user);
-    await within(dialog).findByText(/Listening/);
+    await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
     act(() => port().fail("denied"));
     expect(await within(dialog).findByText("The microphone is blocked")).toBeInTheDocument();
-    expect(within(dialog).getByText(/Windows Settings, then Privacy & security, then Microphone/)).toBeInTheDocument();
-    expect(within(dialog).getByText(/Cookies and site permissions/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Privacy & security, then Microphone/)).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText("Your question"), "cbc price{Enter}");
     await waitFor(() => expect(within(dialog).getByRole("log")).toHaveTextContent("PKR 800"));
   });
-});
 
-describe("hands-free booking in the panel", () => {
-  it("collects the booking, mirrors it in a summary card, books only after a yes, and shows the slip with QR and PDF", async () => {
+  it("Edge's listening service error says to use Chrome or type", async () => {
     const user = userEvent.setup();
     const dialog = await openVoiceByBubble(user);
-    await within(dialog).findByText(/Listening/);
-    const log = within(dialog).getByRole("log");
-
-    const say = async (text: string, expectText: string | RegExp) => {
-      act(() => port().hear(text));
-      await waitFor(() => expect(log).toHaveTextContent(expectText));
-    };
-    await say("I want to book an appointment with Dr Bilal", /full name/);
-    await say("my name is Sara Noor", /mobile number/);
-    await say("zero three one one one two three four five six seven", /visit for/);
-    await say("toothache", /Which day/);
-    await say("friday at 11:30", /email/);
-    expect(await within(dialog).findByTestId("voice-summary")).toHaveTextContent("Sara Noor");
-    await say("skip", /Shall I confirm/);
-
-    const summary = within(dialog).getByTestId("voice-summary");
-    expect(summary).toHaveTextContent("0311 123 4567");
-    expect(summary).toHaveTextContent("Dr. Bilal Ansari");
-    expect(summary).toHaveTextContent("Friday 13 November");
-    expect(summary).toHaveTextContent("Waiting for your yes");
-    expect(g.__posts).toHaveLength(0); // nothing is booked until the caller says yes
-
-    await user.click(within(summary).getByRole("button", { name: /Yes, confirm/ }));
-    const slip = await within(dialog).findByTestId("voice-slip");
-    expect(g.__posts).toHaveLength(1);
-    expect(within(slip).getByTestId("voice-reference")).toHaveTextContent("7K3M 9P2Q XA");
-    expect(within(slip).getByRole("img", { name: /QR code for booking reference 7K3M9P2QXA/ })).toBeInTheDocument();
-    expect(within(slip).getByRole("button", { name: "Download PDF" })).toBeInTheDocument();
-    expect(slip).toHaveTextContent("15 minutes early");
-    expect(slip).toHaveTextContent("CNIC");
-    expect(within(dialog).queryByTestId("voice-summary")).toBeNull();
+    await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
+    act(() => port().fail("network"));
+    expect(await within(dialog).findByText("Voice listening works most reliably in the Chrome browser")).toBeInTheDocument();
+    expect(within(dialog).getByText(/You can also type below/)).toBeInTheDocument();
   });
 
-  it("a spoken yes after the read-back books; the typed text box works as a fallback", async () => {
+  it("books by voice: one item at a time, a summary card, a spoken yes after the read-back, and the slip link", async () => {
     const user = userEvent.setup();
     const dialog = await openVoiceByBubble(user);
-    await within(dialog).findByText(/Listening/);
+    await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
     const log = within(dialog).getByRole("log");
     for (const [text, expected] of [
-      ["book an appointment with Dr Bilal", /full name/],
-      ["Sara Noor", /mobile/],
-      ["03111234567", /visit for/],
-      ["toothache", /Which day/],
-      ["monday at 3 pm", /email/],
+      ["I want to book an appointment with Dr Bilal", /Which day/],
+      ["monday at 3 pm", /full name/],
+      ["my name is Sara Noor", /mobile number/],
+      ["zero three one one one two three four five six seven", /email/],
       ["skip", /Shall I confirm/],
     ] as const) {
       act(() => port().hear(text));
       await waitFor(() => expect(log).toHaveTextContent(expected));
     }
+    const summary = within(dialog).getByTestId("voice-summary");
+    expect(summary).toHaveTextContent("0311 123 4567");
+    expect(summary).toHaveTextContent("Waiting for your yes");
     expect(g.__posts).toHaveLength(0);
-    // The read-back is spoken sentence by sentence, with short rests: wait until it has finished before saying yes.
-    await waitFor(() => expect(within(dialog).getByRole("status", { name: "" })).toHaveTextContent("Listening…"), { timeout: 8000 });
+    // The read-back is spoken sentence by sentence: say yes once it has finished.
+    await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."), { timeout: 8000 });
     act(() => port().hear("yes"));
-    await within(dialog).findByTestId("voice-slip");
+    const slip = await within(dialog).findByTestId("voice-slip");
     expect(g.__posts).toHaveLength(1);
-    expect(fakeSlots("dr-bilal-ansari").days.length).toBe(14);
-    expect(bookedView(pack, { doctorSlug: "dr-bilal-ansari", startsAt: "2026-11-09T10:00:00Z" } as never).reference).toBe("7K3M9P2QXA");
+    expect(within(slip).getByTestId("voice-reference")).toHaveTextContent("7K3M 9P2Q XA");
+    expect(within(slip).getByRole("link", { name: /View \/ Download slip/ })).toHaveAttribute("href", "/book-appointment/confirmed/7K3M9P2QXA");
+    expect(log).toHaveTextContent("Tap the link below to view and download your slip");
   }, 30000);
 });

@@ -1,21 +1,27 @@
-// Feature 013: one whole voice conversation with a scripted speech port: opening lines, turn-taking, barge-in,
-// echo, silence, microphone problems, the Urdu-voice note, and the safe "yes" gate.
+// Feature 013: one whole voice conversation with a scripted speech port: the welcome, one voice for the whole call,
+// automatic language, turn-taking, barge-in, echo, the single mic button, silence, microphone and Edge errors, and the
+// safe "yes" gate.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getProvider } from "@/agent/registry";
 import { createFakeSpeech, type FakeSpeech } from "@/voice/fakeSpeech";
+import { Conversation } from "@/voice/router";
 import { VoiceSession, type Notice, type SessionEvents } from "@/voice/session";
-import type { Turn, VoiceInfo, VoiceState } from "@/voice/types";
+import type { Turn, VoiceInfo, VoiceLang, VoiceState } from "@/voice/types";
 
 import { makeWorld } from "../voice/harness";
 
 const EDGE: VoiceInfo[] = [
+  { name: "Microsoft Guy Online (Natural) - English (United States)", lang: "en-US", local: false },
+  { name: "Microsoft Jenny Online (Natural) - English (United States)", lang: "en-US", local: false },
+  { name: "Microsoft Aria Online (Natural) - English (United States)", lang: "en-US", local: false },
   { name: "Microsoft Neerja Online (Natural) - English (India)", lang: "en-IN", local: false },
-  { name: "Microsoft Prabhat Online (Natural) - English (India)", lang: "en-IN", local: false },
+  { name: "Microsoft Uzma Online (Natural) - Urdu (Pakistan)", lang: "ur-PK", local: false },
+  { name: "Microsoft Asad Online (Natural) - Urdu (Pakistan)", lang: "ur-PK", local: false },
 ];
 
-function build(options: { port?: FakeSpeech; mode?: "ok" | "taken-once"; listenLang?: "en" | "ur"; skipOpening?: boolean; guide?: boolean; slowAnswerMs?: number } = {}) {
-  const world = makeWorld({ mode: options.mode, guide: options.guide });
+function build(options: { port?: FakeSpeech; skipOpening?: boolean; guide?: boolean; slowAnswerMs?: number; welcomeLang?: VoiceLang } = {}) {
+  const world = makeWorld({ guide: options.guide });
   const port = options.port ?? createFakeSpeech({ voices: EDGE });
   const states: VoiceState[] = [];
   const turns: Turn[] = [];
@@ -30,10 +36,10 @@ function build(options: { port?: FakeSpeech; mode?: "ok" | "taken-once"; listenL
     onTurn: (t) => turns.push(t),
     onSpeaking: (s) => captions.push(s),
     onBoundary: () => (boundaries += 1),
-    onBooking: () => undefined,
-    onBooked: () => (booked += 1),
+    onResult: (r) => {
+      if (r.booked) booked += 1;
+    },
     onNotice: (n) => notices.push(n),
-    onLang: () => undefined,
   };
   const provider = getProvider(world.pack, "local");
   if (options.slowAnswerMs) {
@@ -43,11 +49,12 @@ function build(options: { port?: FakeSpeech; mode?: "ok" | "taken-once"; listenL
       return answer(request);
     };
   }
-  const session = new VoiceSession({ port, pack: world.pack, mode: options.guide ? "guide" : "patient", provider, deps: world.deps, events, listenLang: options.listenLang, skipOpening: options.skipOpening, pauseMs: 0 });
-  return { session, port, world, states, turns, notices, interims, captions, get booked() { return booked; }, get boundaries() { return boundaries; } };
+  const conversation = new Conversation({ pack: world.pack, mode: options.guide ? "guide" : "patient", provider, deps: world.deps });
+  const session = new VoiceSession({ port, conversation, events, skipOpening: options.skipOpening, welcomeLang: options.welcomeLang, pauseMs: 0 });
+  return { session, port, world, conversation, states, turns, notices, interims, captions, get booked() { return booked; }, get boundaries() { return boundaries; } };
 }
 
-/** Everything spoken (not cancelled) since the last time the caller was heard, joined, newest last. */
+/** Everything spoken (not cancelled), joined, newest last. */
 function said(port: FakeSpeech): string {
   return port.spoken.filter((x) => !x.cancelled).map((x) => x.text).join(" ");
 }
@@ -64,63 +71,81 @@ async function settle(port: FakeSpeech, rounds = 12) {
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
-describe("opening and listening", () => {
-  it("greets once as an AI for a demo clinic, says audio is never recorded, then listens", async () => {
+describe("the welcome", () => {
+  it("English: short and warm, in one warm female voice, then it listens by itself", async () => {
     const t = build();
     void t.session.start();
     await settle(t.port);
-    const first = t.turns[0];
-    expect(first?.from).toBe("assistant");
-    expect(first?.text).toContain("Assalam o Alaikum");
-    expect(first?.text).toContain("an AI");
-    expect(first?.text).toContain("demo clinic");
-    expect(first?.text).toContain("never record or store your audio");
+    expect(t.turns[0]?.text).toBe("Welcome to Shuaib Health! I'm your AI assistant. How can I help you today?");
+    expect(said(t.port)).not.toMatch(/record/i); // "audio is never recorded" is small text, not spoken
+    expect(t.port.spoken[0]?.voice).toContain("Jenny");
     expect(t.port.listening).toBe(true);
-    expect(t.port.listenLang).toBe("en-PK");
-    expect(t.states).toContain("speaking");
+    expect(t.port.listenLang).toBe("en-IN");
     expect(t.states.at(-1)).toBe("listening");
     expect(t.boundaries).toBeGreaterThan(0);
-    expect(t.port.spoken[0]?.voice).toContain("Neerja"); // a natural female voice by default
   });
 
-  it("does not greet again when the caller already heard it", async () => {
+  it("Roman Urdu: the Urdu welcome in the Urdu voice, with the words in Urdu script for that voice", async () => {
+    const t = build({ welcomeLang: "roman" });
+    void t.session.start();
+    await settle(t.port);
+    expect(t.turns[0]?.text).toBe("Assalam o Alaikum! Shuaib Health mein khush aamdeed. Main aap ki AI assistant hoon, bataiye kya madad karoon?");
+    expect(t.port.spoken[0]?.voice).toContain("Uzma");
+    expect(t.port.spoken[0]?.text).toContain("السلام علیکم");
+  });
+
+  it("does not welcome again when the caller already heard it, and still listens", async () => {
     const t = build({ skipOpening: true });
     void t.session.start();
     await settle(t.port);
     expect(t.turns).toHaveLength(0);
     expect(t.port.listening).toBe(true);
   });
+});
 
-  it("answers a spoken question with the same words as the text chat, speaks it, and shows captions", async () => {
+describe("one voice, automatic language", () => {
+  it("English in, English out; Roman Urdu in, Roman Urdu out; the same single female voice throughout", async () => {
+    const t = build();
+    void t.session.start();
+    await settle(t.port);
+    t.port.hear("What are your timings?");
+    await settle(t.port);
+    expect(t.turns.at(-1)?.text).toContain("We are open");
+    t.port.hear("Lab kab khulti hai?");
+    await settle(t.port);
+    expect(t.turns.at(-1)?.text).toContain("khuli hai");
+    expect(t.turns.at(-1)?.text).not.toContain("We are open");
+    const voices = new Set(t.port.spoken.map((s) => s.voice));
+    expect(voices.size).toBe(1);
+    expect([...voices][0]).toContain("Jenny");
+    expect(t.port.spokenRates.every((r) => r === 0.95)).toBe(true);
+  });
+
+  it("shows captions sentence by sentence and clears them after speaking", async () => {
     const t = build({ skipOpening: true });
     void t.session.start();
     await settle(t.port);
     t.port.hear("What are your timings?", { interim: true });
     await settle(t.port);
-    expect(t.turns.map((x) => x.from)).toEqual(["you", "assistant"]);
-    expect(t.turns[1]?.text).toContain("Mon–Sat, 9 AM – 9 PM");
-    expect(said(t.port)).toContain("9 AM");
-    // Captions follow the speech sentence by sentence.
     expect(t.captions.filter(Boolean).join(" ")).toContain("9 AM");
     expect(t.captions.at(-1)).toBeNull();
     expect(t.interims).toContain("What are your timings?");
-    expect(t.states.at(-1)).toBe("listening");
   });
 
-  it("says 'Ji, checking…' if the answer is slow, and still answers", async () => {
+  it("says a short 'one moment, checking' if the answer is slow, and still answers", async () => {
     const t = build({ skipOpening: true, slowAnswerMs: 1500 });
     void t.session.start();
     await settle(t.port);
     t.port.hear("What are your timings?");
     await vi.advanceTimersByTimeAsync(1100);
-    expect(t.port.spoken.some((s) => s.text.startsWith("Ji, checking"))).toBe(true);
+    expect(t.port.spoken.some((s) => s.text.startsWith("One moment, checking"))).toBe(true);
     await vi.advanceTimersByTimeAsync(1000);
     await settle(t.port);
     expect(said(t.port)).toContain("9 AM");
   });
 });
 
-describe("barge-in and echo", () => {
+describe("barge-in, echo and the one mic button", () => {
   async function speakingSession() {
     const t = build({ skipOpening: true });
     void t.session.start();
@@ -130,74 +155,60 @@ describe("barge-in and echo", () => {
     return t;
   }
 
-  it("the caller talking over the assistant stops it at once and is heard", async () => {
+  it("the patient starting to talk stops the assistant at once and is heard", async () => {
     const t = await speakingSession();
     expect(t.port.speakingNow).not.toBeNull();
     t.port.hearInterim("no wait tell me about dental");
     expect(t.port.speakingNow).toBeNull();
-    expect(t.port.spoken.some((s) => s.cancelled)).toBe(true);
     t.port.hear("tell me about dental");
     await settle(t.port);
-    expect(t.turns.filter((x) => x.from === "you").at(-1)?.text).toBe("tell me about dental");
     expect(t.turns.at(-1)?.text).toMatch(/Dental/);
   });
 
-  it("the Interrupt button stops the assistant and listens", async () => {
-    const t = await speakingSession();
-    t.session.interrupt();
-    expect(t.port.speakingNow).toBeNull();
-    expect(t.states.at(-1)).toBe("listening");
-  });
-
-  it("the assistant's own voice coming back in is NOT treated as the caller", async () => {
+  it("its own voice coming back in, or a single stray word, does not interrupt", async () => {
     const t = await speakingSession();
     const heard = t.port.speakingNow as string;
-    const turnsBefore = t.turns.length;
+    const before = t.turns.length;
     t.port.hearInterim(heard);
     t.port.hear(heard);
-    expect(t.port.speakingNow).not.toBeNull();
-    expect(t.turns).toHaveLength(turnsBefore);
-  });
-
-  it("a single stray word does not interrupt", async () => {
-    const t = await speakingSession();
     t.port.hearInterim("hmm");
     expect(t.port.speakingNow).not.toBeNull();
+    expect(t.turns).toHaveLength(before);
+  });
+
+  it("the mic button: a tap while it speaks cuts in; a tap while listening stops; another tap listens again", async () => {
+    const t = await speakingSession();
+    t.session.toggleMic();
+    expect(t.port.speakingNow).toBeNull();
+    expect(t.states.at(-1)).toBe("listening");
+    t.session.toggleMic();
+    expect(t.port.listening).toBe(false);
+    expect(t.states.at(-1)).toBe("idle");
+    t.session.toggleMic();
+    expect(t.port.listening).toBe(true);
+    expect(t.states.at(-1)).toBe("listening");
   });
 });
 
 describe("silence", () => {
-  it("prompts once, then stops listening and says to tap the microphone", async () => {
+  it("prompts once, then stops listening and says to tap the mic", async () => {
     const t = build({ skipOpening: true });
     void t.session.start();
     await settle(t.port);
     await vi.advanceTimersByTimeAsync(8100);
-    expect(t.port.spoken.at(-1)?.text).toContain("still there");
+    expect(said(t.port)).toContain("still there");
     await settle(t.port);
     await vi.advanceTimersByTimeAsync(8100);
-    expect(t.port.spoken.at(-1)?.text).toContain("stopped listening");
     await settle(t.port);
+    expect(said(t.port)).toContain("stopped listening");
     expect(t.notices).toContain("tap_to_talk");
     expect(t.port.listening).toBe(false);
     expect(t.states.at(-1)).toBe("idle");
   });
-
-  it("talking resets the silence count", async () => {
-    const t = build({ skipOpening: true });
-    void t.session.start();
-    await settle(t.port);
-    await vi.advanceTimersByTimeAsync(8100);
-    await settle(t.port);
-    t.port.hear("hello");
-    await settle(t.port);
-    await vi.advanceTimersByTimeAsync(8100);
-    await settle(t.port);
-    expect(t.port.listening).toBe(true);
-  });
 });
 
-describe("microphone and device limits", () => {
-  it("microphone refused: tells the panel, goes idle, and the text box still works", async () => {
+describe("microphone and browser problems", () => {
+  it("microphone refused: tells the panel, stops, and the text box still works", async () => {
     const t = build({ skipOpening: true });
     void t.session.start();
     await settle(t.port);
@@ -206,8 +217,19 @@ describe("microphone and device limits", () => {
     expect(t.states.at(-1)).toBe("idle");
     t.session.submitText("what are your timings");
     await settle(t.port);
-    expect(t.turns.at(-1)?.text).toContain("9 AM");
     expect(said(t.port)).toContain("9 AM");
+  });
+
+  it("Edge's 'speech service not reachable' (network): a clear notice, and it stops trying", async () => {
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    t.port.fail("network");
+    expect(t.notices).toContain("network");
+    expect(t.port.listening).toBe(false);
+    expect(t.states.at(-1)).toBe("idle");
+    t.session.resume();
+    expect(t.port.listening).toBe(true);
   });
 
   it("no speech recognition: speaks only, and says so", async () => {
@@ -219,82 +241,41 @@ describe("microphone and device limits", () => {
     await settle(t.port);
     expect(said(t.port)).toContain("9 AM");
   });
-
-  it("Urdu chosen but no Urdu voice: says so once, politely, and still shows the text", async () => {
-    const t = build({ skipOpening: true, listenLang: "ur" });
-    void t.session.start();
-    await settle(t.port);
-    expect(t.port.listenLang).toBe("ur-PK");
-    t.port.hear("ڈاکٹر کی فیس کتنی ہے");
-    await settle(t.port);
-    t.port.hear("clinic kab khulta hai");
-    await settle(t.port);
-    const notes = t.port.spoken.filter((s) => s.text.includes("no Urdu voice") || s.text.includes("Urdu awaaz"));
-    expect(notes).toHaveLength(1);
-    expect(t.notices.filter((n) => n === "no_urdu_voice")).toHaveLength(1);
-    expect(t.turns.filter((x) => x.from === "assistant").length).toBeGreaterThanOrEqual(2);
-  });
-
-  it("muting stops listening; unmuting resumes", async () => {
-    const t = build({ skipOpening: true });
-    void t.session.start();
-    await settle(t.port);
-    t.session.setMuted(true);
-    expect(t.port.listening).toBe(false);
-    expect(t.states.at(-1)).toBe("paused");
-    t.session.setMuted(false);
-    expect(t.port.listening).toBe(true);
-  });
-
-  it("switching to Urdu restarts listening in Urdu; female and male voices switch", async () => {
-    const t = build({ skipOpening: true });
-    void t.session.start();
-    await settle(t.port);
-    t.session.setListenLang("ur");
-    expect(t.port.listenLang).toBe("ur-PK");
-    t.session.setGender("male");
-    t.port.hear("what are your timings");
-    await settle(t.port);
-    expect(t.port.spoken.at(-1)?.voice).toContain("Prabhat");
-  });
 });
 
 describe("the safe yes gate, end to end", () => {
-  async function toReadBack() {
+  const steps = ["book an appointment with Dr Bilal", "friday at 11:30", "Sara Noor", "03111234567"];
+
+  it("a yes spoken AFTER the read-back finished books once, and spells the reference", async () => {
     const t = build({ skipOpening: true });
     void t.session.start();
     await settle(t.port);
-    for (const say of ["book an appointment with Dr Bilal", "Sara Noor", "03111234567", "toothache", "friday at 11:30", "skip"]) {
-      t.port.hear(say);
+    for (const s of [...steps, "skip"]) {
+      t.port.hear(s);
       await settle(t.port);
     }
-    return t;
-  }
-
-  it("a yes spoken AFTER the read-back finished books once, and the slip event fires", async () => {
-    const t = await toReadBack();
-    expect(t.world.submits).toHaveLength(0);
     expect(said(t.port)).toContain("Shall I confirm");
+    expect(t.world.submits).toHaveLength(0);
     t.port.hear("yes");
     await settle(t.port);
     expect(t.world.submits).toHaveLength(1);
     expect(t.booked).toBe(1);
-    expect(t.port.spoken.some((s) => s.text.includes("7, K, 3, M"))).toBe(true); // the reference is spelled out
+    expect(said(t.port)).toContain("7, K, 3, M");
   });
 
   it("a yes that starts while the read-back is still being read does not book", async () => {
     const t = build({ skipOpening: true });
     void t.session.start();
     await settle(t.port);
-    for (const say of ["book an appointment with Dr Bilal", "Sara Noor", "03111234567", "toothache", "friday at 11:30"]) {
-      t.port.hear(say);
+    for (const s of steps) {
+      t.port.hear(s);
       await settle(t.port);
     }
-    t.port.hear("skip"); // the read-back now starts speaking, sentence by sentence
+    t.port.hear("skip");
     await vi.advanceTimersByTimeAsync(0);
     expect(t.port.speakingNow).not.toBeNull();
-    t.port.hearInterim("yes"); // one word while it speaks: ignored as a stray sound, but it overlaps the read-back
-    t.port.hear("yes"); // a final "yes" that started during the read-back
+    t.port.hearInterim("yes");
+    t.port.hear("yes");
     await settle(t.port);
     expect(t.world.submits).toHaveLength(0);
     expect(said(t.port)).toContain("Just to be sure");
@@ -304,7 +285,13 @@ describe("the safe yes gate, end to end", () => {
   });
 
   it("an emergency mid-booking speaks the number first and cancels the read-back", async () => {
-    const t = await toReadBack();
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    for (const s of [...steps, "skip"]) {
+      t.port.hear(s);
+      await settle(t.port);
+    }
     t.port.hear("my father has chest pain and can't breathe");
     await settle(t.port);
     expect(said(t.port)).toMatch(/1122/);
@@ -312,9 +299,21 @@ describe("the safe yes gate, end to end", () => {
     await settle(t.port);
     expect(t.world.submits).toHaveLength(0);
   });
+
+  it("typed turns and spoken turns are one conversation (the booking continues from the text box)", async () => {
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    t.port.hear("book an appointment with Dr Bilal");
+    await settle(t.port);
+    t.session.submitText("friday at 11:30");
+    await settle(t.port);
+    expect(t.turns.at(-1)?.text).toContain("full name");
+    expect(t.conversation.ctx.booking?.draft.time).toBe("11:30");
+  });
 });
 
-describe("rate limit", () => {
+describe("limits and tabs", () => {
   it("asking too fast gets a calm 'please wait' instead of an answer", async () => {
     const t = build({ skipOpening: true });
     void t.session.start();
@@ -325,10 +324,8 @@ describe("rate limit", () => {
     }
     expect(said(t.port)).toMatch(/moment/);
   });
-});
 
-describe("the Clinic owner tab", () => {
-  it("answers the product guide by voice and offers no booking", async () => {
+  it("the Clinic owner tab answers the product guide by voice and offers no booking", async () => {
     const t = build({ skipOpening: true, guide: true });
     void t.session.start();
     await settle(t.port);

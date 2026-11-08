@@ -64,7 +64,7 @@ export function pickVoice(voices: VoiceInfo[], options: { lang: VoiceLang; liste
 // --- Per-sentence choice (the warm, natural voice) ----------------------------------------------------
 
 // The voices that sound best, by their own first name: Edge's free neural voices.
-const PREFERRED: Record<VoiceGender, string[]> = { female: ["aria", "jenny", "ava", "emma"], male: ["guy", "andrew", "brian", "christopher"] };
+const PREFERRED: Record<VoiceGender, string[]> = { female: ["jenny", "aria", "ava", "emma"], male: ["guy", "andrew", "brian", "christopher"] };
 const ENGLISH_ORDER = ["en-us", "en-gb", "en-in", "en-pk", "en"];
 
 const isNatural = (voice: VoiceInfo): boolean => /natural|online/i.test(voice.name);

@@ -1,11 +1,10 @@
 {
-  "name": "'No, make it the 14th' at the read-back is applied, confirmed in one sentence, and read back again",
+  "name": "Mid-way correction: 'no, make it the 14th' is applied, confirmed in one sentence, and read back again",
   "turns": [
-    { "say": "book an appointment with Dr Bilal", "expect": ["full name"] },
+    { "say": "book an appointment with Dr Bilal", "expect": ["Which day"] },
+    { "say": "friday at 11:30", "expect": ["full name"] },
     { "say": "Sara Noor", "expect": ["Sara", "mobile"] },
-    { "say": "03111234567", "expect": ["visit for"] },
-    { "say": "toothache", "expect": ["Which day"] },
-    { "say": "friday at 11:30", "expect": ["email"] },
+    { "say": "03111234567", "expect": ["email"] },
     { "say": "skip", "expect": ["Friday 13 November at 11:30 AM", "Shall I confirm"], "submits": 0 },
     { "say": "no, make it the 14th", "expect": ["Done, Saturday 14 November", "Saturday 14 November at 11:30 AM", "Shall I confirm"], "submits": 0 },
     { "say": "yes", "expect": ["You're booked", "Saturday 14 November"], "submits": 1 }

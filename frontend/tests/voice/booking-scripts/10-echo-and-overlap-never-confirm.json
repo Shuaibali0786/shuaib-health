@@ -1,11 +1,10 @@
 {
   "name": "A 'yes' that overlapped the read-back (the caller talking over it, or an echo) is not a confirmation",
   "turns": [
-    { "say": "book an appointment with Dr Bilal", "expect": ["full name"] },
+    { "say": "book an appointment with Dr Bilal", "expect": ["Which day"] },
+    { "say": "monday at 3 pm", "expect": ["full name"] },
     { "say": "Sara Noor", "expect": ["mobile"] },
-    { "say": "03111234567", "expect": ["visit for"] },
-    { "say": "toothache", "expect": ["Which day"] },
-    { "say": "monday at 3 pm", "expect": ["email"] },
+    { "say": "03111234567", "expect": ["email"] },
     { "say": "skip", "expect": ["Shall I confirm"], "submits": 0 },
     { "say": "yes", "confirmable": false, "expect": ["Just to be sure"], "forbid": ["You're booked"], "submits": 0 },
     { "say": "yes yes", "confirmable": false, "expect": ["Just to be sure"], "submits": 0 },

@@ -11,7 +11,7 @@ import { primeMicrophone, type MicResult } from "@/voice/microphone";
 
 import type { VoicePrefs } from "./voice/VoiceMode";
 
-const DEFAULT_PREFS: VoicePrefs = { listenLang: "en", gender: "female", opened: false };
+const DEFAULT_PREFS: VoicePrefs = { opened: false };
 const BUBBLE_DELAY_MS = 1200;
 
 /**
@@ -22,7 +22,7 @@ const BUBBLE_DELAY_MS = 1200;
  * a moment after the page loads, once per visit, and can be dismissed. Tapping it opens the chat straight into
  * voice mode (the tap is also what lets the browser play sound and ask for the microphone).
  */
-export function AssistantLauncher({ pack, provider = "local", voice = false }: { pack: KnowledgePack; provider?: ProviderId; voice?: boolean }) {
+export function AssistantLauncher({ pack, provider = "local", voice = false, voiceProvider = "browser" }: { pack: KnowledgePack; provider?: ProviderId; voice?: boolean; voiceProvider?: "browser" | "azure" }) {
   const [Panel, setPanel] = useState<ComponentType<AssistantPanelProps> | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -100,7 +100,7 @@ export function AssistantLauncher({ pack, provider = "local", voice = false }: {
         </div>
       )}
       {open && Panel ? (
-        <Panel pack={pack} provider={provider} onClose={close} voice={voice} startInVoice={startInVoice} voicePrefs={prefs} onVoicePrefs={(patch) => setPrefs((p) => ({ ...p, ...patch }))} micCheck={micCheck} />
+        <Panel pack={pack} provider={provider} onClose={close} voice={voice} startInVoice={startInVoice} voicePrefs={prefs} onVoicePrefs={(patch) => setPrefs((p) => ({ ...p, ...patch }))} micCheck={micCheck} voiceProvider={voiceProvider} />
       ) : null}
     </>
   );

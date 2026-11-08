@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-import { isVoiceEnabled } from "./src/lib/demo";
+import { getVoiceProvider, isVoiceEnabled } from "./src/lib/demo";
 import {
   PUBLIC_SITE_SOURCE,
   commonSecurityHeaders,
@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
         ? []
         : [
             { source: "/:path*", headers: commonSecurityHeaders(securityMode, { microphone: isVoiceEnabled() }) },
-            { source: PUBLIC_SITE_SOURCE, headers: publicSiteHeaders(securityMode, reportUri) },
+            { source: PUBLIC_SITE_SOURCE, headers: publicSiteHeaders(securityMode, reportUri, { speech: getVoiceProvider() === "azure" }) },
           ]),
       { source: "/admin", headers: PRIVATE_HEADERS },
       { source: "/admin/:path*", headers: PRIVATE_HEADERS },

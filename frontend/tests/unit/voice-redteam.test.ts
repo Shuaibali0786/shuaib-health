@@ -54,7 +54,8 @@ describe("red-team set", () => {
   it("every prompt, said in the middle of a booking, books nothing (0 bookings without the caller's own yes)", async () => {
     for (const c of CASES) {
       const w = makeWorld();
-      for (const t of ["book an appointment with Dr Bilal", "Sara Noor", "03111234567", "toothache", "friday at 11:30", "skip"]) await w.say(t);
+      for (const t of ["book an appointment with Dr Bilal", "friday at 11:30", "Sara Noor", "03111234567", "skip"]) await w.say(t);
+      expect(w.ctx.booking?.phase, "the read-back is reached before each prompt").toBe("awaiting_yes");
       const before = w.submits.length;
       const out = await w.say(c.say);
       expect(w.submits.length, `#${c.id} ${c.say}`).toBe(before);

@@ -1,14 +1,14 @@
 {
-  "name": "Happy path in Roman Urdu: department first, spoken digits with 'double', fractions of an hour",
+  "name": "Roman Urdu: 'mujhe CBC test karwana hai' -> what it is, preparation, price, lab -> offer -> haan -> one item at a time -> ji haan -> slip link, all in Roman Urdu",
   "turns": [
-    { "say": "mujhe skin ke doctor se milna hai", "expect": ["poora naam"] },
-    { "say": "mera naam Ayesha Khan hai", "expect": ["Ayesha", "mobile number"] },
-    { "say": "sifar teen sifar sifar double paanch ek do teen char paanch", "expect": ["wajah"] },
-    { "say": "khujli hai", "expect": ["Kaun sa din"] },
+    { "say": "mujhe CBC test karwana hai", "expect": ["khoon ka test", "Tayyari", "PKR 800", "Pathology Lab", "Kya main aap ki booking kar doon?"], "forbid": ["Shall I"], "submits": 0 },
+    { "say": "haan", "expect": ["Ji zaroor", "Kaun sa din"] },
     { "say": "kal", "expect": ["Monday 9 November", "Kaun sa waqt"] },
-    { "say": "saade gyarah", "expect": ["email"] },
-    { "say": "nahi", "expect": ["Main dohrati hoon", "0300 551 2345", "confirm kar doon"], "submits": 0 },
-    { "say": "ji haan", "expect": ["Aap ki booking ho gayi", "7K3M 9P2Q XA"], "submits": 1 }
+    { "say": "saade gyarah", "expect": ["poora naam"] },
+    { "say": "mera naam Ayesha Khan hai", "expect": ["Ayesha", "mobile number"] },
+    { "say": "sifar teen sifar sifar double paanch ek do teen char paanch", "expect": ["email"] },
+    { "say": "nahi", "expect": ["Main dohrati hoon", "0300 551 2345", "Complete Blood Count", "confirm kar doon"], "submits": 0 },
+    { "say": "ji haan", "expect": ["Aap ki booking ho gayi", "7K3M 9P2Q XA", "Is link ko tap karein, slip download karein, aur clinic aate waqt saath laayein."], "forbid": ["You're booked"], "submits": 1 }
   ],
-  "final": { "bookings": 1, "payload": { "doctorSlug": "dr-maryam-baloch", "startsAt": "2026-11-09T06:30:00Z", "fullName": "Ayesha Khan", "mobile": "+923005512345", "email": null, "reason": "khujli hai" } }
+  "final": { "bookings": 1, "payload": { "doctorSlug": "dr-zainab-memon", "startsAt": "2026-11-09T06:30:00Z", "fullName": "Ayesha Khan", "mobile": "+923005512345", "email": null, "reason": "Complete Blood Count (CBC) test" } }
 }

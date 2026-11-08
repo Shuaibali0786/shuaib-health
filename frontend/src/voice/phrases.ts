@@ -7,27 +7,20 @@ import type { VoiceLang } from "./types";
 
 export const T = (lang: VoiceLang, en: string, roman: string): string => (lang === "roman" ? roman : en);
 
-/** Said once at the start of a voice conversation: greeting, "I am an AI", and "audio is never recorded". */
-export function openingLines(pack: KnowledgePack, lang: VoiceLang): string {
+/** The short, warm welcome (once per conversation). "Audio is never recorded" is shown as small text, not spoken. */
+export function welcomeLine(pack: KnowledgePack, lang: VoiceLang): string {
   const clinic = pack.clinic.name;
   return T(
     lang,
-    `Assalam o Alaikum! I'm the voice assistant of ${clinic}. I'm an AI, and this is a demo clinic. We never record or store your audio. How can I help you today?`,
-    `Assalam o Alaikum! Main ${clinic} ki voice assistant hoon. Main ek AI hoon, aur yeh ek demo clinic hai. Aap ki awaaz kabhi record ya save nahi hoti. Bataiye, main kya madad karoon?`,
+    `Welcome to ${clinic}! I'm your AI assistant. How can I help you today?`,
+    `Assalam o Alaikum! ${clinic} mein khush aamdeed. Main aap ki AI assistant hoon, bataiye kya madad karoon?`,
   );
 }
 
-export const CHECKING = (lang: VoiceLang): string => T(lang, "Ji, checking…", "Ji, dekh rahi hoon…");
+export const CHECKING = (lang: VoiceLang): string => T(lang, "One moment, checking…", "Ji, dekh rahi hoon…");
 
 export const STILL_THERE = (lang: VoiceLang): string => T(lang, "Are you still there? I'm listening.", "Kya aap abhi hain? Main sun rahi hoon.");
-export const TAP_TO_TALK = (lang: VoiceLang): string => T(lang, "I've stopped listening. Tap the microphone when you're ready.", "Maine sunna band kar diya hai. Jab tayyar hon, microphone dabaiye.");
-
-export const NO_URDU_VOICE = (lang: VoiceLang): string =>
-  T(
-    lang,
-    "This device has no Urdu voice, so I'll speak Roman Urdu in an English voice and show you the text.",
-    "Is device mein Urdu awaaz maujood nahi, is liye main Roman Urdu English awaaz mein bolungi aur text bhi dikhaungi.",
-  );
+export const TAP_TO_TALK = (lang: VoiceLang): string => T(lang, "I've stopped listening. Tap the mic when you're ready.", "Maine sunna band kar diya hai. Jab tayyar hon, mic dabaiye.");
 
 export const NOT_UNDERSTOOD = (lang: VoiceLang): string => T(lang, "Sorry, I didn't catch that. Could you say it again?", "Maaf kijiye, main samajh nahi saki. Dobara bata dein?");
 

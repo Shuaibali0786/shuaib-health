@@ -24,9 +24,9 @@ const EDGE: VoiceInfo[] = [
 ];
 
 describe("the voices chosen", () => {
-  it("female: Aria for English and Uzma for Urdu", () => {
+  it("female: Jenny for English and Uzma for Urdu", () => {
     const set = pickVoiceSet(EDGE, "female");
-    expect(set.english?.name).toContain("Aria");
+    expect(set.english?.name).toContain("Jenny");
     expect(set.urdu?.name).toContain("Uzma");
   });
   it("male: Guy for English and Asad for Urdu", () => {
@@ -54,7 +54,7 @@ describe("the voice for each sentence", () => {
     expect(urdu.urduScript).toBe(true);
     expect(urdu.langTag).toBe("ur-PK");
     const english = chooseVoice(set, false, null);
-    expect(english.voice?.name).toContain("Aria");
+    expect(english.voice?.name).toContain("Jenny");
     expect(english.urduScript).toBe(false);
   });
   it("without an Urdu voice, Roman Urdu is read by the English voice that suits it, with no rewriting", () => {

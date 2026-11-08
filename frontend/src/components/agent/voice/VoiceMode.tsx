@@ -1,104 +1,79 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Mic, MicOff, PhoneOff } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
-import type { AgentMode, AgentProvider, KnowledgePack } from "@/agent/types";
-import { fetchSlots, postBooking } from "@/lib/booking/client";
-import { createAttemptKey } from "@/lib/booking/idempotency";
-import type { AppointmentView } from "@/lib/booking/schemas";
-import type { BookingState, DialogDeps } from "@/voice/bookingDialog";
-import { createBrowserSpeech } from "@/voice/browserSpeech";
+import { cn } from "@/lib/cn";
 import type { MicResult } from "@/voice/microphone";
+import type { Conversation, RouterResult } from "@/voice/router";
 import { VoiceSession, type Notice } from "@/voice/session";
-import type { ListenLang, Turn, VoiceGender, VoiceInfo, VoiceState } from "@/voice/types";
+import { createSpeechPort } from "@/voice/speechPort";
+import type { Turn, VoiceLang, VoiceState } from "@/voice/types";
 
 import { Captions } from "./Captions";
-import { Controls } from "./Controls";
 import { MicHelp } from "./MicHelp";
 import { Orb, type OrbHandle } from "./Orb";
-import { SlipCard } from "./SlipCard";
-import { SummaryCard } from "./SummaryCard";
-import { VoiceMenu, voiceKey } from "./VoiceMenu";
 
-export type VoicePrefs = { listenLang: ListenLang; gender: VoiceGender; opened: boolean };
+export type VoicePrefs = { opened: boolean };
 
 export type VoiceModeProps = {
-  pack: KnowledgePack;
-  mode: AgentMode;
-  provider: AgentProvider;
+  conversation: Conversation;
+  /** The welcome's language, and so the one voice used for this conversation. */
+  welcomeLang: VoiceLang;
+  /** Use the premium voice provider (behind its own flag); it falls back to the browser silently. */
+  provider: "browser" | "azure";
   prefs: VoicePrefs;
   onPrefs: (next: Partial<VoicePrefs>) => void;
   /** Every spoken or typed turn, so the chat history is one conversation (FR-003). */
   onTurn: (turn: Turn) => void;
+  /** Whatever a turn changed (the booking card, the slip card). */
+  onResult: (result: RouterResult) => void;
   /** End: leave voice mode (the chat stays open). */
   onEnd: () => void;
   /** Hands the panel a function that sends typed text into the voice conversation (the text fallback). */
   registerSubmit: (submit: ((text: string) => void) | null) => void;
   /** The microphone permission request made at the moment of the tap (so the prompt comes from a real action). */
   micCheck?: Promise<MicResult> | null;
-  /** "Change" on the summary card: put the cursor in the text box. */
-  onChangeRequest: () => void;
   /** Draws the conversation log, with the cards inside it. */
-  renderLog: (extras: ReactNode) => ReactNode;
+  renderLog: (extras?: ReactNode) => ReactNode;
+  /** The booking and slip cards, drawn inside the log. */
+  cards: ReactNode;
 };
 
 const STATE_LABEL: Record<VoiceState, string> = {
-  idle: "Tap the microphone to talk",
-  listening: "Listening…",
-  thinking: "Thinking…",
-  speaking: "Speaking · talk or tap Interrupt to cut in",
-  paused: "Microphone muted",
+  idle: "Tap the mic to talk",
+  listening: "Listening...",
+  thinking: "Thinking...",
+  speaking: "Speaking...",
+  paused: "Tap the mic to talk",
 };
 
-const SLOTS_TIMEOUT_MS = 10_000;
-
 /**
- * Voice mode inside the chat panel: the orb, live captions and controls above the conversation, with the booking
- * summary and the slip drawn inside the conversation. All of the talking logic lives in `VoiceSession`; this only
- * draws what it reports. Loaded on demand, so pages and the chat itself stay light until someone asks for voice.
+ * Voice mode inside the chat panel: the orb, the state, live captions, one big mic button and End. Everything else is
+ * automatic: it listens after the welcome, the language follows the caller, and talking over the assistant stops it.
+ * All of the talking logic lives in `VoiceSession`; this only draws what it reports.
  */
-export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn, onEnd, registerSubmit, micCheck, onChangeRequest, renderLog }: VoiceModeProps) {
+export default function VoiceMode({ conversation, welcomeLang, provider, prefs, onPrefs, onTurn, onResult, onEnd, registerSubmit, micCheck, renderLog, cards }: VoiceModeProps) {
   const [state, setState] = useState<VoiceState>("idle");
   const [interim, setInterim] = useState("");
   const [caption, setCaption] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
-  const [booking, setBooking] = useState<BookingState | null>(null);
-  const [booked, setBooked] = useState<AppointmentView | null>(null);
-  const [muted, setMuted] = useState(false);
-  const [voices, setVoices] = useState<VoiceInfo[]>([]);
-  const [chosenVoice, setChosenVoice] = useState("");
   const orb = useRef<OrbHandle>(null);
   const session = useRef<VoiceSession | null>(null);
   const status = useRef<HTMLParagraphElement>(null);
-  const port = useMemo(() => createBrowserSpeech(), []);
-  // The latest callbacks, so the session (created once per mode) never calls a stale one.
-  const latest = useRef({ onTurn, onPrefs, registerSubmit });
+  const port = useMemo(() => createSpeechPort(provider), [provider]);
+  // The latest callbacks, so the session (created once) never calls a stale one.
+  const latest = useRef({ onTurn, onResult, onPrefs, registerSubmit });
   useEffect(() => {
-    latest.current = { onTurn, onPrefs, registerSubmit };
+    latest.current = { onTurn, onResult, onPrefs, registerSubmit };
   });
-  const first = useRef(prefs);
-  const firstMic = useRef(micCheck ?? null);
+  const first = useRef({ opened: prefs.opened, micCheck: micCheck ?? null, welcomeLang });
 
   useEffect(() => {
-    const deps: DialogDeps = {
-      pack,
-      now: () => new Date(),
-      fetchSlots: (slug) => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), SLOTS_TIMEOUT_MS);
-        return fetchSlots(slug, controller.signal).finally(() => clearTimeout(timer));
-      },
-      submit: (payload, key) => postBooking(payload, key),
-      newKey: createAttemptKey,
-    };
     const s = new VoiceSession({
       port,
-      pack,
-      mode,
-      provider,
-      deps,
-      listenLang: first.current.listenLang,
-      gender: first.current.gender,
+      conversation,
+      welcomeLang: first.current.welcomeLang,
       skipOpening: first.current.opened,
       events: {
         onState: setState,
@@ -109,10 +84,8 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
         },
         onSpeaking: setCaption,
         onBoundary: () => orb.current?.pulse(),
-        onBooking: setBooking,
-        onBooked: setBooked,
+        onResult: (result) => latest.current.onResult(result),
         onNotice: setNotice,
-        onLang: () => undefined,
       },
     });
     session.current = s;
@@ -122,13 +95,10 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
     let cancelled = false;
     void (async () => {
       // The permission prompt was asked for at the tap; if it was refused, explain how to fix it, but still speak.
-      const mic = firstMic.current ? await firstMic.current : "granted";
+      const mic = first.current.micCheck ? await first.current.micCheck : "granted";
       if (cancelled) return;
       if (mic === "denied") setNotice("mic_denied");
       else if (mic === "unavailable") setNotice("mic_unavailable");
-      void s.availableVoices().then((list) => {
-        if (!cancelled) setVoices(list);
-      });
       await s.start();
     })();
     return () => {
@@ -137,71 +107,52 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
       latest.current.registerSubmit(null);
       session.current = null;
     };
-  }, [pack, mode, provider, port]);
+  }, [conversation, port]);
 
-  const onMute = useCallback((next: boolean) => {
-    setMuted(next);
-    session.current?.setMuted(next);
-  }, []);
-
-  const retry = () => {
-    setNotice(null);
-    setMuted(false);
-    session.current?.resume();
-  };
-
-  // While a booking card or a help message is on screen the orb shrinks so there is room for it.
-  const compact = Boolean((booking && booking.phase !== "booked" && booking.phase !== "failed") || booked || notice);
-
-  const extras = (
-    <>
-      {booking && booking.phase !== "booked" && booking.phase !== "failed" ? (
-        <SummaryCard state={booking} pack={pack} onConfirm={() => session.current?.submitText("yes")} onChange={onChangeRequest} />
-      ) : null}
-      {booked ? <SlipCard view={booked} pack={pack} /> : null}
-    </>
-  );
+  // While a help message or a booking card is on screen the orb shrinks so there is room for it.
+  const compact = Boolean(notice) || Boolean(cards);
+  const listening = state === "listening";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="voice-mode">
       <section aria-label="Voice assistant" className="flex min-h-0 shrink flex-col items-center gap-1 overflow-y-auto border-b border-border bg-linear-to-b from-teal-50 to-white pt-2 pb-3" data-compact={compact}>
-        <Orb ref={orb} state={state} className={compact ? "h-[min(9rem,18dvh)] w-[min(9rem,18dvh)]" : "h-[min(17rem,27dvh)] w-[min(17rem,27dvh)]"} />
+        <Orb ref={orb} state={state} className={compact ? "h-[min(8rem,16dvh)] w-[min(8rem,16dvh)]" : "h-[min(16rem,28dvh)] w-[min(16rem,28dvh)]"} />
         <p ref={status} tabIndex={-1} role="status" aria-live="polite" className="-mt-1 rounded-pill bg-white px-3 py-1 text-sm font-semibold text-navy-900 shadow-soft outline-none">
           {STATE_LABEL[state]}
         </p>
         <Captions you={interim} assistant={caption} />
-        <MicHelp notice={notice} onAction={retry} onDismiss={() => setNotice(null)} />
-        <Controls
-          state={state}
-          muted={muted}
-          canListen={port.canListen}
-          listenLang={prefs.listenLang}
-          gender={prefs.gender}
-          onMute={onMute}
-          onInterrupt={() => session.current?.interrupt()}
-          onEnd={onEnd}
-          onListenLang={(lang) => {
-            onPrefs({ listenLang: lang });
-            session.current?.setListenLang(lang);
+        <MicHelp
+          notice={notice}
+          onAction={() => {
+            setNotice(null);
+            session.current?.resume();
           }}
-          onGender={(gender) => {
-            onPrefs({ gender });
-            setChosenVoice("");
-            session.current?.setGender(gender);
-          }}
+          onDismiss={() => setNotice(null)}
         />
-        <VoiceMenu
-          voices={voices}
-          selected={chosenVoice}
-          onSelect={(voice) => {
-            setChosenVoice(voice ? voiceKey(voice) : "");
-            session.current?.setVoice(voice);
-            void session.current?.sample();
-          }}
-          onSample={() => void session.current?.sample()}
-        />
+        <div className="mt-1 flex items-center justify-center gap-6">
+          <button
+            type="button"
+            onClick={() => session.current?.toggleMic()}
+            aria-pressed={listening}
+            aria-label={listening ? "Stop listening" : state === "speaking" ? "Interrupt and talk" : "Tap to talk"}
+            className={cn(
+              "inline-flex size-16 items-center justify-center rounded-full shadow-lift transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-navy-900",
+              listening ? "bg-teal-700 text-white ring-4 ring-teal-300" : "bg-navy-900 text-white",
+            )}
+          >
+            {listening ? <Mic className="size-7" aria-hidden="true" /> : <MicOff className="size-7" aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
+            onClick={onEnd}
+            className="inline-flex min-h-12 items-center gap-2 rounded-pill bg-danger-700 px-5 text-sm font-semibold text-white shadow-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-navy-900"
+          >
+            <PhoneOff className="size-5" aria-hidden="true" />
+            End
+          </button>
+        </div>
       </section>
-      {renderLog(extras)}
+      {renderLog(cards)}
     </div>
   );
 }
