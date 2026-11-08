@@ -220,6 +220,8 @@ See `.specify/memory/constitution.md` for code quality, testing, performance, se
 - Money rule: free tiers only; never enable billing; non-commercial demo on Vercel Hobby
 - Python 3.12 (backend), TypeScript strict / Next.js 16.4 (frontend) + FastAPI, SQLModel, Alembic. **New: `cryptography`** (AES-GCM only; see research R2). The frontend adds no new dependency: the QR code uses the existing in-house encoder `src/lib/booking/qr.ts`. (011-admin-two-factor)
 - Neon Postgres; migration `0004_two_factor` (additive). See [data-model.md](data-model.md). (011-admin-two-factor)
+- TypeScript strict / Next.js 16.4 (frontend); Python 3.12 (backend) + no new runtime dependency. Browser Web Speech API, Canvas 2D, Web Audio `AnalyserNode` (visual level only), Framer Motion (already present), the existing Resend sender, the existing Zod schemas, `phone.ts`, `qr.ts` and `slip.ts`. (013-voice-receptionist)
+- browser memory for the conversation (only the voice preference goes in `localStorage`). Neon Postgres: the new `patient_access_code` table and reused `rate_limit_counter` buckets. See [data-model.md](data-model.md). (013-voice-receptionist)
 
 ## Recent Changes
 - 007-launch-ready: first public demo deployment (spec, plan, ADR-0011, constitution 1.2.0)
