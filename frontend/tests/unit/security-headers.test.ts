@@ -70,6 +70,13 @@ describe("header sets", () => {
     expect(common.find((h) => h.key === "X-Frame-Options")?.value).toBe("DENY");
   });
 
+  it("the microphone is blocked unless voice is on, and then only for this site itself", () => {
+    const policy = (options?: { microphone?: boolean }) => commonSecurityHeaders("enforce", options).find((h) => h.key === "Permissions-Policy")?.value;
+    expect(policy()).toBe("camera=(), microphone=(), geolocation=(), payment=(), usb=()");
+    expect(policy({ microphone: true })).toBe("camera=(), microphone=(self), geolocation=(), payment=(), usb=()");
+    expect(commonSecurityHeaders("off", { microphone: true })).toEqual([]);
+  });
+
   it("report mode uses Report-Only for the CSP, enforce mode the enforced header", () => {
     expect(names(publicSiteHeaders("report"))).toEqual(["Referrer-Policy", "Content-Security-Policy-Report-Only"]);
     expect(names(publicSiteHeaders("enforce"))).toEqual(["Referrer-Policy", "Content-Security-Policy"]);

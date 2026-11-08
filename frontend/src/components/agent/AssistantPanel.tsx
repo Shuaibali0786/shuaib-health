@@ -11,6 +11,7 @@ import { createThrottle } from "@/agent/throttle";
 import type { AgentLink, AgentMode, KnowledgePack } from "@/agent/types";
 import { cn } from "@/lib/cn";
 import { createBrowserSpeech } from "@/voice/browserSpeech";
+import { primeMicrophone, type MicResult } from "@/voice/microphone";
 import type { Notice } from "@/voice/session";
 import type { Turn } from "@/voice/types";
 
@@ -34,6 +35,8 @@ export type AssistantPanelProps = {
   /** Voice choices kept while the page stays open: language, voice, and whether the greeting was heard. */
   voicePrefs?: VoicePrefs;
   onVoicePrefs?: (next: Partial<VoicePrefs>) => void;
+  /** The microphone request already made by the tap that opened voice mode (the bubble). */
+  micCheck?: Promise<MicResult> | null;
 };
 
 type Message = { id: number; from: "you" | "assistant"; text: string; links?: AgentLink[] };
@@ -49,7 +52,7 @@ const greetingFor = (mode: AgentMode, pack: KnowledgePack) => (mode === "guide" 
  * Feature 013 adds, behind a flag: a Mic button (dictation into the box) and a Voice mode button (the orb, live
  * captions and hands-free booking). Typed and spoken turns share this one conversation.
  */
-export function AssistantPanel({ pack, provider: providerId = "local", onClose, voice = false, startInVoice = false, voicePrefs = DEFAULT_VOICE_PREFS, onVoicePrefs }: AssistantPanelProps) {
+export function AssistantPanel({ pack, provider: providerId = "local", onClose, voice = false, startInVoice = false, voicePrefs = DEFAULT_VOICE_PREFS, onVoicePrefs, micCheck: initialMicCheck = null }: AssistantPanelProps) {
   const provider = useMemo(() => getProvider(pack, providerId), [pack, providerId]);
   const throttle = useMemo(() => createThrottle(), []);
   const [mode, setMode] = useState<AgentMode>("patient");
@@ -58,6 +61,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
   const [draft, setDraft] = useState("");
   const [paused, setPaused] = useState(false);
   const [voiceOn, setVoiceOn] = useState(voice && startInVoice);
+  const [micCheck, setMicCheck] = useState<Promise<MicResult> | null>(initialMicCheck);
   // What this browser can do. The panel only ever renders after a click (never on the server), so it is read once here.
   const [caps] = useState(() => {
     if (!voice) return { listen: false, speak: false };
@@ -225,6 +229,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
             registerSubmit={(fn) => {
               voiceSubmit.current = fn;
             }}
+            micCheck={micCheck}
             onChangeRequest={() => input.current?.focus()}
             renderLog={renderLog}
           />
@@ -277,7 +282,14 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
           </button>
         ) : null}
         {showVoice && !voiceOn ? (
-          <button type="button" onClick={() => setVoiceOn(true)} aria-label="Start voice mode, talk with the assistant" className="inline-flex size-11 shrink-0 items-center justify-center rounded-control bg-navy-900 text-teal-300">
+          <button
+            type="button"
+            onClick={() => {
+              // Ask for the microphone right here, in the tap, so the browser shows its permission prompt.
+              setMicCheck(primeMicrophone());
+              setVoiceOn(true);
+            }}
+            aria-label="Start voice mode, talk with the assistant" className="inline-flex size-11 shrink-0 items-center justify-center rounded-control bg-navy-900 text-teal-300">
             <AudioLines className="size-5" aria-hidden="true" />
           </button>
         ) : null}
@@ -286,9 +298,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
         </button>
       </form>
       <p className="bg-surface px-4 py-2 text-center text-xs text-ink">
-        {voiceOn
-          ? "Portfolio demo — not a real clinic, not medical advice. A voice booking is a demo booking: please use sample details, not your real ones."
-          : "Portfolio demo — not a real clinic, not medical advice. Please don't share personal details."}
+        Portfolio demo — not a real clinic, not medical advice. This is a demo: please use sample details only, never your real personal or medical information.
       </p>
     </div>
   );

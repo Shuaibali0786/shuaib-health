@@ -27,7 +27,7 @@ export type SpeakHandlers = {
   onEnd: (cancelled: boolean) => void;
 };
 
-export type SpeakOptions = { lang: string; voice: VoiceInfo | null };
+export type SpeakOptions = { lang: string; voice: VoiceInfo | null; /** 1 is normal speed; a little under 1 sounds warmer. */ rate?: number };
 
 /**
  * Listening and speaking behind one door (research R6). Phase 1 has the browser adapter only. A premium voice

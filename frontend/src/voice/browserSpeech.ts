@@ -154,7 +154,7 @@ export function createBrowserSpeech(win: SpeechWindow | undefined = typeof windo
         const u = new Utterance(text);
         u.lang = options.lang;
         if (voice) u.voice = voice;
-        u.rate = 1;
+        u.rate = options.rate ?? 1;
         u.pitch = 1;
         if (index === 0) u.onstart = () => handlers.onStart?.();
         u.onboundary = () => handlers.onBoundary?.();

@@ -29,12 +29,22 @@ async function say(page: Page, text: string, expected: string | RegExp) {
 test.describe("voice receptionist", () => {
   test("is absent when the flags are off (default)", async ({ page }) => {
     test.skip(ON, "flags are on in this run");
-    await page.goto("/");
+    const response = await page.goto("/");
+    // The microphone stays blocked for everyone when voice is off.
+    expect(response?.headers()["permissions-policy"] ?? "").toContain("microphone=()");
     await expect(page.getByRole("button", { name: /Talk to us/ })).toHaveCount(0);
     // With the flags off (the CI build) there is no chat button, so nothing voice-related can be reached.
     await expect(page.getByRole("button", { name: /voice mode|dictate/i })).toHaveCount(0);
     await page.waitForTimeout(1500); // longer than the bubble's delay: it must still not appear
     await expect(page.getByRole("button", { name: /Talk to us/ })).toHaveCount(0);
+  });
+
+  test("lets this site (and only this site) use the microphone: Permissions-Policy microphone=(self)", async ({ page }) => {
+    test.skip(!ON, "run with ASSISTANT_ENABLED=true VOICE_ENABLED=true");
+    const response = await page.goto("/");
+    const policy = response?.headers()["permissions-policy"] ?? "";
+    expect(policy).toContain("microphone=(self)");
+    expect(policy).toContain("camera=()");
   });
 
   test("answers by voice, shows captions and controls, and passes axe", async ({ page }) => {
@@ -85,6 +95,23 @@ test.describe("voice receptionist", () => {
     expect(results.violations).toEqual([]);
   });
 
+  test("a refused microphone request at the tap shows the Edge and Windows steps at once", async ({ page }) => {
+    test.skip(!ON, "run with ASSISTANT_ENABLED=true VOICE_ENABLED=true");
+    await installFakeWebSpeech(page, { micError: "NotAllowedError" });
+    await page.goto("/");
+    await page.getByRole("button", { name: /Talk to us/ }).click({ timeout: 8000 });
+    const dialog = page.getByRole("dialog", { name: /Ask / });
+    await expect(dialog.getByText("The microphone is blocked")).toBeVisible();
+    await expect(dialog.getByText(/Cookies and site permissions/)).toBeVisible();
+    await expect(dialog.getByText(/Privacy & security, then Microphone/)).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Try again" })).toBeVisible();
+    // The greeting is still spoken, and typing works.
+    await expect.poll(() => spokenText(page), { timeout: 10000 }).toContain("voice assistant");
+    await dialog.getByLabel("Your question").fill("cbc price");
+    await dialog.getByLabel("Your question").press("Enter");
+    await expect(dialog.getByRole("log")).toContainText("PKR 800");
+  });
+
   test("without speech recognition it speaks only and says to type", async ({ page }) => {
     test.skip(!ON, "run with ASSISTANT_ENABLED=true VOICE_ENABLED=true");
     await installFakeWebSpeech(page, { recognition: false });
@@ -129,6 +156,8 @@ test.describe("voice receptionist", () => {
     const axe = await new AxeBuilder({ page }).include("[role='dialog']").withTags(WCAG).analyze();
     expect(axe.violations.map((v) => `${v.id} on ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
 
+    // Say yes only once the read-back has been spoken to the end (a "yes" over the read-back never books).
+    await expect(dialog.getByRole("status").filter({ hasText: "Listening…" })).toBeVisible({ timeout: 15000 });
     await hear(page, "yes");
     const slip = dialog.getByTestId("voice-slip");
     await expect(slip).toBeVisible({ timeout: 10000 });

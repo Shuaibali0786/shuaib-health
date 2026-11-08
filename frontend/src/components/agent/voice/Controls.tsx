@@ -55,7 +55,7 @@ export function Controls({ state, muted, canListen, listenLang, gender, onMute, 
         ))}
       </div>
 
-      <div className="inline-flex rounded-pill border border-border-strong bg-white p-0.5" role="group" aria-label="Voice">
+      <div className="inline-flex rounded-pill border border-border-strong bg-white p-0.5" role="group" aria-label="Voice style">
         {(["female", "male"] as const).map((g) => (
           <button
             key={g}

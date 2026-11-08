@@ -37,6 +37,12 @@ Booking tests ran against the **mock API / scripted routes only**, never product
 6. **Voice turn limit** is 24 a minute (typed chat stays at 8): a booking takes about ten turns.
 7. The assistant says it cannot look up or change an existing booking or accept codes (fixed, safe reply with the clinic number) until Phase 2.
 
+## Update after the owner's preview test (2026-11-08, Edge on Windows)
+1. **Voice quality:** natural voices first (Aria / Jenny, Guy / Andrew, Uzma / Asad); Roman Urdu and greetings go to the Urdu voice, English to the English voice; rate 0.95; short pauses between sentences; emojis, symbols, money, day names, time zones and phone numbers rewritten for speech; a **Voice menu** to try the voices on the device.
+2. **Microphone:** our own `Permissions-Policy: microphone=()` header **was blocking it** for everyone. It is now `microphone=(self)` when voice is on. The permission request is made inside the tap, and a refusal shows Edge and Windows steps.
+3. **"Clinic" name:** the preview of this branch had no `CATALOG_API_URL` (the existing ones are scoped to other branches), so the site fell back to the neutral name and booking could not work. Set for this branch; documented in the runbook.
+4. **Footer:** the text chat and voice mode now show the same line: "…This is a demo: please use sample details only, never your real personal or medical information."
+
 ## Phase 2 notes (not done on purpose)
 - Email-code lookup, cancel, slip email, 4 endpoints, migration `0006_patient_access`, Resend: see ADR-0015 and `contracts/patient-access-api.md`.
 - **Existing booking-view endpoint left as it is:** `GET /appointments/{reference}` shows the last 3 phone digits (`0300****567`) to anyone holding the reference, so "reference + last 4" adds about one digit. Decide how to tighten it when Phase 2 starts (it changes the confirmation page).

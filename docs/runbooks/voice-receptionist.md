@@ -23,7 +23,15 @@ Email-code lookup, cancel by voice, the slip email, the four patient-access endp
 Both are read at **build** time (like `ASSISTANT_ENABLED`), so change the value and **redeploy**.
 
 ### Turn on for the Vercel Preview only (to try it)
-Vercel → `shuaib-health-web` → Settings → Environment Variables → add `VOICE_ENABLED=true` for **Preview** only → redeploy the preview. (Production is untouched.)
+Add these for **Preview**, scoped to the branch (Vercel → `shuaib-health-web` → Settings → Environment Variables, or `vercel env add NAME preview <branch>`), then redeploy the preview. Production is untouched.
+
+| Variable | Value |
+|---|---|
+| `ASSISTANT_ENABLED` | `true` |
+| `VOICE_ENABLED` | `true` |
+| `CATALOG_API_URL` | the **API project's preview alias for that branch** (`https://shuaib-health-api-git-<branch>-…vercel.app`). Without it the site shows the neutral name "Clinic" and booking cannot work. |
+
+`BOOKING_PROXY_SECRET` and `API_PROTECTION_BYPASS` already exist for all Previews. Delete the branch-scoped variables when the branch is done.
 
 ### Turn on in production (🔑 owner, after approval)
 Add `VOICE_ENABLED=true` for **Production** and redeploy. First complete `frontend/tests/voice/manual-checklist.md` on a preview build.
@@ -43,10 +51,18 @@ Set `VOICE_ENABLED` to `false` (or remove it) and redeploy (about 1–2 minutes)
 - **Voice**: write another `SpeechPort` (see `src/voice/types.ts`), choose it where `createBrowserSpeech()` is called in `VoiceMode.tsx` and `useDictation.ts`. The conversation code does not change.
 - **Codes by SMS or WhatsApp** (Phase 2): a new `CodeSender` on the backend, chosen by `LOOKUP_CODE_CHANNEL` (see ADR-0015 and `specs/013-voice-receptionist/contracts/patient-access-api.md`).
 
+## Microphone and the Permissions-Policy header
+The site sends `Permissions-Policy: microphone=()` (blocked) by default. With `VOICE_ENABLED` on it sends `microphone=(self)`: only this site's own pages may ask, never a frame or another origin (`src/lib/security-headers.ts`, set in `next.config.ts`). The permission request is made inside the tap that opens voice mode. If the browser refuses, the panel shows step-by-step help for Edge and Windows (site permission, Edge's Microphone setting, Windows Privacy & security).
+
+## Voices
+- **Automatic** (default): the warmest voices on the device. English sentences use a natural English voice (Aria or Jenny for female, Guy or Andrew for male); greetings and Roman Urdu sentences use a natural Urdu voice (Uzma, Asad) with the words rewritten in Urdu script for that voice. Without an Urdu voice, Roman Urdu is read by Indian English.
+- **Voice menu** in voice mode lists every English, Urdu and Hindi voice on the device (natural first); picking one reads a sample and then reads everything. Female / Male returns to Automatic.
+- Speaking rate is 0.95, with a short rest between sentences. Money, days, times zones and phone numbers are rewritten for speech (`src/voice/speechText.ts`).
+
 ## Known limits
 - Browser support: Edge and Chrome (desktop and Android) are best. Safari/iPhone recognition is partial. Firefox has none, so voice mode speaks only and asks people to type.
 - Speech recognition in Chrome and Edge is done by the browser vendor's own service, so it needs an internet connection. The privacy line says "we never record or store your audio", which is true for this site.
-- Replies are English or **Roman Urdu**, spoken by an English voice. Urdu-script replies with an Urdu voice are Phase 2.
+- Replies are English or **Roman Urdu**. Roman Urdu is read by an Urdu voice when the device has one (words rewritten in Urdu script, `src/voice/urduSpeech.ts`, a starter list), otherwise by an English voice. Full Urdu-script replies are Phase 2.
 - Dates and times are the clinic's days, taken from the server's slot list.
 
 ## Tests

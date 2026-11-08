@@ -13,7 +13,12 @@ const port = () => g.__fakeSpeech as FakeSpeech;
 
 vi.mock("@/voice/browserSpeech", async () => {
   const { createFakeSpeech } = await import("@/voice/fakeSpeech");
-  const fake = createFakeSpeech({ autoFinish: true, voices: [{ name: "Microsoft Neerja Online (Natural) - English (India)", lang: "en-IN", local: false }] });
+  const fake = createFakeSpeech({ autoFinish: true, voices: [
+    { name: "Microsoft Neerja Online (Natural) - English (India)", lang: "en-IN", local: false },
+    { name: "Microsoft Aria Online (Natural) - English (United States)", lang: "en-US", local: false },
+    { name: "Microsoft Uzma Online (Natural) - Urdu (Pakistan)", lang: "ur-PK", local: false },
+    { name: "Microsoft David - English (United States)", lang: "en-US", local: true },
+  ] });
   g.__fakeSpeech = fake;
   return { createBrowserSpeech: () => fake };
 });
@@ -48,6 +53,20 @@ async function openVoiceByBubble(user: ReturnType<typeof userEvent.setup>) {
   await user.click(bubble);
   return screen.findByRole("dialog", { name: /Ask Shuaib Health/ });
 }
+
+describe("the footer", () => {
+  it("says the same clear thing in the text chat and in voice mode", async () => {
+    const user = userEvent.setup();
+    render(<AssistantLauncher pack={pack} voice />);
+    await user.click(screen.getByRole("button", { name: "Ask us" }));
+    const dialog = await screen.findByRole("dialog");
+    const text = "Portfolio demo — not a real clinic, not medical advice. This is a demo: please use sample details only, never your real personal or medical information.";
+    expect(within(dialog).getByText(text)).toBeInTheDocument();
+    await user.click(await within(dialog).findByRole("button", { name: /Start voice mode/ }));
+    await within(dialog).findByTestId("voice-mode");
+    expect(within(dialog).getByText(text)).toBeInTheDocument();
+  });
+});
 
 describe("flag off (the default)", () => {
   it("shows no bubble, no Mic and no Voice mode button", async () => {
@@ -125,12 +144,43 @@ describe("voice mode", () => {
     expect(port().listening).toBe(false);
   });
 
+  it("has a Voice menu of the natural voices; choosing one reads a sample in it; Female and Male return to automatic", async () => {
+    const user = userEvent.setup();
+    const dialog = await openVoiceByBubble(user);
+    await within(dialog).findByText(/Listening/);
+    const select = await within(dialog).findByLabelText("Voice");
+    const options = within(select).getAllByRole("option").map((o) => o.textContent);
+    expect(options[0]).toBe("Automatic (recommended)");
+    expect(options).toContain("Aria (Natural), English (United States)");
+    expect(options).toContain("Uzma (Natural), Urdu (Pakistan)");
+    expect(options.indexOf("David, English (United States)")).toBeGreaterThan(options.indexOf("Uzma (Natural), Urdu (Pakistan)"));
+    await user.selectOptions(select, within(select).getByRole("option", { name: "Aria (Natural), English (United States)" }));
+    await waitFor(() => expect(port().spoken.at(-1)?.voice).toContain("Aria"));
+    expect(port().spoken.some((s) => s.text.includes("Assalam"))).toBe(true);
+    await user.click(within(dialog).getByRole("button", { name: "Male" }));
+    expect(select).toHaveValue("");
+  });
+
+  it("speaks Roman Urdu and greetings with the Urdu voice (Urdu script), English with the English voice, a little slower", async () => {
+    const user = userEvent.setup();
+    const dialog = await openVoiceByBubble(user);
+    await within(dialog).findByText(/Listening/);
+    await waitFor(() => expect(port().spoken.length).toBeGreaterThan(2));
+    const greeting = port().spoken.find((s) => s.text.includes("السلام علیکم"));
+    expect(greeting?.voice).toContain("Uzma");
+    const english = port().spoken.find((s) => s.text.includes("demo clinic"));
+    expect(english?.voice).toContain("Aria");
+    expect(port().spokenRates.every((r) => r === 0.95)).toBe(true);
+  });
+
   it("explains a blocked microphone and keeps typing working", async () => {
     const user = userEvent.setup();
     const dialog = await openVoiceByBubble(user);
     await within(dialog).findByText(/Listening/);
     act(() => port().fail("denied"));
     expect(await within(dialog).findByText("The microphone is blocked")).toBeInTheDocument();
+    expect(within(dialog).getByText(/Windows Settings, then Privacy & security, then Microphone/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Cookies and site permissions/)).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText("Your question"), "cbc price{Enter}");
     await waitFor(() => expect(within(dialog).getByRole("log")).toHaveTextContent("PKR 800"));
   });
@@ -190,10 +240,12 @@ describe("hands-free booking in the panel", () => {
       await waitFor(() => expect(log).toHaveTextContent(expected));
     }
     expect(g.__posts).toHaveLength(0);
+    // The read-back is spoken sentence by sentence, with short rests: wait until it has finished before saying yes.
+    await waitFor(() => expect(within(dialog).getByRole("status", { name: "" })).toHaveTextContent("Listening…"), { timeout: 8000 });
     act(() => port().hear("yes"));
     await within(dialog).findByTestId("voice-slip");
     expect(g.__posts).toHaveLength(1);
     expect(fakeSlots("dr-bilal-ansari").days.length).toBe(14);
     expect(bookedView(pack, { doctorSlug: "dr-bilal-ansari", startsAt: "2026-11-09T10:00:00Z" } as never).reference).toBe("7K3M9P2QXA");
-  });
+  }, 30000);
 });

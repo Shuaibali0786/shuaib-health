@@ -146,7 +146,7 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     }
     const start = newBookingState();
     const out = await bookingStep(start, { text: accepted ? "" : mapped, lang, confirmable: input.confirmable }, ctx.deps);
-    const opener = T(lang, "Ji zaroor, I'll book that for you.", "Ji zaroor, main aap ke liye booking kar deti hoon.");
+    const opener = T(lang, "Ji zaroor, I'll book that for you. This is a demo, so please use sample details.", "Ji zaroor, main aap ke liye booking kar deti hoon. Yeh ek demo hai, is liye sample details istemal karein.");
     return {
       ...base,
       booking: out.state,

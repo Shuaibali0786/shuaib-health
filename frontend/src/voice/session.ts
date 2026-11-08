@@ -14,7 +14,11 @@ import { splitSentences } from "./chunk";
 import { CHECKING, NO_URDU_VOICE, STILL_THERE, TAP_TO_TALK, T, openingLines } from "./phrases";
 import { routeTurn, type RouterContext, type RouterResult } from "./router";
 import type { ListenLang, SpeechPort, Turn, VoiceGender, VoiceInfo, VoiceLang, VoiceState } from "./types";
-import { pickVoice } from "./voicePicker";
+import { detectLang } from "@/agent/normalize";
+
+import { forSpeech } from "./speechText";
+import { urduSpeech } from "./urduSpeech";
+import { chooseVoice, pickVoiceSet } from "./voicePicker";
 
 export type Notice = "mic_denied" | "mic_unavailable" | "listen_unsupported" | "speak_unsupported" | "network" | "tap_to_talk" | "no_urdu_voice";
 
@@ -46,11 +50,16 @@ export type SessionOptions = {
   gender?: VoiceGender;
   /** Skip the greeting (the caller already heard it in this conversation). */
   skipOpening?: boolean;
+  /** A short rest between sentences, in milliseconds (default 220). Zero in tests. */
+  pauseMs?: number;
 };
 
 const SILENCE_MS = 8000;
 const ACK_AFTER_MS = 1000;
 const ECHO_OVERLAP = 0.6;
+/** A little slower than the default: warmer, easier to follow. */
+const SPEECH_RATE = 0.95;
+const GREETING = /^(assalam|wa\s?alaikum|salam)/i;
 
 const LISTEN_CODE: Record<ListenLang, string> = { en: "en-PK", ur: "ur-PK" };
 
@@ -95,6 +104,8 @@ export class VoiceSession {
   /** The caller spoke during the read-back (or cut it off): a "yes" from that turn must not book. */
   private overlapped = false;
   private noUrduNoted = false;
+  private voiceOverride: VoiceInfo | null = null;
+  private readonly pauseMs: number;
   private openingDone: boolean;
 
   constructor(options: SessionOptions) {
@@ -103,6 +114,7 @@ export class VoiceSession {
     this.listenLang = options.listenLang ?? "en";
     this.gender = options.gender ?? "female";
     this.openingDone = Boolean(options.skipOpening);
+    this.pauseMs = options.pauseMs ?? 220;
     this.ctx = { pack: options.pack, mode: options.mode, lang: "en", provider: options.provider, deps: options.deps, booking: null, offerDoctor: false, bookingsMade: 0 };
   }
 
@@ -167,6 +179,24 @@ export class VoiceSession {
 
   setGender(gender: VoiceGender): void {
     this.gender = gender;
+    this.voiceOverride = null; // choosing Female or Male goes back to the automatic voices
+  }
+
+  /** A voice picked in the Voice menu reads everything; null returns to the automatic choice. */
+  setVoice(voice: VoiceInfo | null): void {
+    this.voiceOverride = voice;
+  }
+
+  /** Speaks a short bilingual sample in the current voice, so the person can hear it. */
+  async sample(): Promise<void> {
+    if (this.state === "speaking") this.interrupt();
+    await this.speak(`Assalam o Alaikum! Main ${this.ctx.pack.clinic.name} ki assistant hoon. I'm happy to help you today.`, { readBack: false, lang: "roman", keepIdle: this.state !== "listening" });
+  }
+
+  /** The voices this device offers (for the Voice menu). */
+  async availableVoices(): Promise<VoiceInfo[]> {
+    await this.loadVoices();
+    return this.voices;
   }
 
   /** A typed message from the panel's text box (the text fallback). It counts as the caller's own turn. */
@@ -348,7 +378,7 @@ export class VoiceSession {
     await this.speak(text, { readBack: false, keepIdle: options.keepIdle });
   }
 
-  private async speak(text: string, options: { readBack: boolean; keepIdle?: boolean }): Promise<void> {
+  private async speak(text: string, options: { readBack: boolean; keepIdle?: boolean; lang?: VoiceLang }): Promise<void> {
     if (this.ended || !this.port.canSpeak) {
       if (!this.port.canSpeak && !this.ended) {
         this.events.onNotice("speak_unsupported");
@@ -357,10 +387,11 @@ export class VoiceSession {
       return;
     }
     await this.loadVoices();
-    const lang = this.ctx.lang;
-    const pick = pickVoice(this.voices, { lang, listen: this.listenLang, gender: this.gender });
+    const lang = options.lang ?? this.ctx.lang;
+    const set = pickVoiceSet(this.voices, this.gender);
     let sentences = splitSentences(text);
-    if (pick.urduVoiceMissing && !this.noUrduNoted) {
+    // Urdu chosen, but the device has no Urdu voice: say so once, politely (the text is always shown).
+    if (this.listenLang === "ur" && !set.urdu && !this.voiceOverride && !this.noUrduNoted) {
       this.noUrduNoted = true;
       this.events.onNotice("no_urdu_voice");
       sentences = [...splitSentences(NO_URDU_VOICE(lang)), ...sentences];
@@ -376,15 +407,20 @@ export class VoiceSession {
     this.clearSilence();
     this.setState("speaking");
     let cancelled = false;
-    for (const sentence of sentences) {
+    for (const [index, sentence] of sentences.entries()) {
       if (generation !== this.generation || this.ended) {
         cancelled = true;
         break;
       }
+      // Greetings and Roman Urdu sentences go to the Urdu voice, English sentences to the English voice.
+      const roman = GREETING.test(sentence) || (lang === "roman" && detectLang(sentence) === "roman");
+      const choice = chooseVoice(set, roman, this.voiceOverride);
+      const clean = forSpeech(sentence);
+      const spoken = choice.urduScript ? urduSpeech(clean) : clean;
       cancelled = await new Promise<boolean>((resolve) => {
-        this.port.speak([sentence], { lang: pick.langTag, voice: pick.voice }, {
+        this.port.speak([spoken], { lang: choice.langTag, voice: choice.voice, rate: SPEECH_RATE }, {
           onStart: () => {
-            this.recent = [...this.recent.slice(-1), sentence];
+            this.recent = [...this.recent.slice(-3), sentence, clean];
             this.events.onSpeaking(sentence);
           },
           onBoundary: () => this.events.onBoundary(),
@@ -392,6 +428,8 @@ export class VoiceSession {
         });
       });
       if (cancelled) break;
+      // A short rest between sentences, like a person drawing breath.
+      if (this.pauseMs > 0 && index < sentences.length - 1) await new Promise<void>((resolve) => setTimeout(resolve, this.pauseMs));
     }
     this.speaking = Math.max(0, this.speaking - 1);
     if (generation !== this.generation || this.ended) return; // an interruption already moved on

@@ -3,8 +3,18 @@
 // `window.__hear(...)` and reads what the page "spoke" from `window.__spoken`. Nothing here is recorded or sent anywhere.
 import type { Page } from "@playwright/test";
 
-export async function installFakeWebSpeech(page: Page, options: { recognition?: boolean } = {}): Promise<void> {
-  await page.addInitScript((withRecognition: boolean) => {
+export async function installFakeWebSpeech(page: Page, options: { recognition?: boolean; micError?: "NotAllowedError" | "NotFoundError" } = {}): Promise<void> {
+  await page.addInitScript(({ withRecognition, micError }: { withRecognition: boolean; micError: string | null }) => {
+    // A microphone permission request: granted by default, or refused the way a browser refuses it.
+    Object.defineProperty(navigator, "mediaDevices", {
+      value: {
+        getUserMedia: async () => {
+          if (micError) throw new DOMException("refused", micError);
+          return { getTracks: () => [{ stop() {} }] };
+        },
+      },
+      configurable: true,
+    });
     const w = window as unknown as Record<string, unknown> & Window;
     const spoken: string[] = [];
     w.__spoken = spoken;
@@ -93,7 +103,7 @@ export async function installFakeWebSpeech(page: Page, options: { recognition?: 
       removeEventListener() {},
     };
     Object.defineProperty(window, "speechSynthesis", { value: synth, configurable: true });
-  }, options.recognition ?? true);
+  }, { withRecognition: options.recognition ?? true, micError: options.micError ?? null });
 }
 
 /** Everything the page has spoken so far, joined. */

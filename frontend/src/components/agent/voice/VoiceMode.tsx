@@ -8,8 +8,9 @@ import { createAttemptKey } from "@/lib/booking/idempotency";
 import type { AppointmentView } from "@/lib/booking/schemas";
 import type { BookingState, DialogDeps } from "@/voice/bookingDialog";
 import { createBrowserSpeech } from "@/voice/browserSpeech";
+import type { MicResult } from "@/voice/microphone";
 import { VoiceSession, type Notice } from "@/voice/session";
-import type { ListenLang, Turn, VoiceGender, VoiceState } from "@/voice/types";
+import type { ListenLang, Turn, VoiceGender, VoiceInfo, VoiceState } from "@/voice/types";
 
 import { Captions } from "./Captions";
 import { Controls } from "./Controls";
@@ -17,6 +18,7 @@ import { MicHelp } from "./MicHelp";
 import { Orb, type OrbHandle } from "./Orb";
 import { SlipCard } from "./SlipCard";
 import { SummaryCard } from "./SummaryCard";
+import { VoiceMenu, voiceKey } from "./VoiceMenu";
 
 export type VoicePrefs = { listenLang: ListenLang; gender: VoiceGender; opened: boolean };
 
@@ -32,6 +34,8 @@ export type VoiceModeProps = {
   onEnd: () => void;
   /** Hands the panel a function that sends typed text into the voice conversation (the text fallback). */
   registerSubmit: (submit: ((text: string) => void) | null) => void;
+  /** The microphone permission request made at the moment of the tap (so the prompt comes from a real action). */
+  micCheck?: Promise<MicResult> | null;
   /** "Change" on the summary card: put the cursor in the text box. */
   onChangeRequest: () => void;
   /** Draws the conversation log, with the cards inside it. */
@@ -53,7 +57,7 @@ const SLOTS_TIMEOUT_MS = 10_000;
  * summary and the slip drawn inside the conversation. All of the talking logic lives in `VoiceSession`; this only
  * draws what it reports. Loaded on demand, so pages and the chat itself stay light until someone asks for voice.
  */
-export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn, onEnd, registerSubmit, onChangeRequest, renderLog }: VoiceModeProps) {
+export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn, onEnd, registerSubmit, micCheck, onChangeRequest, renderLog }: VoiceModeProps) {
   const [state, setState] = useState<VoiceState>("idle");
   const [interim, setInterim] = useState("");
   const [caption, setCaption] = useState<string | null>(null);
@@ -61,6 +65,8 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
   const [booking, setBooking] = useState<BookingState | null>(null);
   const [booked, setBooked] = useState<AppointmentView | null>(null);
   const [muted, setMuted] = useState(false);
+  const [voices, setVoices] = useState<VoiceInfo[]>([]);
+  const [chosenVoice, setChosenVoice] = useState("");
   const orb = useRef<OrbHandle>(null);
   const session = useRef<VoiceSession | null>(null);
   const status = useRef<HTMLParagraphElement>(null);
@@ -71,6 +77,7 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
     latest.current = { onTurn, onPrefs, registerSubmit };
   });
   const first = useRef(prefs);
+  const firstMic = useRef(micCheck ?? null);
 
   useEffect(() => {
     const deps: DialogDeps = {
@@ -111,9 +118,21 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
     session.current = s;
     latest.current.registerSubmit((text) => s.submitText(text));
     latest.current.onPrefs({ opened: true });
-    void s.start();
     status.current?.focus();
+    let cancelled = false;
+    void (async () => {
+      // The permission prompt was asked for at the tap; if it was refused, explain how to fix it, but still speak.
+      const mic = firstMic.current ? await firstMic.current : "granted";
+      if (cancelled) return;
+      if (mic === "denied") setNotice("mic_denied");
+      else if (mic === "unavailable") setNotice("mic_unavailable");
+      void s.availableVoices().then((list) => {
+        if (!cancelled) setVoices(list);
+      });
+      await s.start();
+    })();
     return () => {
+      cancelled = true;
       s.stop();
       latest.current.registerSubmit(null);
       session.current = null;
@@ -131,8 +150,8 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
     session.current?.resume();
   };
 
-  // While a booking is on screen (the summary card or the slip) the orb shrinks so the card has room.
-  const compact = Boolean((booking && booking.phase !== "booked" && booking.phase !== "failed") || booked);
+  // While a booking card or a help message is on screen the orb shrinks so there is room for it.
+  const compact = Boolean((booking && booking.phase !== "booked" && booking.phase !== "failed") || booked || notice);
 
   const extras = (
     <>
@@ -167,8 +186,19 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
           }}
           onGender={(gender) => {
             onPrefs({ gender });
+            setChosenVoice("");
             session.current?.setGender(gender);
           }}
+        />
+        <VoiceMenu
+          voices={voices}
+          selected={chosenVoice}
+          onSelect={(voice) => {
+            setChosenVoice(voice ? voiceKey(voice) : "");
+            session.current?.setVoice(voice);
+            void session.current?.sample();
+          }}
+          onSample={() => void session.current?.sample()}
         />
       </section>
       {renderLog(extras)}

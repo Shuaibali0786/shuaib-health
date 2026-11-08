@@ -61,14 +61,16 @@ export function cspReportUri(env: Record<string, string | undefined>): string | 
 }
 
 /** Headers for every route, including the staff pages (which keep their own private headers on top). */
-export function commonSecurityHeaders(mode: SecurityHeadersMode): HeaderEntry[] {
+export function commonSecurityHeaders(mode: SecurityHeadersMode, options: { microphone?: boolean } = {}): HeaderEntry[] {
+  // Feature 013: with voice on, this site's own pages (never a frame or another origin) may ask for the microphone.
+  const microphone = options.microphone ? "microphone=(self)" : "microphone=()";
   if (mode === "off") return [];
   return [
     // No `preload`: that is a one-way door the owner has not chosen.
     { key: "Strict-Transport-Security", value: "max-age=31536000" },
     { key: "X-Content-Type-Options", value: "nosniff" },
     { key: "X-Frame-Options", value: "DENY" },
-    { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+    { key: "Permissions-Policy", value: `camera=(), ${microphone}, geolocation=(), payment=(), usb=()` },
   ];
 }
 

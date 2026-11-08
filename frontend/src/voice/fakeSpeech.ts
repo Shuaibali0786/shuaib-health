@@ -6,6 +6,8 @@ import type { ListenHandlers, SpeakHandlers, SpeakOptions, SpeechPort, VoiceInfo
 export interface FakeSpeech extends SpeechPort {
   /** Every sentence spoken, in order (cancelled ones included, marked by `cancelled`). */
   readonly spoken: Array<{ text: string; cancelled: boolean; lang: string; voice: string | null }>;
+  /** The speaking rate of every sentence spoken. */
+  readonly spokenRates: number[];
   readonly listening: boolean;
   readonly listenLang: string | null;
   /** The sentence being spoken right now, or null. */
@@ -24,6 +26,7 @@ export interface FakeSpeech extends SpeechPort {
 
 export function createFakeSpeech(options: { canListen?: boolean; canSpeak?: boolean; voices?: VoiceInfo[]; autoFinish?: boolean } = {}): FakeSpeech {
   const spoken: FakeSpeech["spoken"] = [];
+  const spokenRates: number[] = [];
   let handlers: ListenHandlers | null = null;
   let lang: string | null = null;
   const queue: Array<{ text: string; index: number; run: { chunks: string[]; handlers: SpeakHandlers; finished: boolean } }> = [];
@@ -48,6 +51,7 @@ export function createFakeSpeech(options: { canListen?: boolean; canSpeak?: bool
     canListen: options.canListen ?? true,
     canSpeak: options.canSpeak ?? true,
     spoken,
+    spokenRates,
     get listening() {
       return handlers !== null;
     },
@@ -66,6 +70,7 @@ export function createFakeSpeech(options: { canListen?: boolean; canSpeak?: bool
     },
     speak(chunks, o: SpeakOptions, h) {
       const run = { chunks, handlers: h, finished: false };
+      for (let i = 0; i < chunks.length; i += 1) spokenRates.push(o.rate ?? 1);
       chunks.forEach((text, index) => {
         spoken.push({ text, cancelled: false, lang: o.lang, voice: o.voice?.name ?? null });
         queue.push({ text, index, run });

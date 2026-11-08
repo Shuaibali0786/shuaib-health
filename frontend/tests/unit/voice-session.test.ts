@@ -43,7 +43,7 @@ function build(options: { port?: FakeSpeech; mode?: "ok" | "taken-once"; listenL
       return answer(request);
     };
   }
-  const session = new VoiceSession({ port, pack: world.pack, mode: options.guide ? "guide" : "patient", provider, deps: world.deps, events, listenLang: options.listenLang, skipOpening: options.skipOpening });
+  const session = new VoiceSession({ port, pack: world.pack, mode: options.guide ? "guide" : "patient", provider, deps: world.deps, events, listenLang: options.listenLang, skipOpening: options.skipOpening, pauseMs: 0 });
   return { session, port, world, states, turns, notices, interims, captions, get booked() { return booked; }, get boundaries() { return boundaries; } };
 }
 

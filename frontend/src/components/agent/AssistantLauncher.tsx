@@ -7,6 +7,8 @@ import type { ProviderId } from "@/agent/registry";
 import type { KnowledgePack } from "@/agent/types";
 
 import type { AssistantPanelProps } from "./AssistantPanel";
+import { primeMicrophone, type MicResult } from "@/voice/microphone";
+
 import type { VoicePrefs } from "./voice/VoiceMode";
 
 const DEFAULT_PREFS: VoicePrefs = { listenLang: "en", gender: "female", opened: false };
@@ -28,6 +30,7 @@ export function AssistantLauncher({ pack, provider = "local", voice = false }: {
   const [bubble, setBubble] = useState(false);
   const [bubbleDismissed, setBubbleDismissed] = useState(false);
   const [prefs, setPrefs] = useState<VoicePrefs>(DEFAULT_PREFS);
+  const [micCheck, setMicCheck] = useState<Promise<MicResult> | null>(null);
   const button = useRef<HTMLButtonElement>(null);
   const returnFocus = useRef(false);
 
@@ -47,6 +50,8 @@ export function AssistantLauncher({ pack, provider = "local", voice = false }: {
   }, [voice]);
 
   async function show(inVoice = false) {
+    // Ask for the microphone right now, inside the tap, so the browser's permission prompt comes from a real action.
+    setMicCheck(inVoice ? primeMicrophone() : null);
     setStartInVoice(inVoice);
     setBubble(false);
     setBubbleDismissed(true);
@@ -95,7 +100,7 @@ export function AssistantLauncher({ pack, provider = "local", voice = false }: {
         </div>
       )}
       {open && Panel ? (
-        <Panel pack={pack} provider={provider} onClose={close} voice={voice} startInVoice={startInVoice} voicePrefs={prefs} onVoicePrefs={(patch) => setPrefs((p) => ({ ...p, ...patch }))} />
+        <Panel pack={pack} provider={provider} onClose={close} voice={voice} startInVoice={startInVoice} voicePrefs={prefs} onVoicePrefs={(patch) => setPrefs((p) => ({ ...p, ...patch }))} micCheck={micCheck} />
       ) : null}
     </>
   );
