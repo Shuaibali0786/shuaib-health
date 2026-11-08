@@ -37,3 +37,13 @@ export function isAssistantEnabled(): boolean {
 export function getAssistantProvider(): "local" | "claude" {
   return process.env.ASSISTANT_PROVIDER?.trim().toLowerCase() === "claude" ? "claude" : "local";
 }
+
+/**
+ * VOICE_ENABLED (Feature 013, Phase 1): the voice receptionist inside the chat (discovery bubble, Mic and
+ * Voice mode buttons). OFF by default and only meaningful when the assistant itself is on. Read at build
+ * time, like ASSISTANT_ENABLED. Free browser speech only: no paid service, no audio stored.
+ */
+export function isVoiceEnabled(): boolean {
+  const raw = process.env.VOICE_ENABLED?.trim().toLowerCase();
+  return isAssistantEnabled() && (raw === "true" || raw === "1" || raw === "yes" || raw === "on");
+}
