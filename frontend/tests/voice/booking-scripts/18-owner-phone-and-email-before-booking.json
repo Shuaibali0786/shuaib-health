@@ -16,7 +16,7 @@
       ]
     },
     {
-      "say": "Blood test (CBC)",
+      "say": "Blood test",
       "expect": [
         "Kaun sa din"
       ]

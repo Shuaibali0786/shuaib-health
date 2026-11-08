@@ -8,11 +8,14 @@ import { buildHeroFacts, heroImage } from "@/data/homeContent";
 import { getSiteConfig } from "@/lib/content";
 import { ROUTES } from "@/lib/routes";
 
-/** On large screens the three fact cards float over the photo's edges; below that they stack under it. */
+/**
+ * On large screens the three fact cards float over the photo's edges; below that they stack under it. None sits in
+ * the bottom-right corner, where the fixed "Ask us" button is (owner test 2026-11-08: a card hid behind it).
+ */
 const FACT_POSITION = [
   "lg:absolute lg:-left-10 lg:top-12",
-  "lg:absolute lg:-right-4 lg:top-1/2",
-  "lg:absolute lg:-bottom-6 lg:left-8",
+  "lg:absolute lg:-right-4 lg:top-[38%]",
+  "lg:absolute lg:-left-6 lg:bottom-20",
 ];
 
 /**
@@ -58,7 +61,7 @@ export async function Hero() {
               <Card
                 as="li"
                 key={fact.id}
-                className={`flex items-center gap-3 p-3 pr-4 shadow-lift lg:max-w-[19rem] ${FACT_POSITION[index] ?? ""}`}
+                className={`hero-float hero-float-${index + 1} flex items-center gap-3 p-3 pr-4 shadow-lift lg:max-w-[19rem] ${FACT_POSITION[index] ?? ""}`}
               >
                 <IconTile name={fact.iconName} />
                 <span className="text-balance text-sm font-semibold leading-snug text-navy-900">{fact.label}</span>

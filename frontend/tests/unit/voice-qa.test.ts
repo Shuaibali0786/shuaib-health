@@ -23,7 +23,8 @@ describe("normal questions by voice", () => {
     for (const fact of c.includes) expect(out.text, `fact "${fact}"`).toContain(fact);
     // Same brain: whenever the text assistant knows the answer, the voice answer starts with exactly its words.
     const text = answer({ mode: "patient", question: say }, w.pack);
-    if (text.intent !== "unknown" && out.intent !== "departments") expect(out.text.startsWith(text.text)).toBe(true);
+    // (A greeting alone gets the receptionist's short welcome instead of the chat's long product welcome.)
+    if (text.intent !== "unknown" && out.intent !== "departments" && out.intent !== "greeting") expect(out.text.startsWith(text.text.replace(/sakta/g, "sakti").replace(/batata hoon/g, "batati hoon"))).toBe(true);
     expect(w.submits).toHaveLength(0);
   });
 
@@ -31,8 +32,12 @@ describe("normal questions by voice", () => {
     const w = makeWorld();
     for (const q of ["Is parking available?", "Do you accept insurance?", "Who won the cricket match yesterday?"]) {
       const out = await w.say(q);
-      expect(out.text).toContain("I don't know");
+      // Never the same sentence twice in a row: the same honest answer, said another way each time.
+      expect(out.text).toMatch(/I don't know/);
       expect(out.text).toContain("+92 21 0000 0001");
     }
+    const replies = w.log.slice(-3).map((r) => r.text);
+    expect(replies[1]).not.toBe(replies[0]);
+    expect(replies[2]).not.toBe(replies[1]);
   });
 });

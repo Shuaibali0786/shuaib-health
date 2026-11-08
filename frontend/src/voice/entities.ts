@@ -102,6 +102,48 @@ export function resolveLabTest(text: string, pack: KnowledgePack): PackLabTest |
   return pack.labTests.find((t) => /complete-blood-count|\bcbc\b/i.test(`${t.slug} ${t.aka.join(" ")} ${t.name}`)) ?? null;
 }
 
+/** A lab test or a health package, both booked at the Pathology Lab; the card and the slip show its name and price. */
+export type LabItem = { slug: string; name: string; pricePkr: number; kind: "test" | "package" };
+
+export function labItem(pack: KnowledgePack, slug: string | null): LabItem | null {
+  if (!slug) return null;
+  const test = pack.labTests.find((t) => t.slug === slug);
+  if (test) return { slug: test.slug, name: test.name, pricePkr: test.pricePkr, kind: "test" };
+  const p = pack.packages.find((x) => x.slug === slug);
+  return p ? { slug: p.slug, name: p.name, pricePkr: p.pricePkr, kind: "package" } : null;
+}
+
+type PackPackage = KnowledgePack["packages"][number];
+const PACKAGE_GENERIC = new Set(["health", "check", "care", "package", "packages", "checkup", "the", "and", "s"]);
+const PACKAGE_WORDS: Array<[RegExp, RegExp]> = [
+  [/\b(senior|buzurg|budhe|old age|elderly|walid|walida|abbu|ammi)\b/, /senior/],
+  [/\b(women|woman|ladies|aurat\w*|khawateen)\b/, /women/],
+  [/\b(diabet\w*|sugar)\b/, /diabetes/],
+  [/\b(heart|dil|cardiac)\b/, /heart/],
+  [/\b(basic|full body|routine|general|complete)\b/, /basic/],
+];
+
+/** True when the patient talks about a health package or a full check-up. */
+export const mentionsPackage = (text: string): boolean => /\b(package|packages|pakage|pkg|full body|full checkup|full check up|health check|health checkup|medical checkup)\b/.test(cleanText(text));
+
+/** The package a patient names ("basic health check", "diabetes package", "senior citizen"), or null. */
+export function findPackage(text: string, pack: KnowledgePack): PackPackage | null {
+  const clean = cleanText(text);
+  const words = clean.split(" ").filter((w) => w.length >= 3 && !PACKAGE_GENERIC.has(w));
+  for (const p of pack.packages) {
+    const names = nameTokens(p.name).filter((w) => !PACKAGE_GENERIC.has(w));
+    if (names.length && (names.length >= 2 || mentionsPackage(clean)) && names.every((n) => words.some((w) => same(w, n)))) return p;
+  }
+  if (!mentionsPackage(clean)) return null;
+  for (const [said, slug] of PACKAGE_WORDS) {
+    if (said.test(clean)) {
+      const found = pack.packages.find((p) => slug.test(p.slug));
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 const WEEKDAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const DAY_NAMES: Record<string, string> = { sun: "Sunday", mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday" };
 

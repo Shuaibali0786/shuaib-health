@@ -24,9 +24,38 @@ describe("reply language", () => {
 
 describe("Urdu script to Latin words", () => {
   it("maps known words and Urdu digits, passes Latin through", () => {
-    expect(urduToLatin("ڈاکٹر کی فیس کتنی ہے؟")).toBe("doctor ki fee kitni hai");
+    expect(urduToLatin("ڈاکٹر کی فیس کتنی ہے؟")).toBe("doctor ki fee kitni hai?");
     expect(urduToLatin("۰۳۰۰ ۱۲۳")).toBe("0300 123");
     expect(urduToLatin("cbc price")).toBe("cbc price");
+  });
+
+  // Owner test 2026-11-08: Urdu listening writes English words in Urdu letters.
+  it.each([
+    ["سیٹرڈے", "saturday"],
+    ["سیٹر ڈے کو", "saturday ko"],
+    ["فرائیڈے گیارہ بجے", "friday 11 baje"],
+    ["منڈے صبح دس بجے", "monday subah 10 baje"],
+    ["زیرو تھری زیرو زیرو ون ٹو تھری فور فائیو سکس سیون", "zero three zero zero one two three four five six seven"],
+    ["ڈبل فائیو", "double five"],
+    ["تین پی ایم", "3 pm"],
+    ["13 نمبر کو", "13 november ko"],
+    ["تیرہ نمبر", "13 november"],
+    ["میرا نمبر زیرو تھری", "mera number zero three"],
+    ["شعیب علی", "Shuaib Ali"],
+    ["میرا نام شعیب علی ہے", "mera naam Shuaib Ali hai"],
+    ["بکنگ کر دو", "booking kar do"],
+    ["رہنے دو", "rehne do"],
+    ["ای میل شعیب ایٹ دی ریٹ جی میل ڈاٹ کام", "email Shuaib at the rate gmail dot com"],
+    ["مجھے الرجی ہے", "mujhe allergy hai"],
+    ["دانت کی صفائی کروانی ہے", "daant ki safai karwani hai"],
+  ])("%s -> %s", (urdu, latin) => {
+    expect(urduToLatin(urdu)).toBe(latin);
+  });
+
+  it("never leaves Urdu letters behind: an unknown word (a name) is written in English letters", () => {
+    const out = urduToLatin("میرا نام زرغونہ ہے");
+    expect(out).not.toMatch(/[؀-ۿ]/);
+    expect(out).toMatch(/^mera naam \w+ hai$/);
   });
 });
 

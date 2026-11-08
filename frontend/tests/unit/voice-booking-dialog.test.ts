@@ -137,7 +137,9 @@ describe("corrections and memory", () => {
     await w.say("book an appointment with Dr Bilal");
     const out = await w.say("what are your timings?");
     expect(out.text).toMatch(/open/i);
-    expect(out.text).toContain("Which day");
+    // Asked again in other words (never the same sentence twice in a row), still with the free days.
+    expect(out.text).toMatch(/Which day|What day/);
+    expect(out.text).toMatch(/Monday 9 November/);
   });
 });
 

@@ -33,7 +33,7 @@
     {
       "say": "haan",
       "expect": [
-        "booking kar rahi hoon",
+        "zaroor",
         "Kaun sa din"
       ],
       "forbid": [

@@ -4,14 +4,14 @@
 // what this emits. Audio is never recorded or stored here. The conversation's memory (the booking, the language)
 // is the shared `Conversation`, so typed and spoken turns are one conversation.
 
-import { cleanText, detectLang } from "@/agent/normalize";
+import { detectLang } from "@/agent/normalize";
 import { createThrottle } from "@/agent/throttle";
 
 import type { BookingState } from "./bookingDialog";
 import { splitSentences } from "./chunk";
 import { CHECKING, STILL_THERE, TAP_TO_TALK, T, welcomeLine } from "./phrases";
 import type { Conversation, RouterResult } from "./router";
-import { replyLanguage } from "./language";
+import { urduToLatin } from "./language";
 import { forSpeech } from "./speechText";
 import type { SpeechPort, Turn, VoiceInfo, VoiceLang, VoiceState } from "./types";
 import { urduSpeech } from "./urduSpeech";
@@ -46,24 +46,67 @@ export type SessionOptions = {
   pauseMs?: number;
   /** What the browser listens for. Indian English hears English and Roman Urdu (spoken Hinglish) best. */
   listenCode?: string;
+  /**
+   * How long the patient may pause mid-sentence before the turn is taken as finished (default 1300 ms). Listening
+   * splits a sentence at short pauses; joining the pieces is what "waiting for the patient to finish" means. Zero in tests.
+   */
+  endOfTurnMs?: number;
+  /** A short rest after the assistant stops speaking before the mic opens again, so its last word is not heard (default 400 ms). */
+  resumeMs?: number;
 };
 
-const SILENCE_MS = 8000;
+const SILENCE_MS = 9000;
 const ACK_AFTER_MS = 1000;
-const ECHO_OVERLAP = 0.6;
+const ECHO_OVERLAP = 0.7;
 const ECHO_MIN_WORDS = 4;
+/** Its own voice can come back a moment after it stopped (room echo, a slow recogniser). */
+const ECHO_WINDOW_MS = 8000;
 /** A little slower than the default: warmer, easier to follow. */
 const SPEECH_RATE = 0.95;
 const GREETING = /^(assalam|wa alaikum|salam)/i;
 
-const words = (text: string) => cleanText(text).split(" ").filter(Boolean);
+/** Words in any script (Urdu letters kept), lower case, without punctuation. */
+const scriptWords = (text: string) =>
+  text
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .split(" ")
+    .filter(Boolean);
 
-/** How much of what was heard is made of words the assistant itself just said (its own voice, coming back in). */
-function overlap(heard: string, spoken: string): number {
-  const h = words(heard);
-  if (h.length === 0) return 0;
-  const s = new Set(words(spoken));
-  return h.filter((w) => s.has(w)).length / h.length;
+/**
+ * True when a heard phrase is the assistant's own recent speech coming back through the mic: compared as heard
+ * (Urdu letters against the Urdu the voice read) and in Latin letters (against the Roman Urdu caption), so "معاف
+ * کیجیے" heard after "Maaf kijiye" is caught too. Short answers ("haan", "11:30") are never treated as an echo.
+ */
+export function isEcho(heard: string, recent: string[]): boolean {
+  const count = scriptWords(heard).length;
+  if (count < ECHO_MIN_WORDS || recent.length === 0) return false;
+  // A loose match per word: Urdu letters written back in English letters lose their vowels ("کیجیے" -> "kijie",
+  // "سن" -> "sn", "میں" -> "mein" for "main"), so words are compared by their consonants.
+  const skeleton = (w: string) => w.replace(/[aeiouyhw]/g, "") || w;
+  const same = (a: string, b: string) => a === b || skeleton(a) === skeleton(b);
+  const covered = (h: string[], s: string[]) => {
+    // Words of what was heard that sit in a run of 3+ words said in the same order by the assistant.
+    const mark = new Array<boolean>(h.length).fill(false);
+    for (let i = 0; i < h.length; i += 1) {
+      for (let j = 0; j < s.length; j += 1) {
+        let k = 0;
+        while (i + k < h.length && j + k < s.length && same(h[i + k] as string, s[j + k] as string)) k += 1;
+        if (k >= 3) for (let x = 0; x < k; x += 1) mark[i + x] = true;
+      }
+    }
+    return mark.filter(Boolean).length / Math.max(1, h.length);
+  };
+  const h = scriptWords(heard);
+  const hLatin = scriptWords(urduToLatin(heard));
+  return recent.some((said) => {
+    const s = scriptWords(said);
+    const sLatin = scriptWords(urduToLatin(said));
+    const share = Math.max(covered(h, s), covered(hLatin, sLatin), covered(hLatin, s));
+    // A short phrase must be ALL its own words to count ("haan spelling theek hai" is the patient answering).
+    return count <= 5 ? share >= 1 : share >= ECHO_OVERLAP;
+  });
 }
 
 export class VoiceSession {
@@ -73,6 +116,14 @@ export class VoiceSession {
   // A booking by voice takes about ten turns, so the limit is wider than the typed chat's 8 a minute. It only stops runaway loops.
   private readonly throttle = createThrottle(Date.now, 24, 150);
   private readonly pauseMs: number;
+  private readonly endOfTurnMs: number;
+  private readonly resumeMs: number;
+  /** Pieces of the patient's sentence heard so far (listening splits at short pauses); sent as one turn. */
+  private pending: string[] = [];
+  private endTimer: ReturnType<typeof setTimeout> | null = null;
+  private resumeTimer: ReturnType<typeof setTimeout> | null = null;
+  /** When the assistant last finished speaking (for the echo window). */
+  private spokeUntil = 0;
   /** The language the browser listens in: English first, Urdu (ur-PK) once the caller speaks Urdu or English listening hears nonsense. */
   private listenLang: string;
   /** The listening language was already switched since the last understood turn (switch once, then ask again). */
@@ -111,6 +162,8 @@ export class VoiceSession {
     this.welcomeLang = options.welcomeLang ?? "en";
     this.openingDone = Boolean(options.skipOpening);
     this.pauseMs = options.pauseMs ?? 220;
+    this.endOfTurnMs = options.endOfTurnMs ?? 1300;
+    this.resumeMs = options.resumeMs ?? 400;
     this.listenLang = options.listenCode ?? "en-US";
     if (!this.openingDone) this.conversation.ctx.lang = this.welcomeLang;
   }
@@ -121,6 +174,8 @@ export class VoiceSession {
   async start(): Promise<void> {
     if (!this.port.canSpeak && !this.port.canListen) return;
     await this.loadVoices();
+    // One warm female voice for the whole call, chosen now (before the welcome) and never switched.
+    this.voice ??= this.pickOne(this.welcomeLang);
     if (!this.port.canListen) this.events.onNotice("listen_unsupported");
     if (!this.openingDone) {
       this.openingDone = true;
@@ -213,29 +268,44 @@ export class VoiceSession {
     });
   }
 
+  // The mic is closed while the assistant speaks (owner test 2026-11-08: it heard its own "Maaf kijiye" as
+  // "معاف کیجیے" and answered itself in a loop). Anything that still arrives while it speaks is ignored; a tap on the
+  // mic is how the patient cuts in.
   private onInterim(text: string): void {
+    if (this.state === "speaking" || this.speaking > 0) return;
     this.silenceCount = 0;
-    if (this.state === "speaking" || this.speaking > 0) {
-      // Talking over the assistant stops it (barge-in). Its own voice coming back in must not.
-      if (this.readBackActive) this.overlapped = true;
-      if (words(text).length >= 2 && overlap(text, this.recent.join(" ")) < ECHO_OVERLAP) this.interrupt();
-      return;
-    }
     this.armSilence();
-    this.events.onInterim(text);
+    // The patient is still talking: wait for them to finish before answering.
+    if (this.endTimer) this.restartEndTimer();
+    this.events.onInterim(urduToLatin([...this.pending, text].join(" ")));
   }
 
   private onFinal(text: string): void {
+    if (!text || this.state === "speaking" || this.speaking > 0) return;
+    // Its own voice coming back a moment after it stopped (in any script) is not the patient.
+    if (Date.now() - this.spokeUntil < ECHO_WINDOW_MS && isEcho(text, this.recent)) return;
     this.silenceCount = 0;
-    if (!text) return;
-    if (this.state === "speaking" || this.speaking > 0) {
-      if (this.readBackActive) this.overlapped = true;
-      // Its own voice coming back in is a long run of its own words. A short answer ("11:30", "haan") is the patient
-      // answering early, even if those words were just said: it cuts in and counts.
-      if (words(text).length >= ECHO_MIN_WORDS && overlap(text, this.recent.join(" ")) >= ECHO_OVERLAP) return;
-      this.interrupt();
+    this.pending.push(text);
+    if (this.endOfTurnMs <= 0) {
+      this.flushPending();
+      return;
     }
-    void this.enqueueTurn(text, false);
+    this.events.onInterim(urduToLatin(this.pending.join(" ")));
+    this.restartEndTimer();
+  }
+
+  private restartEndTimer(): void {
+    if (this.endTimer) clearTimeout(this.endTimer);
+    this.endTimer = setTimeout(() => this.flushPending(), this.endOfTurnMs);
+  }
+
+  /** The patient finished: their pieces become one turn. */
+  private flushPending(): void {
+    if (this.endTimer) clearTimeout(this.endTimer);
+    this.endTimer = null;
+    const text = this.pending.join(" ").replace(/\s+/g, " ").trim();
+    this.pending = [];
+    if (text) void this.enqueueTurn(text, false);
   }
 
   private onListenError(code: "denied" | "unavailable" | "silence" | "network"): void {
@@ -276,6 +346,10 @@ export class VoiceSession {
     this.clearSilence();
     if (this.ackTimer) clearTimeout(this.ackTimer);
     this.ackTimer = null;
+    if (this.endTimer) clearTimeout(this.endTimer);
+    this.endTimer = null;
+    if (this.resumeTimer) clearTimeout(this.resumeTimer);
+    this.resumeTimer = null;
   }
 
   // --- One turn -----------------------------------------------------------------------------------------
@@ -288,11 +362,11 @@ export class VoiceSession {
   private async runTurn(text: string, fromText: boolean): Promise<void> {
     if (this.ended || !text) return;
     const allowed = this.throttle.take();
-    this.events.onTurn({ id: this.turnId++, from: "you", text, voice: !fromText });
+    // The chat shows English letters only: what Urdu listening heard is written in Roman Urdu.
+    this.events.onTurn({ id: this.turnId++, from: "you", text: urduToLatin(text), voice: !fromText });
     const lang = this.conversation.ctx.lang;
-    // The first sentence decides the language and the voice, once. (The welcome used the English female voice.)
     await this.loadVoices();
-    this.lockVoiceFrom(text);
+    this.voice ??= this.pickOne(this.welcomeLang);
     if (!allowed.ok) {
       const wait =
         allowed.reason === "session"
@@ -335,14 +409,14 @@ export class VoiceSession {
       this.setListenLang(toUrdu ? "ur-PK" : "en-US");
       this.switchedSinceUnderstood = true;
       this.conversation.ctx.lang = toUrdu ? "roman" : "en";
-      result = {
+      result = this.conversation.replaceLast({
         ...result,
         lang: this.conversation.ctx.lang,
         intent: "heard_again",
         links: undefined,
         spoken: undefined,
         text: toUrdu ? "Maaf kijiye, main theek se sun nahi saki. Dobara bataiye, aap Urdu mein bhi bol sakte hain." : "Sorry, I didn't catch that. Please say it again, in English or Urdu.",
-      };
+      });
     } else if (!garbled) {
       this.switchedSinceUnderstood = false;
       if (result.lang === "roman" && this.listenLang.startsWith("en")) this.setListenLang("ur-PK");
@@ -372,17 +446,16 @@ export class VoiceSession {
     return this.voicesPromise;
   }
 
-  /** The best warm female voice for a language: an Urdu voice for Roman Urdu when the device has one, else an English one. */
-  private pick(lang: VoiceLang): { info: VoiceInfo | null; lang: string; urdu: boolean } {
+  /**
+   * The ONE warm female voice for the whole call. A South Asian English voice (Neerja, en-IN / en-PK) reads both
+   * English and Roman Urdu naturally, so it comes first; an Urdu voice only when the call starts in Roman Urdu and
+   * no such voice exists; otherwise the best English female voice.
+   */
+  private pickOne(lang: VoiceLang): { info: VoiceInfo | null; lang: string; urdu: boolean } {
     const set = pickVoiceSet(this.voices, "female");
-    const info = lang === "roman" ? (set.urdu ?? set.romanFallback ?? set.english) : (set.english ?? set.romanFallback ?? set.urdu);
+    const southAsian = set.romanFallback && /^en-(in|pk)/i.test(set.romanFallback.lang) ? set.romanFallback : null;
+    const info = southAsian ?? (lang === "roman" ? (set.urdu ?? set.english) : (set.english ?? set.urdu));
     return { info, lang: info?.lang ?? (lang === "roman" ? "en-IN" : "en-US"), urdu: Boolean(info?.lang.toLowerCase().startsWith("ur")) };
-  }
-
-  /** From the caller's first sentence: choose the language and the one voice, and keep it for the whole conversation. */
-  private lockVoiceFrom(text: string): void {
-    if (this.voice) return;
-    this.voice = this.pick(replyLanguage(text, "en"));
   }
 
   /** Shows a message in the chat and speaks it. */
@@ -400,8 +473,8 @@ export class VoiceSession {
       return;
     }
     await this.loadVoices();
-    // The welcome is spoken in the English female voice; after the caller's first sentence the chosen voice is used.
-    const voice = this.voice ?? this.pick("en");
+    this.voice ??= this.pickOne(this.welcomeLang);
+    const voice = this.voice;
     const sentences = splitSentences(text);
     if (sentences.length === 0) return;
 
@@ -412,6 +485,11 @@ export class VoiceSession {
     }
     this.speaking += 1;
     this.clearSilence();
+    if (this.resumeTimer) clearTimeout(this.resumeTimer);
+    this.resumeTimer = null;
+    // Never listen while speaking: the mic would hear the assistant's own voice.
+    this.port.stopListening();
+    if (this.endTimer) this.flushPending();
     this.setState("speaking");
     let cancelled = false;
     for (const [index, sentence] of sentences.entries()) {
@@ -426,7 +504,7 @@ export class VoiceSession {
       cancelled = await new Promise<boolean>((resolve) => {
         this.port.speak([spoken], { lang: voice.lang, voice: voice.info, rate: SPEECH_RATE }, {
           onStart: () => {
-            this.recent = [...this.recent.slice(-3), sentence, clean];
+            this.recent = [...this.recent.slice(-5), sentence, spoken];
             this.events.onSpeaking(sentence);
           },
           onBoundary: () => this.events.onBoundary(),
@@ -438,6 +516,7 @@ export class VoiceSession {
       if (this.pauseMs > 0 && index < sentences.length - 1) await new Promise<void>((resolve) => setTimeout(resolve, this.pauseMs));
     }
     this.speaking = Math.max(0, this.speaking - 1);
+    this.spokeUntil = Date.now();
     if (generation !== this.generation || this.ended) return; // an interruption already moved on
     this.events.onSpeaking(null);
     if (options.readBack) this.readBackActive = false;
@@ -446,7 +525,16 @@ export class VoiceSession {
       this.setState("idle");
       return;
     }
-    this.beginListening();
+    // A short breath before the mic opens again, so the end of its own sentence is not heard.
+    if (this.resumeMs <= 0) {
+      this.beginListening();
+      return;
+    }
+    // ("Listening..." is shown only once the mic is really open.)
+    this.resumeTimer = setTimeout(() => {
+      this.resumeTimer = null;
+      if (this.speaking === 0) this.beginListening();
+    }, this.resumeMs);
   }
 
   /** The language listening uses from the next time it starts (stopping now, so the switch takes effect right away). */
@@ -458,8 +546,7 @@ export class VoiceSession {
       this.beginListening();
       return;
     }
-    // While it thinks or speaks, keep listening (in the new language) so the caller can still answer early or cut in.
-    if (!this.ended && !this.stopped && this.port.canListen) this.listenNow();
+    // While it thinks, the mic stays closed; it opens again (in the new language) after the reply is spoken.
   }
 
   /** The listening language now (for the panel and tests). */

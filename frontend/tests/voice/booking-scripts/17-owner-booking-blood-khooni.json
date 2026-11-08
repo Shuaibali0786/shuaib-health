@@ -4,7 +4,7 @@
     {
       "say": "are booking karo blood Khooni",
       "expect": [
-        "main aap ki booking kar rahi hoon",
+        "Ji zaroor",
         "Complete Blood Count (CBC)",
         "Kaun sa din"
       ],

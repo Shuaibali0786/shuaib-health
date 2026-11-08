@@ -15,7 +15,7 @@ import type { VoiceLang } from "@/voice/types";
  * website form creates (QR code, Download PDF, WhatsApp), in a new tab so the conversation stays open. For a lab test
  * the card and the slip show the test and its price (the booking itself is with the Pathology Lab doctor).
  */
-export function BookedCard({ view, lang, test }: { view: AppointmentView; lang: VoiceLang; test?: { slug: string; name: string; pricePkr: number } }) {
+export function BookedCard({ view, lang, test }: { view: AppointmentView; lang: VoiceLang; test?: { slug: string; name: string; pricePkr: number; kind?: "test" | "package" } }) {
   const base = `${ROUTES.bookAppointment}/confirmed/${encodeURIComponent(view.reference)}`;
   const href = test ? `${base}?test=${encodeURIComponent(test.slug)}` : base;
   return (
@@ -30,7 +30,7 @@ export function BookedCard({ view, lang, test }: { view: AppointmentView; lang: 
       </p>
       {test ? (
         <p className="text-sm text-ink" data-testid="voice-booked-test">
-          {T(lang, "Test", "Test")}: <span className="font-semibold text-navy-900">{test.name}</span> - {formatPkr(test.pricePkr)} (sample)
+          {test.kind === "package" ? "Package" : "Test"}: <span className="font-semibold text-navy-900">{test.name}</span> - {formatPkr(test.pricePkr)} (sample)
         </p>
       ) : null}
       <a
@@ -39,7 +39,7 @@ export function BookedCard({ view, lang, test }: { view: AppointmentView; lang: 
         rel="noopener noreferrer"
         className="mt-3 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-card bg-linear-to-br from-teal-700 to-navy-900 px-4 text-lg font-bold text-white shadow-soft"
       >
-        {T(lang, "Open my slip", "Meri slip kholein")}
+        Open my slip
         <ExternalLink className="size-5" aria-hidden="true" />
         <span className="sr-only">{T(lang, "(opens in a new tab)", "(naye tab mein khulega)")}</span>
       </a>

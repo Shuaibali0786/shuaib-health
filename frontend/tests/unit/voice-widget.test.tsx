@@ -1,5 +1,5 @@
 // Feature 013: the voice receptionist inside the chat widget (jsdom, scripted speech, fake booking route).
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, configure, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -40,6 +40,10 @@ vi.mock("@/lib/booking/client", async () => {
   };
 });
 
+// Voice mode waits for the patient to finish (about 1.3 s) and breathes before listening again.
+configure({ asyncUtilTimeout: 6000 });
+vi.setConfig({ testTimeout: 30000 });
+
 beforeAll(() => {
   // jsdom has no canvas; the orb then simply does not draw (the state text still tells the story).
   HTMLCanvasElement.prototype.getContext = (() => null) as never;
@@ -55,8 +59,8 @@ const FOOTER = "Portfolio demo — not a real clinic, not medical advice. This i
 
 async function openVoiceByBubble(user: ReturnType<typeof userEvent.setup>) {
   render(<AssistantLauncher pack={pack} voice />);
-  const bubble = await screen.findByRole("button", { name: /Talk to us/ }, { timeout: 4000 });
-  await user.click(bubble);
+  // The mic inside the "Ask us" button opens voice mode straight away.
+  await user.click(screen.getByRole("button", { name: "Talk by voice, in English or Urdu" }));
   return screen.findByRole("dialog", { name: /Ask Shuaib Health/ });
 }
 
@@ -64,9 +68,10 @@ async function openVoiceByBubble(user: ReturnType<typeof userEvent.setup>) {
 const statusOf = (dialog: HTMLElement) => within(dialog).getAllByRole("status").find((el) => /Listening|Thinking|Speaking|Tap the mic/.test(el.textContent ?? "")) as HTMLElement;
 
 describe("flag off (the default)", () => {
-  it("shows no bubble, no Mic and no Voice mode button", async () => {
+  it("shows no mic on the button, no Mic and no Voice mode button", async () => {
     const user = userEvent.setup();
     render(<AssistantLauncher pack={pack} />);
+    expect(screen.queryByRole("button", { name: /Talk by voice/ })).toBeNull();
     await user.click(screen.getByRole("button", { name: "Ask us" }));
     const dialog = await screen.findByRole("dialog");
     expect(screen.queryByRole("button", { name: /Talk to us/ })).toBeNull();
@@ -87,14 +92,14 @@ describe("the chat", () => {
     expect(within(dialog).getByText(FOOTER)).toBeInTheDocument();
   });
 
-  it("the bubble can be dismissed, and the chat shows Mic and Voice mode beside Send", async () => {
+  it("ONE 'Ask us' button with the mic inside it (no separate 'Talk to us' bubble); the chat shows Mic and Voice mode beside Send", async () => {
     const user = userEvent.setup();
     render(<AssistantLauncher pack={pack} voice />);
-    const bubble = await screen.findByRole("button", { name: /Talk to us/ }, { timeout: 4000 });
-    expect(bubble).toHaveTextContent("English");
-    await user.click(screen.getByRole("button", { name: "Dismiss the voice invitation" }));
+    const mic = screen.getByRole("button", { name: "Talk by voice, in English or Urdu" });
+    const ask = screen.getByRole("button", { name: "Ask us" });
+    expect(mic.parentElement).toBe(ask.parentElement);
     expect(screen.queryByRole("button", { name: /Talk to us/ })).toBeNull();
-    await user.click(screen.getByRole("button", { name: "Ask us" }));
+    await user.click(ask);
     const dialog = await screen.findByRole("dialog");
     expect(await within(dialog).findByRole("button", { name: /Dictate your question/ })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: /Start voice mode/ })).toBeInTheDocument();
@@ -145,7 +150,7 @@ describe("the chat", () => {
     expect(g.__posts).toHaveLength(1);
     const slip = within(dialog).getByTestId("voice-slip");
     expect(within(slip).getByTestId("voice-booked-test")).toHaveTextContent("Complete Blood Count (CBC) - PKR 800 (sample)");
-    const open = within(slip).getByRole("link", { name: /Meri slip kholein/ });
+    const open = within(slip).getByRole("link", { name: /^Open my slip/ });
     expect(open).toHaveAttribute("href", "/book-appointment/confirmed/7K3M9P2QXA?test=complete-blood-count");
     expect(open).toHaveAttribute("target", "_blank");
   }, 30000);
@@ -164,7 +169,7 @@ describe("the chat", () => {
     await type("friday at 11:30", "full name");
     await type("Sara Noor", "mobile");
     await type("03111234567", "email");
-    await type("skip", "Please check, then say yes or tap Confirm.");
+    await type("skip", "Please check the card, then say yes or tap Confirm.");
     let card = within(dialog).getByTestId("voice-summary");
     expect(card).toHaveTextContent("0311 123 4567");
     expect(card).toHaveTextContent("Fee");
@@ -218,7 +223,7 @@ describe("the owner's real messages, typed", () => {
     await user.type(within(dialog).getByLabelText("Your question"), "mujhy elaj karwana hia{Enter}");
     await waitFor(() => expect(log).toHaveTextContent("Aap ko kya takleef hai"));
     expect(log).not.toHaveTextContent("nahi maloom");
-    await user.click(within(within(dialog).getByTestId("assistant-options")).getByRole("button", { name: "Daant (Dental)" }));
+    await user.click(within(within(dialog).getByTestId("assistant-options")).getByRole("button", { name: "Daant" }));
     await waitFor(() => expect(log).toHaveTextContent("Dental department"));
   }, 30000);
 });
@@ -298,6 +303,8 @@ describe("voice mode", () => {
       ["zero three one one one two three four five six seven", /email/],
       ["skip", /tap Confirm/],
     ] as const) {
+      // The mic opens only after the assistant has finished speaking.
+      await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
       act(() => port().hear(text));
       await waitFor(() => expect(log).toHaveTextContent(expected));
     }

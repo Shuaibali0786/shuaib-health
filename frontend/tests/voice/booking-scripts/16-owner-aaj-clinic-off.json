@@ -17,7 +17,7 @@
     {
       "say": "haan",
       "expect": [
-        "booking kar rahi hoon",
+        "zaroor",
         "kis doctor ya department"
       ],
       "options": [
@@ -35,7 +35,7 @@
       "say": "aaj",
       "expect": [
         "Sunday 8 November ko clinic band hai",
-        "Kaun sa din"
+        "kis din"
       ],
       "forbid": [
         "Sunday 8 November ko mere paas"

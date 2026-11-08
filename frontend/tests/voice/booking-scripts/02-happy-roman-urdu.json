@@ -2,7 +2,7 @@
   "name": "Roman Urdu: 'mujhe CBC test karwana hai' -> what it is, preparation, price, lab -> offer -> haan -> one item at a time -> ji haan -> slip link, all in Roman Urdu",
   "turns": [
     { "say": "mujhe CBC test karwana hai", "expect": ["khoon ka test", "Tayyari", "PKR 800", "Pathology Lab", "Kya main aap ki booking kar doon?"], "forbid": ["Shall I"], "submits": 0 },
-    { "say": "haan", "expect": ["main aap ki booking kar rahi hoon", "Kaun sa din"] },
+    { "say": "haan", "expect": ["Ji zaroor", "Kaun sa din"] },
     { "say": "kal", "expect": ["Monday 9 November", "Kaun sa waqt"] },
     { "say": "saade gyarah", "expect": ["poora naam"] },
     { "say": "mera naam Ayesha Khan hai", "expect": ["Ayesha", "mobile number"] },

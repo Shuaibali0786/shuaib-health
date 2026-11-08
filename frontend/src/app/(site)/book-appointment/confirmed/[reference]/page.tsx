@@ -10,7 +10,7 @@ import { ApiError } from "@/lib/api/http";
 import { callBooking, clientIpFrom, type BackendResult } from "@/lib/booking/backend";
 import { displayReference, parseReference } from "@/lib/booking/reference";
 import { AppointmentViewSchema } from "@/lib/booking/schemas";
-import { getClinicRules, getLabTestBySlug, getSiteConfig } from "@/lib/content";
+import { getClinicRules, getHealthPackages, getLabTestBySlug, getSiteConfig } from "@/lib/content";
 import { ROUTES } from "@/lib/routes";
 
 // A confirmation is private to whoever holds the link: never indexed, never sent as a referrer.
@@ -45,7 +45,10 @@ async function lookup(reference: string): Promise<BackendResult | null> {
 async function labTestFor(slug: string | undefined, departmentSlug: string) {
   if (!slug || !/^[a-z0-9-]{1,80}$/.test(slug) || !/lab|patholog/i.test(departmentSlug)) return undefined;
   const test = await getLabTestBySlug(slug);
-  return test ? { name: test.name, pricePkr: test.pricePkr } : undefined;
+  if (test) return { name: test.name, pricePkr: test.pricePkr };
+  // A health package booked by the voice receptionist (also at the lab): its name and package price.
+  const pkg = (await getHealthPackages()).find((p) => p.slug === slug);
+  return pkg ? { name: `${pkg.name} package`, pricePkr: pkg.packagePricePkr } : undefined;
 }
 
 export default async function ConfirmedPage({ params, searchParams }: { params: Promise<{ reference: string }>; searchParams: Promise<{ test?: string | string[] }> }) {

@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { formatPkr } from "@/lib/format";
 import type { BookingState } from "@/voice/bookingDialog";
 import { groupPhone } from "@/voice/chunk";
+import { labItem } from "@/voice/entities";
 import { speakDate, speakTime } from "@/voice/parse/date";
 import { T } from "@/voice/phrases";
 import type { VoiceLang } from "@/voice/types";
@@ -18,10 +19,10 @@ function rowsOf(state: BookingState, pack: KnowledgePack, lang: VoiceLang): Row[
   const d = state.draft;
   const doctor = pack.doctors.find((x) => x.slug === d.doctorSlug);
   const department = pack.departments.find((x) => x.slug === (doctor?.departmentSlug ?? d.departmentSlug));
-  const test = d.labTestSlug ? pack.labTests.find((t) => t.slug === d.labTestSlug) : undefined;
+  const test = labItem(pack, d.labTestSlug);
   const when = d.date ? `${speakDate(d.date)}${d.time ? ` · ${speakTime(d.time)}` : ""}` : null;
   return [
-    test ? { label: T(lang, "Test", "Test"), value: `${test.name} - ${formatPkr(test.pricePkr)} (sample)`, corrected: false } : { label: T(lang, "Reason", "Wajah"), value: d.reason ?? (d.reasonAnswered ? T(lang, "Not given", "Nahi di") : null), corrected: false },
+    test ? { label: test.kind === "package" ? "Package" : T(lang, "Test", "Test"), value: `${test.name} - ${formatPkr(test.pricePkr)} (sample)`, corrected: false } : { label: T(lang, "Reason", "Wajah"), value: d.reason ?? (d.reasonAnswered ? T(lang, "Not given", "Nahi di") : null), corrected: false },
     { label: T(lang, "Doctor", "Doctor"), value: doctor ? `${doctor.name}${department ? `, ${department.name}` : ""}` : (department?.name ?? null), corrected: d.corrected.includes("doctorSlug") },
     { label: T(lang, "When", "Kab"), value: when, corrected: d.corrected.includes("date") || d.corrected.includes("time") },
     { label: T(lang, "Name", "Naam"), value: d.fullName, corrected: d.corrected.includes("fullName") },
@@ -83,7 +84,7 @@ export function SummaryCard({ state, pack, lang, onConfirm, onCorrect }: Props) 
       </dl>
       {waiting ? (
         <>
-          <p className="mt-3 text-sm font-semibold text-navy-900">{T(lang, "Please check, then say yes or tap Confirm.", "Barah-e-meherbani check karein, phir haan kahein ya Confirm dabaiye.")}</p>
+          <p className="mt-3 text-sm font-semibold text-navy-900">{T(lang, "Please check, then say yes or tap Confirm.", "Please check karein, phir haan kahein ya Confirm dabaiye.")}</p>
           <div className="mt-2 flex gap-2">
             <button type="button" onClick={onConfirm} className="inline-flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-control bg-navy-900 px-4 text-base font-semibold text-white">
               <Check className="size-5" aria-hidden="true" />

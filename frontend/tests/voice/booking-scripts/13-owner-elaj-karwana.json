@@ -11,8 +11,8 @@
         "blood test"
       ],
       "options": [
-        "Bukhar (General Medicine)",
-        "Blood test (CBC)"
+        "Bukhar ya zukam",
+        "Blood test"
       ],
       "forbid": [
         "nahi maloom",
@@ -25,7 +25,7 @@
       "expect": [
         "General Medicine",
         "diagnosis nahi",
-        "Kya main General Medicine mein aap ki booking kar doon?"
+        "Kya main aap ki booking kar doon?"
       ],
       "forbid": [
         "nahi maloom",
@@ -36,7 +36,7 @@
     {
       "say": "haan",
       "expect": [
-        "booking kar rahi hoon",
+        "zaroor",
         "Kaun se doctor"
       ],
       "options": [

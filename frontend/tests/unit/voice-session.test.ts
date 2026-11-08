@@ -20,7 +20,7 @@ const EDGE: VoiceInfo[] = [
   { name: "Microsoft Asad Online (Natural) - Urdu (Pakistan)", lang: "ur-PK", local: false },
 ];
 
-function build(options: { port?: FakeSpeech; skipOpening?: boolean; guide?: boolean; slowAnswerMs?: number; welcomeLang?: VoiceLang } = {}) {
+function build(options: { port?: FakeSpeech; skipOpening?: boolean; guide?: boolean; slowAnswerMs?: number; welcomeLang?: VoiceLang; endOfTurnMs?: number } = {}) {
   const world = makeWorld({ guide: options.guide });
   const port = options.port ?? createFakeSpeech({ voices: EDGE });
   const states: VoiceState[] = [];
@@ -50,7 +50,7 @@ function build(options: { port?: FakeSpeech; skipOpening?: boolean; guide?: bool
     };
   }
   const conversation = new Conversation({ pack: world.pack, mode: options.guide ? "guide" : "patient", provider, deps: world.deps });
-  const session = new VoiceSession({ port, conversation, events, skipOpening: options.skipOpening, welcomeLang: options.welcomeLang, pauseMs: 0 });
+  const session = new VoiceSession({ port, conversation, events, skipOpening: options.skipOpening, welcomeLang: options.welcomeLang, pauseMs: 0, endOfTurnMs: options.endOfTurnMs ?? 0, resumeMs: 0 });
   return { session, port, world, conversation, states, turns, notices, interims, captions, get booked() { return booked; }, get boundaries() { return boundaries; } };
 }
 
@@ -78,56 +78,48 @@ describe("the welcome", () => {
     await settle(t.port);
     expect(t.turns[0]?.text).toBe("Welcome to Shuaib Health! I'm your AI assistant. How can I help you today?");
     expect(said(t.port)).not.toMatch(/record/i); // "audio is never recorded" is small text, not spoken
-    expect(t.port.spoken[0]?.voice).toContain("Jenny");
+    // Neerja (Indian English, natural) reads English AND Roman Urdu well, so she is the one voice of the call.
+    expect(t.port.spoken[0]?.voice).toContain("Neerja");
     expect(t.port.listening).toBe(true);
     expect(t.port.listenLang).toBe("en-US");
     expect(t.states.at(-1)).toBe("listening");
     expect(t.boundaries).toBeGreaterThan(0);
   });
 
-  it("the welcome is always in the English female voice; a Roman Urdu first sentence then picks the Urdu voice (words in Urdu script) and keeps it", async () => {
+  it("ONE female voice for the whole call: the welcome, a Roman Urdu answer and an English answer all use it (owner rule)", async () => {
     const t = build();
     void t.session.start();
     await settle(t.port);
-    expect(t.port.spoken[0]?.voice).toContain("Jenny");
-    const welcomed = t.port.spoken.length;
     t.port.hear("Assalam o Alaikum, Dr Ayesha ki fee kitni hai?");
     await settle(t.port);
-    const after = t.port.spoken.slice(welcomed);
-    expect(after.length).toBeGreaterThan(0);
-    expect(after.every((s) => s.voice?.includes("Uzma"))).toBe(true);
-    expect(after.some((s) => s.text.includes("السلام علیکم") || s.text.includes("کی") || s.text.includes("کتنی"))).toBe(true);
-    // One voice for the rest of the call, even when the patient later speaks English.
     t.port.hear("What are your timings?");
     await settle(t.port);
-    expect(t.port.spoken.slice(welcomed).every((s) => s.voice?.includes("Uzma"))).toBe(true);
     expect(t.turns.at(-1)?.text).toContain("We are open");
-  });
-
-  it("an English first sentence keeps the English female voice even if Roman Urdu follows", async () => {
-    const t = build();
-    void t.session.start();
-    await settle(t.port);
-    t.port.hear("What are your timings?");
-    await settle(t.port);
-    t.port.hear("Lab kab khulti hai?");
-    await settle(t.port);
     expect(new Set(t.port.spoken.map((s) => s.voice))).toEqual(new Set([t.port.spoken[0]?.voice]));
-    expect(t.port.spoken[0]?.voice).toContain("Jenny");
+    expect(t.port.spoken[0]?.voice).toContain("Neerja");
   });
 
-  it("without an Urdu voice, a Roman Urdu first sentence uses the English female voice that suits it, and keeps it", async () => {
-    const noUrdu = createFakeSpeech({ voices: EDGE.filter((v) => !v.lang.startsWith("ur")) });
-    const t = build({ port: noUrdu });
+  it("with no South Asian English voice: a Roman Urdu call uses the Urdu voice (in Urdu script) for everything", async () => {
+    const port = createFakeSpeech({ voices: EDGE.filter((v) => !v.lang.startsWith("en-IN")) });
+    const t = build({ port, welcomeLang: "roman" });
     void t.session.start();
     await settle(t.port);
-    const welcomed = t.port.spoken.length;
+    t.port.hear("Dr Ayesha ki fee kitni hai?");
+    await settle(t.port);
+    expect(t.port.spoken.every((s) => s.voice?.includes("Uzma"))).toBe(true);
+    expect(t.port.spoken.some((s) => /[؀-ۿ]/.test(s.text))).toBe(true);
+  });
+
+  it("with only US voices, the English female voice reads everything, and it never switches", async () => {
+    const port = createFakeSpeech({ voices: EDGE.filter((v) => v.lang === "en-US") });
+    const t = build({ port });
+    void t.session.start();
+    await settle(t.port);
     t.port.hear("mujhe CBC test karwana hai");
     await settle(t.port);
-    const after = t.port.spoken.slice(welcomed).map((s) => s.voice);
-    expect(after.length).toBeGreaterThan(0);
-    expect(new Set(after).size).toBe(1);
-    expect(after[0]).toContain("Neerja");
+    const voices = t.port.spoken.map((s) => s.voice);
+    expect(new Set(voices).size).toBe(1);
+    expect(voices[0]).toMatch(/Jenny|Aria/);
   });
 
   it("does not welcome again when the caller already heard it, and still listens", async () => {
@@ -153,7 +145,7 @@ describe("one voice, automatic language", () => {
     expect(t.turns.at(-1)?.text).not.toContain("We are open");
     const voices = new Set(t.port.spoken.map((s) => s.voice));
     expect(voices.size).toBe(1);
-    expect([...voices][0]).toContain("Jenny");
+    expect([...voices][0]).toContain("Neerja");
     expect(t.port.spokenRates.every((r) => r === 0.95)).toBe(true);
   });
 
@@ -191,40 +183,80 @@ describe("barge-in, echo and the one mic button", () => {
     return t;
   }
 
-  it("the patient starting to talk stops the assistant at once and is heard", async () => {
+  it("the mic is CLOSED while the assistant speaks: nothing heard then becomes a turn or cuts it off", async () => {
     const t = await speakingSession();
     expect(t.port.speakingNow).not.toBeNull();
-    t.port.hearInterim("no wait tell me about dental");
-    expect(t.port.speakingNow).toBeNull();
-    t.port.hear("tell me about dental");
-    await settle(t.port);
-    expect(t.turns.at(-1)?.text).toMatch(/Dental/);
-  });
-
-  it("its own voice coming back in, or a single stray word, does not interrupt", async () => {
-    const t = await speakingSession();
-    const heard = t.port.speakingNow as string;
+    expect(t.port.listening).toBe(false);
     const before = t.turns.length;
-    t.port.hearInterim(heard);
-    t.port.hear(heard);
-    t.port.hearInterim("hmm");
+    t.port.hearInterim("no wait tell me about dental");
+    t.port.hear("tell me about dental");
     expect(t.port.speakingNow).not.toBeNull();
     expect(t.turns).toHaveLength(before);
+    await settle(t.port);
+    expect(t.port.listening).toBe(true); // open again once it has finished
   });
 
-  it("a short answer given while the assistant is still listing the times (even if it repeats a time it just said) is the patient answering early: it cuts in and counts", async () => {
+  it("owner echo case: its own 'Maaf kijiye, main samajh nahi saki' heard back in Urdu letters right after it stopped is ignored", async () => {
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    t.port.hear("Qawwali"); // nonsense: it apologises once and asks again
+    await settle(t.port);
+    const replies = () => t.turns.filter((x) => x.from === "assistant").length;
+    const before = replies();
+    t.port.hear("معاف کیجیے میں ٹھیک سے سن نہیں سکی دوبارہ بتائیے");
+    await settle(t.port);
+    t.port.hear("Maaf kijiye main theek se sun nahi saki");
+    await settle(t.port);
+    expect(replies()).toBe(before);
+    // A real answer straight after is heard.
+    t.port.hear("mujhe bukhar hai");
+    await settle(t.port);
+    expect(t.turns.at(-1)?.text).toContain("General Medicine");
+  });
+
+  it("a short answer that repeats its words ('haan', '11:30') is never mistaken for an echo", async () => {
     const t = build({ skipOpening: true });
     void t.session.start();
     await settle(t.port);
     t.port.hear("book an appointment with Dr Bilal");
     await settle(t.port);
     t.port.hear("friday");
-    await vi.advanceTimersByTimeAsync(0);
-    expect(t.port.speakingNow).not.toBeNull(); // "On Friday 13 November I have 9:00 AM, 11:30 AM..." is being read
+    await settle(t.port);
     t.port.hear("11:30");
     await settle(t.port);
     expect(t.turns.filter((x) => x.from === "you").at(-1)?.text).toBe("11:30");
     expect(t.conversation.ctx.booking?.draft.time).toBe("11:30");
+  });
+
+  it("waits for the patient to finish: pieces of one sentence (split at a pause) become one turn", async () => {
+    const t = build({ skipOpening: true, endOfTurnMs: 1300 });
+    void t.session.start();
+    await settle(t.port);
+    t.port.hear("mujhe");
+    await vi.advanceTimersByTimeAsync(800);
+    t.port.hearInterim("skin pe");
+    await vi.advanceTimersByTimeAsync(800);
+    t.port.hear("skin pe daane hain");
+    expect(t.turns.filter((x) => x.from === "you")).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(1400);
+    await settle(t.port);
+    const mine = t.turns.filter((x) => x.from === "you");
+    expect(mine).toHaveLength(1);
+    expect(mine[0]?.text).toBe("mujhe skin pe daane hain");
+    expect(t.turns.at(-1)?.text).toContain("Dermatology");
+  });
+
+  it("the patient's Urdu-script words are shown in English letters in the chat", async () => {
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    t.port.hear("مجھے بخار ہے");
+    await settle(t.port);
+    const mine = t.turns.filter((x) => x.from === "you").at(-1)?.text ?? "";
+    expect(mine).not.toMatch(/[؀-ۿ]/);
+    expect(mine).toBe("mujhe bukhar hai");
+    expect(t.turns.filter((x) => x.from === "assistant").every((x) => !/[؀-ۿ]/.test(x.text))).toBe(true);
   });
 
   it("the mic button: a tap while it speaks cuts in; a tap while listening stops; another tap listens again", async () => {
@@ -246,10 +278,10 @@ describe("silence", () => {
     const t = build({ skipOpening: true });
     void t.session.start();
     await settle(t.port);
-    await vi.advanceTimersByTimeAsync(8100);
+    await vi.advanceTimersByTimeAsync(9100);
     expect(said(t.port)).toContain("still there");
     await settle(t.port);
-    await vi.advanceTimersByTimeAsync(8100);
+    await vi.advanceTimersByTimeAsync(9100);
     await settle(t.port);
     expect(said(t.port)).toContain("stopped listening");
     expect(t.notices).toContain("tap_to_talk");
@@ -325,7 +357,11 @@ describe("the safe yes gate, end to end", () => {
     t.port.hear("skip");
     await vi.advanceTimersByTimeAsync(0);
     expect(t.port.speakingNow).not.toBeNull();
-    t.port.hearInterim("yes");
+    // A "yes" while it is still reading is not even heard (the mic is closed)...
+    t.port.hear("yes");
+    expect(t.world.submits).toHaveLength(0);
+    // ...and a tap that cuts the read-back short makes the next "yes" ask once more, never book.
+    t.session.toggleMic();
     t.port.hear("yes");
     await settle(t.port);
     expect(t.world.submits).toHaveLength(0);
@@ -392,14 +428,21 @@ describe("limits and tabs", () => {
 // The owner's real test (2026-11-08), heard by voice: each message leads to the right answer or the next booking step.
 describe("the owner's real messages, heard by voice", () => {
   const CASES: Array<[string, RegExp]> = [
-    ["hay Mujhe CBC ki test karwani Kya Meri booking kar sakti ho", /booking kar rahi hoon[\s\S]*Pathology Lab[\s\S]*Kaun sa din/],
+    ["hay Mujhe CBC ki test karwani Kya Meri booking kar sakti ho", /Ji zaroor[\s\S]*Pathology Lab[\s\S]*Kaun sa din/],
     ["mujhy elaj karwana hia", /Aap ko kya takleef hai/],
     ["mujhy test karwani hia", /Kaun sa test karwana hai/],
     ["boking karo blod ki test karnekiay", /Complete Blood Count[\s\S]*Kaun sa din/],
     ["kia aaj clenic off hia", /Aaj Sunday hai, aur aaj clinic band hai/],
-    ["are booking karo blood Khooni", /booking kar rahi hoon[\s\S]*Kaun sa din/],
+    ["are booking karo blood Khooni", /Ji zaroor[\s\S]*Kaun sa din/],
     ["Mera phone number 0324 5211332 aur email share@gmail.com hai", /tafseelat note kar li/],
     ["yaar main aapko bol raha hun booking kyon nahin kar rahi ho", /booking kar rahi hoon/],
+    ["Assalam o Alaikum, mujhe bukhar hai, ilaaj karwana hai", /^Wa alaikum assalam![\s\S]*General Medicine[\s\S]*PKR 2,000[\s\S]*booking kar doon/],
+    ["Mujhe allergy hai", /Dermatology[\s\S]*Dr\. Maryam Baloch/],
+    ["skin pe daane hain", /Dermatology/],
+    ["Daant ki safai karwani hai", /Dental[\s\S]*Dr\. Bilal Ansari/],
+    ["mera BP high rehta hai", /Cardiology[\s\S]*Dr\. Imran Qureshi/],
+    ["mere bache ko khansi hai", /Pediatrics/],
+    ["meri aankh mein takleef hai", /nahi hota[\s\S]*General Medicine/],
   ];
   it.each(CASES)("%s", async (heard, expected) => {
     const t = build({ skipOpening: true });

@@ -14,7 +14,7 @@ import type { BookingAnswer } from "@/lib/booking/client";
 import { formatPkr } from "@/lib/format";
 
 import { groupPhone, groupReference, speakEmail, speakPhone, speakReference } from "./chunk";
-import { clinicClosedOn, doctorsOf, findDepartment, findDoctors, labDepartment, resolveLabTest } from "./entities";
+import { clinicClosedOn, doctorsOf, findDepartment, findDoctors, labDepartment, labItem, resolveLabTest } from "./entities";
 import { T } from "./phrases";
 import { parseDate, speakDate, speakTime } from "./parse/date";
 import { cleanReason, declines, extractEmail, extractName } from "./parse/name";
@@ -24,7 +24,7 @@ import { parseYesNo } from "./parse/yesno";
 import { EMPTY_DRAFT, type BookingDraft, type BookingPhase, type VoiceLang } from "./types";
 import { complains } from "./understand";
 
-export type Ask = "fullName" | "phone" | "reason" | "doctor" | "date" | "time" | "email" | "partOfDay" | null;
+export type Ask = "fullName" | "nameCheck" | "phone" | "reason" | "doctor" | "date" | "time" | "email" | "partOfDay" | null;
 
 export type BookingState = {
   phase: BookingPhase;
@@ -40,6 +40,10 @@ export type BookingState = {
   booked: AppointmentView | null;
   /** How many turns in a row did not answer the question being asked (two or more: offer tappable choices). */
   misses: number;
+  /** The name was heard in Urdu letters and written in English letters: ask "Spelling theek hai?" once. */
+  nameCheck?: boolean;
+  /** The patient said the spelling was wrong: ask them to type it. */
+  typeName?: boolean;
 };
 
 /**
@@ -92,7 +96,14 @@ export type DialogReply = {
   options?: string[];
 };
 
-type Input = { text: string; lang: VoiceLang; /** The caller's turn did not overlap the read-back being spoken. */ confirmable: boolean };
+type Input = {
+  text: string;
+  lang: VoiceLang;
+  /** The caller's turn did not overlap the read-back being spoken. */
+  confirmable: boolean;
+  /** The turn was heard in Urdu letters (already written in English letters in `text`): a name from it is checked. */
+  script?: boolean;
+};
 
 const FIELD_LABELS = {
   fullName: ["name", "naam"],
@@ -179,7 +190,7 @@ function clearRequested(state: BookingState, text: string): BookingState {
   return next;
 }
 
-function applyUtterance(start: BookingState, text: string, deps: DialogDeps): Applied {
+function applyUtterance(start: BookingState, text: string, deps: DialogDeps, script = false): Applied {
   const { pack } = deps;
   let state = clearRequested(start, text);
   const changes: Change[] = [];
@@ -190,11 +201,31 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps): Ap
   const asking = state.asking;
   const draft = () => state.draft;
 
+  // "Maine naam Shuaib Ali likha hai. Spelling theek hai?"
+  if (asking === "nameCheck") {
+    const yes = parseYesNo(text) === "yes" || /^(ji|jee|haan|han|ok|okay|sahi|theek|thik|correct|right)\b/i.test(text.trim()) && !/\b(nahi|nahin|no|galat|ghalat|wrong)\b/i.test(text);
+    const typed = !script ? extractName(text, true) : null;
+    if (yes) {
+      changes.push({ field: "fullName", was: false });
+      return { state: { ...state, nameCheck: false, typeName: false }, changes, phoneProblem, ambiguousDoctors };
+    }
+    if (typed && !/\b(nahi|nahin|no|galat|ghalat|wrong)\b/i.test(text)) {
+      changes.push({ field: "fullName", was: true });
+      return { state: { ...withDraft(state, { fullName: typed }, "fullName"), nameCheck: false, typeName: false }, changes, phoneProblem, ambiguousDoctors };
+    }
+    if (/\b(nahi|nahin|no|galat|ghalat|wrong|change)\b/i.test(text)) {
+      changes.push({ field: "fullName", was: true });
+      return { state: { ...withDraft(state, { fullName: null }), nameCheck: false, typeName: true }, changes, phoneProblem, ambiguousDoctors };
+    }
+  }
+
   // Name first: a patient called "Sana" must not be taken for "Dr. Sana Farooqui".
-  const name = extractName(text, asking === "fullName");
+  const name = extractName(text, asking === "fullName" || asking === "nameCheck");
   if (name) {
     if (orig.fullName !== name) changes.push({ field: "fullName", was: orig.fullName !== null });
     state = withDraft(state, { fullName: name }, orig.fullName && orig.fullName !== name ? "fullName" : undefined);
+    // Heard in Urdu letters: written in English letters, so the patient checks the spelling once.
+    state = { ...state, nameCheck: script, typeName: false };
   }
 
   const emailWanted = asking === "email" || /@|\bemail\b|\bgmail\b|\bhotmail\b|\byahoo\b|\bat the rate\b|\bdot com\b/i.test(text);
@@ -358,6 +389,7 @@ function nextAsk(state: BookingState): Ask {
   if (!d.date) return "date";
   if (!d.startsAt) return state.pendingTimes.length > 1 ? "partOfDay" : "time";
   if (!d.fullName) return "fullName";
+  if (state.nameCheck) return "nameCheck";
   if (!d.phone) return "phone";
   if (!d.emailAnswered) return "email";
   return null;
@@ -369,7 +401,10 @@ function question(state: BookingState, deps: DialogDeps, lang: VoiceLang, ask: A
   const slots = d.doctorSlug ? state.slots[d.doctorSlug] : undefined;
   switch (ask) {
     case "fullName":
+      if (state.typeName) return T(lang, "No problem. Please type your name in English letters in the box below.", "Koi baat nahi. Apna naam neeche box mein English letters mein likh dein.");
       return T(lang, "May I have your full name, please?", "Aap ka poora naam kya hai?");
+    case "nameCheck":
+      return T(lang, `I've written your name as ${d.fullName}. Is the spelling right?`, `Maine aap ka naam ${d.fullName} likha hai. Spelling theek hai?`);
     case "phone":
       if (problem === "partial" && d.phonePartial) return T(lang, `I heard ${d.phonePartial.replace(/(\d{4})(\d{0,3})/, "$1 $2").trim()}. Please say the rest of the number.`, `Maine ${d.phonePartial.replace(/(\d{4})(\d{0,3})/, "$1 $2").trim()} suna. Baaqi number bata dein.`);
       if (problem === "invalid") return T(lang, "That doesn't look like a mobile number. Please say it again, for example zero three zero zero, one two three, four five six seven.", "Yeh mobile number nahi lag raha. Dobara bata dein, jaise zero teen zero zero, ek do teen, chaar paanch chhe saat.");
@@ -401,7 +436,7 @@ function question(state: BookingState, deps: DialogDeps, lang: VoiceLang, ask: A
     case "partOfDay":
       return T(lang, `Do you mean ${joinList([...state.pendingTimes].sort().map(speakTime), lang)}? Please say morning or evening.`, `Aap ka matlab ${joinList([...state.pendingTimes].sort().map(speakTime), lang)} hai? Subah ya shaam bata dein.`);
     case "email":
-      return T(lang, "Would you like to add an email? It's optional, and it's saved with your booking for when email slips are switched on. You can say skip.", "Kya aap email dena chahenge? Yeh zaroori nahi hai, aur booking ke saath mehfooz hogi jab email slip shuru hogi. Aap skip keh sakte hain.");
+      return T(lang, "Would you like to add an email? It's optional, you can also say skip.", "Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.");
     default:
       return "";
   }
@@ -415,7 +450,7 @@ function readBack(state: BookingState, deps: DialogDeps, lang: VoiceLang): { tex
   const dept = deps.pack.departments.find((x) => x.slug === (doc?.departmentSlug ?? d.departmentSlug))?.name ?? "";
   const when = `${speakDate(d.date as string)} ${T(lang, "at", "")} ${speakTime(d.time as string)}`.replace(/\s+/g, " ");
   const fee = doc ? formatPkr(doc.feePkr) : "";
-  const test = d.labTestSlug ? deps.pack.labTests.find((t) => t.slug === d.labTestSlug) : undefined;
+  const test = labItem(deps.pack, d.labTestSlug) ?? undefined;
   const phone = d.phone as string;
   const rules = T(lang, "Confirming means you accept the clinic's booking rules, which are on our website.", "Confirm karne ka matlab hai ke aap clinic ke booking rules maante hain, jo hamari website par hain.");
   const head = T(lang, "Please check these details.", "Barah-e-meherbani yeh tafseelat check karein.");
@@ -427,18 +462,19 @@ function readBack(state: BookingState, deps: DialogDeps, lang: VoiceLang): { tex
       T(lang, `When: ${when}.`, `Kab: ${when}.`),
       d.reason && !test ? T(lang, `Reason: ${d.reason}.`, `Wajah: ${d.reason}.`) : "",
       d.email ? T(lang, `Email: ${spokenEmail ? speakEmail(d.email) : d.email}.`, `Email: ${spokenEmail ? speakEmail(d.email) : d.email}.`) : "",
-      test ? T(lang, `Test: ${test.name}, ${formatPkr(test.pricePkr)} (sample price).`, `Test: ${test.name}, ${formatPkr(test.pricePkr)} (sample qeemat).`) : fee ? T(lang, `Fee: ${fee} (sample price).`, `Fee: ${fee} (sample qeemat).`) : "",
+      test ? T(lang, `${test.kind === "package" ? "Package" : "Test"}: ${test.name}, ${formatPkr(test.pricePkr)}.`, `${test.kind === "package" ? "Package" : "Test"}: ${test.name}, ${formatPkr(test.pricePkr)}.`) : fee ? T(lang, `Fee: ${fee}.`, `Fee: ${fee}.`) : "",
     ]
       .filter(Boolean)
       .join(" ");
   // The chat shows the filled card and one short line; the details are also read aloud (phone digit by digit).
+  const doing = T(lang, "Thank you! I'm making your booking now.", "Shukriya! Ji, main aap ki booking kar rahi hoon.");
   const ask = confirmLine(lang);
-  return { text: ask, spoken: `${head} ${lines(true, true)} ${rules} ${ask}` };
+  return { text: `${doing} ${ask}`, spoken: `${doing} ${head} ${lines(true, true)} ${rules} ${ask}` };
 }
 
 /** The line that asks the patient to check the card and confirm (by voice or by tapping Confirm). */
 export const confirmLine = (lang: VoiceLang): string =>
-  T(lang, "Please check, then say yes or tap Confirm.", "Barah-e-meherbani check karein, phir haan kahein ya Confirm dabaiye.");
+  T(lang, "Please check the card, then say yes or tap Confirm.", "Please card check karein, phir haan kahein ya Confirm dabaiye.");
 
 // --- One turn ---------------------------------------------------------------------------------------------
 
@@ -473,7 +509,7 @@ function welcomeSentence(applied: Applied, state: BookingState, deps: DialogDeps
   if (newName && state.draft.fullName) return T(lang, `Nice to meet you, ${first(state.draft.fullName)}.`, `Aap se mil kar khushi hui, ${first(state.draft.fullName)}.`);
   const newDoctor = applied.changes.find((c) => c.field === "doctor" && !c.was);
   const doc = doctorOf(deps.pack, state.draft.doctorSlug);
-  const test = state.draft.labTestSlug ? deps.pack.labTests.find((t) => t.slug === state.draft.labTestSlug) : undefined;
+  const test = labItem(deps.pack, state.draft.labTestSlug);
   const lab = test ? labDepartment(deps.pack) : null;
   if (newDoctor && doc && test && lab) return T(lang, `${test.name} at our ${lab.name}, with ${doc.name}.`, `${test.name}, hamari ${lab.name} mein, ${doc.name} ke saath.`);
   if (newDoctor && doc) return T(lang, `With ${doc.name}.`, `${doc.name} ke saath.`);
@@ -512,7 +548,7 @@ export async function bookingStep(start: BookingState, input: Input, deps: Dialo
     }
     // A correction wins over a plain "no": "no, make it the 14th" changes the date and reads it back again.
     const before = JSON.stringify(state.draft);
-    const applied = applyUtterance({ ...state, phase: "collecting" }, text, deps);
+    const applied = applyUtterance({ ...state, phase: "collecting" }, text, deps, input.script);
     if (JSON.stringify(applied.state.draft) !== before || applied.state.pendingTimes.length > 0) {
       return collect({ ...applied.state, phase: "collecting", key: null }, applied, deps, lang);
     }
@@ -523,7 +559,7 @@ export async function bookingStep(start: BookingState, input: Input, deps: Dialo
     return reply(state, T(lang, "Please say yes or tap Confirm, or tell me what to change.", "Haan kahein ya Confirm dabaiye, ya bata dein ke kya badalna hai."), { readBack: true });
   }
 
-  const applied = applyUtterance(state, text, deps);
+  const applied = applyUtterance(state, text, deps, input.script);
   return collect(applied.state, applied, deps, lang, text);
 }
 
@@ -548,6 +584,7 @@ function optionsFor(state: BookingState, deps: DialogDeps, lang: VoiceLang, ask:
   }
   if (ask === "partOfDay") return [...state.pendingTimes].sort().map(speakTime);
   if (ask === "email") return ["Skip"];
+  if (ask === "nameCheck") return [T(lang, "Yes, it's right", "Haan, theek hai"), T(lang, "No, it's wrong", "Nahi, galat hai")];
   return [];
 }
 

@@ -171,27 +171,42 @@
   }
 }
 
-/* Feature 013: the "Talk to us" voice bubble above the Ask us button glows gently. With reduced motion it stays still. */
-.voice-bubble {
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--color-teal-300) 45%, transparent),
-    0 8px 24px color-mix(in srgb, var(--color-teal-500) 28%, transparent);
-}
+/* Feature 013: the mic inside the "Ask us" button glows gently, so voice is easy to find. Still with reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
-  .voice-bubble {
-    animation: voice-bubble-glow 3.2s ease-in-out infinite;
+  .assistant-mic {
+    animation: assistant-mic-glow 3.2s ease-in-out infinite;
   }
 }
-@keyframes voice-bubble-glow {
+@keyframes assistant-mic-glow {
   0%,
   100% {
-    box-shadow:
-      0 0 0 3px color-mix(in srgb, var(--color-teal-300) 35%, transparent),
-      0 8px 20px color-mix(in srgb, var(--color-teal-500) 20%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-gold-300) 0%, transparent);
   }
   50% {
-    box-shadow:
-      0 0 0 6px color-mix(in srgb, var(--color-teal-300) 55%, transparent),
-      0 8px 30px color-mix(in srgb, var(--color-teal-500) 40%, transparent);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-gold-300) 45%, transparent);
+  }
+}
+
+/* Home hero: the three fact cards float gently up and down, each at its own pace. Still with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-float {
+    animation: hero-float 6s ease-in-out infinite;
+  }
+  .hero-float-2 {
+    animation-duration: 7s;
+    animation-delay: -2s;
+  }
+  .hero-float-3 {
+    animation-duration: 6.5s;
+    animation-delay: -4s;
+  }
+}
+@keyframes hero-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -6px;
   }
 }

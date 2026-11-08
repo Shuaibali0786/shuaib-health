@@ -1,7 +1,7 @@
 {
   "name": "English booking: doctor, day, time, then name, phone, email, one at a time; read-back; yes; slip link",
   "turns": [
-    { "say": "I want to book an appointment with Dr Maryam", "expect": ["booking that for you", "Which day"], "forbid": ["main aap ki booking kar rahi hoon"], "submits": 0 },
+    { "say": "I want to book an appointment with Dr Maryam", "expect": ["Of course", "Which day"], "forbid": ["Ji zaroor"], "submits": 0 },
     { "say": "friday", "expect": ["Friday 13 November", "11:30 AM"] },
     { "say": "11:30", "expect": ["full name"] },
     { "say": "my name is Ali Raza", "expect": ["Ali", "mobile number"] },

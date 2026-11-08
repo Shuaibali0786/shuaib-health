@@ -4,7 +4,7 @@
     {
       "say": "booking karo",
       "expect": [
-        "booking kar rahi hoon"
+        "zaroor"
       ],
       "options": [
         "Blood test (CBC)",
