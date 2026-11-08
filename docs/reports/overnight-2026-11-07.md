@@ -29,6 +29,12 @@ Nothing merged, nothing deployed, no Neon database touched, no secrets printed o
 - **A5. Voice agent decisions** (section 12 of the draft): the will/won't lists, a new lookup endpoint (API contract change, own spec), and billing. All three providers cost money beyond trial credit, which conflicts with the free-tiers-only rule. My recommendation: free web-only Phase 0 first.
 - **A6. Backups T083–T087** are still owner actions (age key, private repo, first run, drill, Drive copy). The runbook and scripts are ready.
 
+## Follow-up, 8 Nov 2026 (owner approved A1–A4)
+- A1: branch pushed, PR #37 opened. The API preview build ran against the preview database (nothing new to migrate).
+- A2/A3: `dr-bilal-ansari.jpg` and `general-medicine.jpg` replaced with Pexels photos (Tran Nhu Tuan; RDNE Stock project), fitted with `npm run images -- fit`. Dr. Bilal's alt text was updated in the seed data and fixtures; the live database keeps the old alt text until an approved re-seed.
+- A4: all 22 other photos traced to their exact Pexels pages (same pixel size plus an image comparison); links are in `CREDITS.md`. None needed replacing.
+- The first CI run caught one test that relied on the old `aria-label="Departments"`; its selector now follows the new heading.
+
 ## Risks and notes
 - The e2e changes (OG images on listing pages, the heading-order test) are only checked by unit tests and typecheck so far. First CI run after the push is the real check. If an OG route fails at build, the fallback is to delete the new `opengraph-image.tsx` files (no other code depends on them).
 - Audit traffic: Lighthouse and the crawl made about 250 read-only page views on the live site; these pages read the catalog through the API like any visitor. No writes, no logins.
