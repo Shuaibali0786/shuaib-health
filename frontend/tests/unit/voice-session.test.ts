@@ -319,7 +319,7 @@ describe("rate limit", () => {
     const t = build({ skipOpening: true });
     void t.session.start();
     await settle(t.port);
-    for (let i = 0; i < 9; i += 1) {
+    for (let i = 0; i < 25; i += 1) {
       t.port.hear("what are your timings");
       await settle(t.port);
     }

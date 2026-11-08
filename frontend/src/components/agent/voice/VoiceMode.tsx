@@ -131,6 +131,9 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
     session.current?.resume();
   };
 
+  // While a booking is on screen (the summary card or the slip) the orb shrinks so the card has room.
+  const compact = Boolean((booking && booking.phase !== "booked" && booking.phase !== "failed") || booked);
+
   const extras = (
     <>
       {booking && booking.phase !== "booked" && booking.phase !== "failed" ? (
@@ -142,8 +145,8 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="voice-mode">
-      <section aria-label="Voice assistant" className="flex shrink-0 flex-col items-center gap-1 border-b border-border bg-linear-to-b from-teal-50 to-white pt-2 pb-3">
-        <Orb ref={orb} state={state} className="h-[min(17rem,30dvh)] w-[min(17rem,30dvh)]" />
+      <section aria-label="Voice assistant" className="flex shrink-0 flex-col items-center gap-1 border-b border-border bg-linear-to-b from-teal-50 to-white pt-2 pb-3" data-compact={compact}>
+        <Orb ref={orb} state={state} className={compact ? "h-[min(9rem,18dvh)] w-[min(9rem,18dvh)]" : "h-[min(15rem,26dvh)] w-[min(15rem,26dvh)]"} />
         <p ref={status} tabIndex={-1} role="status" aria-live="polite" className="-mt-1 rounded-pill bg-white px-3 py-1 text-sm font-semibold text-navy-900 shadow-soft outline-none">
           {STATE_LABEL[state]}
         </p>

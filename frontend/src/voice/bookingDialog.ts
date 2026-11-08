@@ -34,10 +34,12 @@ export type BookingState = {
   pendingTimes: string[];
   /** The idempotency key of this booking attempt; kept so a retry after a timeout is the same attempt. */
   key: string | null;
+  /** The server's own clock (from the slot list), so "the 13th" and "tomorrow" mean the clinic's days, not the phone's. */
+  serverNow: string | null;
   booked: AppointmentView | null;
 };
 
-export const newBookingState = (): BookingState => ({ phase: "collecting", draft: EMPTY_DRAFT, asking: null, slots: {}, pendingTimes: [], key: null, booked: null });
+export const newBookingState = (): BookingState => ({ phase: "collecting", draft: EMPTY_DRAFT, asking: null, slots: {}, pendingTimes: [], key: null, booked: null, serverNow: null });
 
 export type DialogDeps = {
   pack: KnowledgePack;
@@ -100,7 +102,7 @@ async function slotsFor(state: BookingState, doctorSlug: string, deps: DialogDep
   if (cached && !refresh) return { state, slots: cached };
   try {
     const slots = await deps.fetchSlots(doctorSlug);
-    return { state: { ...state, slots: { ...state.slots, [doctorSlug]: slots } }, slots };
+    return { state: { ...state, slots: { ...state.slots, [doctorSlug]: slots }, serverNow: slots.generatedAt }, slots };
   } catch {
     return { state, slots: null };
   }
@@ -235,7 +237,7 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps): Ap
 
   // Date and time.
   {
-    const date = parseDate(rest, deps.now(), asking === "date");
+    const date = parseDate(rest, start.serverNow ? new Date(start.serverNow) : deps.now(), asking === "date");
     if (date) {
       if (orig.date !== date) changes.push({ field: "date", was: orig.date !== null });
       state = withDraft(state, { date, startsAt: null }, orig.date && orig.date !== date ? "date" : undefined);

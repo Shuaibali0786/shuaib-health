@@ -10,6 +10,11 @@ export async function installFakeWebSpeech(page: Page, options: { recognition?: 
     w.__spoken = spoken;
     w.__cancelled = 0;
 
+    if (!withRecognition) {
+      // A browser without speech recognition: hide the real one too, so the page sees none.
+      w.SpeechRecognition = undefined;
+      w.webkitSpeechRecognition = undefined;
+    }
     if (withRecognition) {
       class FakeRecognition {
         continuous = false;

@@ -57,16 +57,16 @@ test.describe("voice receptionist", () => {
     await installFakeWebSpeech(page);
     const dialog = await openVoice(page);
     for (const name of ["Mute", "Interrupt", "EN", "اردو", "Female", "Male", "End"]) {
-      await expect(dialog.getByRole("button", { name })).toBeVisible();
+      await expect(dialog.getByRole("button", { name, exact: true })).toBeVisible();
     }
-    await dialog.getByRole("button", { name: "Mute" }).focus();
+    await dialog.getByRole("button", { name: "Mute", exact: true }).focus();
     await page.keyboard.press("Enter");
     await expect(dialog.getByText("Microphone muted")).toBeVisible();
     await page.keyboard.press("Enter");
     await expect(dialog.getByText("Listening…")).toBeVisible();
-    await dialog.getByRole("button", { name: "اردو" }).click();
+    await dialog.getByRole("button", { name: "اردو", exact: true }).click();
     expect(await page.evaluate(() => (window as unknown as { __srLang: string }).__srLang)).toBe("ur-PK");
-    await dialog.getByRole("button", { name: "End" }).click();
+    await dialog.getByRole("button", { name: "End", exact: true }).click();
     await expect(dialog.getByTestId("voice-mode")).toHaveCount(0);
   });
 
@@ -120,7 +120,8 @@ test.describe("voice receptionist", () => {
     await expect(summary).toContainText("Sara Noor");
     await expect(summary).toContainText("0311 123 4567");
     await expect(summary).toContainText("Waiting for your yes");
-    expect(await spokenText(page)).toContain("zero three one one, one two three, four five six seven"); // the phone is read digit by digit
+    // The phone is read digit by digit (speech is sentence by sentence, so wait for it).
+    await expect.poll(() => spokenText(page), { timeout: 10000 }).toContain("zero three one one, one two three, four five six seven");
     await expect(dialog.getByTestId("voice-slip")).toHaveCount(0); // nothing is booked before the yes
 
     const axe = await new AxeBuilder({ page }).include("[role='dialog']").withTags(WCAG).analyze();
@@ -135,7 +136,7 @@ test.describe("voice receptionist", () => {
     const download = page.waitForEvent("download", { timeout: 15000 });
     await slip.getByRole("button", { name: "Download PDF" }).click();
     expect((await download).suggestedFilename()).toMatch(/\.pdf$/);
-    expect(await spokenText(page)).toMatch(/Your reference is/);
+    await expect.poll(() => spokenText(page), { timeout: 10000 }).toMatch(/Your reference is 7|Your reference is [0-9A-Z]/);
 
     // A second booking in the same conversation is refused.
     await say(page, "book another appointment", /one booking per conversation/);

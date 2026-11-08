@@ -74,15 +74,19 @@ export function speakPhone(e164: string): string {
     .join(", ");
 }
 
+/** The reference's letters and digits only, upper case (a hyphen or space inside it is only for the eye). */
+const referenceCharacters = (reference: string): string => reference.replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+
 /** A booking reference spoken character by character in groups of four: "7, K, 3, M. 9, P, 2, Q. X, A". */
 export function speakReference(reference: string): string {
-  const groups = reference.match(/.{1,4}/g) ?? [];
+  const groups = referenceCharacters(reference).match(/.{1,4}/g) ?? [];
   return groups.map((group) => [...group].join(", ")).join(". ");
 }
 
 /** The reference for the eye: "7K3M 9P2Q XA". */
 export function groupReference(reference: string): string {
-  return (reference.match(/.{1,4}/g) ?? [reference]).join(" ");
+  const clean = referenceCharacters(reference);
+  return (clean.match(/.{1,4}/g) ?? [clean]).join(" ");
 }
 
 /** An email spoken the way people say it: "ali dot raza at gmail dot com". */

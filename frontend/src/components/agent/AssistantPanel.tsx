@@ -176,7 +176,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
       className={cn(
         "assistant-panel fixed z-50 flex flex-col overflow-hidden border border-border bg-white shadow-lift",
         voiceOn
-          ? "inset-0 h-dvh md:inset-auto md:right-6 md:bottom-6 md:h-[min(46rem,92dvh)] md:w-[26rem] md:rounded-card"
+          ? "inset-0 h-dvh md:inset-auto md:right-6 md:bottom-6 md:h-[min(48rem,94dvh)] md:w-[26rem] md:rounded-card"
           : "inset-x-0 bottom-0 max-h-[85dvh] rounded-t-card md:inset-x-auto md:right-6 md:bottom-6 md:w-[24rem] md:rounded-card",
       )}
     >

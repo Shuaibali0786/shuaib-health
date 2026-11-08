@@ -32,6 +32,9 @@ describe("voice chunking", () => {
   it("reads a reference character by character in groups of four", () => {
     expect(groupReference("7K3M9P2QXA")).toBe("7K3M 9P2Q XA");
     expect(speakReference("7K3M9P2QXA")).toBe("7, K, 3, M. 9, P, 2, Q. X, A");
+    // A hyphen or lower case in the reference is ignored.
+    expect(groupReference("7k3m9-p2qxa")).toBe("7K3M 9P2Q XA");
+    expect(speakReference("7K3M9-P2QXA")).toBe("7, K, 3, M. 9, P, 2, Q. X, A");
   });
 
   it("reads an email the way people say it", () => {

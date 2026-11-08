@@ -68,7 +68,8 @@ export class VoiceSession {
   private readonly port: SpeechPort;
   private readonly events: SessionEvents;
   private readonly ctx: RouterContext;
-  private readonly throttle = createThrottle();
+  // A booking by voice takes about ten turns, so the limit is wider than the typed chat's 8 a minute. It only stops runaway loops.
+  private readonly throttle = createThrottle(Date.now, 24, 150);
 
   private state: VoiceState = "idle";
   private muted = false;
