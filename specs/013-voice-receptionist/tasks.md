@@ -283,3 +283,9 @@ Booking and code tests run on preview or dev only, never production.
 4. **Phase 2 (NOT now)**: Phase 6 (US3 lookup), Phase 7 (US4 cancel), Phase 9 (slip email), T002, the 0006 migration, the 4 endpoints, Resend. No migration is created or run. Gate G2 stays closed.
 5. The existing booking-view endpoint stays as it is (Phase 2 note: last-3-digits exposure).
 6. ADR-0015 records the patient-access + provider-slot decision as Proposed, Phase 2.
+
+## Phase 1 status (2026-11-08)
+
+Done (see [results.md](results.md)): T001, T003–T015, T017–T023, T030–T037, T040–T055, T080, T090–T095 (visual baselines are win32 only).
+Changed: T016 (Urdu-script forms) moved to Phase 2; T004 became a mock-only harness (`frontend/tests/voice/harness.ts`).
+Not started (Phase 2, by owner decision): T002, T060–T078, T085–T086.
