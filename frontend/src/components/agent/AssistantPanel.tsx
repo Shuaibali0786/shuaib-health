@@ -58,25 +58,26 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
   const [draft, setDraft] = useState("");
   const [paused, setPaused] = useState(false);
   const [voiceOn, setVoiceOn] = useState(voice && startInVoice);
-  const [caps, setCaps] = useState({ listen: false, speak: false });
+  // What this browser can do. The panel only ever renders after a click (never on the server), so it is read once here.
+  const [caps] = useState(() => {
+    if (!voice) return { listen: false, speak: false };
+    const port = createBrowserSpeech();
+    return { listen: port.canListen, speak: port.canSpeak };
+  });
   const [dictationNotice, setDictationNotice] = useState<Notice | null>(null);
   const next = useRef(1);
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
   const voiceSubmit = useRef<((text: string) => void) | null>(null);
   const draftRef = useRef(draft);
-  draftRef.current = draft;
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
   const titleId = useId();
   const prefs = voicePrefs;
   const setPrefs = (patch: Partial<VoicePrefs>) => onVoicePrefs?.(patch);
 
   useEffect(() => input.current?.focus(), []);
-  // What this browser can do, checked once after mount (never during the server render).
-  useEffect(() => {
-    if (!voice) return;
-    const port = createBrowserSpeech();
-    setCaps({ listen: port.canListen, speak: port.canSpeak });
-  }, [voice]);
   // Escape closes the chat wherever focus is (the Send button disables itself after sending).
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {

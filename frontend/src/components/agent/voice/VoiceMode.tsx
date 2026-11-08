@@ -14,7 +14,7 @@ import type { ListenLang, Turn, VoiceGender, VoiceState } from "@/voice/types";
 import { Captions } from "./Captions";
 import { Controls } from "./Controls";
 import { MicHelp } from "./MicHelp";
-import { Orb } from "./Orb";
+import { Orb, type OrbHandle } from "./Orb";
 import { SlipCard } from "./SlipCard";
 import { SummaryCard } from "./SummaryCard";
 
@@ -61,13 +61,15 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
   const [booking, setBooking] = useState<BookingState | null>(null);
   const [booked, setBooked] = useState<AppointmentView | null>(null);
   const [muted, setMuted] = useState(false);
-  const pulse = useRef(0);
+  const orb = useRef<OrbHandle>(null);
   const session = useRef<VoiceSession | null>(null);
   const status = useRef<HTMLParagraphElement>(null);
   const port = useMemo(() => createBrowserSpeech(), []);
   // The latest callbacks, so the session (created once per mode) never calls a stale one.
   const latest = useRef({ onTurn, onPrefs, registerSubmit });
-  latest.current = { onTurn, onPrefs, registerSubmit };
+  useEffect(() => {
+    latest.current = { onTurn, onPrefs, registerSubmit };
+  });
   const first = useRef(prefs);
 
   useEffect(() => {
@@ -99,9 +101,7 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
           latest.current.onTurn(turn);
         },
         onSpeaking: setCaption,
-        onBoundary: () => {
-          pulse.current = 1;
-        },
+        onBoundary: () => orb.current?.pulse(),
         onBooking: setBooking,
         onBooked: setBooked,
         onNotice: setNotice,
@@ -143,7 +143,7 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="voice-mode">
       <section aria-label="Voice assistant" className="flex shrink-0 flex-col items-center gap-1 border-b border-border bg-linear-to-b from-teal-50 to-white pt-2 pb-3">
-        <Orb state={state} pulse={pulse} className="h-[min(17rem,30dvh)] w-[min(17rem,30dvh)]" />
+        <Orb ref={orb} state={state} className="h-[min(17rem,30dvh)] w-[min(17rem,30dvh)]" />
         <p ref={status} tabIndex={-1} role="status" aria-live="polite" className="-mt-1 rounded-pill bg-white px-3 py-1 text-sm font-semibold text-navy-900 shadow-soft outline-none">
           {STATE_LABEL[state]}
         </p>

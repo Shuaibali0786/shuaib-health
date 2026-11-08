@@ -189,20 +189,16 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps): Ap
     }
   }
 
-  let phoneTouched = false;
   const digits = spokenDigits(text).replace(/\D/g, "");
   if (asking === "phone" || digits.length >= 7 || /\b(phone|mobile|number|raabta)\b/i.test(text)) {
     const heard = extractPhone(text, draft().phonePartial);
     if (heard.status === "complete") {
-      phoneTouched = true;
       if (orig.phone !== heard.e164) changes.push({ field: "phone", was: orig.phone !== null });
       state = withDraft(state, { phone: heard.e164, phonePartial: "" }, orig.phone && orig.phone !== heard.e164 ? "phone" : undefined);
     } else if (heard.status === "partial" && (asking === "phone" || digits.length >= 4)) {
-      phoneTouched = true;
       phoneProblem = "partial";
       state = withDraft(state, { phonePartial: heard.digits });
     } else if (heard.status === "invalid") {
-      phoneTouched = true;
       phoneProblem = "invalid";
       state = withDraft(state, { phonePartial: "" });
     }

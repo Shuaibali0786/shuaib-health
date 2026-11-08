@@ -19,7 +19,9 @@ export function useDictation(options: { lang: ListenLang; getDraft: () => string
   const port = useRef<SpeechPort | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef(options);
-  latest.current = options;
+  useEffect(() => {
+    latest.current = options;
+  });
 
   const stop = useCallback(() => {
     port.current?.stopListening();
