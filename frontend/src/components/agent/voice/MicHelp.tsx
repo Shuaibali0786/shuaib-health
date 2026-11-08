@@ -35,7 +35,7 @@ const COPY: Record<Notice, { title: string; body: string; action?: string }> = {
   },
   no_urdu_voice: {
     title: "No Urdu voice on this device",
-    body: "I will show the text and read it in Roman Urdu with an English voice. Microsoft Edge on Windows has natural Urdu voices you can install.",
+    body: "I will show the text and read it in Roman Urdu with an English voice. Edge on Windows has natural Urdu voices you can install.",
   },
 };
 

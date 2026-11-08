@@ -10,7 +10,8 @@ const FEMALE = new Set(
 const MALE = new Set("guy ryan davis mark david george james ravi prabhat asad salman daniel alex fred thomas liam eric brian christopher roger rishi hemant sean tony jason".split(" "));
 
 export function voiceGender(voice: VoiceInfo): VoiceGender | null {
-  const words = voice.name.toLowerCase().replace(/microsoft|google|online|natural|\(.*?\)|- .*$/g, " ").split(/[^a-z]+/).filter(Boolean);
+  // Drop the maker's name (the first word) and the descriptive words, leaving the voice's own first name.
+  const words = voice.name.toLowerCase().replace(/^\S+\s+/, "").replace(/online|natural|\(.*?\)|- .*$/g, " ").split(/[^a-z]+/).filter(Boolean);
   if (words.some((w) => FEMALE.has(w)) || /\bfemale\b/i.test(voice.name)) return "female";
   if (words.some((w) => MALE.has(w)) || /\bmale\b/i.test(voice.name)) return "male";
   return null;
@@ -47,7 +48,6 @@ export function pickVoice(voices: VoiceInfo[], options: { lang: VoiceLang; liste
     const gender = voiceGender(voice);
     let score = rank * 100;
     if (/natural|online/i.test(voice.name)) score += 60;
-    else if (/google/i.test(voice.name)) score += 15;
     if (gender === options.gender) score += 25;
     else if (gender !== null) score -= 40;
     if (voice.local) score += 2;
