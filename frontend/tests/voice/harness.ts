@@ -109,5 +109,5 @@ export function makeWorld(options: { mode?: SubmitMode; lang?: VoiceLang; guide?
     return out;
   }
 
-  return { pack, ctx, submits, say, log, newBooking: newBookingState };
+  return { pack, ctx, deps, submits, say, log, newBooking: newBookingState };
 }
