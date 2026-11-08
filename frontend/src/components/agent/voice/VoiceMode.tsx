@@ -145,8 +145,8 @@ export default function VoiceMode({ pack, mode, provider, prefs, onPrefs, onTurn
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="voice-mode">
-      <section aria-label="Voice assistant" className="flex shrink-0 flex-col items-center gap-1 border-b border-border bg-linear-to-b from-teal-50 to-white pt-2 pb-3" data-compact={compact}>
-        <Orb ref={orb} state={state} className={compact ? "h-[min(9rem,18dvh)] w-[min(9rem,18dvh)]" : "h-[min(15rem,26dvh)] w-[min(15rem,26dvh)]"} />
+      <section aria-label="Voice assistant" className="flex min-h-0 shrink flex-col items-center gap-1 overflow-y-auto border-b border-border bg-linear-to-b from-teal-50 to-white pt-2 pb-3" data-compact={compact}>
+        <Orb ref={orb} state={state} className={compact ? "h-[min(9rem,18dvh)] w-[min(9rem,18dvh)]" : "h-[min(17rem,27dvh)] w-[min(17rem,27dvh)]"} />
         <p ref={status} tabIndex={-1} role="status" aria-live="polite" className="-mt-1 rounded-pill bg-white px-3 py-1 text-sm font-semibold text-navy-900 shadow-soft outline-none">
           {STATE_LABEL[state]}
         </p>

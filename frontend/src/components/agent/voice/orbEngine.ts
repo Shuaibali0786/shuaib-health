@@ -29,7 +29,7 @@ export function drawOrb(ctx: CanvasRenderingContext2D, width: number, height: nu
   const { time: t, state, energy } = frame;
   const cx = width / 2;
   const cy = height / 2;
-  const base = Math.min(width, height) * 0.34;
+  const base = Math.min(width, height) * 0.38;
   ctx.clearRect(0, 0, width, height);
 
   const breathe = state === "listening" ? 1 + 0.05 * Math.sin(t * 1.8) : state === "idle" || state === "paused" ? 1 + 0.015 * Math.sin(t * 0.6) : state === "speaking" ? 1 + 0.03 * energy : 1;
@@ -37,7 +37,7 @@ export function drawOrb(ctx: CanvasRenderingContext2D, width: number, height: nu
   const glow = state === "listening" ? 0.6 : state === "speaking" ? 0.55 + 0.3 * energy : state === "thinking" ? 0.5 : 0.3;
 
   // Soft glow around the orb.
-  const halo = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 1.45);
+  const halo = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 1.3);
   halo.addColorStop(0, rgba(palette.mid, glow));
   halo.addColorStop(1, rgba(palette.mid, 0));
   ctx.fillStyle = halo;

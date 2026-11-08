@@ -7,7 +7,7 @@
  */
 export function Captions({ you, assistant }: { you: string; assistant: string | null }) {
   return (
-    <div aria-hidden="true" data-testid="voice-captions" className="flex min-h-[4.25rem] w-full flex-col items-center justify-center gap-1 px-5 text-center">
+    <div aria-hidden="true" data-testid="voice-captions" className="flex min-h-[3.5rem] w-full flex-col items-center justify-center gap-1 px-5 text-center">
       {you ? (
         <p dir="auto" className="max-w-full text-sm text-ink">
           <span className="font-semibold">You: </span>

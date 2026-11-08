@@ -143,7 +143,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
   const showVoice = voice && (caps.listen || caps.speak);
 
   const renderLog = (extras?: ReactNode): ReactNode => (
-    <div ref={log} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4" role="log" aria-live="polite" aria-label="Conversation">
+    <div ref={log} className="min-h-[6.5rem] flex-1 space-y-3 overflow-y-auto px-4 py-4" role="log" aria-live="polite" aria-label="Conversation">
       {messages.map((message) => (
         <div key={message.id} className={cn("flex", message.from === "you" ? "justify-end" : "justify-start")}>
           <div className={cn("max-w-[85%] rounded-card px-3.5 py-2.5 text-sm", message.from === "you" ? "bg-navy-900 text-white" : "border border-border bg-surface text-ink")}>
