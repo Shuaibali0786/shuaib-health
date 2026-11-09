@@ -21,8 +21,8 @@ export { parseFreeModels };
 const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 /** The whole call, all models together, stays under the browser's own 6 s limit. */
 const TOTAL_MS = 5500;
-/** One model gets at most this long, so a slow first model still leaves time for the next. */
-const PER_MODEL_MS = 3500;
+/** One model gets at most this long (a model that is rate limited fails at once, so the next one still has time; a slow free model gets the whole budget). */
+const PER_MODEL_MS = 5000;
 
 /** Gemini's tool declarations (upper-case JSON schema types) in the OpenAI format. */
 function openAiTools(pack: KnowledgePack) {
