@@ -35,7 +35,7 @@ export type VoiceModeProps = {
   /** The microphone permission request made at the moment of the tap (so the prompt comes from a real action). */
   micCheck?: Promise<MicResult> | null;
   /** Draws the conversation log, with the cards inside it. */
-  renderLog: (extras?: ReactNode) => ReactNode;
+  renderLog: (extras?: ReactNode, options?: { hidden?: boolean }) => ReactNode;
   /** The booking and slip cards, drawn inside the log. */
   cards: ReactNode;
 };
@@ -116,15 +116,17 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
     };
   }, [conversation, port]);
 
-  // While a help message or a booking card is on screen the orb shrinks so there is room for it.
-  const compact = Boolean(notice) || Boolean(cards);
+  // The written chat is hidden by default in voice mode: the caption under the orb is the only text (no duplicates).
+  const [showChat, setShowChat] = useState(false);
+  // While a help message, a booking card or the chat is on screen the orb shrinks so there is room for it.
+  const compact = Boolean(notice) || Boolean(cards) || showChat;
   const listening = state === "listening";
 
   // Owner layout (2026-11-09): orb, ONE status pill, the caption (max 2 lines), "You said", then the two buttons with
   // clear space. Every row keeps its height and the block never shrinks or scrolls, so nothing can sit on the buttons;
   // the booking card and the choices live in the scrolling chat below.
   return (
-    <div className="flex min-h-0 flex-1 flex-col" data-testid="voice-mode">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden" data-testid="voice-mode">
       <section aria-label="Voice assistant" data-testid="voice-stage" className="flex shrink-0 flex-col items-center border-b border-border bg-linear-to-b from-teal-50 to-white px-2 pt-3 pb-4" data-compact={compact}>
         <Orb ref={orb} state={state} className={compact ? "h-[min(6.5rem,13dvh)] w-[min(6.5rem,13dvh)]" : "h-[min(11rem,22dvh)] w-[min(11rem,22dvh)]"} />
         <p ref={status} tabIndex={-1} role="status" aria-live="polite" data-testid="voice-status" className="mt-1 rounded-pill bg-white px-3 py-0.5 text-xs font-semibold tracking-wide text-navy-900 shadow-soft outline-none">
@@ -168,7 +170,30 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
           </div>
         ) : null}
       </section>
-      {renderLog(cards)}
+      {/* Below the controls: the cards (booking card, Open my slip, the phone and email boxes, choices) in their own
+          scroll area, and the chat only when asked for. This area is clipped, so it can never cover the input row. */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden" data-testid="voice-below">
+        <div className="flex shrink-0 justify-center pt-1.5">
+          <button
+            type="button"
+            onClick={() => setShowChat((v) => !v)}
+            aria-expanded={showChat}
+            className="min-h-9 rounded-pill px-3 text-xs font-semibold text-teal-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-navy-900"
+          >
+            {showChat ? "Hide chat" : "Show chat"}
+          </button>
+        </div>
+        {showChat ? (
+          renderLog(cards)
+        ) : (
+          <>
+            {renderLog(null, { hidden: true })}
+            <div data-testid="voice-cards" className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pt-1 pb-3">
+              {cards}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

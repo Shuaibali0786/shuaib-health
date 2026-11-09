@@ -1,7 +1,7 @@
 import { ConfirmedSeal } from "@/components/booking/ConfirmedSeal";
 import { LogoMark } from "@/components/brand/LogoMark";
 import { SampleBadge } from "@/components/ui/SampleBadge";
-import { arriveByTime, formatLocalDateWithYear, timeZoneLabel } from "@/lib/booking/labels";
+import { arriveByTime, formatClockTime, formatLocalDateWithYear } from "@/lib/booking/labels";
 import { qrModules, qrPath } from "@/lib/booking/qr";
 import type { AppointmentView } from "@/lib/booking/schemas";
 import { ARRIVE_EARLY_MINUTES, SLIP_BRING, SLIP_DEMO_FOOTER, formatBookedOn, zoneLabel, type SlipLabTest } from "@/lib/booking/slip";
@@ -57,9 +57,8 @@ export function ConfirmationCard({ view, site, labTest }: { view: AppointmentVie
               <GoldLabel>Your appointment</GoldLabel>
               <p className="mt-1 font-heading text-xl font-bold leading-snug text-navy-900 sm:text-2xl">{formatLocalDateWithYear(view.localDate)}</p>
               <p className="mt-1 font-heading text-lg font-bold text-teal-700">
-                {view.localTime} <span className="text-base">({zone})</span>
+                {formatClockTime(view.localTime)} <span className="text-base">({zone})</span>
               </p>
-              <p className="text-xs text-muted">{timeZoneLabel(view.timeZone, new Date(view.startsAt))}</p>
             </div>
             <ConfirmedSeal clinicName={site.name} bookedAt={view.bookedAt} timeZone={view.timeZone} sample={view.isSample} className="size-28 shrink-0 sm:size-32" />
           </div>

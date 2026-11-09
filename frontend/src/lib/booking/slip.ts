@@ -3,7 +3,7 @@
 // mobile number, email and reason are never available here, so they can never leak into a file.
 import { MARK_COLOURS, MARK_LARGE, MARK_SMALL, MARK_VIEWBOX, SMALL_MARK_MAX_PX, WATERMARK_COLOURS } from "@/lib/brand-marks";
 import { formatPkr } from "@/lib/format";
-import { arriveByTime, formatLocalDateWithYear, zoneLabel } from "./labels";
+import { appointmentTime, arriveByTime, formatClockTime, formatLocalDateWithYear, zoneLabel } from "./labels";
 import { qrModules } from "./qr";
 import { SEAL, sealContent } from "./seal";
 import { SLIP_FONT_KEYS, SLIP_FONT_METRICS, advance, winAnsiCode, type SlipFontKey, type SlipFonts } from "./slip-fonts";
@@ -28,11 +28,11 @@ export interface SlipClinic {
   emergencyDisplay?: string;
 }
 
-/** "4 Oct 2026, 14:05 PKT": when the booking was made, in the appointment's own zone. */
+/** "4 Oct 2026, 2:05 PM Pakistan time": when the booking was made, in the appointment's own zone. */
 export function formatBookedOn(bookedAt: string, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(bookedAt));
   const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-  return `${pick("day")} ${pick("month")} ${pick("year")}, ${pick("hour")}:${pick("minute")} ${zoneLabel(timeZone)}`;
+  return `${pick("day")} ${pick("month")} ${pick("year")}, ${formatClockTime(`${pick("hour")}:${pick("minute")}`)} ${zoneLabel(timeZone)}`;
 }
 
 export const ARRIVE_EARLY_MINUTES = 15;
@@ -295,7 +295,7 @@ export function buildSlipPdf(view: AppointmentView, clinic: SlipClinic, fonts: S
   text("YOUR APPOINTMENT", MARGIN + 16, boxTop + 18, "F2", 7.5, GOLD_TEXT, { spacing: 1.6 });
   const dateText = formatLocalDateWithYear(view.localDate);
   text(dateText, MARGIN + 16, boxTop + 40, "F3", fitSize(dateText, "F3", 22, textWidthMax, 14), NAVY);
-  const timeText = `${view.localTime} (${zoneLabel(view.timeZone)})`;
+  const timeText = appointmentTime(view.localTime, view.timeZone);
   text(timeText, MARGIN + 16, boxTop + 60, "F3", fitSize(timeText, "F3", 17, textWidthMax, 12), TEAL);
 
   // Stamp: the page's SVG, drawn from the same layout (seal.ts). Y runs up here, so every y is flipped.

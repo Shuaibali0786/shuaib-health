@@ -2,7 +2,7 @@
 
 import { ExternalLink } from "lucide-react";
 
-import { formatLocalDateWithYear } from "@/lib/booking/labels";
+import { formatClockTime, formatLocalDateWithYear } from "@/lib/booking/labels";
 import type { AppointmentView } from "@/lib/booking/schemas";
 import { formatPkr } from "@/lib/format";
 import { ROUTES } from "@/lib/routes";
@@ -26,7 +26,7 @@ export function BookedCard({ view, lang, test }: { view: AppointmentView; lang: 
         {groupReference(view.reference)}
       </p>
       <p className="mt-1 text-sm text-ink">
-        <span className="font-semibold text-navy-900">{view.doctor.fullName}</span> · {formatLocalDateWithYear(view.localDate)}, {view.localTime}
+        <span className="font-semibold text-navy-900">{view.doctor.fullName}</span> · {formatLocalDateWithYear(view.localDate)}, {formatClockTime(view.localTime)}
       </p>
       {test ? (
         <p className="text-sm text-ink" data-testid="voice-booked-test">
@@ -44,7 +44,8 @@ export function BookedCard({ view, lang, test }: { view: AppointmentView; lang: 
         <span className="sr-only">{T(lang, "(opens in a new tab)", "(naye tab mein khulega)")}</span>
       </a>
       <p className="mt-2 text-xs text-ink">
-        {T(lang, "Download the slip, save it on your phone, and bring it with you to the clinic.", "Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.")}
+        {/* Not the sentence Ayesha just said (it is the caption): the one thing to do at the clinic. */}
+        {T(lang, "At the clinic, show this slip or its QR code at reception.", "Clinic mein reception par yeh slip ya QR code dikhayein.")}
       </p>
     </section>
   );

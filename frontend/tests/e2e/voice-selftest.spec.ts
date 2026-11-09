@@ -387,6 +387,58 @@ const C: Conversation[] = [
     ],
     books: { name: "Saima Nawaz", department: /Dermatology/ },
   },
+  // --- Owner request 2026-11-09 (final polish): voice-mode bookings, a clean panel, 12-hour times on the slip ---------
+  {
+    id: 25,
+    title: "Voice mode, English: dentist -> card -> yes -> slip (12-hour time)",
+    by: "voice",
+    steps: [
+      { say: "I need to see a dentist please", expect: /Dental[\s\S]*Shall I book/ },
+      { say: "yes", expect: /day/ },
+      { sayChoice: 0, expect: /time/ },
+      { sayChoice: 1, expect: /full name/ },
+      { say: "my name is Daniel Ross", expect: /mobile number/ },
+      { say: "zero three zero zero one two three four five six seven", expect: /email/ },
+      { say: "skip", expect: /Confirm/ },
+      { say: "yes", expect: /You're booked/ },
+    ],
+    books: { name: "Daniel Ross", department: /Dental/ },
+  },
+  {
+    id: 26,
+    title: "Voice mode, Roman Urdu: bache ko bukhar -> Pediatrics -> haan -> slip (12-hour time)",
+    by: "voice",
+    steps: [
+      { say: "mere bache ko bukhar hai", expect: /Pediatrics/ },
+      { say: "ji", expect: /doctor/ },
+      { sayChoice: 0, expect: /din/ },
+      { sayChoice: 0, expect: /waqt/ },
+      { sayChoice: 0, expect: /naam/ },
+      { say: "mera naam Fatima Zahra hai", expect: /mobile number/ },
+      { say: "zero three four five one two three four five six seven", expect: /email/ },
+      { say: "nahi", expect: /Confirm/ },
+      { say: "haan", expect: /booking ho gayi/ },
+    ],
+    books: { name: "Fatima Zahra", department: /Pediatrics/ },
+  },
+  {
+    id: 27,
+    title: "Voice mode with a correction: time changed at the card, then 'ok'",
+    by: "voice",
+    steps: [
+      { say: "mujhe skin allergy hai", expect: /Dermatology/ },
+      { say: "haan", expect: /din/ },
+      { sayChoice: 0, expect: /waqt/ },
+      { sayChoice: 0, expect: /naam/ },
+      { say: "Usman Tariq", expect: /mobile/ },
+      { say: "zero three three three one two three four five six seven", expect: /email/ },
+      { say: "skip", expect: /Confirm/ },
+      { say: "waqt galat hai", expect: /waqt/ },
+      { sayChoice: 1, expect: /Confirm/ },
+      { say: "ok", expect: /booking ho gayi/ },
+    ],
+    books: { name: "Usman Tariq", department: /Dermatology/ },
+  },
 ];
 
 
@@ -397,27 +449,42 @@ const C: Conversation[] = [
 async function panelProblems(dialog: Locator): Promise<string[]> {
   if ((await dialog.getByTestId("voice-stage").count()) === 0) return [];
   return dialog.evaluate((root) => {
-    const box = (el: Element | null) => (el ? el.getBoundingClientRect() : null);
-    const hit = (a: DOMRect, b: DOMRect) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    const hit = (a: DOMRect, b: DOMRect) => a.x < b.x + b.width - 0.5 && b.x < a.x + a.width - 0.5 && a.y < b.y + b.height - 0.5 && b.y < a.y + a.height - 0.5;
+    const clip = (a: DOMRect, b: DOMRect) => new DOMRect(a.x, Math.max(a.y, b.y), a.width, Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.y, b.y)));
     const problems: string[] = [];
     const buttons = [...root.querySelectorAll("[data-testid=voice-controls] button")].map((b) => b.getBoundingClientRect());
-    const log = root.querySelector("[role=log]")?.getBoundingClientRect();
-    const others: Array<[string, Element | null]> = [
+    const input = root.querySelector("form input[id$='-q']")?.closest("form")?.getBoundingClientRect();
+    const chat = root.querySelector("[data-testid=chat-log]") as HTMLElement | null;
+    const chatShown = chat && chat.dataset.hidden !== "true";
+    const area = (chatShown ? chat : root.querySelector("[data-testid=voice-cards]"))?.getBoundingClientRect();
+    const fixed: Array<[string, Element | null]> = [
       ["status", root.querySelector("[data-testid=voice-status]")],
       ["caption", root.querySelector("[data-testid=voice-caption]")],
       ["you said", root.querySelector("[data-testid=voice-heard]")],
-      ...[...root.querySelectorAll("[data-testid=voice-summary], [data-testid=assistant-options], [data-testid=phone-field], [data-testid=email-field], [data-testid=voice-slip]")].map((el) => [el.getAttribute("data-testid") ?? "card", el] as [string, Element]),
     ];
-    for (const [name, el] of others) {
-      const b = box(el);
-      if (!b || b.width === 0 || b.height === 0) continue;
-      // A card inside the scrolling chat only counts where the chat shows it.
-      const shown = name === "status" || name === "caption" || name === "you said" || !log ? b : new DOMRect(b.x, Math.max(b.y, log.y), b.width, Math.max(0, Math.min(b.bottom, log.bottom) - Math.max(b.y, log.y)));
+    const cards = [...root.querySelectorAll("[data-testid=voice-summary], [data-testid=assistant-options], [data-testid=phone-field], [data-testid=email-field], [data-testid=voice-slip]")].map((el) => [el.getAttribute("data-testid") ?? "card", el] as [string, Element]);
+    for (const [name, el] of [...fixed, ...cards]) {
+      if (!el) continue;
+      const b = el.getBoundingClientRect();
+      if (b.width === 0 || b.height === 0) continue;
+      // A card scrolls inside its own area: only the part that area shows counts.
+      const shown = cards.some(([, c]) => c === el) && area ? clip(b, area) : b;
       if (shown.height <= 0) continue;
-      for (const btn of buttons) if (hit(shown, btn)) problems.push(`${name} overlaps a control button`);
+      for (const btn of buttons) if (hit(shown, btn)) problems.push(`${name} overlaps the mic or End button`);
+      if (input && hit(shown, input)) problems.push(`${name} overlaps the "Or type here" input row`);
     }
+    // Nothing in voice mode reaches into the input row.
+    const below = root.querySelector("[data-testid=voice-mode]")?.getBoundingClientRect();
+    if (below && input && below.bottom > input.y + 0.5) problems.push(`voice mode runs ${Math.round(below.bottom - input.y)} px into the input row`);
     const caption = root.querySelector("[data-testid=voice-caption]") as HTMLElement | null;
     if (caption && caption.getBoundingClientRect().height > 46) problems.push(`caption taller than two lines (${Math.round(caption.getBoundingClientRect().height)} px)`);
+    // No duplicate text: with the chat hidden (the default), the caption's sentence is nowhere else on screen.
+    const said = (caption?.textContent ?? "").trim();
+    if (!chatShown && said) {
+      // (The hidden chat stays in the page for screen readers only, so it is not "on screen".)
+      const visible = [...root.querySelectorAll("[data-testid=voice-cards] *, [data-testid=voice-below] p")].filter((el) => !el.closest("[data-testid=chat-log]") && (el as HTMLElement).offsetParent !== null && el.getBoundingClientRect().height > 2);
+      if (visible.some((el) => (el.textContent ?? "").includes(said) && !el.contains(caption))) problems.push(`the caption "${said.slice(0, 40)}" is also shown elsewhere`);
+    }
     return [...new Set(problems)];
   });
 }
@@ -559,7 +626,22 @@ test.describe("voice receptionist self-test as a patient", () => {
         else record.checks.push("no 'afsos'");
         if (!record.failures.some((f) => f.startsWith("panel"))) record.checks.push("panel clean after every turn");
         const shots = process.env.VOICE_SHOTS_DIR;
-        if (voice && conv.id === 24) {
+        if (voice && conv.id >= 25) {
+          // The finished panel (slip card) at a phone, a tablet and a laptop, chat hidden; #27 also with the chat shown.
+          for (const size of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1366, height: 768 }]) {
+            await page.setViewportSize(size);
+            await page.waitForTimeout(300);
+            for (const problem of await panelProblems(dialog)) fail(`panel at ${size.width}px: ${problem}`);
+            if (shots) await page.screenshot({ path: `${shots}/voice-mode-${conv.id}-${size.width}.png` });
+            if (conv.id === 27) {
+              await dialog.getByRole("button", { name: "Show chat" }).click();
+              for (const problem of await panelProblems(dialog)) fail(`panel with chat at ${size.width}px: ${problem}`);
+              if (shots) await page.screenshot({ path: `${shots}/voice-mode-27-${size.width}-chat.png` });
+              await dialog.getByRole("button", { name: "Hide chat" }).click();
+            }
+          }
+          record.checks.push("panel clean at 390, 768 and 1366 px" + (conv.id === 27 ? " (chat hidden and shown)" : ""));
+        } else if (voice && conv.id === 24) {
           // The same finished panel at a phone and a laptop width: still nothing on the buttons.
           for (const size of [{ width: 390, height: 844 }, { width: 1366, height: 768 }]) {
             await page.setViewportSize(size);
@@ -589,6 +671,12 @@ test.describe("voice receptionist self-test as a patient", () => {
           if (URDU.test(text)) fail("Urdu letters on the slip");
           if (!conv.books.department.test(text)) fail(`slip department ${conv.books.department} missing`);
           if (conv.books.test && !conv.books.test.test(text)) fail(`slip test ${conv.books.test} missing`);
+          if (conv.id >= 25) {
+            if (!/\b\d{1,2}:\d\d (AM|PM) \(Pakistan time\)/.test(text)) fail("slip: no 12-hour time with (Pakistan time)");
+            else if (!/Please arrive by \d{1,2}:\d\d (AM|PM)/.test(text)) fail("slip: arrive-by is not 12-hour");
+            else if (/\b([01]\d|2[0-3]):[0-5]\d \(/.test(text)) fail("slip: a 24-hour time is still shown");
+            else record.checks.push("slip shows 12-hour time");
+          }
           record.checks.push("slip opened, English only");
           await slip.close();
         }

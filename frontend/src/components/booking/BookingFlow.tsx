@@ -18,7 +18,7 @@ import { StepIndicator } from "@/components/booking/StepIndicator";
 import { SampleBadge } from "@/components/ui/SampleBadge";
 import { DetailsFormSchema, type DetailsFormInput, type DetailsFormValues } from "@/lib/booking/form";
 import { FLOW_STEPS, parseFlowParams, serializeFlowParams, type FlowParams, type FlowStep } from "@/lib/booking/flowUrl";
-import { DOCTOR_GONE_MESSAGE, NO_SLOTS_MESSAGE, STEP_HEADING, formatLocalDate, timeZoneLabel } from "@/lib/booking/labels";
+import { DOCTOR_GONE_MESSAGE, NO_SLOTS_MESSAGE, STEP_HEADING, formatClockTime, formatLocalDate, timeZoneLabel } from "@/lib/booking/labels";
 import { fetchSlots, postBooking } from "@/lib/booking/client";
 import { attemptFingerprint, useAttemptKey } from "@/lib/booking/idempotency";
 import { AppointmentViewSchema, BookingConflictSchema, ErrorResponseSchema, type AlternativeSlot, type DoctorSlots } from "@/lib/booking/schemas";
@@ -438,7 +438,7 @@ export function BookingFlow({ departments, doctors, clinicPhone, timeZone }: Boo
                   <dd>{formatLocalDate(params.date)}</dd>
                   <dt className="text-muted">Time</dt>
                   <dd>
-                    {slot.localTime} ({zoneName})
+                    {formatClockTime(slot.localTime)} ({zoneName})
                   </dd>
                   <dt className="text-muted">Fee</dt>
                   <dd>{formatPkr(doctor.feePkr)} (sample)</dd>

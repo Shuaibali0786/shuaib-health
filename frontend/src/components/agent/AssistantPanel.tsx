@@ -1,7 +1,7 @@
 "use client";
 
 import { AudioLines, Mic, Send, X } from "lucide-react";
-import { Suspense, lazy, useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { Suspense, lazy, useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { QUICK_REPLIES, welcomeMessage } from "@/agent/localEngine";
 import { MAX_QUESTION } from "@/agent/normalize";
@@ -257,8 +257,24 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
       </>
     ) : null;
 
-  const renderLog = (extras?: ReactNode): ReactNode => (
-    <div ref={log} className="min-h-[6.5rem] flex-1 space-y-3 overflow-y-auto px-4 py-4" role="log" aria-live="polite" aria-label="Conversation" tabIndex={0}>
+  // In voice mode the written chat is hidden by default (owner 2026-11-09): it stays in the page for screen readers
+  // (the same polite live region), but takes no space and is never drawn over the input.
+  // A chat that appears (voice mode's "Show chat") opens at the newest message.
+  const showLog = useCallback((el: HTMLDivElement | null) => {
+    log.current = el;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
+  const renderLog = (extras?: ReactNode, options: { hidden?: boolean } = {}): ReactNode => (
+    <div
+      ref={showLog}
+      className={options.hidden ? "sr-only" : "min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4"}
+      role="log"
+      aria-live="polite"
+      aria-label="Conversation"
+      tabIndex={options.hidden ? -1 : 0}
+      data-testid="chat-log"
+      data-hidden={options.hidden ? "true" : undefined}
+    >
       {messages.map((message) => (
         <div key={message.id} className={cn("flex", message.from === "you" ? "justify-end" : "justify-start")}>
           <div className={cn("max-w-[85%] rounded-card px-3.5 py-2.5 text-sm", message.from === "you" ? "bg-navy-900 text-white" : "border border-border bg-surface text-ink")}>
@@ -348,7 +364,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
         </Suspense>
       ) : (
         <>
-          {renderLog(cards)}
+          <div className="flex min-h-[6.5rem] flex-1 flex-col">{renderLog(cards)}</div>
           {suggestions.length ? (
             <div className="flex gap-2 overflow-x-auto px-4 pb-2" role="group" aria-label="Suggested questions">
               {suggestions.map((s) => (

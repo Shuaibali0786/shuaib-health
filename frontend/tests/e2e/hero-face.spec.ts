@@ -76,6 +76,9 @@ test.describe("hero: the doctor's face is never covered", () => {
       const mid = (b: Box) => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
       expect(mid(open as Box).y, "Open: top edge").toBeLessThan(p.y + p.height * 0.25);
       expect(mid(open as Box).x, "Open: left").toBeLessThan(p.x + p.width / 2);
+      // Owner 2026-11-09 (final polish): fully inside the photo's top-left corner.
+      expect((open as Box).x, "Open: inside the photo (left)").toBeGreaterThanOrEqual(p.x);
+      expect((open as Box).y, "Open: inside the photo (top)").toBeGreaterThanOrEqual(p.y);
       // Owner 2026-11-09: inside the photo, lower-left, about a third up from the bottom (not on the bottom edge).
       expect(mid(reports as Box).y, "Lab reports: lower part").toBeGreaterThan(p.y + p.height * 0.5);
       expect(mid(reports as Box).y, "Lab reports: a third up, not the bottom edge").toBeLessThan(p.y + p.height * 0.8);
