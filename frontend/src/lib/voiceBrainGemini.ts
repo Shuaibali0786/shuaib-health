@@ -55,24 +55,87 @@ function tools(pack: KnowledgePack) {
   ];
 }
 
+/** The model chosen from ListModels when the configured one is not available (per server instance; never the key). */
+let discoveredModel: string | null = null;
+/** Test hook: forget the discovered model. */
+export function resetDiscoveredModel(): void {
+  discoveredModel = null;
+}
+
+/** What Google said, safe to log: status code and reason text only (the key, if echoed, is blanked). Never patient text. */
+async function reasonOf(res: Response, key: string): Promise<string> {
+  try {
+    const body = (await res.json()) as { error?: { status?: string; message?: string } };
+    const text = `${body.error?.status ?? ""} ${body.error?.message ?? ""}`.trim();
+    return text.split(key).join("[key]").replace(/AIza[\w-]{10,}/g, "[key]").replace(/\s+/g, " ").slice(0, 240);
+  } catch {
+    return "(no reason given)";
+  }
+}
+
+const log = (message: string) => console.warn(`[voice-brain] ${message}`);
+
+/**
+ * Asks Google which models this key can use and picks the first stable "gemini-*-flash" that can generate content
+ * (a preview, experimental, image, audio or live model only if nothing else exists). Logs the status or the chosen name.
+ */
+async function pickFlashModel(key: string, fetcher: typeof fetch): Promise<string | null> {
+  try {
+    const res = await fetcher(`${ENDPOINT}?pageSize=200`, { headers: { "x-goog-api-key": key }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    if (!res.ok) {
+      log(`ListModels failed: HTTP ${res.status} ${await reasonOf(res, key)}`);
+      return null;
+    }
+    const body = (await res.json()) as { models?: Array<{ name?: string; supportedGenerationMethods?: string[] }> };
+    const flash = (body.models ?? [])
+      .filter((m) => /^models\/gemini-[\w.-]*flash[\w.-]*$/.test(m.name ?? "") && (m.supportedGenerationMethods ?? []).includes("generateContent"))
+      .map((m) => (m.name ?? "").slice("models/".length));
+    const stable = flash.filter((n) => !/preview|exp|image|tts|audio|live|thinking|lite|latest/.test(n));
+    const chosen = stable[0] ?? flash[0] ?? null;
+    log(chosen ? `chose model ${chosen}` : "ListModels worked but no gemini flash model is available for this key");
+    return chosen;
+  } catch {
+    log("ListModels failed: no answer (network or timeout)");
+    return null;
+  }
+}
+
+async function generate(text: string, lang: "en" | "roman", pack: KnowledgePack, key: string, model: string, fetcher: typeof fetch): Promise<Response> {
+  return fetcher(`${ENDPOINT}/${model}:generateContent`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-goog-api-key": key },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: systemPrompt(pack) }] },
+      contents: [{ role: "user", parts: [{ text: `(${lang === "roman" ? "Roman Urdu" : "English"}) ${text.slice(0, 300)}` }] }],
+      tools: tools(pack),
+      toolConfig: { functionCallingConfig: { mode: "ANY" } },
+      generationConfig: { temperature: 0.1, maxOutputTokens: 256 },
+    }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+}
+
 /** Gemini's choice, validated against the catalog; null when off, failing, or invalid. */
 export async function askGemini(text: string, lang: "en" | "roman", pack: KnowledgePack, settings: { key: string; model: string } | null, fetcher: typeof fetch = fetch): Promise<BrainDecision | null> {
   if (!settings?.key) return null;
-  const { key, model } = settings;
+  const { key } = settings;
   try {
-    const res = await fetcher(`${ENDPOINT}/${model}:generateContent`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt(pack) }] },
-        contents: [{ role: "user", parts: [{ text: `(${lang === "roman" ? "Roman Urdu" : "English"}) ${text.slice(0, 300)}` }] }],
-        tools: tools(pack),
-        toolConfig: { functionCallingConfig: { mode: "ANY" } },
-        generationConfig: { temperature: 0.1, maxOutputTokens: 256 },
-      }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-    if (!res.ok) return null;
+    let model = discoveredModel ?? settings.model;
+    let res = await generate(text, lang, pack, key, model, fetcher);
+    if (!res.ok) {
+      log(`generateContent with ${model} failed: HTTP ${res.status} ${await reasonOf(res, key)}`);
+      // Over the free limit (429) is not a model problem. Anything else: ask which models this key has, once.
+      if (res.status !== 429 && !discoveredModel) {
+        const other = await pickFlashModel(key, fetcher);
+        if (other && other !== model) {
+          discoveredModel = other;
+          model = other;
+          res = await generate(text, lang, pack, key, model, fetcher);
+          if (!res.ok) log(`generateContent with ${model} failed: HTTP ${res.status} ${await reasonOf(res, key)}`);
+        }
+      }
+      if (!res.ok) return null;
+    }
     const body = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ functionCall?: { name?: string; args?: Record<string, unknown> } }> } }> };
     const call = body.candidates?.[0]?.content?.parts?.find((p) => p.functionCall)?.functionCall;
     if (!call?.name) return null;
@@ -80,6 +143,7 @@ export async function askGemini(text: string, lang: "en" | "roman", pack: Knowle
     if (!parsed.success) return null;
     return validInCatalog(parsed.data, pack) ? parsed.data : null;
   } catch {
+    log("the Gemini call did not complete (network or timeout)");
     return null;
   }
 }

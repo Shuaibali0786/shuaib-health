@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { askGemini, validInCatalog } from "@/lib/voiceBrainGemini";
+import { askGemini, resetDiscoveredModel, validInCatalog } from "@/lib/voiceBrainGemini";
 import type { Brain } from "@/voice/brain";
 
 import { makeWorld, packFor } from "../voice/harness";
@@ -49,6 +49,62 @@ describe("askGemini (server)", () => {
     const env = { key: "k", model: "gemini-2.5-flash" };
     expect(await askGemini("x", "en", pack, env, (() => Promise.resolve(new Response("{}", { status: 429 }))) as never)).toBeNull();
     expect(await askGemini("x", "en", pack, env, (() => Promise.reject(new Error("timeout"))) as never)).toBeNull();
+  });
+
+  describe("logging and model discovery (owner 2026-11-09)", () => {
+    const warn = () => vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
+
+    it("logs only Google's status and reason, never the key or the patient's words", async () => {
+      resetDiscoveredModel();
+      const spy = warn();
+      const fetcher = vi.fn((url: string) => Promise.resolve(url.includes(":generateContent") ? json({ error: { status: "PERMISSION_DENIED", message: "API key SECRETKEY123 is not valid" } }, 403) : json({ error: { status: "PERMISSION_DENIED", message: "no" } }, 403)));
+      expect(await askGemini("mujhe neend nahi aati", "roman", pack, { key: "SECRETKEY123", model: "gemini-2.5-flash" }, fetcher as never)).toBeNull();
+      const logged = spy.mock.calls.map((c) => String(c[0])).join("\n");
+      expect(logged).toContain("HTTP 403 PERMISSION_DENIED");
+      expect(logged).toContain("[key]");
+      expect(logged).not.toContain("SECRETKEY123");
+      expect(logged).not.toContain("neend");
+      spy.mockRestore();
+    });
+
+    it("when the model is not found it lists models, picks the first stable gemini flash, retries, and logs only its name", async () => {
+      resetDiscoveredModel();
+      const spy = warn();
+      const fetcher = vi.fn((url: string) => {
+        if (url.includes("gemini-2.5-flash:generateContent")) return Promise.resolve(json({ error: { status: "NOT_FOUND", message: "model not found" } }, 404));
+        if (url.includes("?pageSize")) {
+          return Promise.resolve(
+            json({
+              models: [
+                { name: "models/gemini-3-pro", supportedGenerationMethods: ["generateContent"] },
+                { name: "models/gemini-3-flash-preview", supportedGenerationMethods: ["generateContent"] },
+                { name: "models/gemini-3-flash", supportedGenerationMethods: ["generateContent"] },
+                { name: "models/gemini-3-flash-embed", supportedGenerationMethods: ["embedContent"] },
+              ],
+            }),
+          );
+        }
+        return reply("suggest_department", { slug: "general-medicine" });
+      });
+      const out = await askGemini("neend nahi aati", "roman", pack, { key: "k", model: "gemini-2.5-flash" }, fetcher as never);
+      expect(out).toEqual({ action: "suggest_department", slug: "general-medicine" });
+      expect(spy.mock.calls.map((c) => String(c[0])).join("\n")).toContain("chose model gemini-3-flash");
+      // The next turn goes straight to the discovered model.
+      await askGemini("x", "en", pack, { key: "k", model: "gemini-2.5-flash" }, fetcher as never);
+      expect((fetcher.mock.calls.at(-1) as unknown as [string])[0]).toContain("gemini-3-flash:generateContent");
+      spy.mockRestore();
+      resetDiscoveredModel();
+    });
+
+    it("over the free limit (429) does not look for another model", async () => {
+      resetDiscoveredModel();
+      const spy = warn();
+      const fetcher = vi.fn(() => Promise.resolve(json({ error: { status: "RESOURCE_EXHAUSTED", message: "quota" } }, 429)));
+      expect(await askGemini("x", "en", pack, { key: "k", model: "gemini-2.5-flash" }, fetcher as never)).toBeNull();
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      spy.mockRestore();
+    });
   });
 
   it("validInCatalog accepts only what we have", () => {
