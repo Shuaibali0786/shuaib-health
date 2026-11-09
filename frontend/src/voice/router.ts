@@ -11,7 +11,7 @@ import type { AppointmentView } from "@/lib/booking/schemas";
 import { departmentForSymptoms } from "@/agent/localEngine";
 import { formatPkr } from "@/lib/format";
 
-import { bookingStep, currentQuestion, newBookingState, type BookingState, type DialogDeps } from "./bookingDialog";
+import { bookingStep, currentQuestion, inputFor, newBookingState, type BookingState, type DialogDeps } from "./bookingDialog";
 import { clinicNow, dayName, doctorsOf, findDepartment, findDoctors, findLabTest, findPackage, labDepartment, labItem, mentionsLabTest, mentionsPackage, openDayNames, openingOn, resolveLabTest } from "./entities";
 import { hasUrduScript, replyLanguage, urduToLatin } from "./language";
 import type { Brain } from "./brain";
@@ -23,7 +23,7 @@ import { extractEmail } from "./parse/name";
 import { extractPhone } from "./parse/phone";
 import { parseYesNo } from "./parse/yesno";
 import { asksOpenToday, asksToBook, asksTreatment, canonicalize, complains, wantsTest } from "./understand";
-import { DONT_KNOW, T } from "./phrases";
+import { ASSISTANT_NAME, DONT_KNOW, reassure, T } from "./phrases";
 import { guardTurn } from "./safety";
 import type { BookingDraft, VoiceLang } from "./types";
 
@@ -70,8 +70,8 @@ export type RouterResult = {
   options?: string[];
   /** What the next short answer refers to (see RouterContext.awaiting). */
   awaiting?: Awaiting;
-  /** A field to type the answer into, under the reply (the mobile number). */
-  input?: "phone";
+  /** A field to type the answer into, under the reply (the mobile number, or the email after one unclear try). */
+  input?: "phone" | "email";
 };
 
 const BOOK_WORDS = /\b(book|booking|appointment|appoint|reserve|reservation|slot|apointment|appointmnt)\b/;
@@ -334,11 +334,16 @@ function askTest(ctx: RouterContext, lang: VoiceLang): RouterResult {
 /** "Assalam o Alaikum" or "hello" at the start of a turn gets a greeting back before the answer. */
 function greetingBack(raw: string, lang: VoiceLang): string {
   const clean = cleanText(urduToLatin(raw));
+  // "Assalam o alaikum, kaise hain? Mujhe bukhar hai": the greeting and the "how are you" are answered first.
+  const how = HOW_ARE_YOU.test(clean) ? T(lang, "I'm doing well, thank you!", "Main bilkul theek hoon, shukriya!") : "";
+  return [helloBack(raw, lang), how].filter(Boolean).join(" ");
+}
+
+/** "Wa alaikum assalam!", "Good morning!" or "Hello!" for a turn that starts with a greeting, else "". */
+function helloBack(raw: string, lang: VoiceLang): string {
+  const clean = cleanText(urduToLatin(raw));
   if (SALAM.test(clean)) return "Wa alaikum assalam!";
-  const day = timeOfDayGreeting(clean);
-  if (day) return day;
-  if (/^(hi|hello|hey|helo|hallo)\b/.test(clean)) return T(lang, "Hello!", "Assalam o Alaikum!");
-  return "";
+  return timeOfDayGreeting(clean) ?? (/^(hi|hello|hey|helo|hallo)\b/.test(clean) ? T(lang, "Hello!", "Assalam o Alaikum!") : "");
 }
 
 // "Good mroning", "gud evning", "good afternon": the recogniser's and the keyboard's spellings of the time of day.
@@ -371,6 +376,56 @@ export function greetingOnly(raw: string): boolean {
   return rest.split(" ").filter(Boolean).every((w) => GREETING_FILLER.has(w) || PART_OF_DAY.some(([re]) => re.test(w)));
 }
 
+// --- Small talk (owner 2026-11-09: a warm receptionist, never "Sorry, I didn't catch that" for "how are you") ----
+
+const HOW_ARE_YOU = /\b(how are (you|u)|how r (you|u)|how (are|is) (it going|things|your day)|how s (it going|your day)|how do you do|how you doing|how have you been|(aap|ap|tum|app) (kaise|kaisi|kaisay|kesi|kese)( (ho|hain|hai|hein|hen))?|(kaise|kaisi|kaisay|kesi|kese) (ho|hain|hai|hein|hen)( (aap|ap|tum|app))?|(kya|kia) (haal|hal) (hai|hain|he)|haal chaal|(aur|or) sunao|(aur|or) sunaiye)\b/;
+const FINE = /\b((i m|i am|im|main|mai|me|hum) )?(fine|good|great|well|very well|doing (well|good|great|fine)|not bad|all good|(bilkul )?(theek|thik|teek) (hoon|hun|hu|hain|thaak|thak)|theek thaak|alhamdulillah|alhamdolillah|alhamdulilah|badhiya|zabardast)\b/;
+const THANKS = /\b(thanks|thank (you|u)|thx|shukriya|shukria|bohat shukriya|jazak ?allah\w*|meherbani)\b/;
+const BYE = /\b(bye|bye bye|goodbye|good bye|allah hafiz|khuda hafiz|alvida|see you|take care)\b/;
+// Words that can sit around small talk and add nothing ("ji", "sir", "and you", "aaj", "bhi", the assistant's name).
+const TALK_FILLER = new Set("ji jee sir madam mam maam and aur or you u too also bhi bohat bahut very much so today aaj main i am im hoon hun hain ho hai sab kuch thank thanks ayesha dear please to toh well nice good ok okay acha achha accha yes haan han allah wa alaikum alaikom alykum assalam o salam aoa hi hello hey morning afternoon evening for asking poochne ka ki kaa ke shukriya".split(" "));
+
+type Talk = { how: boolean; fine: boolean; thanks: boolean; bye: boolean };
+
+/** The kinds of small talk in a turn, or null when the turn has something else in it (a problem, a question). */
+export function smallTalkOf(raw: string): Talk | null {
+  const all = cleanText(urduToLatin(raw));
+  // "Good morning" is a greeting, not "I'm good".
+  const day = GOOD.exec(all);
+  const clean = day && timeOfDayGreeting(all) ? all.slice(day[0].length) : all;
+  if (!clean.trim()) return null;
+  const talk: Talk = { how: HOW_ARE_YOU.test(clean), fine: FINE.test(clean), thanks: THANKS.test(clean), bye: BYE.test(clean) };
+  if (!talk.how && !talk.fine && !talk.thanks && !talk.bye) return null;
+  const rest = [HOW_ARE_YOU, FINE, THANKS, BYE, SALAM].reduce((s, re) => s.replace(new RegExp(re.source, "g"), " "), clean);
+  return rest.split(" ").filter(Boolean).every((w) => TALK_FILLER.has(w)) ? talk : null;
+}
+
+/** A warm answer to small talk; with `help`, ends by offering help. */
+function smallTalkReply(talk: Talk, lang: VoiceLang, help: boolean): string {
+  if (talk.bye) return T(lang, `Thank you for talking with us. Take care, and have a lovely day!`, "Bohat shukriya! Apna khayal rakhiye, Allah Hafiz!");
+  const parts: string[] = [];
+  if (talk.how && talk.fine) parts.push(T(lang, "Glad to hear that! I'm doing great too, thank you.", "Sun kar khushi hui! Main bhi bilkul theek hoon, shukriya!"));
+  else if (talk.how) parts.push(T(lang, "I'm doing great, thank you for asking!", "Main bilkul theek hoon, shukriya!"));
+  else if (talk.fine) parts.push(T(lang, "Glad to hear that!", "Sun kar khushi hui!"));
+  else if (talk.thanks) parts.push(T(lang, "You're very welcome!", "Koi baat nahi, khushi hui!"));
+  if (help) parts.push(talk.thanks && !talk.how && !talk.fine ? T(lang, "Is there anything else I can help you with?", "Kuch aur madad chahiye to zaroor bataiye.") : T(lang, "How can I help you today?", "Aap sunaiye, main aap ki kya madad karoon?"));
+  return parts.join(" ");
+}
+
+/**
+ * "Thank you Ayesha" or "Ayesha, mujhe doctor chahiye" speaks to the receptionist, not about Dr. Ayesha Rahman: her
+ * name is dropped unless it comes with "doctor"/"Dr" or a surname of one of our doctors.
+ */
+export function withoutAssistantName(text: string, pack: KnowledgePack): string {
+  const surnames = pack.doctors.filter((d) => new RegExp(`\\b${ASSISTANT_NAME}\\b`, "i").test(d.name)).map((d) => d.name.split(" ").at(-1)?.toLowerCase() ?? "");
+  return text.replace(new RegExp(`(^|[^\\p{L}])(${ASSISTANT_NAME})(?=$|[^\\p{L}])`, "giu"), (whole, pre: string, _n: string, offset: number) => {
+    const before = text.slice(Math.max(0, offset - 12), offset + pre.length).toLowerCase();
+    const after = text.slice(offset + whole.length, offset + whole.length + 20).toLowerCase();
+    if (/\b(dr|doctor|daktar)\.?\s*$/.test(before) || surnames.some((s) => s && after.trimStart().startsWith(s))) return whole;
+    return `${pre} `;
+  });
+}
+
 /** "Dr. Hassan Mirza (PKR 2,000) and Dr. Omar Sheikh (PKR 1,800)": the doctors of a department with their fees. */
 function doctorsWithFees(ctx: RouterContext, slug: string, lang: VoiceLang): string {
   const team = doctorsOf(slug, ctx.pack).slice(0, 3);
@@ -384,7 +439,7 @@ function suggestDepartment(ctx: RouterContext, slug: string, lang: VoiceLang, gr
   const docs = doctorsWithFees(ctx, slug, lang);
   // Sympathy only for pain or illness, never for a cleaning, a check-up or a pregnancy.
   const unwell = /\b(dard|pain|ache|problem|masla|bukhar|fever|khansi|cough|zukam|flu|allergy|daane|rash|kharish|khujli|itch\w*|takleef|bimar|sick|ulti|vomit\w*|dast|chakkar|dizz\w*|high|infection)\b/.test(cleanText(topic));
-  const sorry = unwell ? T(lang, "I'm sorry to hear that.", "Mujhe sun kar afsos hua.") : "";
+  const sorry = unwell ? reassure(lang, cleanText(topic)) : "";
   return {
     lang,
     booking: null,
@@ -531,7 +586,7 @@ export function acceptsOffer(text: string): boolean {
 /** A new department or lab item named while a booking is being collected, as a fresh prefill; null when the topic is the same. */
 function topicChange(ctx: RouterContext, booking: BookingState, mapped: string): Partial<BookingDraft> | null {
   if (!["collecting", "awaiting_yes"].includes(booking.phase)) return null;
-  if (booking.asking === "fullName" || booking.asking === "email" || booking.asking === "nameCheck") return null;
+  if (booking.asking === "fullName" || booking.asking === "email" || booking.asking === "nameCheck" || booking.asking === "emailCheck") return null;
   if (extractPhone(mapped, "").status === "complete" || parseYesNo(mapped) === "yes") return null;
   if (booking.asking === "phone" && extractPhone(mapped, "", { fuzzy: true }).status !== "none") return null;
   const d = booking.draft;
@@ -550,10 +605,11 @@ function topicChange(ctx: RouterContext, booking: BookingState, mapped: string):
 
 /** Routes one turn. Never throws for ordinary input; network problems inside the booking dialog are handled there. */
 export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise<RouterResult> {
-  const latin = urduToLatin(input.text);
   // Names and emails are taken word for word; everything else is read with Roman Urdu spellings and typos mapped.
   // The mobile number too: "Thi", "Fa", "S" are misheard digits there, not typos to be corrected.
-  const literal = ctx.booking?.phase === "collecting" && (ctx.booking.asking === "fullName" || ctx.booking.asking === "email" || ctx.booking.asking === "phone");
+  const literal = ctx.booking?.phase === "collecting" && (ctx.booking.asking === "fullName" || ctx.booking.asking === "email" || ctx.booking.asking === "emailCheck" || ctx.booking.asking === "phone");
+  // "Thank you Ayesha" talks to the receptionist (a patient called Ayesha still gives her own name word for word).
+  const latin = literal ? urduToLatin(input.text) : withoutAssistantName(urduToLatin(input.text), ctx.pack);
   const mapped = canonicalize(latin, { fuzzy: !literal });
   const dialogText = literal ? latin : mapped;
   const lang = replyLanguage(`${input.text} ${mapped}`, ctx.lang);
@@ -588,6 +644,11 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     if (asking && asksOpenToday(mapped)) {
       const today = openToday(ctx, lang);
       if (today) return { ...base, ...today, booking: ctx.booking, offer: null, text: `${today.text.replace(/ (Shall I book|Kya main kisi).*$/, "")} ${currentQuestion(ctx.booking, ctx.deps, lang)}`.trim() };
+    }
+    // "Thank you" or "how are you?" in the middle of a booking: a warm word, then the same question again.
+    const talk = asking ? smallTalkOf(latin) : null;
+    if (talk && (talk.how || talk.thanks) && !talk.bye && ctx.booking.asking !== "nameCheck" && ctx.booking.asking !== "emailCheck") {
+      return { ...base, offer: null, intent: "small_talk", text: `${smallTalkReply({ ...talk, fine: false }, lang, false)} ${currentQuestion(ctx.booking, ctx.deps, lang)}`.trim(), input: inputFor(ctx.booking) };
     }
     if (asking && QUESTION.test(mapped.trim()) && !/(name|naam|number|phone|mobile)/i.test(mapped) && parseYesNo(mapped) === "unclear" && !complains(mapped)) {
       const answer = await engineAnswer(ctx, mapped, lang);
@@ -641,6 +702,12 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     }
 
     const greet = greetingBack(input.text, lang);
+    // Small talk ("kaise hain aap?", "I'm fine, thank you", "shukriya", "Allah Hafiz"): a warm human answer.
+    const talk = smallTalkOf(input.text);
+    if (talk) {
+      const text = [helloBack(input.text, lang), smallTalkReply(talk, lang, true)].filter(Boolean).join(" ");
+      return { ...base, offer: talk.bye ? null : ctx.offer, intent: "small_talk", text, options: talk.bye ? [] : startChoices(ctx.pack, lang), awaiting: talk.bye ? null : "problem" };
+    }
     // A greeting alone ("good mroning", "AOA ji") is greeted back warmly, never asked "what is the problem?".
     if (greetingOnly(input.text)) {
       return { ...base, intent: "greeting", text: `${greet || T(lang, "Hello!", "Assalam o Alaikum!")} ${T(lang, "How can I help you today?", "Bataiye, main aap ki kya madad kar sakti hoon?")}`, options: startChoices(ctx.pack, lang), awaiting: "problem" };
@@ -786,8 +853,8 @@ export class Conversation {
   async turn(text: string, options: { confirmable: boolean }): Promise<RouterResult> {
     // Remember the doctor the patient names (not while they give their own name, number or email: "Sana" is a patient).
     const asking = this.ctx.booking?.phase === "collecting" ? this.ctx.booking.asking : null;
-    if (this.ctx.mode === "patient" && asking !== "fullName" && asking !== "nameCheck" && asking !== "email" && asking !== "phone") {
-      const named = findDoctors(canonicalize(urduToLatin(text)), this.ctx.pack);
+    if (this.ctx.mode === "patient" && asking !== "fullName" && asking !== "nameCheck" && asking !== "email" && asking !== "emailCheck" && asking !== "phone") {
+      const named = findDoctors(canonicalize(withoutAssistantName(urduToLatin(text), this.ctx.pack)), this.ctx.pack);
       if (named.length === 1 && named[0]) this.ctx.lastDoctor = named[0].slug;
     }
     const out = this.polish(await routeTurn(this.ctx, { text, confirmable: options.confirmable }));

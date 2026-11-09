@@ -10,14 +10,15 @@ import { ROUTES } from "@/lib/routes";
 
 /**
  * The three fact cards sit on the photo's edges at every width, never over the doctor's face (owner test 2026-11-09:
- * "Lab reports online" covered it): opening hours on the top-left edge above the hair line, lab reports on the
- * bottom-left edge (the chair), home sample collection on the bottom-right edge (the desk), raised above the fixed
+ * "Lab reports online" covered it): opening hours on the top-left edge above the hair line, lab reports inside the
+ * photo at the lower left, a third up from the bottom (owner 2026-11-09), home sample collection on the bottom-right edge (the desk), raised above the fixed
  * "Ask us" button. Checked at 1920, 1366, 768 and 390 px by tests/e2e/hero-face.spec.ts.
  */
 const FACT_POSITION = [
   "-top-10 left-2 max-w-[60%] sm:-top-12 sm:max-w-[16rem] lg:-top-9 lg:-left-8 lg:max-w-[15rem]",
-  // On a phone the two bottom cards are narrow and staggered, so neither slides under "Ask us" while scrolling.
-  "bottom-3 left-2 max-w-[50%] sm:bottom-5 sm:max-w-[16rem] lg:bottom-8 lg:-left-8",
+  // Owner 2026-11-09: inside the photo, lower-left, about a third up from the bottom (left of and below the face).
+  // (A little higher on a tablet, where the photo is narrow and the right-hand card sits higher.)
+  "bottom-[30%] left-3 max-w-[50%] sm:bottom-[38%] sm:left-4 sm:max-w-[16rem] lg:bottom-[30%] lg:left-5",
   // 76 px up on a phone: below "Ask us" on the first screen, and above it once the photo is scrolled fully into view.
   "bottom-[4.75rem] right-2 max-w-[50%] sm:bottom-32 sm:max-w-[16rem] lg:bottom-28 lg:-right-6",
 ];

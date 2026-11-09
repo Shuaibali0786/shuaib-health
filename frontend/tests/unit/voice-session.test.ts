@@ -76,7 +76,7 @@ describe("the welcome", () => {
     const t = build();
     void t.session.start();
     await settle(t.port);
-    expect(t.turns[0]?.text).toBe("Welcome to Shuaib Health! I'm your AI assistant. How can I help you today?");
+    expect(t.turns[0]?.text).toBe("Hi, welcome to Shuaib Health! I'm Ayesha, your virtual assistant. How are you today?");
     expect(said(t.port)).not.toMatch(/record/i); // "audio is never recorded" is small text, not spoken
     // Neerja (Indian English, natural) reads English AND Roman Urdu well, so she is the one voice of the call.
     expect(t.port.spoken[0]?.voice).toContain("Neerja");
@@ -166,7 +166,7 @@ describe("one voice, automatic language", () => {
     await settle(t.port);
     t.port.hear("What are your timings?");
     await vi.advanceTimersByTimeAsync(1100);
-    expect(t.port.spoken.some((s) => s.text.startsWith("One moment, checking"))).toBe(true);
+    expect(t.port.spoken.some((s) => s.text.startsWith("Just one moment while I check"))).toBe(true);
     await vi.advanceTimersByTimeAsync(1000);
     await settle(t.port);
     expect(said(t.port)).toContain("9 AM");

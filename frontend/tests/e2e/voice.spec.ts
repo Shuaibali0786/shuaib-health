@@ -25,11 +25,32 @@ async function openVoice(page: Page) {
 
 const listening = (dialog: ReturnType<Page["getByRole"]>) => dialog.getByRole("status").filter({ hasText: "Listening..." });
 
+/** The assistant messages in the chat, oldest first (the cards and choices in the log are not messages). */
+const assistantMessages = (page: Page) =>
+  page.getByRole("log").evaluate((log) =>
+    [...log.querySelectorAll(":scope > div > div")]
+      .filter((el) => (el.querySelector(":scope > span.sr-only")?.textContent ?? "").startsWith("Assistant"))
+      .map((el) => el.querySelector(":scope > p")?.textContent ?? ""),
+  );
+
+/**
+ * Waits for a NEW assistant reply that matches. Matching the whole log was flaky: "mobile number" or "Confirm dabaiye"
+ * were already there from earlier turns, so the next line was "said" while the assistant was still thinking or
+ * speaking (the mic is closed then) and was lost.
+ */
+async function expectNewReply(page: Page, before: number, expected: string | RegExp) {
+  const matches = (t: string) => (typeof expected === "string" ? t.includes(expected) : expected.test(t));
+  await expect
+    .poll(async () => (await assistantMessages(page)).slice(before).some(matches), { timeout: 15000, message: `a new reply matching ${String(expected)}` })
+    .toBe(true);
+}
+
 async function say(page: Page, text: string, expected: string | RegExp) {
   // The mic is closed while the assistant speaks: answer once it is listening again, like a patient would.
   await expect(page.getByRole("status").filter({ hasText: "Listening..." })).toBeVisible({ timeout: 20000 });
+  const before = (await assistantMessages(page)).length;
   await hear(page, text);
-  await expect(page.getByRole("log")).toContainText(expected, { timeout: 8000 });
+  await expectNewReply(page, before, expected);
 }
 
 /** A real free day and time from the mock API (it follows its own clock), so the scripts never go stale. */
@@ -67,6 +88,8 @@ async function finishCleanly(page: Page, dialog: ReturnType<Page["getByRole"]>, 
 }
 
 test.describe("voice receptionist", () => {
+  // Each turn now waits for the real reply and for the mic to open again, so a full booking takes longer than 30 s.
+  test.describe.configure({ timeout: 120_000 });
   test("is absent when the flags are off (default)", async ({ page }) => {
     test.skip(ON, "flags are on in this run");
     const response = await page.goto("/");
@@ -90,7 +113,7 @@ test.describe("voice receptionist", () => {
     await installFakeWebSpeech(page);
     const dialog = await openVoice(page);
     await expect(dialog.getByTestId("voice-orb")).toBeVisible();
-    await expect(dialog.getByRole("log")).toContainText("Welcome to Shuaib Health! I'm your AI assistant. How can I help you today?");
+    await expect(dialog.getByRole("log")).toContainText("Hi, welcome to Shuaib Health! I'm Ayesha, your virtual assistant. How are you today?");
     await expect(dialog.getByText(/audio is never recorded/)).toBeVisible();
     await say(page, "What are your timings?", /Mon–Sat/);
     await expect.poll(() => spokenText(page)).toContain("9 AM");
@@ -137,7 +160,7 @@ test.describe("voice receptionist", () => {
     await expect(dialog.getByText("The microphone is blocked")).toBeVisible();
     await expect(dialog.getByText(/Cookies and site permissions/)).toBeVisible();
     await expect(dialog.getByText(/Privacy & security, then Microphone/)).toBeVisible();
-    await expect.poll(() => spokenText(page), { timeout: 10000 }).toContain("Welcome to Shuaib Health");
+    await expect.poll(() => spokenText(page), { timeout: 10000 }).toContain("welcome to Shuaib Health");
     const results = await new AxeBuilder({ page }).include("[role='dialog']").withTags(WCAG).analyze();
     expect(results.violations).toEqual([]);
   });
@@ -268,8 +291,9 @@ test.describe("voice receptionist", () => {
 
     // 2) Change by tapping: pick the name only.
     await card.getByRole("button", { name: "Change" }).click();
+    const beforeTap = (await assistantMessages(page)).length;
     await card.getByRole("button", { name: "Naam" }).click();
-    await expect(dialog.getByRole("log")).toContainText("poora naam kya hai?", { timeout: 8000 });
+    await expectNewReply(page, beforeTap, /poora naam|naam bata dein|kis naam/);
     await say(page, "mera naam Ali Hassan hai", /Confirm dabaiye/);
     await expect(card).toContainText("Ali Hassan");
     await expect(card).toContainText("0321 123 4567");

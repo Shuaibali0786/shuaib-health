@@ -5,6 +5,8 @@
 // letters only, an English slip, no stuck state, no console errors.
 //
 // Run: ASSISTANT_ENABLED=true VOICE_ENABLED=true VOICE_SELFTEST_OUT=<file.json> npx playwright test voice-selftest --project=desktop --workers=1
+// Owner request 2026-11-09 (#19-#24): also no "afsos", and a clean voice panel (nothing on the mic and End buttons);
+// VOICE_SHOTS_DIR=<folder> saves the panel at 1366 and 390 px.
 import { appendFileSync, writeFileSync } from "node:fs";
 
 import { expect, test, type Locator } from "@playwright/test";
@@ -22,7 +24,9 @@ type Step =
   | { tap: number; expect?: RegExp }
   /** Say the n-th choice out loud (in English words, or in Urdu letters with `urdu`). */
   | { sayChoice: number; urdu?: boolean; expect?: RegExp }
-  | { confirm: true; expect?: RegExp };
+  | { confirm: true; expect?: RegExp }
+  /** Type into the email box under the reply, then Save email. */
+  | { fillEmail: string; expect?: RegExp };
 
 type Conversation = { id: number; title: string; by: "typed" | "voice"; steps: Step[]; books?: { name: string; department: RegExp; test?: RegExp }; forbid?: RegExp };
 
@@ -88,7 +92,8 @@ const C: Conversation[] = [
       { sayChoice: 0, expect: /poora naam/ },
       { say: "Ayesha Siddiqui", expect: /mobile number/ },
       { say: "0333 4567890", expect: /email/ },
-      { say: "ayesha at gmail dot com", expect: /Confirm/ },
+      { say: "ayesha at gmail dot com", expect: /a-y-e-s-h-a at gmail dot com, sahi hai/ },
+      { say: "ji sahi hai", expect: /Confirm/ },
       { say: "haan", expect: /booking ho gayi/ },
     ],
     books: { name: "Ayesha Siddiqui", department: /Dental/ },
@@ -275,7 +280,147 @@ const C: Conversation[] = [
       { say: "skin ki problem hai", expect: /Dermatology/ },
     ],
   },
+  // --- Owner request 2026-11-09: a premium receptionist ----------------------------------------------------------
+  {
+    id: 19,
+    title: "English, fever by voice -> General Medicine -> slip",
+    by: "voice",
+    steps: [
+      { say: "I have a fever since yesterday", expect: /General Medicine[\s\S]*Shall I book/ },
+      { say: "yes please", expect: /Which doctor/ },
+      { sayChoice: 0, expect: /day/ },
+      { sayChoice: 0, expect: /time/ },
+      { sayChoice: 0, expect: /full name/ },
+      { say: "my name is John Matthews", expect: /mobile number/ },
+      { say: "zero three zero zero one two three four five six seven", expect: /email/ },
+      { say: "skip", expect: /Confirm/ },
+      { say: "yes", expect: /You're booked[\s\S]*Open my slip/ },
+    ],
+    books: { name: "John Matthews", department: /General Medicine/ },
+  },
+  {
+    id: 20,
+    title: "Roman Urdu, daant ka dard by voice -> Dental -> slip",
+    by: "voice",
+    steps: [
+      { say: "mere daant mein bohat dard hai", expect: /Dental[\s\S]*Dr\. Bilal Ansari[\s\S]*booking kar doon/ },
+      { say: "ji kar dein", expect: /Kaun sa din|kis din|din/ },
+      { sayChoice: 0, expect: /waqt/ },
+      { sayChoice: 0, expect: /naam/ },
+      { say: "mera naam Hina Pervaiz hai", expect: /mobile number/ },
+      { say: "zero three four five one two three four five six seven", expect: /email/ },
+      { say: "nahi", expect: /Confirm/ },
+      { say: "haan", expect: /booking ho gayi/ },
+    ],
+    books: { name: "Hina Pervaiz", department: /Dental/ },
+  },
+  {
+    id: 21,
+    title: "Small talk first (salam, how are you, thanks, Allah Hafiz), then a booking",
+    by: "voice",
+    steps: [
+      { say: "Assalam o Alaikum", expect: /Wa alaikum assalam/ },
+      { say: "main theek hoon aap kaisi hain", expect: /Sun kar khushi hui! Main bhi bilkul theek hoon/ },
+      { say: "mujhe skin pe kharish hai", expect: /Dermatology/ },
+      { say: "ji", expect: /din/ },
+      { sayChoice: 0, expect: /waqt/ },
+      { sayChoice: 0, expect: /naam/ },
+      { say: "Zara Ali", expect: /mobile/ },
+      { say: "zero three zero zero one two three four five six seven", expect: /email/ },
+      { say: "skip", expect: /Confirm/ },
+      { say: "theek hai", expect: /booking ho gayi/ },
+      { say: "shukriya Ayesha", expect: /Koi baat nahi/ },
+      { say: "Allah Hafiz", expect: /Allah Hafiz/ },
+    ],
+    books: { name: "Zara Ali", department: /Dermatology/ },
+  },
+  {
+    id: 22,
+    title: "Email by voice: 'Sohail gmail dot com' read back letter by letter, 'no', then typed in the email box",
+    by: "voice",
+    steps: [
+      { say: "I would like to book an appointment with a dentist", expect: /day/ },
+      { sayChoice: 0, expect: /time/ },
+      { sayChoice: 0, expect: /full name/ },
+      { say: "my name is Sohail Khan", expect: /mobile number/ },
+      { say: "zero three two one seven six five four three two one", expect: /email/ },
+      { say: "Sohail gmail dot com", expect: /s-o-h-a-i-l at gmail dot com/ },
+      { say: "no", expect: /type your email in the box below/ },
+      { fillEmail: "sohail.khan@gmail.com", expect: /Confirm/ },
+      { say: "correct", expect: /You're booked/ },
+    ],
+    books: { name: "Sohail Khan", department: /Dental/ },
+  },
+  {
+    id: 23,
+    title: "'ok hain sab kuch' confirms the card",
+    by: "voice",
+    steps: [
+      { say: "Dr Omar Sheikh se milna hai", expect: /din/ },
+      { sayChoice: 0, expect: /waqt/ },
+      { sayChoice: 0, expect: /naam/ },
+      { say: "mera naam Kashif Iqbal hai", expect: /mobile number/ },
+      { say: "zero three one two five five five six six seven seven", expect: /email/ },
+      { say: "sohail khan at gmail", expect: /s-o-h-a-i-l-k-h-a-n at gmail dot com/ },
+      { say: "ji", expect: /Confirm/ },
+      { say: "ok hain sab kuch", expect: /booking ho gayi/ },
+    ],
+    books: { name: "Kashif Iqbal", department: /General Medicine/ },
+  },
+  {
+    id: 24,
+    title: "Mid-way correction: name and number changed at the card, then 'jee'",
+    by: "voice",
+    steps: [
+      { say: "mujhe allergy hai", expect: /Dermatology/ },
+      { say: "haan", expect: /din/ },
+      { sayChoice: 0, expect: /waqt/ },
+      { sayChoice: 0, expect: /naam/ },
+      { say: "Saima Noor", expect: /mobile/ },
+      { say: "zero three three three one two three four five six seven", expect: /email/ },
+      { say: "skip", expect: /Confirm/ },
+      { say: "naam galat hai", expect: /naam/ },
+      { say: "mera naam Saima Nawaz hai", expect: /Confirm/ },
+      { say: "number bhi galat hai", expect: /mobile/ },
+      { say: "zero three zero zero seven six five four three two one", expect: /Confirm/ },
+      { say: "jee", expect: /booking ho gayi/ },
+    ],
+    books: { name: "Saima Nawaz", department: /Dermatology/ },
+  },
 ];
+
+
+/**
+ * Owner layout rule: the status pill, the caption, "You said" and every card or choice in the chat stay clear of the mic
+ * and End buttons, and the caption is at most two lines. Returns the problems found (empty when clean).
+ */
+async function panelProblems(dialog: Locator): Promise<string[]> {
+  if ((await dialog.getByTestId("voice-stage").count()) === 0) return [];
+  return dialog.evaluate((root) => {
+    const box = (el: Element | null) => (el ? el.getBoundingClientRect() : null);
+    const hit = (a: DOMRect, b: DOMRect) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    const problems: string[] = [];
+    const buttons = [...root.querySelectorAll("[data-testid=voice-controls] button")].map((b) => b.getBoundingClientRect());
+    const log = root.querySelector("[role=log]")?.getBoundingClientRect();
+    const others: Array<[string, Element | null]> = [
+      ["status", root.querySelector("[data-testid=voice-status]")],
+      ["caption", root.querySelector("[data-testid=voice-caption]")],
+      ["you said", root.querySelector("[data-testid=voice-heard]")],
+      ...[...root.querySelectorAll("[data-testid=voice-summary], [data-testid=assistant-options], [data-testid=phone-field], [data-testid=email-field], [data-testid=voice-slip]")].map((el) => [el.getAttribute("data-testid") ?? "card", el] as [string, Element]),
+    ];
+    for (const [name, el] of others) {
+      const b = box(el);
+      if (!b || b.width === 0 || b.height === 0) continue;
+      // A card inside the scrolling chat only counts where the chat shows it.
+      const shown = name === "status" || name === "caption" || name === "you said" || !log ? b : new DOMRect(b.x, Math.max(b.y, log.y), b.width, Math.max(0, Math.min(b.bottom, log.bottom) - Math.max(b.y, log.y)));
+      if (shown.height <= 0) continue;
+      for (const btn of buttons) if (hit(shown, btn)) problems.push(`${name} overlaps a control button`);
+    }
+    const caption = root.querySelector("[data-testid=voice-caption]") as HTMLElement | null;
+    if (caption && caption.getBoundingClientRect().height > 46) problems.push(`caption taller than two lines (${Math.round(caption.getBoundingClientRect().height)} px)`);
+    return [...new Set(problems)];
+  });
+}
 
 type Turn = { from: "patient" | "assistant"; text: string; how?: string };
 
@@ -348,6 +493,13 @@ test.describe("voice receptionist self-test as a patient", () => {
         if ("confirm" in step) {
           said = "(taps Confirm)";
           await dialog.getByTestId("voice-summary").getByRole("button", { name: "Confirm" }).click();
+        } else if ("fillEmail" in step) {
+          said = `(types "${step.fillEmail}" in the email box)`;
+          const box = dialog.getByTestId("email-field");
+          await expect(box).toBeVisible({ timeout: 10000 });
+          await box.getByRole("textbox").fill(step.fillEmail);
+          await box.getByRole("button", { name: "Save email" }).click();
+          how = "typed";
         } else if ("tap" in step) {
           const option = dialog.getByTestId("assistant-options").getByRole("button").nth(step.tap);
           said = `(taps "${await option.innerText()}")`;
@@ -384,6 +536,7 @@ test.describe("voice receptionist self-test as a patient", () => {
         record.turns.push({ from: "assistant", text: reply });
         if (!reply) fail(`no reply to "${said}"`);
         if (step.expect && !step.expect.test(reply)) fail(`expected ${step.expect} after "${said}", got: ${reply}`);
+        if (conv.id >= 19) for (const problem of await panelProblems(dialog)) fail(`panel after "${said}": ${problem}`);
       }
 
       // The owner's rules, over the whole conversation.
@@ -401,6 +554,22 @@ test.describe("voice receptionist self-test as a patient", () => {
       const apologies = assistant.join(" ").match(new RegExp(APOLOGY.source, "gi"))?.length ?? 0;
       if (apologies > 1) fail(`${apologies} apologies`);
       else record.checks.push(`apologies: ${apologies}`);
+      if (conv.id >= 19) {
+        if (assistant.some((t) => /afsos/i.test(t))) fail("said 'afsos'");
+        else record.checks.push("no 'afsos'");
+        if (!record.failures.some((f) => f.startsWith("panel"))) record.checks.push("panel clean after every turn");
+        const shots = process.env.VOICE_SHOTS_DIR;
+        if (voice && conv.id === 24) {
+          // The same finished panel at a phone and a laptop width: still nothing on the buttons.
+          for (const size of [{ width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+            await page.setViewportSize(size);
+            await page.waitForTimeout(300);
+            for (const problem of await panelProblems(dialog)) fail(`panel at ${size.width}px: ${problem}`);
+            if (shots) await page.screenshot({ path: `${shots}/voice-panel-${size.width}-slip.png` });
+          }
+          record.checks.push("panel clean at 390 and 1366 px");
+        } else if (shots && voice) await page.screenshot({ path: `${shots}/voice-panel-1280-conv${conv.id}.png` });
+      }
       const logText = (await dialog.getByRole("log").innerText()) ?? "";
       if (URDU.test(logText)) fail("Urdu letters on screen");
       else record.checks.push("chat in English letters only");

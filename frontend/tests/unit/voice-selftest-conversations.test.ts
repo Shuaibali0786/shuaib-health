@@ -54,7 +54,8 @@ const C: Conv[] = [
     { sayChoice: 0, expect: /poora naam/ },
     { say: "Ayesha Siddiqui", expect: /mobile number/ },
     { say: "0333 4567890", expect: /email/ },
-    { say: "ayesha at gmail dot com", expect: /Confirm/ },
+    { say: "ayesha at gmail dot com", expect: /a-y-e-s-h-a at gmail dot com, sahi hai/ },
+    { say: "ji sahi hai", expect: /Confirm/ },
     { say: "haan", expect: /booking ho gayi/ } ] },
   { id: 5, title: "English: I need a blood test -> CBC -> slip with the test", by: "typed", books: { name: "Sarah Ahmed", department: "pathology-lab", test: /Complete Blood Count/ }, steps: [
     { say: "I need a blood test", expect: /Complete Blood Count[\s\S]*PKR 800[\s\S]*Shall I book/ },

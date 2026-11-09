@@ -267,7 +267,7 @@ describe("voice mode", () => {
     const dialog = await openVoiceByBubble(user);
     await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
     const log = within(dialog).getByRole("log");
-    expect(log.textContent?.match(/Welcome to Shuaib Health/g)?.length).toBe(1);
+    expect(log.textContent?.match(/welcome to Shuaib Health/g)?.length).toBe(1);
     expect(log).not.toHaveTextContent("Hello! Welcome");
   });
 
@@ -277,7 +277,7 @@ describe("voice mode", () => {
     expect(await within(dialog).findByTestId("voice-mode")).toBeInTheDocument();
     expect(within(dialog).getByTestId("voice-orb")).toBeInTheDocument();
     await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
-    expect(within(dialog).getByRole("log")).toHaveTextContent("Welcome to Shuaib Health! I'm your AI assistant. How can I help you today?");
+    expect(within(dialog).getByRole("log")).toHaveTextContent("Hi, welcome to Shuaib Health! I'm Ayesha, your virtual assistant. How are you today?");
     expect(within(dialog).getByText(/audio is never recorded/)).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Stop listening" })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "End" })).toBeInTheDocument();

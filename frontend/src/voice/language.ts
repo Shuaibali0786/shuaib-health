@@ -29,7 +29,7 @@ export function replyLanguage(text: string, previous: VoiceLang): VoiceLang {
   return words.filter((w) => ENGLISH_MARKERS.has(w)).length >= 2 ? "en" : previous;
 }
 
-const ROMAN_EXTRA = new Set("rehne rehnay chhor chor chhoro mat galat ghalat sahi theek thik haan han ji jee nahin acha achha accha chalo zaroor bilkul shukriya bhai behen beta abbu ammi bacha bache bachay daane dane jild khansi zukam bukhar sar safai daant".split(" "));
+const ROMAN_EXTRA = new Set("rehne rehnay chhor chor chhoro mat galat ghalat sahi theek thik haan han ji jee nahin acha achha accha chalo zaroor bilkul shukriya bhai behen beta abbu ammi bacha bache bachay daane dane jild khansi zukam bukhar sar safai daant kaise kaisi kaisay haal hafiz alhamdulillah sunaiye sunao".split(" "));
 
 const URDU_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";

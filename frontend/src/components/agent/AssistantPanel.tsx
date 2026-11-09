@@ -22,6 +22,7 @@ import type { Notice } from "@/voice/session";
 import type { Turn, VoiceLang } from "@/voice/types";
 
 import { BookedCard } from "./voice/BookedCard";
+import { EmailField } from "./voice/EmailField";
 import { MicHelp } from "./voice/MicHelp";
 import { PhoneField } from "./voice/PhoneField";
 import { CORRECTION_TEXT, SummaryCard, type CorrectionField } from "./voice/SummaryCard";
@@ -92,8 +93,8 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
   const [replyLang, setReplyLang] = useState<VoiceLang>("en");
   // Short answers to tap for the last question (free times, departments, tests). Tapping one says it.
   const [options, setOptions] = useState<string[]>([]);
-  // The mobile number is being asked: a field to type it (said or typed, both work).
-  const [phoneField, setPhoneField] = useState(false);
+  // The mobile number (or, after one unclear try, the email) is being asked: a field to type it (said or typed, both work).
+  const [field, setField] = useState<RouterResult["input"] | null>(null);
   // One conversation for typed and spoken turns (the same memory, booking and language), per Patient / owner tab.
   const conversation = useMemo(
     () =>
@@ -161,7 +162,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     setBooked(null);
     setBookedTest(undefined);
     setOptions([]);
-    setPhoneField(false);
+    setField(null);
   }
 
   /** What a turn (typed or spoken) changed: the booking card, the slip card, the reply language. */
@@ -173,7 +174,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     }
     setReplyLang(result.lang);
     setOptions(result.options ?? []);
-    setPhoneField(result.input === "phone");
+    setField(result.input ?? null);
   }
 
   async function ask(question: string) {
@@ -238,11 +239,12 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     void ask(option);
   };
   const cards: ReactNode =
-    booking || booked || options.length || phoneField ? (
+    booking || booked || options.length || field ? (
       <>
         {booking ? <SummaryCard key={booking.phase} state={booking} pack={pack} lang={replyLang} onConfirm={confirmByTap} onCorrect={correctByTap} /> : null}
         {booked ? <BookedCard view={booked} lang={replyLang} test={bookedTest} /> : null}
-        {phoneField ? <PhoneField lang={replyLang} disabled={paused} onSave={(digits) => void ask(digits)} /> : null}
+        {field === "phone" ? <PhoneField lang={replyLang} disabled={paused} onSave={(digits) => void ask(digits)} /> : null}
+        {field === "email" ? <EmailField lang={replyLang} disabled={paused} onSave={(email) => void ask(email)} onSkip={() => void ask("skip")} /> : null}
         {options.length ? (
           <div role="group" aria-label={replyLang === "roman" ? "Jawab chunein" : "Choose an answer"} data-testid="assistant-options" className="flex flex-wrap gap-2">
             {options.map((option) => (
@@ -298,7 +300,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
           <h2 id={titleId} className="text-base font-semibold text-white">
             Ask {pack.clinic.name}
           </h2>
-          <p className="text-xs text-white/80">{voiceOn ? "Voice mode · an AI for a demo clinic · audio is never recorded" : "Instant answers from the clinic's own information"}</p>
+          <p className="text-xs text-white/80">{voiceOn ? "Voice mode · Ayesha is an AI for a demo clinic · audio is never recorded" : "Instant answers from the clinic's own information"}</p>
         </div>
         <button type="button" onClick={onClose} className="inline-flex size-11 items-center justify-center rounded-control hover:bg-white/10" aria-label="Close chat">
           <X className="size-5" aria-hidden="true" />

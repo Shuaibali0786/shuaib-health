@@ -14,7 +14,10 @@ describe("self-test regressions", () => {
     const out = await w.say("ayesha at gmail dot com");
     expect(w.ctx.booking?.draft.doctorSlug).toBe("dr-bilal-ansari");
     expect(w.ctx.booking?.draft.email).toBe("ayesha@gmail.com");
-    expect(out.text).toContain("Confirm");
+    // Said aloud: read back letter by letter first (owner 2026-11-09), then the card.
+    expect(out.text).toContain("a-y-e-s-h-a at gmail dot com");
+    expect((await w.say("haan")).text).toContain("Confirm");
+    expect(w.ctx.booking?.draft.doctorSlug).toBe("dr-bilal-ansari");
   });
 
   it("#13: 'rehne do' is answered in Roman Urdu", async () => {

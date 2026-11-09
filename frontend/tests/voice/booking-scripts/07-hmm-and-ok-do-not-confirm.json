@@ -1,5 +1,5 @@
 {
-  "name": "'hmm', 'ok' and 'wait' at the read-back never book; only a clear yes does",
+  "name": "'hmm', 'wait', a yes with a change, and 'nahi' at the read-back never book (owner 2026-11-09: a plain 'ok' at the card DOES confirm, see 21-owner-yes-words)",
   "turns": [
     { "say": "book an appointment with Dr Bilal", "expect": ["Which day"] },
     { "say": "monday", "expect": ["Monday 9 November"] },
@@ -8,7 +8,7 @@
     { "say": "03111234567", "expect": ["email"] },
     { "say": "skip", "expect": ["tap Confirm"], "submits": 0 },
     { "say": "hmm", "expect": ["Please say yes"], "submits": 0 },
-    { "say": "ok", "expect": ["Please say yes"], "submits": 0 },
+    { "say": "ok wait", "expect": ["Please say yes"], "submits": 0 },
     { "say": "wait", "expect": ["Please say yes"], "submits": 0 },
     { "say": "yes but change the doctor", "forbid": ["You're booked"], "submits": 0 },
     { "say": "nahi", "forbid": ["You're booked"], "submits": 0 }

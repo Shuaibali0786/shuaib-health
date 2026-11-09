@@ -17,14 +17,14 @@ import { groupPhone, groupReference, speakEmail, speakPhone, speakReference } fr
 import { clinicClosedOn, doctorsOf, findDepartment, findDoctors, labDepartment, labItem, resolveLabTest } from "./entities";
 import { T } from "./phrases";
 import { parseDate, speakDate, speakTime } from "./parse/date";
-import { cleanReason, declines, extractEmail, extractName } from "./parse/name";
+import { cleanReason, declines, extractEmail, extractName, spellEmail } from "./parse/name";
 import { extractPhone, RESTART_NUMBER, spokenDigits, withoutPhone } from "./parse/phone";
 import { parseTimes } from "./parse/time";
-import { parseYesNo } from "./parse/yesno";
+import { confirmsBooking, parseYesNo } from "./parse/yesno";
 import { EMPTY_DRAFT, type BookingDraft, type BookingPhase, type VoiceLang } from "./types";
 import { complains } from "./understand";
 
-export type Ask = "fullName" | "nameCheck" | "phone" | "reason" | "doctor" | "date" | "time" | "email" | "partOfDay" | null;
+export type Ask = "fullName" | "nameCheck" | "phone" | "reason" | "doctor" | "date" | "time" | "email" | "emailCheck" | "partOfDay" | null;
 
 export type BookingState = {
   phase: BookingPhase;
@@ -48,6 +48,12 @@ export type BookingState = {
   phoneTries?: number;
   /** The digits heard on the last try that did not make a mobile number, read back once. */
   phoneHeard?: string;
+  /** A spoken email was heard: read it back letter by letter once ("s-o-h-a-i-l at gmail dot com, sahi hai?"). */
+  emailCheck?: boolean;
+  /** The email was not understood once (or was wrong): an email box is shown under the reply. */
+  emailBox?: "unclear" | "wrong";
+  /** A detail the patient said was wrong ("naam galat hai"): its new value is confirmed as a change, not welcomed as new. */
+  fixing?: "fullName" | "phone";
 };
 
 /**
@@ -98,8 +104,8 @@ export type DialogReply = {
   readBack?: boolean;
   /** Two to four short answers the patient can tap (or say) instead of answering in their own words. */
   options?: string[];
-  /** A field to type the answer into, shown under the reply (the mobile number: a numeric keypad on phones). */
-  input?: "phone";
+  /** A field to type the answer into, shown under the reply (the mobile number: a numeric keypad on phones; the email). */
+  input?: "phone" | "email";
 };
 
 type Input = {
@@ -181,19 +187,19 @@ function dayProblem(status: string, date: string, lang: VoiceLang): string {
 
 type Change = { field: keyof typeof FIELD_LABELS; was: boolean };
 
-type Applied = { state: BookingState; changes: Change[]; phoneProblem: "partial" | "invalid" | "unheard" | null; ambiguousDoctors: string[] };
+type Applied = { state: BookingState; changes: Change[]; phoneProblem: "partial" | "invalid" | "unheard" | null; ambiguousDoctors: string[]; emailProblem?: boolean };
 
 function clearRequested(state: BookingState, text: string): BookingState {
   const t = text.toLowerCase();
   if (!WRONG.test(t)) return state;
   let next = state;
   const has = (field: keyof typeof FIELD_LABELS) => FIELD_LABELS[field].some((k) => new RegExp(`\\b${k}\\b`).test(t));
-  if (has("phone")) next = withDraft(next, { phone: null, phonePartial: "" });
-  else if (has("fullName")) next = withDraft(next, { fullName: null });
+  if (has("phone")) next = { ...withDraft(next, { phone: null, phonePartial: "" }), fixing: "phone" };
+  else if (has("fullName")) next = { ...withDraft(next, { fullName: null }), fixing: "fullName" };
   else if (has("doctor")) next = withDraft(next, { doctorSlug: null, startsAt: null });
   else if (has("date")) next = withDraft(next, { date: null, startsAt: null });
   else if (has("time")) next = withDraft(next, { time: null, startsAt: null });
-  else if (has("email")) next = withDraft(next, { email: null, emailAnswered: false });
+  else if (has("email")) next = { ...withDraft(next, { email: null, emailAnswered: false }), emailCheck: false };
   else if (has("reason")) next = withDraft(next, { reason: null, reasonAnswered: false });
   return next;
 }
@@ -230,21 +236,49 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
   // Name first: a patient called "Sana" must not be taken for "Dr. Sana Farooqui".
   const name = extractName(text, asking === "fullName" || asking === "nameCheck");
   if (name) {
-    if (orig.fullName !== name) changes.push({ field: "fullName", was: orig.fullName !== null });
+    if (orig.fullName !== name) changes.push({ field: "fullName", was: orig.fullName !== null || start.fixing === "fullName" });
     state = withDraft(state, { fullName: name }, orig.fullName && orig.fullName !== name ? "fullName" : undefined);
     // Heard in Urdu letters: written in English letters, so the patient checks the spelling once.
     state = { ...state, nameCheck: script, typeName: false };
   }
 
+  // "s-o-h-a-i-l at gmail dot com, sahi hai?": yes keeps it; a new email replaces it; "nahi" asks to type it.
+  if (asking === "emailCheck") {
+    const fresh = extractEmail(text, true);
+    if (/^(skip|skip it|rehne do|chhor do|chor do|no email|email nahi)\b/i.test(text.trim())) {
+      changes.push({ field: "email", was: true });
+      return { state: { ...withDraft(state, { email: null, emailAnswered: true }), emailCheck: false, emailBox: undefined }, changes, phoneProblem, ambiguousDoctors };
+    }
+    if (fresh && fresh !== orig.email) {
+      changes.push({ field: "email", was: true });
+      return { state: { ...withDraft(state, { email: fresh, emailAnswered: true }, "email"), emailCheck: !text.includes("@"), emailBox: undefined }, changes, phoneProblem, ambiguousDoctors };
+    }
+    if (/\b(nahi|nahin|no|galat|ghalat|wrong|incorrect|not right)\b/i.test(text)) {
+      // (No "Done, updated" here: the next line asks calmly to type it.)
+      return { state: { ...withDraft(state, { email: null, emailAnswered: false }), emailCheck: false, emailBox: "wrong" }, changes, phoneProblem, ambiguousDoctors };
+    }
+    if (confirmsBooking(text) || /^(ji|jee|haan|han|ok|okay|sahi|theek|thik|correct|right|bilkul|yes|perfect)\b/i.test(text.trim())) {
+      changes.push({ field: "email", was: false });
+      return { state: { ...state, emailCheck: false, emailBox: undefined }, changes, phoneProblem, ambiguousDoctors };
+    }
+  }
+
   const emailWanted = asking === "email" || /@|\bemail\b|\bgmail\b|\bhotmail\b|\byahoo\b|\bat the rate\b|\bdot com\b/i.test(text);
+  let emailProblem = false;
   if (emailWanted) {
     if (asking === "email" && declines(text)) {
-      state = withDraft(state, { email: null, emailAnswered: true });
+      state = { ...withDraft(state, { email: null, emailAnswered: true }), emailBox: undefined };
     } else {
-      const email = extractEmail(text);
+      const email = extractEmail(text, asking === "email");
       if (email) {
         if (orig.email !== email) changes.push({ field: "email", was: orig.email !== null });
         state = withDraft(state, { email, emailAnswered: true }, orig.email && orig.email !== email ? "email" : undefined);
+        // Typed (or written with "@" by the recogniser): exact. Said aloud: read back letter by letter once.
+        state = { ...state, emailCheck: !text.includes("@"), emailBox: undefined };
+      } else if (asking === "email") {
+        // Not understood once: the email box is shown (and "skip" still works).
+        emailProblem = true;
+        state = { ...state, emailBox: "unclear" };
       }
     }
   }
@@ -256,7 +290,7 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
     if (fuzzy && RESTART_NUMBER.test(text)) state = withDraft(state, { phonePartial: "" });
     const heard = extractPhone(text, draft().phonePartial, { fuzzy });
     if (heard.status === "complete") {
-      if (orig.phone !== heard.e164) changes.push({ field: "phone", was: orig.phone !== null });
+      if (orig.phone !== heard.e164) changes.push({ field: "phone", was: orig.phone !== null || start.fixing === "phone" });
       state = withDraft(state, { phone: heard.e164, phonePartial: "" }, orig.phone && orig.phone !== heard.e164 ? "phone" : undefined);
       state = { ...state, phoneTries: 0 };
     } else if (heard.status === "partial" && (asking === "phone" || digits.length >= 4)) {
@@ -281,8 +315,8 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
 
   // While a personal detail is asked (name, phone, email), the answer is only that detail: "ayesha at gmail dot com"
   // must not pick Dr. Ayesha, and "0300..." is not a time. A clear change ("date galat hai, friday karo") still counts.
-  const detailOnly = (asking === "fullName" || asking === "email" || asking === "phone" || asking === "nameCheck") && !WRONG.test(text.toLowerCase());
-  if (detailOnly) return { state, changes, phoneProblem, ambiguousDoctors };
+  const detailOnly = (asking === "fullName" || asking === "email" || asking === "emailCheck" || asking === "phone" || asking === "nameCheck") && !WRONG.test(text.toLowerCase());
+  if (detailOnly) return { state, changes, phoneProblem, ambiguousDoctors, emailProblem };
 
   // A lab test named at any point ("CBC", "blood test", "khoon ka test") books the lab and its doctor: never asked again.
   if (!draft().doctorSlug && !draft().labTestSlug) {
@@ -346,7 +380,7 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
       if (reason) state = withDraft(state, { reason, reasonAnswered: true });
     }
   }
-  return { state, changes, phoneProblem, ambiguousDoctors };
+  return { state, changes, phoneProblem, ambiguousDoctors, emailProblem };
 }
 
 // --- Slot settling: turn doctor + date + time into one real free slot ---------------------------------
@@ -415,6 +449,7 @@ function nextAsk(state: BookingState): Ask {
   if (state.nameCheck) return "nameCheck";
   if (!d.phone) return "phone";
   if (!d.emailAnswered) return "email";
+  if (state.emailCheck && d.email) return "emailCheck";
   return null;
 }
 
@@ -472,7 +507,11 @@ function question(state: BookingState, deps: DialogDeps, lang: VoiceLang, ask: A
     case "partOfDay":
       return T(lang, `Do you mean ${joinList([...state.pendingTimes].sort().map(speakTime), lang)}? Please say morning or evening.`, `Aap ka matlab ${joinList([...state.pendingTimes].sort().map(speakTime), lang)} hai? Subah ya shaam bata dein.`);
     case "email":
+      if (state.emailBox === "wrong") return T(lang, "No problem. Please type your email in the box below, or say skip.", "Koi baat nahi. Apni email neeche box mein likh dein, ya skip keh dein.");
+      if (state.emailBox === "unclear") return T(lang, "I couldn't quite get the email. Please type it in the box below, or say skip.", "Email mujhe theek se samajh nahi aayi. Neeche box mein likh dein, ya skip keh dein.");
       return T(lang, "Would you like to add an email? It's optional, you can also say skip.", "Kya aap email dena chahenge? Yeh zaroori nahi, aap skip bhi keh sakte hain.");
+    case "emailCheck":
+      return emailCheckLine(d.email as string, lang, false);
     default:
       return "";
   }
@@ -506,6 +545,20 @@ function readBack(state: BookingState, deps: DialogDeps, lang: VoiceLang): { tex
   const doing = T(lang, "Thank you! I'm making your booking now.", "Shukriya! Ji, main aap ki booking kar rahi hoon.");
   const ask = confirmLine(lang);
   return { text: `${doing} ${ask}`, spoken: `${doing} ${head} ${lines(true, true)} ${rules} ${ask}` };
+}
+
+/** "s-o-h-a-i-l at gmail dot com, sahi hai?": the email read back letter by letter for the name part. */
+function emailCheckLine(email: string, lang: VoiceLang, spoken: boolean): string {
+  const spelled = spellEmail(email, spoken);
+  return T(lang, `I have your email as ${spelled}. Is that right?`, `Aap ki email ${spelled}, sahi hai?`);
+}
+
+/** The field shown under the reply for the question being asked: the mobile number, or the email after one unclear try. */
+export function inputFor(state: BookingState | null): "phone" | "email" | undefined {
+  if (!state || state.phase !== "collecting") return undefined;
+  if (state.asking === "phone") return "phone";
+  if (state.asking === "email" && state.emailBox) return "email";
+  return undefined;
 }
 
 /** The line that asks the patient to check the card and confirm (by voice or by tapping Confirm). */
@@ -573,7 +626,8 @@ export async function bookingStep(start: BookingState, input: Input, deps: Dialo
   }
 
   if (state.phase === "awaiting_yes" || state.phase === "submitting") {
-    const answer = parseYesNo(text);
+    // At the card, the owner's yes words count too: "ok", "ok hain sab kuch", "sab theek hai", "jee", "bilkul".
+    const answer = confirmsBooking(text) ? "yes" : parseYesNo(text);
     if (answer === "yes") {
       if (!input.confirmable) {
         // The caller spoke while the read-back was still being read (or it could be an echo): ask again, never book.
@@ -621,6 +675,7 @@ function optionsFor(state: BookingState, deps: DialogDeps, lang: VoiceLang, ask:
   if (ask === "partOfDay") return [...state.pendingTimes].sort().map(speakTime);
   if (ask === "email") return ["Skip"];
   if (ask === "nameCheck") return [T(lang, "Yes, it's right", "Haan, theek hai"), T(lang, "No, it's wrong", "Nahi, galat hai")];
+  if (ask === "emailCheck") return [T(lang, "Yes, it's right", "Haan, sahi hai"), T(lang, "No, it's wrong", "Nahi, galat hai"), "Skip"];
   return [];
 }
 
@@ -632,10 +687,12 @@ const MISSED_HINT: Partial<Record<NonNullable<Ask>, [string, string]>> = {
 async function collect(start: BookingState, applied: Applied, deps: DialogDeps, lang: VoiceLang, text = ""): Promise<DialogReply> {
   const settled = await settle(start, deps, lang);
   let state = settled.state;
+  // The corrected detail has its new value: the next answer is ordinary again.
+  if ((state.fixing === "fullName" && state.draft.fullName) || (state.fixing === "phone" && state.draft.phone)) state = { ...state, fixing: undefined };
   const ask = nextAsk(state);
   // The same question again with nothing new heard is a miss. Twice (or a frustrated "why aren't you booking?"):
   // apologise and show choices instead of repeating the same sentence.
-  const missed = ask !== null && ask === start.asking && start.phase === "collecting" && applied.changes.length === 0 && !applied.phoneProblem && !settled.message;
+  const missed = ask !== null && ask === start.asking && start.phase === "collecting" && applied.changes.length === 0 && !applied.phoneProblem && !applied.emailProblem && !settled.message;
   const angry = complains(text);
   const misses = missed || angry ? Math.max(start.misses + 1, angry ? 2 : 0) : 0;
   state = { ...state, misses };
@@ -649,9 +706,13 @@ async function collect(start: BookingState, applied: Applied, deps: DialogDeps, 
   }
   state = { ...state, phase: "collecting", asking: ask };
   const options = optionsFor(state, deps, lang, ask);
-  const field: Partial<DialogReply> = ask === "phone" ? { input: "phone" } : {};
-  const hint = ask === "phone" ? "" : misses >= 2 ? (options.length ? T(lang, "You can also tap one of the choices below.", "Aap neeche diye gaye options mein se chun bhi sakte hain.") : (MISSED_HINT[ask as NonNullable<Ask>]?.[lang === "roman" ? 1 : 0] ?? "")) : "";
-  return reply(state, [lead, question(state, deps, lang, ask, applied.phoneProblem, applied.ambiguousDoctors), hint].filter(Boolean).join(" "), { ...(options.length ? { options } : {}), ...field });
+  const box = inputFor(state);
+  const field: Partial<DialogReply> = box ? { input: box } : {};
+  const hint = ask === "phone" || box ? "" : misses >= 2 ? (options.length ? T(lang, "You can also tap one of the choices below.", "Aap neeche diye gaye options mein se chun bhi sakte hain.") : (MISSED_HINT[ask as NonNullable<Ask>]?.[lang === "roman" ? 1 : 0] ?? "")) : "";
+  const shown = [lead, question(state, deps, lang, ask, applied.phoneProblem, applied.ambiguousDoctors), hint].filter(Boolean).join(" ");
+  // The email check is spoken letter by letter (the screen shows "s-o-h-a-i-l").
+  const spoken = ask === "emailCheck" && state.draft.email ? [lead, emailCheckLine(state.draft.email, lang, true)].filter(Boolean).join(" ") : undefined;
+  return reply(state, shown, { ...(options.length ? { options } : {}), ...field, ...(spoken ? { spoken } : {}) });
 }
 
 async function submit(start: BookingState, deps: DialogDeps, lang: VoiceLang): Promise<DialogReply> {

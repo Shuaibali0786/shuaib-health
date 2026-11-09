@@ -58,6 +58,8 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
   const [interim, setInterim] = useState("");
   const [heard, setHeard] = useState("");
   const [caption, setCaption] = useState<string | null>(null);
+  // The last line spoken stays as the caption (dimmed) until the next one, so the space under the orb never jumps.
+  const [lastCaption, setLastCaption] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const orb = useRef<OrbHandle>(null);
   const session = useRef<VoiceSession | null>(null);
@@ -84,7 +86,10 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
           if (turn.from === "you" && turn.voice) setHeard(turn.text);
           latest.current.onTurn(turn);
         },
-        onSpeaking: setCaption,
+        onSpeaking: (sentence) => {
+          setCaption(sentence);
+          if (sentence) setLastCaption(sentence);
+        },
         onBoundary: () => orb.current?.pulse(),
         onResult: (result) => latest.current.onResult(result),
         onNotice: setNotice,
@@ -115,23 +120,20 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
   const compact = Boolean(notice) || Boolean(cards);
   const listening = state === "listening";
 
+  // Owner layout (2026-11-09): orb, ONE status pill, the caption (max 2 lines), "You said", then the two buttons with
+  // clear space. Every row keeps its height and the block never shrinks or scrolls, so nothing can sit on the buttons;
+  // the booking card and the choices live in the scrolling chat below.
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="voice-mode">
-      <section aria-label="Voice assistant" className="flex min-h-0 shrink flex-col items-center gap-1 overflow-y-auto border-b border-border bg-linear-to-b from-teal-50 to-white pt-2 pb-3" data-compact={compact}>
-        <Orb ref={orb} state={state} className={compact ? "h-[min(8rem,16dvh)] w-[min(8rem,16dvh)]" : "h-[min(16rem,28dvh)] w-[min(16rem,28dvh)]"} />
-        <p ref={status} tabIndex={-1} role="status" aria-live="polite" className="-mt-1 rounded-pill bg-white px-3 py-1 text-sm font-semibold text-navy-900 shadow-soft outline-none">
+      <section aria-label="Voice assistant" data-testid="voice-stage" className="flex shrink-0 flex-col items-center border-b border-border bg-linear-to-b from-teal-50 to-white px-2 pt-3 pb-4" data-compact={compact}>
+        <Orb ref={orb} state={state} className={compact ? "h-[min(6.5rem,13dvh)] w-[min(6.5rem,13dvh)]" : "h-[min(11rem,22dvh)] w-[min(11rem,22dvh)]"} />
+        <p ref={status} tabIndex={-1} role="status" aria-live="polite" data-testid="voice-status" className="mt-1 rounded-pill bg-white px-3 py-0.5 text-xs font-semibold tracking-wide text-navy-900 shadow-soft outline-none">
           {STATE_LABEL[state]}
         </p>
-        <Captions you={interim} assistant={caption} heard={heard} />
-        <MicHelp
-          notice={notice}
-          onAction={() => {
-            setNotice(null);
-            session.current?.resume();
-          }}
-          onDismiss={() => setNotice(null)}
-        />
-        <div className="mt-1 flex items-center justify-center gap-6">
+        <div className="mt-2 w-full">
+          <Captions you={interim} assistant={caption ?? lastCaption} heard={heard} live={Boolean(caption)} />
+        </div>
+        <div data-testid="voice-controls" className="mt-3 flex items-center justify-center gap-8">
           <button
             type="button"
             onClick={() => session.current?.toggleMic()}
@@ -153,6 +155,18 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
             End
           </button>
         </div>
+        {notice ? (
+          <div className="mt-3 max-h-[28dvh] w-full overflow-y-auto">
+            <MicHelp
+              notice={notice}
+              onAction={() => {
+                setNotice(null);
+                session.current?.resume();
+              }}
+              onDismiss={() => setNotice(null)}
+            />
+          </div>
+        ) : null}
       </section>
       {renderLog(cards)}
     </div>
