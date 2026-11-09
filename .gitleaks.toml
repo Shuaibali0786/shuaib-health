@@ -11,6 +11,8 @@ paths = [
   '''frontend/tests/unit/booking-appointments-route\.test\.ts''',
   '''frontend/tests/unit/booking-backend\.test\.ts''',
   '''frontend/tests/unit/mock-api\.test\.ts''',
+  # Feature 013: the OpenRouter brain test passes an obviously fake key ("sk-or-v1-SECRETKEY") to a fake fetch.
+  '''frontend/tests/unit/voice-brain-openrouter\.test\.ts''',
   '''backend/tests/conftest\.py''',
   '''specs/005-appointment-booking/tasks\.md''',
 ]
