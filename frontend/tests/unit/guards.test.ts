@@ -29,7 +29,7 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
   // the API settings are read in lib/api/config.ts, and the start-up check in instrumentation.ts reads
   // the framework's own NEXT_RUNTIME / NEXT_PHASE.
   it("has no fetch( in src outside the catalog, booking, staff-app and assistant call sites", () => {
-    expect(offenders(/\bfetch\s*\(/, (path) => ["lib/api/http.ts", "lib/booking/backend.ts", "lib/booking/client.ts", "admin/lib/client.ts", "admin/lib/server.ts", "agent/remoteProvider.ts", "voice/brain.ts", "lib/voiceBrainGemini.ts"].includes(path))).toEqual([]);
+    expect(offenders(/\bfetch\s*\(/, (path) => ["lib/api/http.ts", "lib/booking/backend.ts", "lib/booking/client.ts", "admin/lib/client.ts", "admin/lib/server.ts", "agent/remoteProvider.ts", "voice/brain.ts", "lib/voiceBrainGemini.ts", "lib/voiceBrainOpenRouter.ts"].includes(path))).toEqual([]);
   });
 
   it("has no backend env names in src outside lib/api/config.ts, lib/demo.ts and instrumentation.ts", () => {
@@ -64,7 +64,7 @@ describe("static-site guards (no backend, no storage, no unsafe HTML)", () => {
 
   it("uses an external URL only for the OpenStreetMap embed, the GitHub credit and the WhatsApp share link", () => {
     // XML namespaces (SVG, XLink, and SSML for the premium voice, Feature 013) are names, not links.
-    const allowed = /openstreetmap\.org|github\.com\/Shuaibali0786|schema\.org|w3\.org\/(2000\/svg|1999\/xlink|2001\/10\/synthesis)|localhost|^https:\/\/wa\.me\/\?text=|^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models$/;
+    const allowed = /openstreetmap\.org|github\.com\/Shuaibali0786|schema\.org|w3\.org\/(2000\/svg|1999\/xlink|2001\/10\/synthesis)|localhost|^https:\/\/wa\.me\/\?text=|^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models$|^https:\/\/openrouter\.ai\/api\/v1\/chat\/completions$/;
     const found = files.flatMap((file) =>
       (file.code.match(/https?:\/\/[^\s"'`)]+/g) ?? []).filter((url) => !allowed.test(url)).map((url) => `${file.path}: ${url}`),
     );

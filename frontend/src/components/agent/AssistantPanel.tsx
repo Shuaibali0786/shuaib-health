@@ -52,8 +52,8 @@ export type AssistantPanelProps = {
   micCheck?: Promise<MicResult> | null;
   /** The speech provider (VOICE_PROVIDER): the free browser voice, or the premium one with a silent fallback. */
   voiceProvider?: "browser" | "azure";
-  /** VOICE_BRAIN: "gemini" asks the optional AI brain (server-side key) about turns the rules did not understand. */
-  voiceBrain?: "rules" | "gemini";
+  /** VOICE_BRAIN: "openrouter" or "gemini" asks the optional AI brain (server-side key) about turns the rules did not understand. */
+  voiceBrain?: "rules" | "gemini" | "openrouter";
 };
 
 type Message = { id: number; from: "you" | "assistant"; text: string; links?: AgentLink[] };
@@ -113,7 +113,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
           submit: (payload, key) => postBooking(payload, key),
           newKey: createAttemptKey,
         },
-        brain: voiceBrain === "gemini" ? askBrainOverHttp : undefined,
+        brain: voiceBrain !== "rules" ? askBrainOverHttp : undefined,
       }),
     [pack, mode, provider, voiceBrain],
   );

@@ -1,3 +1,5 @@
+import { parseFreeModels } from "./openrouterModels";
+
 /**
  * DEMO_ENABLED: the portfolio's read-only demo dashboard. On by default; a real clinic deployment sets
  * `DEMO_ENABLED=false` and the gold top bar, the demo buttons (footer, About, sign-in) and the demo entry
@@ -58,12 +60,26 @@ export function getVoiceProvider(): "browser" | "azure" {
 }
 
 /**
- * VOICE_BRAIN (Feature 013): "rules" (the default, free, local) or "gemini" (Google Gemini free tier, used only to
- * UNDERSTAND a turn the rules could not; booking is still done only by our own code after the patient's Confirm).
- * The key, GEMINI_API_KEY, is read on the server only and never reaches the browser. Missing key = rules, silently.
+ * VOICE_BRAIN (Feature 013): "rules" (the default, free, local), "openrouter" (free ":free" models through OpenRouter) or
+ * "gemini" (Google Gemini free tier). The AI is used only to UNDERSTAND a turn the rules could not; booking is still done
+ * only by our own code after the patient's Confirm. The keys (OPENROUTER_API_KEY, GEMINI_API_KEY) are read on the server
+ * only and never reach the browser. Missing key = rules, silently.
  */
-export function getVoiceBrain(): "rules" | "gemini" {
-  return isVoiceEnabled() && process.env.VOICE_BRAIN?.trim().toLowerCase() === "gemini" ? "gemini" : "rules";
+export function getVoiceBrain(): "rules" | "gemini" | "openrouter" {
+  if (!isVoiceEnabled()) return "rules";
+  const value = process.env.VOICE_BRAIN?.trim().toLowerCase();
+  return value === "gemini" || value === "openrouter" ? value : "rules";
+}
+
+/**
+ * Server only: the OpenRouter key and the free models to try in order (OPENROUTER_MODEL, comma separated, ids ending in
+ * ":free" only; a built-in list of good free tool-calling models when none is set), or null when this brain is off or
+ * has no key (then the rules answer).
+ */
+export function getOpenRouterSettings(): { key: string; models: string[] } | null {
+  const key = process.env.OPENROUTER_API_KEY?.trim();
+  if (getVoiceBrain() !== "openrouter" || !key) return null;
+  return { key, models: parseFreeModels(process.env.OPENROUTER_MODEL) };
 }
 
 /** Server only: the Gemini key and model, or null when the AI brain is off or has no key (then the rules answer). */

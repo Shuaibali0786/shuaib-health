@@ -92,7 +92,9 @@ describe("no third-party brands", () => {
     expect(text.filter((value) => BRAND_WORDS.test(value))).toEqual([]);
     // The slip's "Share on WhatsApp" button is a share action the visitor asked for, not a partnership claim.
     const SHARE_BUTTON = "/src/components/booking/ConfirmationActions.tsx";
-    const offenders = codeFiles.filter((file) => file.path !== SHARE_BUTTON && BRAND_WORDS.test(file.code)).map((file) => file.path);
+    // OpenRouter model ids are written "vendor/model:free" (the AI brain's free model list), not site content.
+    const OPENROUTER_MODELS = "/src/lib/openrouterModels.ts";
+    const offenders = codeFiles.filter((file) => file.path !== SHARE_BUTTON && file.path !== OPENROUTER_MODELS && BRAND_WORDS.test(file.code)).map((file) => file.path);
     expect(offenders).toEqual([]);
     const imageNames = filesUnder(join(process.cwd(), "public", "images"), [".jpg", ".png", ".svg", ".webp"]);
     expect(imageNames.filter((name) => BRAND_WORDS.test(name))).toEqual([]);
@@ -102,7 +104,7 @@ describe("no third-party brands", () => {
 describe("no backend dependency (constitution V)", () => {
   it("src contains no fetch() call except the catalog API client, the booking proxy, the booking flow's browser client, the staff app's two call sites and the assistant's optional AI provider (off by default)", () => {
     const offenders = codeFiles
-      .filter((file) => !["/src/lib/api/http.ts", "/src/lib/booking/backend.ts", "/src/lib/booking/client.ts", "/src/admin/lib/client.ts", "/src/admin/lib/server.ts", "/src/agent/remoteProvider.ts", "/src/voice/brain.ts", "/src/lib/voiceBrainGemini.ts"].includes(file.path))
+      .filter((file) => !["/src/lib/api/http.ts", "/src/lib/booking/backend.ts", "/src/lib/booking/client.ts", "/src/admin/lib/client.ts", "/src/admin/lib/server.ts", "/src/agent/remoteProvider.ts", "/src/voice/brain.ts", "/src/lib/voiceBrainGemini.ts", "/src/lib/voiceBrainOpenRouter.ts"].includes(file.path))
       .filter((file) => /\bfetch\s*\(/.test(file.code))
       .map((file) => file.path);
     expect(offenders).toEqual([]);

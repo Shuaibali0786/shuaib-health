@@ -21,7 +21,7 @@ const DEFAULT_PREFS: VoicePrefs = { opened: false };
  * separate "Talk to us" bubble). "Ask us" opens the chat; the round mic inside opens it straight into voice mode
  * (the tap is also what lets the browser play sound and ask for the microphone).
  */
-export function AssistantLauncher({ pack, provider = "local", voice = false, voiceProvider = "browser", voiceBrain = "rules" }: { pack: KnowledgePack; provider?: ProviderId; voice?: boolean; voiceProvider?: "browser" | "azure"; voiceBrain?: "rules" | "gemini" }) {
+export function AssistantLauncher({ pack, provider = "local", voice = false, voiceProvider = "browser", voiceBrain = "rules" }: { pack: KnowledgePack; provider?: ProviderId; voice?: boolean; voiceProvider?: "browser" | "azure"; voiceBrain?: "rules" | "gemini" | "openrouter" }) {
   const [Panel, setPanel] = useState<ComponentType<AssistantPanelProps> | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);

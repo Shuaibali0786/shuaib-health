@@ -15,7 +15,7 @@ const TIMEOUT_MS = 5000;
 
 const slugEnum = (slugs: string[]) => ({ type: "STRING", enum: slugs.length ? slugs : ["none"] });
 
-function systemPrompt(pack: KnowledgePack): string {
+export function systemPrompt(pack: KnowledgePack): string {
   const departments = pack.departments
     .filter((d) => pack.doctors.some((doc) => doc.departmentSlug === d.slug))
     .map((d) => `- ${d.slug}: ${d.name}. ${d.summary} Doctors: ${pack.doctors.filter((doc) => doc.departmentSlug === d.slug).map((doc) => `${doc.name} (fee PKR ${doc.feePkr})`).join(", ")}`)
@@ -39,7 +39,7 @@ function systemPrompt(pack: KnowledgePack): string {
   ].join("\n");
 }
 
-function tools(pack: KnowledgePack) {
+export function tools(pack: KnowledgePack) {
   const deptSlugs = pack.departments.filter((d) => pack.doctors.some((doc) => doc.departmentSlug === d.slug)).map((d) => d.slug);
   const one = (name: string, description: string, properties: Record<string, unknown>, required: string[] = []) => ({ name, description, parameters: { type: "OBJECT", properties, required } });
   return [
