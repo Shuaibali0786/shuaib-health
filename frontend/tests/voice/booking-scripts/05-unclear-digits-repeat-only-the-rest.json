@@ -5,7 +5,7 @@
     { "say": "tuesday", "expect": ["Tuesday 10 November"] },
     { "say": "10", "expect": ["full name"] },
     { "say": "Sara Noor", "expect": ["mobile"] },
-    { "say": "zero three one one one two three", "expect": ["I heard 0311 123", "rest of the number"], "forbid": ["email"] },
+    { "say": "zero three one one one two three", "expect": ["I heard 0311 123", "Say the rest", "type it below"], "forbid": ["email"] },
     { "say": "four five six seven", "expect": ["email"] },
     { "say": "skip", "expect": ["zero three one one, one two three, four five six seven", "tap Confirm"] },
     { "say": "yes", "expect": ["You're booked"], "submits": 1 }

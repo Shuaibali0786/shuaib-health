@@ -228,6 +228,39 @@ describe("the owner's real messages, typed", () => {
   }, 30000);
 });
 
+describe("the mobile number field (owner test 2026-11-09)", () => {
+  it("appears when the number is asked, checks the number, and 'Save number' sends it", async () => {
+    const user = userEvent.setup();
+    render(<AssistantLauncher pack={pack} voice />);
+    await user.click(screen.getByRole("button", { name: "Ask us" }));
+    const dialog = await screen.findByRole("dialog");
+    const log = within(dialog).getByRole("log");
+    const type = async (text: string, expected: string | RegExp) => {
+      await user.type(within(dialog).getByLabelText("Your question"), `${text}{Enter}`);
+      await waitFor(() => expect(log).toHaveTextContent(expected));
+    };
+    await type("Dr Bilal se appointment chahiye", "Kaun sa din");
+    expect(within(dialog).queryByTestId("phone-field")).toBeNull();
+    await type("jumma ko", "Kaun sa waqt");
+    await type("11:30", "poora naam");
+    await type("mera naam Ali Raza hai", "Aap number bol sakte hain ya neeche likh bhi sakte hain.");
+    const field = within(dialog).getByTestId("phone-field");
+    const box = within(field).getByLabelText("Mobile number likhein");
+    expect(box).toHaveAttribute("type", "tel");
+    expect(box).toHaveAttribute("inputmode", "numeric");
+    // A wrong number is caught here and nothing is sent.
+    await user.type(box, "0032452");
+    await user.click(within(field).getByRole("button", { name: "Save number" }));
+    expect(within(field).getByRole("alert")).toHaveTextContent("11 digits");
+    await user.clear(box);
+    await user.type(box, "0324 5266535");
+    await user.click(within(field).getByRole("button", { name: "Save number" }));
+    await waitFor(() => expect(log).toHaveTextContent("email"));
+    expect(log).toHaveTextContent("03245266535");
+    expect(within(dialog).queryByTestId("phone-field")).toBeNull();
+  }, 30000);
+});
+
 describe("voice mode", () => {
   it("shows ONE welcome: the spoken welcome replaces the written one", async () => {
     const user = userEvent.setup();

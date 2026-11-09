@@ -23,6 +23,7 @@ import type { Turn, VoiceLang } from "@/voice/types";
 
 import { BookedCard } from "./voice/BookedCard";
 import { MicHelp } from "./voice/MicHelp";
+import { PhoneField } from "./voice/PhoneField";
 import { CORRECTION_TEXT, SummaryCard, type CorrectionField } from "./voice/SummaryCard";
 import { useDictation } from "./voice/useDictation";
 import type { VoicePrefs } from "./voice/VoiceMode";
@@ -91,6 +92,8 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
   const [replyLang, setReplyLang] = useState<VoiceLang>("en");
   // Short answers to tap for the last question (free times, departments, tests). Tapping one says it.
   const [options, setOptions] = useState<string[]>([]);
+  // The mobile number is being asked: a field to type it (said or typed, both work).
+  const [phoneField, setPhoneField] = useState(false);
   // One conversation for typed and spoken turns (the same memory, booking and language), per Patient / owner tab.
   const conversation = useMemo(
     () =>
@@ -158,6 +161,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     setBooked(null);
     setBookedTest(undefined);
     setOptions([]);
+    setPhoneField(false);
   }
 
   /** What a turn (typed or spoken) changed: the booking card, the slip card, the reply language. */
@@ -169,6 +173,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     }
     setReplyLang(result.lang);
     setOptions(result.options ?? []);
+    setPhoneField(result.input === "phone");
   }
 
   async function ask(question: string) {
@@ -233,10 +238,11 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
     void ask(option);
   };
   const cards: ReactNode =
-    booking || booked || options.length ? (
+    booking || booked || options.length || phoneField ? (
       <>
         {booking ? <SummaryCard key={booking.phase} state={booking} pack={pack} lang={replyLang} onConfirm={confirmByTap} onCorrect={correctByTap} /> : null}
         {booked ? <BookedCard view={booked} lang={replyLang} test={bookedTest} /> : null}
+        {phoneField ? <PhoneField lang={replyLang} disabled={paused} onSave={(digits) => void ask(digits)} /> : null}
         {options.length ? (
           <div role="group" aria-label={replyLang === "roman" ? "Jawab chunein" : "Choose an answer"} data-testid="assistant-options" className="flex flex-wrap gap-2">
             {options.map((option) => (

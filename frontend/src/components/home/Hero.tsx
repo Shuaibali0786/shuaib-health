@@ -9,13 +9,17 @@ import { getSiteConfig } from "@/lib/content";
 import { ROUTES } from "@/lib/routes";
 
 /**
- * On large screens the three fact cards float over the photo's edges; below that they stack under it. None sits in
- * the bottom-right corner, where the fixed "Ask us" button is (owner test 2026-11-08: a card hid behind it).
+ * The three fact cards sit on the photo's edges at every width, never over the doctor's face (owner test 2026-11-09:
+ * "Lab reports online" covered it): opening hours on the top-left edge above the hair line, lab reports on the
+ * bottom-left edge (the chair), home sample collection on the bottom-right edge (the desk), raised above the fixed
+ * "Ask us" button. Checked at 1920, 1366, 768 and 390 px by tests/e2e/hero-face.spec.ts.
  */
 const FACT_POSITION = [
-  "lg:absolute lg:-left-10 lg:top-12",
-  "lg:absolute lg:-right-4 lg:top-[38%]",
-  "lg:absolute lg:-left-6 lg:bottom-20",
+  "-top-10 left-2 max-w-[60%] sm:-top-12 sm:max-w-[16rem] lg:-top-9 lg:-left-8 lg:max-w-[15rem]",
+  // On a phone the two bottom cards are narrow and staggered, so neither slides under "Ask us" while scrolling.
+  "bottom-3 left-2 max-w-[50%] sm:bottom-5 sm:max-w-[16rem] lg:bottom-8 lg:-left-8",
+  // 76 px up on a phone: below "Ask us" on the first screen, and above it once the photo is scrolled fully into view.
+  "bottom-[4.75rem] right-2 max-w-[50%] sm:bottom-32 sm:max-w-[16rem] lg:bottom-28 lg:-right-6",
 ];
 
 /**
@@ -52,19 +56,21 @@ export async function Hero() {
           </div>
         </div>
 
-        <div className="relative mx-auto w-full min-w-0 max-w-md lg:max-w-none">
-          <div className="overflow-hidden rounded-card shadow-lift">
-            <ImageWithFallback image={heroImage} sizes="(min-width: 1024px) 480px, 90vw" priority />
+        <div className="relative mx-auto mt-6 w-full min-w-0 max-w-md lg:mt-0 lg:max-w-none">
+          {/* On large screens the photo is a little shorter (only the desk is cropped, from the bottom) so all of it, and
+              all three cards, fit the first screen of a 1366 x 768 laptop. */}
+          <div className="overflow-hidden rounded-card shadow-lift lg:aspect-[0.92]">
+            <ImageWithFallback image={heroImage} sizes="(min-width: 1024px) 560px, 90vw" priority className="lg:h-full lg:object-cover lg:object-top" />
           </div>
-          <ul className="mt-4 grid gap-3 sm:grid-cols-3 lg:mt-0 lg:block">
+          <ul>
             {heroFacts.map((fact, index) => (
               <Card
                 as="li"
                 key={fact.id}
-                className={`hero-float hero-float-${index + 1} flex items-center gap-3 p-3 pr-4 shadow-lift lg:max-w-[19rem] ${FACT_POSITION[index] ?? ""}`}
+                className={`hero-float hero-float-${index + 1} !absolute flex items-center gap-2 p-2 pr-3 shadow-lift sm:gap-3 sm:p-3 sm:pr-4 ${FACT_POSITION[index] ?? ""}`}
               >
-                <IconTile name={fact.iconName} />
-                <span className="text-balance text-sm font-semibold leading-snug text-navy-900">{fact.label}</span>
+                <IconTile name={fact.iconName} className="!size-9 sm:!size-12 [&_svg]:size-5 sm:[&_svg]:size-6" />
+                <span className="text-balance text-xs font-semibold leading-snug text-navy-900 sm:text-sm">{fact.label}</span>
               </Card>
             ))}
           </ul>

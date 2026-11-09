@@ -18,7 +18,7 @@ import { clinicClosedOn, doctorsOf, findDepartment, findDoctors, labDepartment, 
 import { T } from "./phrases";
 import { parseDate, speakDate, speakTime } from "./parse/date";
 import { cleanReason, declines, extractEmail, extractName } from "./parse/name";
-import { extractPhone, spokenDigits, withoutPhone } from "./parse/phone";
+import { extractPhone, RESTART_NUMBER, spokenDigits, withoutPhone } from "./parse/phone";
 import { parseTimes } from "./parse/time";
 import { parseYesNo } from "./parse/yesno";
 import { EMPTY_DRAFT, type BookingDraft, type BookingPhase, type VoiceLang } from "./types";
@@ -44,6 +44,10 @@ export type BookingState = {
   nameCheck?: boolean;
   /** The patient said the spelling was wrong: ask them to type it. */
   typeName?: boolean;
+  /** Tries at the mobile number that did not give one (owner's rule: read back once, never loop more than twice). */
+  phoneTries?: number;
+  /** The digits heard on the last try that did not make a mobile number, read back once. */
+  phoneHeard?: string;
 };
 
 /**
@@ -94,6 +98,8 @@ export type DialogReply = {
   readBack?: boolean;
   /** Two to four short answers the patient can tap (or say) instead of answering in their own words. */
   options?: string[];
+  /** A field to type the answer into, shown under the reply (the mobile number: a numeric keypad on phones). */
+  input?: "phone";
 };
 
 type Input = {
@@ -117,6 +123,8 @@ const FIELD_LABELS = {
 const WRONG = /\b(galat|ghalat|ghalti|wrong|incorrect|change|badal|badlo|badalna|mistake|not right|theek nahi|thik nahi)\b/;
 
 const first = (name: string) => name.split(" ")[0] ?? name;
+/** "03245266" is read back as "0324 526 6": four digits, then threes. */
+const groupDigits = (digits: string) => [digits.slice(0, 4), ...(digits.slice(4).match(/\d{1,3}/g) ?? [])].filter(Boolean).join(" ");
 const doctorOf = (pack: KnowledgePack, slug: string | null) => (slug ? pack.doctors.find((d) => d.slug === slug) : undefined);
 
 function withDraft(state: BookingState, patch: Partial<BookingDraft>, corrected?: BookingDraft["corrected"][number]): BookingState {
@@ -173,7 +181,7 @@ function dayProblem(status: string, date: string, lang: VoiceLang): string {
 
 type Change = { field: keyof typeof FIELD_LABELS; was: boolean };
 
-type Applied = { state: BookingState; changes: Change[]; phoneProblem: "partial" | "invalid" | null; ambiguousDoctors: string[] };
+type Applied = { state: BookingState; changes: Change[]; phoneProblem: "partial" | "invalid" | "unheard" | null; ambiguousDoctors: string[] };
 
 function clearRequested(state: BookingState, text: string): BookingState {
   const t = text.toLowerCase();
@@ -243,16 +251,26 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
 
   const digits = spokenDigits(text).replace(/\D/g, "");
   if (asking === "phone" || digits.length >= 7 || /\b(phone|mobile|number|raabta)\b/i.test(text)) {
-    const heard = extractPhone(text, draft().phonePartial);
+    // While the number is asked, misheard digit words count ("Thi", "Fa", "double S"); "phir se" starts it over.
+    const fuzzy = asking === "phone";
+    if (fuzzy && RESTART_NUMBER.test(text)) state = withDraft(state, { phonePartial: "" });
+    const heard = extractPhone(text, draft().phonePartial, { fuzzy });
     if (heard.status === "complete") {
       if (orig.phone !== heard.e164) changes.push({ field: "phone", was: orig.phone !== null });
       state = withDraft(state, { phone: heard.e164, phonePartial: "" }, orig.phone && orig.phone !== heard.e164 ? "phone" : undefined);
+      state = { ...state, phoneTries: 0 };
     } else if (heard.status === "partial" && (asking === "phone" || digits.length >= 4)) {
       phoneProblem = "partial";
       state = withDraft(state, { phonePartial: heard.digits });
     } else if (heard.status === "invalid") {
       phoneProblem = "invalid";
       state = withDraft(state, { phonePartial: "" });
+    } else if (asking === "phone" && !RESTART_NUMBER.test(text)) {
+      phoneProblem = "unheard";
+    }
+    if (phoneProblem && asking === "phone") {
+      const heardNow = heard.status === "partial" || heard.status === "invalid" ? heard.digits : "";
+      state = { ...state, phoneTries: (state.phoneTries ?? 0) + 1, phoneHeard: heardNow };
     }
   }
 
@@ -410,10 +428,23 @@ function question(state: BookingState, deps: DialogDeps, lang: VoiceLang, ask: A
       return T(lang, "May I have your full name, please?", "Aap ka poora naam kya hai?");
     case "nameCheck":
       return T(lang, `I've written your name as ${d.fullName}. Is the spelling right?`, `Maine aap ka naam ${d.fullName} likha hai. Spelling theek hai?`);
-    case "phone":
-      if (problem === "partial" && d.phonePartial) return T(lang, `I heard ${d.phonePartial.replace(/(\d{4})(\d{0,3})/, "$1 $2").trim()}. Please say the rest of the number.`, `Maine ${d.phonePartial.replace(/(\d{4})(\d{0,3})/, "$1 $2").trim()} suna. Baaqi number bata dein.`);
-      if (problem === "invalid") return T(lang, "That doesn't look like a mobile number. Please say it again, for example zero three zero zero, one two three, four five six seven.", "Yeh mobile number nahi lag raha. Dobara bata dein, jaise zero teen zero zero, ek do teen, chaar paanch chhe saat.");
-      return T(lang, "What is your mobile number? Please say the digits slowly.", "Aap ka mobile number kya hai? Aahista aahista digits bata dein.");
+    case "phone": {
+      const either = T(lang, "You can say the number or type it below.", "Aap number bol sakte hain ya neeche likh bhi sakte hain.");
+      const tries = state.phoneTries ?? 0;
+      if (problem && tries >= 2) {
+        // Never a third "please say it again": the typed field is the calm way through.
+        return T(lang, "I'm having trouble hearing the number. Please type it in the box below: 11 digits starting with 03.", "Mujhe number theek se sunai nahi de raha. Barah-e-meherbani neeche box mein likh dein: 03 se shuru hone wale 11 digits.");
+      }
+      if (problem) {
+        // Once: what was heard, read back, and both ways to answer.
+        const heard = state.phoneHeard ? groupDigits(state.phoneHeard) : "";
+        const said = heard ? T(lang, `I heard ${heard}.`, `Maine ${heard} suna.`) : T(lang, "I couldn't hear the number clearly.", "Mujhe number saaf sunai nahi diya.");
+        const rule = T(lang, "A mobile number has 11 digits and starts with 03.", "Mobile number 11 digits ka hota hai aur 03 se shuru hota hai.");
+        const next = problem === "partial" && heard ? T(lang, "Say the rest, or the whole number again, or type it below.", "Baaqi number bata dein, ya poora number dobara, ya neeche likh dein.") : T(lang, "Please say it once more, or type it in the box below.", "Ek dafa phir bol dein, ya neeche box mein likh dein.");
+        return [said, rule, next].join(" ");
+      }
+      return `${T(lang, "What is your mobile number? Please say the digits slowly.", "Aap ka mobile number kya hai? Aahista aahista digits bata dein.")} ${either}`;
+    }
     case "reason":
       return T(lang, "What is the visit for? A few words are fine.", "Visit ki wajah kya hai? Chand alfaaz kaafi hain.");
     case "doctor": {
@@ -618,8 +649,9 @@ async function collect(start: BookingState, applied: Applied, deps: DialogDeps, 
   }
   state = { ...state, phase: "collecting", asking: ask };
   const options = optionsFor(state, deps, lang, ask);
-  const hint = misses >= 2 ? (options.length ? T(lang, "You can also tap one of the choices below.", "Aap neeche diye gaye options mein se chun bhi sakte hain.") : (MISSED_HINT[ask as NonNullable<Ask>]?.[lang === "roman" ? 1 : 0] ?? "")) : "";
-  return reply(state, [lead, question(state, deps, lang, ask, applied.phoneProblem, applied.ambiguousDoctors), hint].filter(Boolean).join(" "), options.length ? { options } : {});
+  const field: Partial<DialogReply> = ask === "phone" ? { input: "phone" } : {};
+  const hint = ask === "phone" ? "" : misses >= 2 ? (options.length ? T(lang, "You can also tap one of the choices below.", "Aap neeche diye gaye options mein se chun bhi sakte hain.") : (MISSED_HINT[ask as NonNullable<Ask>]?.[lang === "roman" ? 1 : 0] ?? "")) : "";
+  return reply(state, [lead, question(state, deps, lang, ask, applied.phoneProblem, applied.ambiguousDoctors), hint].filter(Boolean).join(" "), { ...(options.length ? { options } : {}), ...field });
 }
 
 async function submit(start: BookingState, deps: DialogDeps, lang: VoiceLang): Promise<DialogReply> {

@@ -42,6 +42,8 @@ export type RouterContext = {
   awaiting: Awaiting;
   /** The optional AI brain (VOICE_BRAIN=gemini): asked only when the rules did not understand a patient turn. */
   brain?: Brain;
+  /** The last doctor the patient named ("Omar Sheikh"): a later "booking karo" books with them, never asks again. */
+  lastDoctor?: string | null;
 };
 
 export type Awaiting = "test" | "problem" | null;
@@ -68,6 +70,8 @@ export type RouterResult = {
   options?: string[];
   /** What the next short answer refers to (see RouterContext.awaiting). */
   awaiting?: Awaiting;
+  /** A field to type the answer into, under the reply (the mobile number). */
+  input?: "phone";
 };
 
 const BOOK_WORDS = /\b(book|booking|appointment|appoint|reserve|reservation|slot|apointment|appointmnt)\b/;
@@ -288,6 +292,7 @@ async function startBooking(ctx: RouterContext, input: RouterInput, lang: VoiceL
     spoken: out.spoken ? [head, out.spoken].filter(Boolean).join(" ") : undefined,
     readBack: out.readBack,
     options: out.options,
+    input: out.input,
   };
 }
 
@@ -329,9 +334,41 @@ function askTest(ctx: RouterContext, lang: VoiceLang): RouterResult {
 /** "Assalam o Alaikum" or "hello" at the start of a turn gets a greeting back before the answer. */
 function greetingBack(raw: string, lang: VoiceLang): string {
   const clean = cleanText(urduToLatin(raw));
-  if (/^(as+alam\w*|salam\w*|aoa)\b/.test(clean) || /\bassalam o alaikum\b|\bassalamu?\s?alaikum\b/.test(clean)) return "Wa alaikum assalam!";
-  if (/^(hi|hello|hey|good (morning|afternoon|evening))\b/.test(clean)) return T(lang, "Hello!", "Assalam o Alaikum!");
+  if (SALAM.test(clean)) return "Wa alaikum assalam!";
+  const day = timeOfDayGreeting(clean);
+  if (day) return day;
+  if (/^(hi|hello|hey|helo|hallo)\b/.test(clean)) return T(lang, "Hello!", "Assalam o Alaikum!");
   return "";
+}
+
+// "Good mroning", "gud evning", "good afternon": the recogniser's and the keyboard's spellings of the time of day.
+const GOOD = /^(?:good|gud|gd|goood|god|gooood) (\w+)/;
+const PART_OF_DAY: Array<[RegExp, string]> = [
+  [/^(m\w*r\w*n\w*|mor\w*)$/, "Good morning!"],
+  [/^af\w*$/, "Good afternoon!"],
+  [/^(ev\w*n\w*|eve\w*|ivning)$/, "Good evening!"],
+];
+const SALAM = /^(as+alam\w*|as+ala+mu?\w*|salam\w*|salaam\w*|slam|aoa|a o a)\b|\bassalam o alaikum\b|\bassalamu?\s?alaikum\b/;
+
+/** "Good morning!" back for "good mroning"; null when the turn does not start with a time-of-day greeting. */
+function timeOfDayGreeting(clean: string): string | null {
+  const word = GOOD.exec(clean)?.[1];
+  return word ? (PART_OF_DAY.find(([re]) => re.test(word))?.[1] ?? null) : null;
+}
+
+// Words that may follow a greeting and add nothing to it ("good morning ji", "AOA sir", "hello there").
+const GREETING_FILLER = new Set(["ji", "jee", "sir", "madam", "mam", "maam", "there", "everyone", "dear", "bhai", "baji", "all", "o", "alaikum", "alaikom", "alykum", "alekum", "walaikum", "wa", "hi", "hello", "hey", "good", "aap", "ko", "bhi"]);
+
+/** A turn that is only a greeting, with no question or problem in it. */
+export function greetingOnly(raw: string): boolean {
+  const clean = cleanText(urduToLatin(raw));
+  let rest: string;
+  const day = GOOD.exec(clean);
+  if (day && timeOfDayGreeting(clean)) rest = clean.slice(day[0].length);
+  else if (SALAM.test(clean)) rest = clean.replace(/^(as+alam\w*|as+ala+mu?\w*|salam\w*|salaam\w*|slam|aoa|a o a)\b/, "");
+  else if (/^(hi|hello|hey|helo|hallo)\b/.test(clean)) rest = clean.replace(/^\w+/, "");
+  else return false;
+  return rest.split(" ").filter(Boolean).every((w) => GREETING_FILLER.has(w) || PART_OF_DAY.some(([re]) => re.test(w)));
 }
 
 /** "Dr. Hassan Mirza (PKR 2,000) and Dr. Omar Sheikh (PKR 1,800)": the doctors of a department with their fees. */
@@ -496,6 +533,7 @@ function topicChange(ctx: RouterContext, booking: BookingState, mapped: string):
   if (!["collecting", "awaiting_yes"].includes(booking.phase)) return null;
   if (booking.asking === "fullName" || booking.asking === "email" || booking.asking === "nameCheck") return null;
   if (extractPhone(mapped, "").status === "complete" || parseYesNo(mapped) === "yes") return null;
+  if (booking.asking === "phone" && extractPhone(mapped, "", { fuzzy: true }).status !== "none") return null;
   const d = booking.draft;
   const pkg = findPackage(mapped, ctx.pack);
   const problem = findProblem(mapped, ctx.pack);
@@ -514,7 +552,8 @@ function topicChange(ctx: RouterContext, booking: BookingState, mapped: string):
 export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise<RouterResult> {
   const latin = urduToLatin(input.text);
   // Names and emails are taken word for word; everything else is read with Roman Urdu spellings and typos mapped.
-  const literal = ctx.booking?.phase === "collecting" && (ctx.booking.asking === "fullName" || ctx.booking.asking === "email");
+  // The mobile number too: "Thi", "Fa", "S" are misheard digits there, not typos to be corrected.
+  const literal = ctx.booking?.phase === "collecting" && (ctx.booking.asking === "fullName" || ctx.booking.asking === "email" || ctx.booking.asking === "phone");
   const mapped = canonicalize(latin, { fuzzy: !literal });
   const dialogText = literal ? latin : mapped;
   const lang = replyLanguage(`${input.text} ${mapped}`, ctx.lang);
@@ -581,6 +620,7 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
       bookedTest: out.booked ? testOf(ctx.pack, out.state.draft.labTestSlug) : undefined,
       readBack: out.readBack,
       options: out.options,
+      input: out.input,
     };
   }
 
@@ -601,6 +641,10 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     }
 
     const greet = greetingBack(input.text, lang);
+    // A greeting alone ("good mroning", "AOA ji") is greeted back warmly, never asked "what is the problem?".
+    if (greetingOnly(input.text)) {
+      return { ...base, intent: "greeting", text: `${greet || T(lang, "Hello!", "Assalam o Alaikum!")} ${T(lang, "How can I help you today?", "Bataiye, main aap ki kya madad kar sakti hoon?")}`, options: startChoices(ctx.pack, lang), awaiting: "problem" };
+    }
     const yesNo = [T(lang, "Yes, book it", "Ji haan, booking karein"), T(lang, "No, thanks", "Nahi, shukriya")];
     const labOffer = (t: KnowledgePack["labTests"][number]): RouterResult => ({ ...base, offer: { kind: "lab", testSlug: t.slug }, intent: "lab_offer", text: [greet, labExplanation(ctx, t, lang)].filter(Boolean).join(" "), links: [{ label: t.name, href: `/lab-tests/${t.slug}` }], options: yesNo });
     const packageOffer = (p: KnowledgePack["packages"][number]): RouterResult => ({ ...base, offer: { kind: "lab", testSlug: p.slug }, intent: "package_offer", text: [greet, packageExplanation(ctx, p, lang)].filter(Boolean).join(" "), links: [{ label: T(lang, "Health packages", "Health packages"), href: "/health-packages" }], options: yesNo });
@@ -650,6 +694,14 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
       if (pkg) return startBooking(ctx, input, lang, prefillFor(ctx, { kind: "lab", testSlug: pkg.slug }), "");
       if (test) return startBooking(ctx, input, lang, prefillFor(ctx, { kind: "lab", testSlug: test.slug }), "");
       if (problem?.kind === "not_offered") return notOffered(ctx, problem, lang, greet);
+      // The doctor the patient already named ("Omar Sheikh", then "booking karo") is kept, even after a side question
+      // or a "nahi" to the offer, unless this turn names someone else or a department that is not theirs.
+      const named = findDoctors(mapped, ctx.pack);
+      const remembered = named.length === 1 ? named[0]?.slug : named.length === 0 ? ctx.lastDoctor : null;
+      const doctor = remembered ? ctx.pack.doctors.find((d) => d.slug === remembered) : undefined;
+      if (doctor && (problem?.kind !== "department" || problem.slug === doctor.departmentSlug)) {
+        return startBooking(ctx, input, lang, { ...prefillFor(ctx, { kind: "doctor", doctorSlug: doctor.slug }), reason: problem ? mapped.slice(0, 300) : null }, "");
+      }
       if (problem?.kind === "department") {
         return startBooking(ctx, input, lang, { ...prefillFor(ctx, { kind: "department", departmentSlug: problem.slug }), reason: mapped.slice(0, 300) }, mapped);
       }
@@ -732,6 +784,12 @@ export class Conversation {
   private apologised = false;
 
   async turn(text: string, options: { confirmable: boolean }): Promise<RouterResult> {
+    // Remember the doctor the patient names (not while they give their own name, number or email: "Sana" is a patient).
+    const asking = this.ctx.booking?.phase === "collecting" ? this.ctx.booking.asking : null;
+    if (this.ctx.mode === "patient" && asking !== "fullName" && asking !== "nameCheck" && asking !== "email" && asking !== "phone") {
+      const named = findDoctors(canonicalize(urduToLatin(text)), this.ctx.pack);
+      if (named.length === 1 && named[0]) this.ctx.lastDoctor = named[0].slug;
+    }
     const out = this.polish(await routeTurn(this.ctx, { text, confirmable: options.confirmable }));
     this.ctx.booking = out.booking;
     this.ctx.offer = out.offer;
@@ -780,6 +838,8 @@ const VARIANTS: Array<[RegExp, string[]]> = [
   [/^Would you like to add an email\?/, ["Would you like to add an email, or skip it?", "An email is optional. Add one, or say skip?"]],
   [/^Kya main aap ki booking kar doon\?/, ["Booking kar doon?", "Kya aap chahenge ke main booking kar doon?"]],
   [/^Shall I book (it|an appointment) for you\?/, ["Would you like me to book it?", "Shall I go ahead and book it?"]],
+  [/^Mujhe number theek se sunai nahi de raha\./, ["Number neeche box mein likh dein, phir Save number dabaiye.", "Box mein 03 se shuru hone wala number likh kar Save number dabaiye."]],
+  [/^I'm having trouble hearing the number\./, ["Please type the number in the box below, then tap Save number.", "Type the number starting with 03 in the box, then tap Save number."]],
   [/^Yeh mobile number nahi lag raha\./, ["Yeh number mobile ka nahi lagta, mobile number 03 se shuru hota hai aur 11 digits ka hota hai.", "Mujhe yeh mobile number theek nahi mila."]],
   [/^That doesn't look like a mobile number\./, ["That number doesn't look like a mobile number: it should start with 03 and have 11 digits.", "I couldn't read that as a mobile number."]],
   [/^I don't know that one, and I won't guess\./, ["I don't know that, and I'd rather not guess.", "I don't know the answer to that one, sorry I can't guess."]],
@@ -841,7 +901,8 @@ export function polishReply(result: RouterResult, previous: string, apologised: 
       T(lang, "I'm here whenever you're ready. Tap a choice below or type it.", "Main yahin hoon, jab chahein bataiye. Neeche se chun lein ya likh dein."),
     ];
     const text = calm.find((c) => !before.has(norm(c))) ?? (calm[0] as string);
-    const options = result.options?.length ? result.options : startChoices(pack, lang);
+    // While the number is asked, the typed field is the choice (never the department buttons).
+    const options = result.input ? (result.options ?? []) : result.options?.length ? result.options : startChoices(pack, lang);
     return { result: { ...result, text, spoken: undefined, options }, apologised: sorry };
   }
   const text = kept.join(" ");
