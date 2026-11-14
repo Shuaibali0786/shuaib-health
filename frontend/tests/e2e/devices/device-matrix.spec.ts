@@ -13,6 +13,7 @@ const SHOTS = process.env.MATRIX_SHOTS_DIR;
 const shotName = (project: string, what: string) => `${SHOTS}/${project.replace(/[^a-z0-9]+/gi, "-").replace(/-+$/, "")}-${what}.png`;
 
 const PAGES = ["/", "/about", "/doctors", "/departments", "/lab-tests", "/health-packages", "/health-tips", "/contact", "/book-appointment", "/admin/login"];
+// WebKit also reports a cancelled Next.js prefetch (?_rsc=) as "due to access control checks" when the page navigates away mid-prefetch: harmless noise.
 // WebKit warns that a report-only CSP has no report-to: the LOCAL test build sends the CSP in report-only mode
 // (SITE_SECURITY_HEADERS=report); production enforces it (Content-Security-Policy header), so this never shows there.
 const IGNORED_CONSOLE = /favicon|Download the React DevTools|ERR_ABORTED|net::ERR_|Failed to load resource|delivered in report-only mode, but does not specify/i;
@@ -22,7 +23,9 @@ const hit = (a: Rect, b: Rect) => a.x < b.x + b.width - 0.5 && b.x < a.x + a.wid
 
 function watchConsole(page: Page): string[] {
   const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
+  page.on("pageerror", (e) => {
+    if (!/_rsc=[^ ]* due to access control checks/.test(e.message)) errors.push(`pageerror: ${e.message}`);
+  });
   page.on("console", (m) => {
     if (m.type() === "error" && !IGNORED_CONSOLE.test(m.text())) errors.push(`console: ${m.text().slice(0, 200)} … ${m.text().slice(-220)}`);
   });

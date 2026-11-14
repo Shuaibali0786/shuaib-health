@@ -50,7 +50,6 @@
   }
 
   body {
-    overflow-x: clip;
     background-color: var(--color-background);
     color: var(--color-ink);
     font-family: var(--font-sans);
