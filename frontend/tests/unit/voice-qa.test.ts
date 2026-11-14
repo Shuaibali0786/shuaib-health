@@ -20,11 +20,15 @@ describe("normal questions by voice", () => {
   it.each(CASES.map((c) => [c.id, c.say, c] as const))("#%i %s", async (_id, say, c) => {
     const w = makeWorld();
     const out = await w.say(say);
-    for (const fact of c.includes) expect(out.text, `fact "${fact}"`).toContain(fact);
+    // The same FACTS as the text chat (case aside: "the same day" is "Same day" said in a sentence).
+    for (const fact of c.includes) expect(out.text.toLowerCase(), `fact "${fact}"`).toContain(fact.toLowerCase());
     // Same brain: whenever the text assistant knows the answer, the voice answer starts with exactly its words.
     const text = answer({ mode: "patient", question: say }, w.pack);
     // (A greeting alone gets the receptionist's short welcome instead of the chat's long product welcome.)
-    if (text.intent !== "unknown" && out.intent !== "departments" && out.intent !== "greeting") expect(out.text.startsWith(text.text.replace(/sakta/g, "sakti").replace(/batata hoon/g, "batati hoon"))).toBe(true);
+    // Owner Part D (2026-11-09): where, fees, departments and tests are said like a receptionist (sentences, not catalog
+    // lines); those answers carry the same facts but not the text chat's exact wording.
+    const spokenStyle = ["departments", "greeting", "contact", "suggest_department", "fee", "lab_offer", "lab_report_time", "package_offer"];
+    if (text.intent !== "unknown" && !spokenStyle.includes(out.intent)) expect(out.text.startsWith(text.text.replace(/sakta/g, "sakti").replace(/batata hoon/g, "batati hoon"))).toBe(true);
     expect(w.submits).toHaveLength(0);
   });
 

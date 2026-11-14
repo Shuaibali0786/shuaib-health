@@ -15,20 +15,20 @@ export function welcomeLine(pack: KnowledgePack, lang: VoiceLang): string {
   const clinic = pack.clinic.name;
   return T(
     lang,
-    `Hi, welcome to ${clinic}! I'm ${ASSISTANT_NAME}, your virtual assistant. How are you today?`,
-    `Assalam o Alaikum! ${clinic} mein khush aamdeed, main ${ASSISTANT_NAME} hoon, aap ki virtual assistant. Aap kaise hain?`,
+    `Hello, welcome to ${clinic}. I'm ${ASSISTANT_NAME}, the clinic's assistant. I can help you in English or Urdu. How can I help you today?`,
+    `Assalam o Alaikum, ${clinic} mein khush aamdeed. Main ${ASSISTANT_NAME} hoon, clinic ki assistant. Main English ya Urdu mein madad kar sakti hoon. Bataiye, kya madad karoon?`,
   );
 }
 
-export const CHECKING = (lang: VoiceLang): string => T(lang, "Just one moment while I check.", "Ji, ek lamha, main dekh rahi hoon.");
+export const CHECKING = (lang: VoiceLang): string => T(lang, "Let me check that for you.", "Ji, ek lamha, main dekh rahi hoon.");
 
 /**
  * Calm, reassuring words when a patient names an illness or pain (owner: never "Mujhe sun kar afsos hua"). Varied, so
  * two problems in one call never get the same line; `seed` picks one deterministically.
  */
 export function reassure(lang: VoiceLang, seed: string): string {
-  const en = ["I'm sorry you're not feeling well. Let's get you seen quickly.", "Don't worry, I'll help you right away.", "I understand. Let's get you to the right doctor."];
-  const roman = ["Ji, fikar na karein, main abhi aap ki madad karti hoon.", "Aap fikar na karein, hum aap ka achhi tarah khayal rakhenge.", "Ji, main samajh gayi. Fikar na karein, abhi intezam karti hoon."];
+  const en = ["I'm sorry you're dealing with that. Yes, we can help.", "I'm sorry you're not feeling well. Yes, we can help with that.", "I understand. Yes, we can help with that."];
+  const roman = ["Fikar na karein, hum aap ki madad kar sakte hain.", "Ji, fikar na karein, hum madad kar sakte hain.", "Ji, main samajh gayi. Fikar na karein, hum madad kar sakte hain."];
   let h = 0;
   for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   const list = lang === "roman" ? roman : en;

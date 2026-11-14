@@ -18,7 +18,9 @@ describe("small talk is answered like a person", () => {
     ["main theek hoon", /Sun kar khushi hui!/],
     ["good morning", /^Good morning!/],
     ["thank you Ayesha", /You're very welcome!/],
-    ["shukriya", /Koi baat nahi, khushi hui!/],
+    // In an English call a one-word "shukriya" or "Allah Hafiz" is answered in English (owner rule A2: stay in the
+    // patient's language; answer words alone never switch it).
+    ["shukriya", /You're very welcome!/],
     ["Allah Hafiz", /Allah Hafiz!/],
     ["bye", /goodbye|lovely day/i],
   ])("%s", async (said, reply) => {
@@ -55,14 +57,14 @@ describe("an illness gets calm, reassuring words (never 'afsos')", () => {
     const w = makeWorld({ lang: "roman" });
     const out = await w.say(said);
     expect(out.text).not.toMatch(/afsos/i);
-    expect(out.text).toMatch(/fikar na karein|samajh gayi/);
+    expect(out.text).toMatch(/fikar na karein|samajh gayi/i);
   });
 
   it("in English: no 'sorry to hear that', a reassuring line instead", async () => {
     const w = makeWorld();
     const out = await w.say("I have a fever");
     expect(out.text).not.toMatch(/sorry to hear/i);
-    expect(out.text).toMatch(/not feeling well|right away|right doctor/);
+    expect(out.text).toMatch(/dealing with that|not feeling well|I understand/);
   });
 });
 

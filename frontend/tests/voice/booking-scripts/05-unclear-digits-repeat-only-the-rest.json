@@ -1,11 +1,11 @@
 {
-  "name": "Only part of the number was heard: the assistant asks only for the rest",
+  "name": "A number said in parts (owner rule A6): each part is read back and the patient goes on; the parts make the number",
   "turns": [
     { "say": "book an appointment with Dr Bilal", "expect": ["Which day"] },
     { "say": "tuesday", "expect": ["Tuesday 10 November"] },
     { "say": "10", "expect": ["full name"] },
     { "say": "Sara Noor", "expect": ["mobile"] },
-    { "say": "zero three one one one two three", "expect": ["I heard 0311 123", "Say the rest", "type it below"], "forbid": ["email"] },
+    { "say": "zero three one one one two three", "expect": ["0311 123", "please go on"], "forbid": ["email"] },
     { "say": "four five six seven", "expect": ["email"] },
     { "say": "skip", "expect": ["zero three one one, one two three, four five six seven", "tap Confirm"] },
     { "say": "yes", "expect": ["You're booked"], "submits": 1 }

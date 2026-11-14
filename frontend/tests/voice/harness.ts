@@ -101,8 +101,9 @@ export function makeWorld(options: { mode?: SubmitMode; lang?: VoiceLang; guide?
   const ctx = conversation.ctx;
   const log: RouterResult[] = [];
 
-  async function say(text: string, opts: { confirmable?: boolean } = {}): Promise<RouterResult> {
-    const out = await conversation.turn(text, { confirmable: opts.confirmable ?? true });
+  /** `spoken`: the turn was said aloud (a name and a whole mobile number are then read back once). */
+  async function say(text: string, opts: { confirmable?: boolean; spoken?: boolean } = {}): Promise<RouterResult> {
+    const out = await conversation.turn(text, { confirmable: opts.confirmable ?? true, spoken: opts.spoken });
     log.push(out);
     return out;
   }

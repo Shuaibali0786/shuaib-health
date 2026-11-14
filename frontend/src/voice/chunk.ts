@@ -77,16 +77,23 @@ export function speakPhone(e164: string): string {
 /** The reference's letters and digits only, upper case (a hyphen or space inside it is only for the eye). */
 const referenceCharacters = (reference: string): string => reference.replace(/[^0-9A-Za-z]/g, "").toUpperCase();
 
-/** A booking reference spoken character by character in groups of four: "7, K, 3, M. 9, P, 2, Q. X, A". */
-export function speakReference(reference: string): string {
-  const groups = referenceCharacters(reference).match(/.{1,4}/g) ?? [];
-  return groups.map((group) => [...group].join(", ")).join(". ");
+/** The reference in its two halves, exactly as the slip prints it ("XP75N" and "MYDWQ"). */
+function referenceHalves(reference: string): string[] {
+  const clean = referenceCharacters(reference);
+  const half = Math.ceil(clean.length / 2);
+  return clean.length > 5 ? [clean.slice(0, half), clean.slice(half)] : [clean];
 }
 
-/** The reference for the eye: "7K3M 9P2Q XA". */
+/** A booking reference spoken slowly, character by character, in its two halves: "X, P, 7, 5, N. Then, M, Y, D, W, Q". */
+export function speakReference(reference: string): string {
+  return referenceHalves(reference)
+    .map((group) => [...group].join(", "))
+    .join(". Then, ");
+}
+
+/** The reference for the eye, exactly like the slip (owner 2026-11-09): "XP75N-MYDWQ". */
 export function groupReference(reference: string): string {
-  const clean = referenceCharacters(reference);
-  return (clean.match(/.{1,4}/g) ?? [clean]).join(" ");
+  return referenceHalves(reference).join("-");
 }
 
 /** An email spoken the way people say it: "ali dot raza at gmail dot com". */

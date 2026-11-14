@@ -99,7 +99,7 @@ describe("never invents a slot", () => {
     expect((await w.say("5th december")).text).toContain("next 14 days");
     await w.say("monday");
     const out = await w.say("2:45 pm");
-    expect(out.text).toContain("isn't free");
+    expect(out.text).toContain("isn't available");
     expect(out.text).not.toContain("tap Confirm");
     expect(w.submits).toHaveLength(0);
   });
@@ -125,10 +125,10 @@ describe("corrections and memory", () => {
   it("applies a correction to the name or the doctor and confirms it in one sentence", async () => {
     const w = await untilReadBack();
     const name = await w.say("my name is Sara Khan");
-    expect(name.text).toContain("Done, Sara Khan.");
+    expect(name.text).toContain("Sure, Sara Khan.");
     expect(name.text).toContain("tap Confirm");
     const doctor = await w.say("make it Dr Maryam");
-    expect(doctor.text).toContain("Done, Dr. Maryam Baloch.");
+    expect(doctor.text).toContain("Sure, Dr. Maryam Baloch.");
     expect(w.submits).toHaveLength(0);
   });
 

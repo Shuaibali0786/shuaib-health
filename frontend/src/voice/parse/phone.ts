@@ -21,19 +21,19 @@ const REPEAT: Record<string, number> = { double: 2, triple: 3, dabal: 2, tripal:
 // "zero Thi two four five two double S Fa Ti Fa", "Z T2 Ffa2d6353") and more Urdu digit words. Outside that
 // question these words keep their ordinary meaning ("to", "for", "do").
 const FUZZY_DIGITS: Record<string, string> = {
-  z: "0", zee: "0", zed: "0", ziro: "0", zeero: "0", jero: "0", sifr: "0", o: "0",
+  z: "0", zee: "0", zed: "0", ziro: "0", zeero: "0", jero: "0", sifr: "0", o: "0", ziroon: "0", zeroon: "0", ziron: "0", zeeroon: "0", sefar: "0",
   won: "1", wan: "1", ik: "1",
   to: "2", too: "2", tu: "2", tow: "2",
   thi: "3", tree: "3", ti: "3", tee: "3", t: "3", thri: "3", tri: "3", thre: "3",
   for: "4", fore: "4", foor: "4", faur: "4",
   fa: "5", faio: "5", faiv: "5", fife: "5", faive: "5", fiv: "5", fai: "5", faiy: "5",
-  s: "6", siks: "6", sics: "6", sicks: "6", che: "6", chhey: "6",
-  sevan: "7", sat: "7",
-  ate: "8", ait: "8", aat: "8",
+  s: "6", siks: "6", sics: "6", sicks: "6", che: "6", chhey: "6", chhay: "6", chey: "6", chhe: "6",
+  sevan: "7", sat: "7", son: "7", sevn: "7", sevin: "7", saath: "7",
+  ate: "8", ait: "8", aat: "8", a: "8", aatth: "8",
   nain: "9", nein: "9", nyne: "9", nao: "9",
 };
 // Words that are also ordinary words: a digit only next to another digit ("bata do" is not a 2).
-const WEAK = new Set(["do", "to", "too", "tu", "for", "fore", "won", "ate", "o", "oh", "s", "t", "z", "ti", "sat", "che"]);
+const WEAK = new Set(["do", "to", "too", "tu", "for", "fore", "won", "ate", "o", "oh", "s", "t", "z", "ti", "sat", "che", "a", "son"]);
 
 /** "ffa" is "fa", "tree" is "tre": letters said twice in a row by the recogniser. */
 const squeeze = (word: string) => word.replace(/(.)\1+/g, "$1");

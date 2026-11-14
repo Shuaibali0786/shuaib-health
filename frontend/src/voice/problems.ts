@@ -51,7 +51,7 @@ const RULES: Rule[] = [
     topic: "fever, cough or a general check-up",
     topicRoman: "bukhar, khansi ya aam check-up",
     words:
-      /\b(fever|feverish|fevar|temperature|bukhar|bukhaar|bokhar|bukar|flu|zukam|zukaam|zukham|nazla|cold|sardi|khansi|khaansi|khasi|khaasi|cough|sore throat|throat|gala|gale|sar ?dard|sir ?dard|sar mein dard|sir mein dard|headache|migraine|pet ?dard|pait ?dard|pet mein dard|stomach\w*|tummy|ulti|ultiyan|vomit\w*|dast|diarrh\w*|loose motion\w*|kamzori|weakness|thakan|tired\w*|chakkar|dizz\w*|infection|typhoid|malaria|dengue|body ?pain|badan ?dard|jism ?dard|sugar|shugar|diabetes|diabetic|thyroid|checkup|check up|general physician|physician|ilaaj ka check)\b/,
+      /\b(neend|nind|sleep|sleepless|insomnia|fever|feverish|fevar|temperature|bukhar|bukhaar|bokhar|bukar|flu|zukam|zukaam|zukham|nazla|cold|sardi|khansi|khaansi|khasi|khaasi|cough|sore throat|throat|gala|gale|sar ?dard|sir ?dard|sar mein dard|sir mein dard|headache|migraine|pet ?dard|pait ?dard|pet mein dard|stomach\w*|tummy|ulti|ultiyan|vomit\w*|dast|diarrh\w*|loose motion\w*|kamzori|weakness|thakan|tired\w*|chakkar|dizz\w*|infection|typhoid|malaria|dengue|body ?pain|badan ?dard|jism ?dard|sugar|shugar|diabetes|diabetic|thyroid|checkup|check up|general physician|physician|ilaaj ka check)\b/,
   },
 ];
 

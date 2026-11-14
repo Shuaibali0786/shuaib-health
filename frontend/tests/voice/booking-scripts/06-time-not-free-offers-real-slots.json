@@ -3,7 +3,7 @@
   "turns": [
     { "say": "book an appointment with Dr Bilal", "expect": ["Which day"] },
     { "say": "friday", "expect": ["Friday 13 November"] },
-    { "say": "9:15", "expect": ["9:15 AM isn't free", "9:00 AM", "11:30 AM"], "forbid": ["full name"], "submits": 0 },
+    { "say": "9:15", "expect": ["9:15 AM isn't available", "9:00 AM", "11:30 AM"], "forbid": ["full name"], "submits": 0 },
     { "say": "9", "expect": ["full name"], "forbid": ["9:15"] },
     { "say": "Sara Noor", "expect": ["mobile"] },
     { "say": "03111234567", "expect": ["email"] },

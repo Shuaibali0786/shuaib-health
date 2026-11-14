@@ -30,12 +30,30 @@ function expand(hour: number, minute: number, mark: Marker): string[] {
   return [hhmm(hour, minute), hhmm(hour + 12, minute)];
 }
 
+const MONTHS = "jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december";
+const DAY_MONTH = new RegExp(`\\b\\d{1,2}(st|nd|rd|th)?\\s+(of\\s+)?(${MONTHS})\\b`, "g");
+const MONTH_DAY = new RegExp(`\\b(${MONTHS})\\s+\\d{1,2}(st|nd|rd|th)?\\b`, "g");
+
+/**
+ * The sentence without its date ("13 november", "november 13th", "the 13th", "13 tareekh"), so the day of the month
+ * is never read as an hour. Owner test 2026-11-09: "13 november 2 pm" was booked at 1:00 PM (13:00) without a word.
+ */
+export function withoutDates(t: string): string {
+  return t
+    .replace(DAY_MONTH, " ")
+    .replace(MONTH_DAY, " ")
+    .replace(/\b(the\s+)?\d{1,2}(st|nd|rd|th)\b/g, " ")
+    .replace(/\b\d{1,2}\s+(tareekh|tarikh|tarik|date)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /**
  * All plausible 24-hour readings of one utterance ("11:30", "11 baje", "saade gyarah", "half past ten",
  * "3 pm", "teen baje shaam"). Empty when no time is heard. `alone` allows a bare number ("11").
  */
 export function parseTimes(text: string, alone = false): string[] {
-  const t = text.toLowerCase().replace(/[,;!?()]/g, " ").replace(/\s+/g, " ").trim();
+  const t = withoutDates(text.toLowerCase().replace(/[,;!?()]/g, " ").replace(/\s+/g, " ").trim());
   if (!t) return [];
   const mark = marker(t);
 
@@ -79,7 +97,11 @@ export function parseTimes(text: string, alone = false): string[] {
     const m = WORD_MINUTES[two] ?? WORD_MINUTES[words[i + 1] ?? ""] ?? (/^\d{2}$/.test(words[i + 1] ?? "") ? Number(words[i + 1]) : null);
     if (m !== null && m !== undefined && m <= 59) return expand(h, m, mark);
   }
-  // "11 baje", "11 o'clock", "at 3", "3 pm", "teen baje"
+  // "11 baje", "11 o'clock", "at 3", "3 pm", "teen baje". A number said WITH its marker wins over any other number.
+  for (let i = 0; i < words.length; i += 1) {
+    const h = num(words[i]);
+    if (h !== null && /^(baje|bajay|bje|o'clock|oclock|am|pm|a|p)$/.test(words[i + 1] ?? "")) return expand(h, 0, mark);
+  }
   for (let i = 0; i < words.length; i += 1) {
     const h = num(words[i]);
     if (h === null) continue;

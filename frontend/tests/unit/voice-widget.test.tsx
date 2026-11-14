@@ -146,7 +146,7 @@ describe("the chat", () => {
     expect(g.__posts).toHaveLength(0);
     // Tapping Confirm is the patient's own yes (in their language).
     await user.click(within(card).getByRole("button", { name: "Confirm" }));
-    await waitFor(() => expect(log).toHaveTextContent("Slip download karke mobile mein save karein aur clinic aate waqt saath laayein."));
+    await waitFor(() => expect(log).toHaveTextContent("slip download karein aur reception par dikha dein."));
     expect(g.__posts).toHaveLength(1);
     const slip = within(dialog).getByTestId("voice-slip");
     expect(within(slip).getByTestId("voice-booked-test")).toHaveTextContent("Complete Blood Count (CBC) - PKR 800 (sample)");
@@ -176,7 +176,7 @@ describe("the chat", () => {
     // Change -> Mobile: only the number is asked again, then the card comes back with the new number.
     await user.click(within(card).getByRole("button", { name: "Change" }));
     await user.click(within(card).getByRole("button", { name: "Mobile" }));
-    await waitFor(() => expect(log).toHaveTextContent("What is your mobile number?"));
+    await waitFor(() => expect(log).toHaveTextContent("Please tell me your mobile number slowly"));
     expect(log.textContent).not.toMatch(/full name[sS]*full name/);
     await type("03211234567", "Please check, then say yes");
     card = within(dialog).getByTestId("voice-summary");
@@ -224,7 +224,8 @@ describe("the owner's real messages, typed", () => {
     await waitFor(() => expect(log).toHaveTextContent("Aap ko kya takleef hai"));
     expect(log).not.toHaveTextContent("nahi maloom");
     await user.click(within(within(dialog).getByTestId("assistant-options")).getByRole("button", { name: "Daant" }));
-    await waitFor(() => expect(log).toHaveTextContent("Dental department"));
+    // Owner rule A4: the department's doctor with days, hours and fee, then wait for the patient's choice.
+    await waitFor(() => expect(log).toHaveTextContent("Dr. Bilal Ansari"));
   }, 30000);
 });
 
@@ -277,7 +278,7 @@ describe("voice mode", () => {
     expect(await within(dialog).findByTestId("voice-mode")).toBeInTheDocument();
     expect(within(dialog).getByTestId("voice-orb")).toBeInTheDocument();
     await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
-    expect(within(dialog).getByRole("log")).toHaveTextContent("Hi, welcome to Shuaib Health! I'm Ayesha, your virtual assistant. How are you today?");
+    expect(within(dialog).getByRole("log")).toHaveTextContent("Hello, welcome to Shuaib Health. I'm Ayesha, the clinic's assistant. I can help you in English or Urdu. How can I help you today?");
     expect(within(dialog).getByText(/audio is never recorded/)).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Stop listening" })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "End" })).toBeInTheDocument();
@@ -332,8 +333,11 @@ describe("voice mode", () => {
     for (const [text, expected] of [
       ["I want to book an appointment with Dr Bilal", /Which day/],
       ["monday at 3 pm", /full name/],
-      ["my name is Sara Noor", /mobile number/],
-      ["zero three one one one two three four five six seven", /email/],
+      // Said aloud: the spelling is checked once; going straight on with the number means it was right, and the whole
+      // number is read back once ("Is that right?").
+      ["my name is Sara Noor", /spelling/],
+      ["zero three one one one two three four five six seven", /0311 123 4567\. Is that right\?/],
+      ["yes", /email/],
       ["skip", /tap Confirm/],
     ] as const) {
       // The mic opens only after the assistant has finished speaking.
@@ -350,8 +354,8 @@ describe("voice mode", () => {
     act(() => port().hear("yes"));
     const slip = await within(dialog).findByTestId("voice-slip");
     expect(g.__posts).toHaveLength(1);
-    expect(within(slip).getByTestId("voice-reference")).toHaveTextContent("7K3M 9P2Q XA");
+    expect(within(slip).getByTestId("voice-reference")).toHaveTextContent("7K3M9-P2QXA");
     expect(within(slip).getByRole("link", { name: /^Open my slip/ })).toHaveAttribute("href", "/book-appointment/confirmed/7K3M9P2QXA");
-    expect(log).toHaveTextContent("Tap Open my slip, download the slip, save it on your phone");
+    expect(log).toHaveTextContent("Tap Open my slip, download it, and show it at reception.");
   }, 30000);
 });

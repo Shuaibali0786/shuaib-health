@@ -138,7 +138,7 @@ export const asksOpenToday = (text: string): boolean => has(/\b(aaj|today|abhi|n
 
 /** "Booking kyun nahi kar rahi?", "I already told you": the caller is frustrated that nothing is happening. */
 export const complains = (text: string): boolean =>
-  has(/\b(kyun|why)\b.*\b(nahi|not|nahin)\b|\bbol raha\b|\bbol rahi\b|\bkeh raha\b|\bkeh rahi\b|\balready (told|said)\b|\bpehle hi\b|\bnot working\b|\bkaam nahi\b|\bsamajh nahi\b|\bsun nahi\b/, text);
+  has(/\b(kyun|why)\b.*\b(nahi|not|nahin)\b|\bbol raha\b|\bbol rahi\b|\bkeh raha\b|\bkeh rahi\b|\balready (told|said)\b|\bpehle hi\b|\bnot working\b|\bkaam nahi\b|\bsamajh nahi\b|\bsun nahi\b|\bjust (do|book) it\b|\btaking (forever|so long|too long)\b|\bhurry\b|\bjaldi karo\b|\bwhy (aren t|are not|isn t|is not) (you|it)\b|\bstill (not|waiting)\b/, text);
 
 /** "Booking karo", "book kar sakti ho?", "appointment chahiye": the caller wants something booked. */
 export const asksToBook = (text: string): boolean =>

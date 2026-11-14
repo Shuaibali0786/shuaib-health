@@ -26,9 +26,22 @@ const INTROS: RegExp[] = [
   /\bmain\s+([^,.;!?]+?)\s+(?:hoon|hun|bol raha hoon|bol rahi hoon)\b/i,
 ];
 
-const looksLikeName = (candidate: string): boolean => {
+// Words that can be part of a real name when the name was just asked ("Ali Test", "Sana Clinic" is odd but possible):
+// they stop a name only in an unasked sentence ("blood test karwana hai").
+const TOPIC_WORDS = new Set("test blood khoon clinic patient new old".split(" "));
+
+// Never a name, in any mode (owner test 2026-11-09: "spelling sahi hai", heard as "Aspilng sahi hai", was saved as the
+// name "Aspilng Sahi"): yes / no words and "spelling" as the recogniser mishears it.
+const NEVER_NAME = new Set("sahi theek thik teek yes yeah yep haan han ji jee ok okay correct right wrong galat ghalat nahi nahin no bilkul perfect done confirm".split(" "));
+const SPELLING = /^[aie]?s+[bp]+[ei]+l+[ei]*n*g*$/;
+// "Hmm", "umm", "uh", "er": a pause, never a name ("Nice to meet you, Hmm" was a real result).
+const HESITATION = /^(h+m+|m+h*m+|u+m+|u+h+|e+r+m*|a+h+|o+h+|h+u+h+|a+c+h+a+)$/;
+
+const looksLikeName = (candidate: string, asked = false): boolean => {
   const words = candidate.toLowerCase().split(/\s+/).filter(Boolean);
-  return words.length >= 1 && words.length <= 4 && !words.some((w) => NOT_A_NAME.has(w));
+  if (words.length < 1 || words.length > 4) return false;
+  if (words.some((w) => NEVER_NAME.has(w) || SPELLING.test(w) || HESITATION.test(w))) return false;
+  return !words.some((w) => NOT_A_NAME.has(w) && !(asked && TOPIC_WORDS.has(w)));
 };
 
 /**
@@ -40,14 +53,25 @@ export function extractName(text: string, asked: boolean): string | null {
     const found = pattern.exec(text);
     if (!found?.[1]) continue;
     const name = cleanName(found[1].replace(TRAILING, ""));
-    if (name && looksLikeName(name)) return name;
+    if (name && looksLikeName(name, asked)) return name;
   }
   if (!asked) return null;
   const words = text.trim().replace(/[,.!?]+/g, " ").split(/\s+/).filter(Boolean);
   const kept = words.filter((w) => !FILLER_WORDS.has(w.toLowerCase()));
   if (kept.length === 0 || kept.length > 4) return null;
   const name = cleanName(kept.join(" "));
-  return name && looksLikeName(name) ? name : null;
+  return name && looksLikeName(name, true) ? name : null;
+}
+
+/**
+ * The patient confirms the spelling of their name ("haan", "yes", "sahi hai", "spelling sahi hai", heard as "Aspilng sahi
+ * hai", "theek hai", "correct", "that's right"): any yes word and no "no" or "wrong".
+ */
+export function confirmsSpelling(text: string): boolean {
+  const words = text.toLowerCase().replace(/[^a-z\s']/g, " ").split(/\s+/).filter(Boolean);
+  if (words.length === 0 || words.length > 8) return false;
+  if (words.some((w) => /^(no|nahi|nahin|nope|galat|ghalat|wrong|incorrect|not|change|badal|badlo)$/.test(w))) return false;
+  return words.some((w) => /^(yes|yeah|yep|yup|haan|han|ji|jee|sahi|theek|thik|teek|correct|right|ok|okay|bilkul|perfect|exactly|sure)$/.test(w));
 }
 
 const DIGIT_WORD: Record<string, string> = { zero: "0", one: "1", two: "2", three: "3", four: "4", five: "5", six: "6", seven: "7", eight: "8", nine: "9" };

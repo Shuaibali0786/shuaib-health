@@ -76,7 +76,7 @@ describe("the welcome", () => {
     const t = build();
     void t.session.start();
     await settle(t.port);
-    expect(t.turns[0]?.text).toBe("Hi, welcome to Shuaib Health! I'm Ayesha, your virtual assistant. How are you today?");
+    expect(t.turns[0]?.text).toBe("Hello, welcome to Shuaib Health. I'm Ayesha, the clinic's assistant. I can help you in English or Urdu. How can I help you today?");
     expect(said(t.port)).not.toMatch(/record/i); // "audio is never recorded" is small text, not spoken
     // Neerja (Indian English, natural) reads English AND Roman Urdu well, so she is the one voice of the call.
     expect(t.port.spoken[0]?.voice).toContain("Neerja");
@@ -146,7 +146,8 @@ describe("one voice, automatic language", () => {
     const voices = new Set(t.port.spoken.map((s) => s.voice));
     expect(voices.size).toBe(1);
     expect([...voices][0]).toContain("Neerja");
-    expect(t.port.spokenRates.every((r) => r === 0.95)).toBe(true);
+    // Owner rule A7 (2026-11-09): a little slower, calm.
+    expect(t.port.spokenRates.every((r) => r === 0.92)).toBe(true);
   });
 
   it("shows captions sentence by sentence and clears them after speaking", async () => {
@@ -166,7 +167,7 @@ describe("one voice, automatic language", () => {
     await settle(t.port);
     t.port.hear("What are your timings?");
     await vi.advanceTimersByTimeAsync(1100);
-    expect(t.port.spoken.some((s) => s.text.startsWith("Just one moment while I check"))).toBe(true);
+    expect(t.port.spoken.some((s) => s.text.startsWith("Let me check that for you"))).toBe(true);
     await vi.advanceTimersByTimeAsync(1000);
     await settle(t.port);
     expect(said(t.port)).toContain("9 AM");
@@ -196,17 +197,19 @@ describe("barge-in, echo and the one mic button", () => {
     expect(t.port.listening).toBe(true); // open again once it has finished
   });
 
-  it("owner echo case: its own 'Maaf kijiye, main samajh nahi saki' heard back in Urdu letters right after it stopped is ignored", async () => {
+  it("owner echo case: in a Roman Urdu call, its own 'Maaf kijiye, zara dobara bata dein?' heard back in Urdu letters right after it stopped is ignored", async () => {
     const t = build({ skipOpening: true });
+    t.conversation.ctx.lang = "roman";
     void t.session.start();
     await settle(t.port);
-    t.port.hear("Qawwali"); // nonsense: it apologises once and asks again
+    t.port.hear("Qawwali"); // nonsense: it asks again once, politely, in the call's language
     await settle(t.port);
     const replies = () => t.turns.filter((x) => x.from === "assistant").length;
+    expect(t.turns.filter((x) => x.from === "assistant").at(-1)?.text).toBe("Maaf kijiye, zara dobara bata dein?");
     const before = replies();
-    t.port.hear("معاف کیجیے میں ٹھیک سے سن نہیں سکی دوبارہ بتائیے");
+    t.port.hear("معاف کیجیے ذرا دوبارہ بتا دیں");
     await settle(t.port);
-    t.port.hear("Maaf kijiye main theek se sun nahi saki");
+    t.port.hear("Maaf kijiye zara dobara bata dein");
     await settle(t.port);
     expect(replies()).toBe(before);
     // A real answer straight after is heard.
@@ -435,8 +438,8 @@ describe("the owner's real messages, heard by voice", () => {
     ["kia aaj clenic off hia", /Aaj Sunday hai, aur aaj clinic band hai/],
     ["are booking karo blood Khooni", /Ji zaroor[\s\S]*Kaun sa din/],
     ["Mera phone number 0324 5211332 aur email share@gmail.com hai", /tafseelat note kar li/],
-    ["yaar main aapko bol raha hun booking kyon nahin kar rahi ho", /booking kar rahi hoon/],
-    ["Assalam o Alaikum, mujhe bukhar hai, ilaaj karwana hai", /^Wa alaikum assalam![\s\S]*General Medicine[\s\S]*PKR 2,000[\s\S]*booking kar doon/],
+    ["yaar main aapko bol raha hun booking kyon nahin kar rahi ho", /Der ke liye maaf kijiye. Jaldi mukammal karte hain/],
+    ["Assalam o Alaikum, mujhe bukhar hai, ilaaj karwana hai", /^Wa alaikum assalam![\s\S]*General Medicine[\s\S]*PKR 2,000[\s\S]*kis doctor se milna chahenge/],
     ["Mujhe allergy hai", /Dermatology[\s\S]*Dr\. Maryam Baloch/],
     ["skin pe daane hain", /Dermatology/],
     ["Daant ki safai karwani hai", /Dental[\s\S]*Dr\. Bilal Ansari/],
@@ -469,16 +472,16 @@ describe("the owner's real messages, heard by voice", () => {
 });
 
 describe("listening language", () => {
-  it("starts in English (en-US); nonsense heard in English ('Qawwali') switches to Urdu listening (ur-PK) and asks again, kindly", async () => {
+  it("starts in English (en-US); a misheard English line ('Qawwali') is asked again politely in ENGLISH and listening stays English (owner B5)", async () => {
     const t = build({ skipOpening: true });
     void t.session.start();
     await settle(t.port);
     expect(t.port.listenLang).toBe("en-US");
     t.port.hear("Qawwali");
     await settle(t.port);
-    expect(t.port.listenLang).toBe("ur-PK");
+    expect(t.port.listenLang).toBe("en-US");
     const reply = t.turns.filter((x) => x.from === "assistant").at(-1)?.text ?? "";
-    expect(reply).toContain("Dobara bataiye");
+    expect(reply).toBe("Sorry, could you say that again?");
     expect(reply).not.toMatch(/nahi maloom|I don't know/);
   });
 
@@ -518,7 +521,7 @@ describe("listening language", () => {
     await settle(t.port);
     t.port.hear("ladki dekh Khani");
     await settle(t.port);
-    expect(t.port.listenLang).toBe("ur-PK");
+    expect(t.port.listenLang).toBe("en-US");
     expect(t.turns.filter((x) => x.from === "assistant").length).toBe(2);
   });
 });

@@ -255,7 +255,8 @@ describe("throttle", () => {
 describe("knowledge pack", () => {
   it("contains only allow-listed public fields", () => {
     expect(Object.keys(pack).sort()).toEqual(["clinic", "demo", "departments", "doctors", "faqs", "labTests", "packages"]);
-    expect(Object.keys(pack.doctors[0] ?? {}).sort()).toEqual(["days", "departmentName", "departmentSlug", "feePkr", "name", "slug", "specialty"]);
+    // "hours" (Feature 013, owner rule A4): the earliest start and latest end of the weekly sessions, already public on the doctor pages.
+    expect(Object.keys(pack.doctors[0] ?? {}).sort()).toEqual(["days", "departmentName", "departmentSlug", "feePkr", "hours", "name", "slug", "specialty"]);
     expect(Object.keys(pack.clinic).sort()).toEqual(["address", "emergencyNumbers", "emergencyPhone", "hours", "labHours", "name", "openingRules", "phone", "timeZone"]);
     // No e-mail address and no Pakistani mobile number (patients' contact details are never in the catalog).
     expect(JSON.stringify(pack)).not.toMatch(/[a-z0-9._-]+@[a-z0-9-]+\.[a-z]|\b03\d{2}[ -]?\d{7}\b/i);

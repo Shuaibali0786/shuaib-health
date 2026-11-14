@@ -64,6 +64,7 @@ export function buildKnowledgePack(input: {
         departmentName: dept?.name ?? "",
         feePkr: d.feePkr,
         days: [...new Set(d.schedule.map((s) => s.day))],
+        hours: d.schedule.length ? { start: d.schedule.map((s) => s.start).sort()[0] as string, end: d.schedule.map((s) => s.end).sort().at(-1) as string } : undefined,
       };
     }),
     labTests: input.labTests.map((t) => ({

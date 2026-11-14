@@ -1,7 +1,7 @@
 "use client";
 
-import { Mic, MicOff, PhoneOff } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { MessageSquareText, Mic, MicOff, PhoneOff } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import type { MicResult } from "@/voice/microphone";
@@ -118,6 +118,7 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
 
   // The written chat is hidden by default in voice mode: the caption under the orb is the only text (no duplicates).
   const [showChat, setShowChat] = useState(false);
+  const chatId = useId();
   // While a help message, a booking card or the chat is on screen the orb shrinks so there is room for it.
   const compact = Boolean(notice) || Boolean(cards) || showChat;
   const listening = state === "listening";
@@ -128,14 +129,29 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden" data-testid="voice-mode">
       <section aria-label="Voice assistant" data-testid="voice-stage" className="flex shrink-0 flex-col items-center border-b border-border bg-linear-to-b from-teal-50 to-white px-2 pt-3 pb-4" data-compact={compact}>
-        <Orb ref={orb} state={state} className={compact ? "h-[min(6.5rem,13dvh)] w-[min(6.5rem,13dvh)]" : "h-[min(11rem,22dvh)] w-[min(11rem,22dvh)]"} />
+        {/* The orb scales with the screen height, so the stage always fits a short laptop window or a phone. */}
+        <Orb ref={orb} state={state} className={compact ? "h-[min(6rem,11dvh)] w-[min(6rem,11dvh)]" : "h-[min(10rem,18dvh)] w-[min(10rem,18dvh)]"} />
         <p ref={status} tabIndex={-1} role="status" aria-live="polite" data-testid="voice-status" className="mt-1 rounded-pill bg-white px-3 py-0.5 text-xs font-semibold tracking-wide text-navy-900 shadow-soft outline-none">
           {STATE_LABEL[state]}
         </p>
-        <div className="mt-2 w-full">
-          <Captions you={interim} assistant={caption ?? lastCaption} heard={heard} live={Boolean(caption)} />
-        </div>
-        <div data-testid="voice-controls" className="mt-3 flex items-center justify-center gap-8">
+        {/* With the chat shown, its text is right there: no caption (no duplicate text, more room on a small phone). */}
+        {showChat ? null : (
+          <div className="mt-2 w-full">
+            <Captions you={interim} assistant={caption ?? lastCaption} heard={heard} live={Boolean(caption)} />
+          </div>
+        )}
+        <div data-testid="voice-controls" className="mt-3 flex items-center justify-center gap-4 sm:gap-6">
+          {/* Show chat sits with the controls (owner B8: it was half hidden behind the input when it lived below them). */}
+          <button
+            type="button"
+            onClick={() => setShowChat((v) => !v)}
+            aria-expanded={showChat}
+            aria-controls={chatId}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-pill border border-teal-700 bg-white px-3 text-sm font-semibold text-teal-700 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-navy-900"
+          >
+            <MessageSquareText className="size-4" aria-hidden="true" />
+            {showChat ? "Hide chat" : "Show chat"}
+          </button>
           <button
             type="button"
             onClick={() => session.current?.toggleMic()}
@@ -172,17 +188,7 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
       </section>
       {/* Below the controls: the cards (booking card, Open my slip, the phone and email boxes, choices) in their own
           scroll area, and the chat only when asked for. This area is clipped, so it can never cover the input row. */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden" data-testid="voice-below">
-        <div className="flex shrink-0 justify-center pt-1.5">
-          <button
-            type="button"
-            onClick={() => setShowChat((v) => !v)}
-            aria-expanded={showChat}
-            className="min-h-9 rounded-pill px-3 text-xs font-semibold text-teal-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-navy-900"
-          >
-            {showChat ? "Hide chat" : "Show chat"}
-          </button>
-        </div>
+      <div id={chatId} className="flex min-h-0 flex-1 flex-col overflow-hidden" data-testid="voice-below">
         {showChat ? (
           renderLog(cards)
         ) : (

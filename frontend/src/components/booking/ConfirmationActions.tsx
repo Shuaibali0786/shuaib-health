@@ -106,7 +106,8 @@ export function ConfirmationActions({ view, clinic, labTest }: { view: Appointme
 
   return (
     <>
-      <div className="sticky bottom-3 z-20 rounded-card border border-border bg-white/95 p-3 shadow-soft backdrop-blur print:hidden lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
+      {/* Sticky above the floating "Ask us" button on phones and tablets, so it never covers Download or Share (owner B1). */}
+      <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 rounded-card border border-border bg-white/95 p-3 shadow-soft backdrop-blur print:hidden lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
         <button
           type="button"
           onClick={download}

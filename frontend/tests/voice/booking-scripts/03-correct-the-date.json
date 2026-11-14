@@ -6,7 +6,7 @@
     { "say": "Sara Noor", "expect": ["Sara", "mobile"] },
     { "say": "03111234567", "expect": ["email"] },
     { "say": "skip", "expect": ["Friday 13 November at 11:30 AM", "tap Confirm"], "submits": 0 },
-    { "say": "no, make it the 14th", "expect": ["Done, Saturday 14 November", "Saturday 14 November at 11:30 AM", "tap Confirm"], "submits": 0 },
+    { "say": "no, make it the 14th", "expect": ["Sure, Saturday 14 November", "Saturday 14 November at 11:30 AM", "tap Confirm"], "submits": 0 },
     { "say": "yes", "expect": ["You're booked", "Saturday 14 November"], "submits": 1 }
   ],
   "final": { "bookings": 1, "payload": { "startsAt": "2026-11-14T06:30:00Z", "fullName": "Sara Noor" } }

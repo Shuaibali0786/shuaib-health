@@ -126,7 +126,8 @@ describe("the brain inside a conversation", () => {
     await w.say("mujhe bukhar hai");
     await w.say("What are your timings?");
     expect(brain).not.toHaveBeenCalled();
-    const out = await w.say("mujhe raat ko neend nahi aati");
+    // (Sleep problems are now understood by the rules too, so a problem they do not know is used here.)
+    const out = await w.say("mujhe bohat ghabrahat hoti hai");
     expect(brain).toHaveBeenCalledTimes(1);
     expect(out.text).toContain("General Medicine");
   });

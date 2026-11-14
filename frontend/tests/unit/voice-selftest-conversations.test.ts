@@ -19,14 +19,14 @@ type Conv = { id: number; title: string; by: "typed" | "voice"; steps: Step[]; b
 
 const C: Conv[] = [
   { id: 1, title: "Fever, Roman Urdu by voice -> General Medicine -> slip", by: "voice", books: { name: "Ali Raza", department: "general-medicine" }, steps: [
-    { say: "Assalam o Alaikum, mujhe bukhar hai, ilaaj karwana hai", expect: /^Wa alaikum assalam![\s\S]*General Medicine[\s\S]*PKR 2,000[\s\S]*booking kar doon/ },
+    { say: "Assalam o Alaikum, mujhe bukhar hai, ilaaj karwana hai", expect: /^Wa alaikum assalam![\s\S]*General Medicine[\s\S]*PKR 2,000[\s\S]*kis doctor se milna chahenge/ },
     { say: "ji haan", expect: /Dr\. Hassan Mirza[\s\S]*Dr\. Omar Sheikh/ },
     { say: "Dr Hassan Mirza", expect: /din/ },
     { sayChoice: 0, expect: /waqt/ },
     { sayChoice: 0, expect: /poora naam/ },
     { say: "mera naam Ali Raza hai", expect: /mobile number/ },
     { say: "zero three zero zero one two three four five six seven", expect: /email/ },
-    { say: "skip", expect: /main aap ki booking kar rahi hoon[\s\S]*Confirm/ },
+    { say: "skip", expect: /Yeh rahi aap ki booking ki tafseel[\s\S]*Confirm/ },
     { say: "haan", expect: /booking ho gayi[\s\S]*Open my slip/ } ] },
   { id: 2, title: "Allergy, typed Roman Urdu -> Dermatology -> slip", by: "typed", books: { name: "Sana Khan", department: "dermatology" }, steps: [
     { say: "Mujhe allergy hai", expect: /Dermatology[\s\S]*Dr\. Maryam Baloch[\s\S]*PKR 3,000/ },
@@ -45,7 +45,7 @@ const C: Conv[] = [
     { say: "میرا نام شعیب علی ہے", expect: /Shuaib Ali[\s\S]*Spelling theek hai/ },
     { say: "ہاں ٹھیک ہے", expect: /mobile number/ },
     { say: "زیرو تھری زیرو زیرو ون ٹو تھری فور فائیو سکس سیون", expect: /email/ },
-    { say: "سکپ", expect: /booking kar rahi hoon/ },
+    { say: "سکپ", expect: /booking ki tafseel/ },
     { say: "ہاں", expect: /booking ho gayi/ } ] },
   { id: 4, title: "Teeth cleaning by voice -> Dental -> slip (email with a doctor's first name in it)", by: "voice", books: { name: "Ayesha Siddiqui", department: "dental" }, steps: [
     { say: "Daant ki safai karwani hai", expect: /Dental[\s\S]*Dr\. Bilal Ansari/ },

@@ -63,15 +63,20 @@ export function AssistantLauncher({ pack, provider = "local", voice = false, voi
   return (
     <>
       {open ? null : (
-        <div className="assistant-dock fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 md:right-6 md:bottom-6">
-          <div className="inline-flex items-center gap-1 rounded-pill bg-navy-900 p-1 shadow-lift">
+        // Owner B1 (2026-11-09). A floating pill always covers some button while a page scrolls (the device matrix found
+        // day filters, test chips, department cards and "View profile" under it from 360 px to 1440 px). So:
+        // - below 1280 px (phones, tablets, iPad landscape) it is a slim bar across the bottom, above the device's own
+        //   bottom inset; the page keeps the same room at the bottom (site layout), so nothing is ever trapped under it;
+        // - from 1280 px it is two round buttons stacked in the empty margin beside the 1200 px page, never over content.
+        <div className="assistant-dock fixed inset-x-0 bottom-0 z-[55] flex justify-end border-t border-border bg-white/95 px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur xl:inset-x-auto xl:right-2 xl:bottom-6 xl:block xl:border-0 xl:bg-transparent xl:p-0 xl:backdrop-blur-none">
+          <div className="inline-flex items-center gap-1 rounded-pill bg-navy-900 p-1 shadow-lift xl:flex-col xl:rounded-[1.75rem]">
             <button
               ref={button}
               type="button"
               onClick={() => void show(false)}
               aria-haspopup="dialog"
               aria-busy={loading}
-              className="assistant-launcher inline-flex min-h-11 items-center gap-2 rounded-pill pr-3 pl-4 font-semibold text-white hover:bg-white/10"
+              className="assistant-launcher inline-flex min-h-11 items-center gap-2 rounded-pill pr-3 pl-4 font-semibold text-white hover:bg-white/10 xl:size-14 xl:flex-col xl:justify-center xl:gap-0.5 xl:p-0 xl:text-[11px] xl:leading-none"
             >
               <MessageCircle className="size-5 text-gold-300" aria-hidden="true" />
               Ask us
@@ -83,7 +88,7 @@ export function AssistantLauncher({ pack, provider = "local", voice = false, voi
                 aria-haspopup="dialog"
                 aria-label="Talk by voice, in English or Urdu"
                 title="Talk by voice (English / Urdu)"
-                className="assistant-mic inline-flex size-11 items-center justify-center rounded-full bg-gold-300 text-navy-900 hover:bg-gold-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="assistant-mic inline-flex size-11 items-center justify-center rounded-full bg-gold-300 xl:size-14 text-navy-900 hover:bg-gold-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 <Mic className="size-5" aria-hidden="true" />
               </button>

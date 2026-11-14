@@ -65,12 +65,17 @@ test.describe("hero: the doctor's face is never covered", () => {
       const cards = hero.locator("li");
       await expect(cards).toHaveCount(3);
       const dock = page.locator(".assistant-dock");
-      const ask = (await dock.count()) ? await boxOf(dock) : null;
+      const dockBox = (await dock.count()) ? await boxOf(dock) : null;
+      // Owner B1 (2026-11-09): below 1280 px "Ask us" is a bar across the bottom (the bottom edge of the screen: the page
+      // keeps room for it); from 1280 px it is two round buttons beside the page. A card must never be under the buttons,
+      // and on the first screen never under the bar.
+      const bar = Boolean(dockBox && dockBox.width >= size.width - 1);
+      const ask = dockBox ? (bar ? dockBox : await boxOf(dock.locator(":scope > div"))) : null;
 
       const [open, reports, home] = await Promise.all([0, 1, 2].map((i) => boxOf(cards.nth(i))));
       for (const [name, card] of [["Open", open], ["Lab reports online", reports], ["Home sample collection", home]] as const) {
         for (const face of faces) expect(overlaps(card as Box, face), `${name} covers the face at ${size.width}px`).toBe(false);
-        if (ask) expect(overlaps(card as Box, ask), `${name} is under the Ask us button at ${size.width}px: ${JSON.stringify({ card, ask })}`).toBe(false);
+        if (ask && !bar) expect(overlaps(card as Box, ask), `${name} is under the Ask us button at ${size.width}px: ${JSON.stringify({ card, ask, photo: p })}`).toBe(false);
       }
       // Where each card sits on the photo.
       const mid = (b: Box) => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
@@ -90,19 +95,22 @@ test.describe("hero: the doctor's face is never covered", () => {
       expect(mid(home as Box).y, "Home sample: bottom edge").toBeGreaterThan(p.y + p.height * 0.6);
       expect(mid(home as Box).x, "Home sample: right").toBeGreaterThan(p.x + p.width / 2);
       // Scrolled so the whole photo just fits (its bottom at the screen's bottom): still nothing under "Ask us".
-      if (ask && p.y + p.height > size.height) {
+      if (ask && p.y + p.height > (bar && dockBox ? dockBox.y : size.height)) {
         // Instant (the site scrolls smoothly), and again after the header settles, until the photo's bottom is 8 px
         // above the screen's bottom.
         for (let step = 0; step < 3; step++) {
           await photo.evaluate((img) => {
-            const gap = img.getBoundingClientRect().bottom - (window.innerHeight - 8);
+            const barTop = document.querySelector(".assistant-dock")?.getBoundingClientRect();
+            const edge = barTop && barTop.width >= window.innerWidth - 1 ? barTop.top : window.innerHeight;
+            const gap = img.getBoundingClientRect().bottom - (edge - 8);
             window.scrollBy({ top: gap, behavior: "instant" });
           });
           await page.waitForTimeout(150);
         }
         const photoNow = await boxOf(photo);
-        expect(Math.abs(photoNow.y + photoNow.height - (size.height - 8))).toBeLessThan(3);
-        const askNow = await boxOf(dock);
+        const edge = bar && dockBox ? dockBox.y : size.height;
+        expect(Math.abs(photoNow.y + photoNow.height - (edge - 8))).toBeLessThan(3);
+        const askNow = bar ? await boxOf(dock) : await boxOf(dock.locator(":scope > div"));
         for (let i = 0; i < 3; i++) {
           const card = await boxOf(cards.nth(i));
           expect(overlaps(card, askNow), `card ${i + 1} is under Ask us when scrolled at ${size.width}px: ${JSON.stringify({ card, askNow, photoNow })}`).toBe(false);

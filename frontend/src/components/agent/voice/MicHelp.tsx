@@ -9,7 +9,7 @@ type Copy = { title: string; body: string; steps?: string[]; action?: string };
 const COPY: Record<Notice, Copy> = {
   mic_denied: {
     title: "The microphone is blocked",
-    body: "Your browser or Windows is not letting this site use the microphone. In Microsoft Edge on Windows, try these steps in order:",
+    body: "No problem, you can type below and I'll answer. To talk instead, allow the microphone for this site in your browser. In Microsoft Edge on Windows:",
     steps: [
       "Click the padlock (or tune) icon at the left of the address bar, open Permissions for this site, set Microphone to Allow, then reload the page.",
       "Still blocked? Open Edge Settings, then Cookies and site permissions, then Microphone. Make sure \"Ask before accessing\" is on and this site is not in the Block list.",
@@ -29,8 +29,8 @@ const COPY: Record<Notice, Copy> = {
     action: "Try again",
   },
   listen_unsupported: {
-    title: "This browser can't listen",
-    body: "I can still speak my answers. Please type your questions below. Chrome or Edge works best for talking.",
+    title: "Voice isn't supported in this browser. Please type below.",
+    body: "I'll answer you here (and aloud when the browser can speak). Chrome works best for talking.",
   },
   speak_unsupported: {
     title: "This browser can't speak aloud",

@@ -32,6 +32,33 @@ export function speakable(sentence: string): string {
     .trim();
 }
 
+// How an English voice should SAY our Urdu names (owner test 2026-11-09: "Ayesha" came out as "Alisha"). Only what
+// the voice speaks changes; the screen keeps the real spelling. Syllables with hyphens make English voices (Chrome on
+// Windows and Android, Safari) stress them the Urdu way.
+const PRONOUNCE: Array<[RegExp, string]> = [
+  [/\bAyesha\b/g, "Aa-ee-sha"],
+  [/\bShuaib\b/g, "Shoo-aib"],
+  [/\bMaryam\b/g, "Mar-yam"],
+  [/\bZainab\b/g, "Zay-nab"],
+  [/\bBaloch\b/g, "Ba-loach"],
+  [/\bMemon\b/g, "May-mon"],
+  [/\bQureshi\b/g, "Ku-ray-shee"],
+  [/\bFarooqui\b/g, "Fa-roo-kee"],
+  [/\bChaudhry\b/g, "Chau-dhree"],
+  [/\bAnsari\b/g, "An-saa-ree"],
+  [/\bBilal\b/g, "Bi-laal"],
+  [/\bImran\b/g, "Im-raan"],
+  [/\bRahman\b/g, "Reh-maan"],
+  [/\bMirza\b/g, "Mir-za"],
+  [/\bHassan\b/g, "Has-san"],
+  [/\bSiddiqui\b/g, "Sid-dee-kee"],
+];
+
+/** The text an ENGLISH voice reads, with our Urdu names spelled the way they should sound (screen text unchanged). */
+export function pronounce(text: string): string {
+  return PRONOUNCE.reduce((out, [name, sound]) => out.replace(name, sound), text);
+}
+
 export function forSpeech(sentence: string): string {
   return speakable(sentence)
     .replace(/\+?\d{2,}(?:[\s-]\d{2,}){2,}/g, spellNumber)

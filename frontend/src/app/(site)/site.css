@@ -40,12 +40,17 @@
 @layer base {
   html {
     color-scheme: light;
+    /* Owner B1 (2026-11-09): nothing may make the page wider than the screen (large phone text, a long word). If it
+       did, the layout viewport would widen and the fixed "Ask us" button (right: 1rem) would sit off the screen.
+       clip (not hidden) keeps the sticky header working. */
+    overflow-x: clip;
     /* Sticky header height, so focused elements are never hidden under it (WCAG 2.2 2.4.11). */
     scroll-padding-top: 4.5rem;
     -webkit-text-size-adjust: 100%;
   }
 
   body {
+    overflow-x: clip;
     background-color: var(--color-background);
     color: var(--color-ink);
     font-family: var(--font-sans);

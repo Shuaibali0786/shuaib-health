@@ -4,7 +4,7 @@
 // script is mapped, word by word, to the Roman Urdu / English words the engine already knows. Names and
 // rare words stay as they are (the engine ignores them). Replies are English or Roman Urdu in Phase 1.
 
-import { cleanText, detectLang } from "@/agent/normalize";
+import { cleanText } from "@/agent/normalize";
 
 import type { VoiceLang } from "./types";
 
@@ -16,20 +16,45 @@ const ENGLISH_MARKERS = new Set(
   "the is are was you your what how when where which who why can could would should do does please want need like with for from about this that have has any some tell show give my me our we it its and or but of to in on at book appointment doctor doctors fee fees hours open timings".split(" "),
 );
 
-/**
- * The style to reply in. Roman Urdu words or Urdu letters give Roman Urdu; a turn with several English
- * function words gives English; anything else (a name, digits, "yes") keeps the previous style.
- */
-export function replyLanguage(text: string, previous: VoiceLang): VoiceLang {
-  if (hasUrduScript(text)) return "roman";
-  if (detectLang(text) === "roman") return "roman";
-  const words = [...new Set(cleanText(text).split(" ").filter(Boolean))];
-  // Roman Urdu that the shared detector does not list ("rehne do", "chhor do", "galat hai").
-  if (words.some((w) => ROMAN_EXTRA.has(w))) return "roman";
-  return words.filter((w) => ENGLISH_MARKERS.has(w)).length >= 2 ? "en" : previous;
+// Words that clearly say "this is Roman Urdu" (owner test 2026-11-09: "darm Hai Thoda ji", a misheard English sentence,
+// flipped the call to Roman Urdu because ONE marker word was enough). "hai", "ji", "thoda", "do", "ka/ki/ke" are
+// common in mishearings and in Pakistani English, so they only count half.
+const URDU_STRONG = new Set(
+  "khoon khooni aaj kal liye karne karni karna mujhe mujhay mujhy mera meri mere mairi aap ap apka aapka apki aapki apko aapko tum kya kia kyun kyon nahi nahin nai chahiye chahta chahti chahte karna karni karne karwana karwani karwane karein karo kardo kardein karen dein dijiye bataiye batao bata sakta sakti sakte hoon hun raha rahi rahe tha thi gaya gayi wala wali kaise kaisay kaisi kab kahan kitna kitni kitne kaun konsa bukhar dard khansi zukam jild daant dant bacha bache bachay bachi ilaaj elaj rehne rehnay chhor chor chhoro galat ghalat ammi abbu beta behen bhai daane dane kharish khujli takleef masla baithte baithti baithta milna dikhana neend aati aata pet sar seene saans hafiz alhamdulillah sunaiye sunao".split(" "),
+);
+// Answer words that English-speaking Pakistanis also use ("sahi hai", "theek", "ji"): they never switch alone.
+const URDU_WEAK = new Set("hai hain hay he ji jee thoda thori do ka ki ke ko se mein me main aur bhi sahi theek thik haan han acha achha accha bilkul shukriya zaroor chalo".split(" "));
+
+/** "English please", "I don't speak Urdu": English for the rest of the call. "Urdu mein baat karein": Roman Urdu. */
+export function requestedLanguage(text: string): VoiceLang | null {
+  const t = cleanText(text);
+  if (/\b(english please|in english|speak english|english mein|english me|i don t speak urdu|i do not speak urdu|no urdu|not urdu|only english)\b/.test(t)) return "en";
+  if (/\b(urdu mein|urdu me|urdu please|in urdu|speak urdu|urdu main)\b/.test(t)) return "roman";
+  return null;
 }
 
-const ROMAN_EXTRA = new Set("rehne rehnay chhor chor chhoro mat galat ghalat sahi theek thik haan han ji jee nahin acha achha accha chalo zaroor bilkul shukriya bhai behen beta abbu ammi bacha bache bachay daane dane jild khansi zukam bukhar sar safai daant kaise kaisi kaisay haal hafiz alhamdulillah sunaiye sunao".split(" "));
+/**
+ * The language to reply in (owner rule A2, 2026-11-09): mirror the patient and stay there. Roman Urdu needs clear Urdu
+ * (two clear Urdu words, or one and two common ones: "mujhe bukhar hai", "bukhar hai na ji"), or Urdu letters; clear English (two
+ * English words and no strong Urdu word) switches back. A name, digits, "yes", a department, a misheard line keep the
+ * current language. With `locked` (the patient asked for a language) only another explicit request changes it.
+ */
+export function replyLanguage(text: string, previous: VoiceLang, locked: VoiceLang | null = null): VoiceLang {
+  const asked = requestedLanguage(text);
+  if (asked) return asked;
+  if (locked) return locked;
+  if (hasUrduScript(text)) return "roman";
+  const words = cleanText(text).split(" ").filter(Boolean);
+  // Distinct strong words: the same word heard twice ("bukhar" as said and as corrected) counts once.
+  const strong = new Set(words.filter((w) => URDU_STRONG.has(w))).size;
+  const score = strong + 0.5 * words.filter((w) => URDU_WEAK.has(w)).length;
+  const english = new Set(words.filter((w) => ENGLISH_MARKERS.has(w))).size;
+  if (strong >= 2 || (strong >= 1 && score >= 2)) return "roman";
+  // A short turn in Urdu only ("booking karo", "ilaaj karwana"): Roman Urdu.
+  if (strong >= 1 && english === 0 && new Set(words).size <= 3) return "roman";
+  return english >= 2 && strong === 0 ? "en" : previous;
+}
+
 
 const URDU_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";

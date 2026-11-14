@@ -4,7 +4,7 @@
     {
       "say": "Dr Bilal se appointment chahiye",
       "expect": [
-        "Ji zaroor",
+        "Theek hai, Dr. Bilal Ansari",
         "Kaun sa din"
       ]
     },

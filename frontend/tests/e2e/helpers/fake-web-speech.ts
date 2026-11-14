@@ -110,4 +110,9 @@ export async function installFakeWebSpeech(page: Page, options: { recognition?: 
 export const spokenText = (page: Page): Promise<string> => page.evaluate(() => ((window as unknown as { __spoken: string[] }).__spoken ?? []).join(" "));
 
 /** The caller says something (interim words, then the final phrase). */
-export const hear = (page: Page, text: string): Promise<void> => page.evaluate((t) => (window as unknown as { __hear: (x: string) => void }).__hear(t), text);
+export const hear = async (page: Page, text: string): Promise<void> => {
+  // The page restarts its recognizer after each reply: wait until the new one has its handler (a short apology can be
+  // spoken before that happens), then speak.
+  await page.waitForFunction(() => typeof (window as unknown as { __sr?: { onresult?: unknown } }).__sr?.onresult === "function", undefined, { timeout: 10000 });
+  await page.evaluate((t) => (window as unknown as { __hear: (x: string) => void }).__hear(t), text);
+};

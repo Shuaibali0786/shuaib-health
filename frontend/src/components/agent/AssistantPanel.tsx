@@ -24,6 +24,7 @@ import type { Turn, VoiceLang } from "@/voice/types";
 import { BookedCard } from "./voice/BookedCard";
 import { EmailField } from "./voice/EmailField";
 import { MicHelp } from "./voice/MicHelp";
+import { NameField } from "./voice/NameField";
 import { PhoneField } from "./voice/PhoneField";
 import { CORRECTION_TEXT, SummaryCard, type CorrectionField } from "./voice/SummaryCard";
 import { useDictation } from "./voice/useDictation";
@@ -244,6 +245,7 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
         {booking ? <SummaryCard key={booking.phase} state={booking} pack={pack} lang={replyLang} onConfirm={confirmByTap} onCorrect={correctByTap} /> : null}
         {booked ? <BookedCard view={booked} lang={replyLang} test={bookedTest} /> : null}
         {field === "phone" ? <PhoneField lang={replyLang} disabled={paused} onSave={(digits) => void ask(digits)} /> : null}
+        {field === "name" ? <NameField lang={replyLang} disabled={paused} onSave={(name) => void ask(name)} /> : null}
         {field === "email" ? <EmailField lang={replyLang} disabled={paused} onSave={(email) => void ask(email)} onSkip={() => void ask("skip")} /> : null}
         {options.length ? (
           <div role="group" aria-label={replyLang === "roman" ? "Jawab chunein" : "Choose an answer"} data-testid="assistant-options" className="flex flex-wrap gap-2">
@@ -366,9 +368,10 @@ export function AssistantPanel({ pack, provider: providerId = "local", onClose, 
         <>
           <div className="flex min-h-[6.5rem] flex-1 flex-col">{renderLog(cards)}</div>
           {suggestions.length ? (
-            <div className="flex gap-2 overflow-x-auto px-4 pb-2" role="group" aria-label="Suggested questions">
+            // Owner B10: the chips wrap onto a second line instead of a horizontal scrollbar.
+            <div className="flex flex-wrap gap-2 px-4 pb-2" role="group" aria-label="Suggested questions">
               {suggestions.map((s) => (
-                <button key={s} type="button" onClick={() => void ask(s)} disabled={paused} className="min-h-11 shrink-0 rounded-pill border border-border bg-white px-3 text-sm whitespace-nowrap text-navy-900 hover:bg-surface disabled:opacity-50">
+                <button key={s} type="button" onClick={() => void ask(s)} disabled={paused} className="min-h-11 rounded-pill border border-border bg-white px-3 text-sm text-navy-900 hover:bg-surface disabled:opacity-50">
                   {s}
                 </button>
               ))}

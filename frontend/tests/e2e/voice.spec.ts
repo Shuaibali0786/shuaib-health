@@ -113,7 +113,7 @@ test.describe("voice receptionist", () => {
     await installFakeWebSpeech(page);
     const dialog = await openVoice(page);
     await expect(dialog.getByTestId("voice-orb")).toBeVisible();
-    await expect(dialog.getByRole("log")).toContainText("Hi, welcome to Shuaib Health! I'm Ayesha, your virtual assistant. How are you today?");
+    await expect(dialog.getByRole("log")).toContainText("Hello, welcome to Shuaib Health. I'm Ayesha, the clinic's assistant. I can help you in English or Urdu. How can I help you today?");
     await expect(dialog.getByText(/audio is never recorded/)).toBeVisible();
     await say(page, "What are your timings?", /Mon–Sat/);
     await expect.poll(() => spokenText(page)).toContain("9 AM");
@@ -160,7 +160,7 @@ test.describe("voice receptionist", () => {
     await expect(dialog.getByText("The microphone is blocked")).toBeVisible();
     await expect(dialog.getByText(/Cookies and site permissions/)).toBeVisible();
     await expect(dialog.getByText(/Privacy & security, then Microphone/)).toBeVisible();
-    await expect.poll(() => spokenText(page), { timeout: 10000 }).toContain("welcome to Shuaib Health");
+    await expect.poll(() => spokenText(page), { timeout: 10000 }).toContain("welcome to Shoo-aib Health");
     const results = await new AxeBuilder({ page }).include("[role='dialog']").withTags(WCAG).analyze();
     expect(results.violations).toEqual([]);
   });
@@ -172,7 +172,7 @@ test.describe("voice receptionist", () => {
     await page.getByRole("button", { name: "Ask us" }).click();
     const dialog = page.getByRole("dialog", { name: /Ask / });
     await dialog.getByRole("button", { name: /Start voice mode/ }).click();
-    await expect(dialog.getByText("This browser can't listen")).toBeVisible();
+    await expect(dialog.getByText("Voice isn't supported in this browser. Please type below.")).toBeVisible();
     await dialog.getByLabel("Your question").fill("timings");
     await dialog.getByLabel("Your question").press("Enter");
     await expect(dialog.getByRole("log")).toContainText("Mon–Sat");
@@ -191,8 +191,10 @@ test.describe("voice receptionist", () => {
     await say(page, "I want to book an appointment with Dr Bilal", /Which day/);
     await say(page, `the ${dayNumber}th`, /Which time/);
     await say(page, time, /full name/);
-    await say(page, "my name is Sara Noor", /mobile number/);
-    await say(page, "zero three one one one two three four five six seven", /email/);
+    await say(page, "my name is Sara Noor", /Sara Noor\. Is the spelling right\?/);
+    await say(page, "yes", /mobile number/);
+    await say(page, "zero three one one one two three four five six seven", /0311 123 4567\. Is that right\?/);
+    await say(page, "yes", /email/);
     await say(page, "skip", /Please check the card, then say yes or tap Confirm/);
 
     const card = dialog.getByTestId("voice-summary");
@@ -212,7 +214,7 @@ test.describe("voice receptionist", () => {
     await hear(page, "yes");
     const slip = dialog.getByTestId("voice-slip");
     await expect(slip).toBeVisible({ timeout: 10000 });
-    await expect(slip.getByTestId("voice-reference")).toHaveText(/^[0-9A-Z]{4} [0-9A-Z]{4} [0-9A-Z]{2}$/);
+    await expect(slip.getByTestId("voice-reference")).toHaveText(/^[0-9A-Z]{5}-[0-9A-Z]{5}$/);
     const link = slip.getByRole("link", { name: OPEN_SLIP });
     await expect(link).toHaveAttribute("href", /^\/book-appointment\/confirmed\/[^?]+$/);
     // The button opens the SAME slip page the website form creates.
@@ -238,8 +240,10 @@ test.describe("voice receptionist", () => {
     await expect(dialog.getByRole("log")).not.toContainText("kis doctor");
     await say(page, `${dayNumber} tareekh`, /Kaun sa waqt/);
     await say(page, time, /poora naam/);
-    await say(page, "mera naam Ayesha Khan hai", /mobile number/);
-    await say(page, "sifar teen sifar sifar double paanch ek do teen char paanch", /email/);
+    await say(page, "mera naam Ayesha Khan hai", /Spelling theek hai/);
+    await say(page, "haan", /mobile number/);
+    await say(page, "sifar teen sifar sifar double paanch ek do teen char paanch", /0300 551 2345\. Sahi hai\?/);
+    await say(page, "haan", /email/);
     await say(page, "nahi", /Confirm dabaiye/);
 
     const card = dialog.getByTestId("voice-summary");
@@ -251,7 +255,7 @@ test.describe("voice receptionist", () => {
     await card.getByRole("button", { name: "Confirm" }).click();
     const slip = dialog.getByTestId("voice-slip");
     await expect(slip).toBeVisible({ timeout: 10000 });
-    await expect(dialog.getByRole("log")).toContainText("Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.");
+    await expect(dialog.getByRole("log")).toContainText("slip download karein aur reception par dikha dein.");
     await expect(slip.getByTestId("voice-booked-test")).toContainText("Complete Blood Count (CBC) - PKR 800 (sample)");
     const link = slip.getByRole("link", { name: OPEN_SLIP });
     await expect(link).toHaveAttribute("href", /\?test=complete-blood-count$/);
@@ -276,8 +280,10 @@ test.describe("voice receptionist", () => {
     await say(page, "Dr Bilal se appointment chahiye", /Kaun sa din/);
     await say(page, `${dayNumber} tareekh`, /Kaun sa waqt/);
     await say(page, time, /poora naam/);
-    await say(page, "mera naam Ali Raza hai", /mobile number/);
-    await say(page, "zero three zero zero one two three four five six seven", /email/);
+    await say(page, "mera naam Ali Raza hai", /Spelling theek hai/);
+    await say(page, "ji sahi hai", /mobile number/);
+    await say(page, "zero three zero zero one two three four five six seven", /Sahi hai\?/);
+    await say(page, "haan", /email/);
     await say(page, "skip", /Confirm dabaiye/);
     const card = dialog.getByTestId("voice-summary");
     await expect(card).toContainText("0300 123 4567");
@@ -285,7 +291,8 @@ test.describe("voice receptionist", () => {
     // 1) A spoken correction: only the number is asked again, then the card is shown again with the new number.
     await expect(listening(dialog)).toBeVisible({ timeout: 15000 });
     await say(page, "number ghalat hai", /mobile number/);
-    await say(page, "zero three two one one two three four five six seven", /Confirm dabaiye/);
+    await say(page, "zero three two one one two three four five six seven", /0321 123 4567\. Sahi hai\?/);
+    await say(page, "haan", /Confirm dabaiye/);
     await expect(card).toContainText("0321 123 4567");
     await expect(card).toContainText("Ali Raza");
 
@@ -294,7 +301,8 @@ test.describe("voice receptionist", () => {
     const beforeTap = (await assistantMessages(page)).length;
     await card.getByRole("button", { name: "Naam" }).click();
     await expectNewReply(page, beforeTap, /poora naam|naam bata dein|kis naam/);
-    await say(page, "mera naam Ali Hassan hai", /Confirm dabaiye/);
+    await say(page, "mera naam Ali Hassan hai", /Spelling theek hai/);
+    await say(page, "haan", /Confirm dabaiye/);
     await expect(card).toContainText("Ali Hassan");
     await expect(card).toContainText("0321 123 4567");
     await expect(dialog.getByTestId("voice-slip")).toHaveCount(0); // still nothing booked
@@ -364,7 +372,7 @@ test.describe("voice receptionist", () => {
     await card.getByRole("button", { name: "Confirm" }).click();
     const slip = dialog.getByTestId("voice-slip");
     await expect(slip).toBeVisible({ timeout: 10000 });
-    await expect(log).toContainText("Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.");
+    await expect(log).toContainText("slip download karein aur reception par dikha dein.");
     const link = slip.getByRole("link", { name: OPEN_SLIP });
     const [slipPage] = await Promise.all([page.context().waitForEvent("page"), link.click()]);
     await slipPage.waitForLoadState();
@@ -404,7 +412,8 @@ test.describe("voice receptionist", () => {
   test("the hero fact cards never sit under the Ask us button, and float gently with motion allowed", async ({ page, isMobile }) => {
     test.skip(!ON || isMobile, "desktop layout, flags on");
     await page.goto("/");
-    const dock = await page.locator(".assistant-dock").boundingBox();
+    // From 1280 px "Ask us" is two round buttons beside the page (owner B1): the buttons themselves must be clear.
+    const dock = await page.locator(".assistant-dock > div").boundingBox();
     const cards = page.locator(".hero-float");
     expect(await cards.count()).toBe(3);
     for (let i = 0; i < 3; i += 1) {

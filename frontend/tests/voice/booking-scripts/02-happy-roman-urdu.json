@@ -8,7 +8,7 @@
     { "say": "mera naam Ayesha Khan hai", "expect": ["Ayesha", "mobile number"] },
     { "say": "sifar teen sifar sifar double paanch ek do teen char paanch", "expect": ["email"] },
     { "say": "nahi", "expect": ["tafseelat check karein", "zero three zero zero, five five one, two three four five", "Complete Blood Count", "Confirm dabaiye"], "submits": 0 },
-    { "say": "ji haan", "expect": ["Aap ki booking ho gayi", "7K3M 9P2Q XA", "Slip download karke mobile mein save karein aur clinic aate waqt saath laayein."], "forbid": ["You're booked"], "submits": 1 }
+    { "say": "ji haan", "expect": ["Aap ki booking ho gayi", "7K3M9-P2QXA", "slip download karein aur reception par dikha dein."], "forbid": ["You're booked"], "submits": 1 }
   ],
   "final": { "bookings": 1, "payload": { "doctorSlug": "dr-zainab-memon", "startsAt": "2026-11-09T06:30:00Z", "fullName": "Ayesha Khan", "mobile": "+923005512345", "email": null, "reason": "Complete Blood Count (CBC) test" } }
 }

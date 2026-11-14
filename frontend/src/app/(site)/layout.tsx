@@ -56,7 +56,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const assistantPack = isAssistantEnabled() ? await loadKnowledgePack() : null;
   return (
     <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
-      <body className="flex min-h-screen flex-col">
+      {/* With the assistant on, phones keep room at the bottom so the floating "Ask us" button never covers the last
+          buttons of a page (owner B1). */}
+      <body className={`flex min-h-screen flex-col ${assistantPack ? "max-xl:pb-[calc(4.5rem+env(safe-area-inset-bottom))]" : ""}`}>
         <SkipLink />
         <AnnouncementBar />
         <NoticeBar />

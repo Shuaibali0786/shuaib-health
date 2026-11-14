@@ -1,5 +1,5 @@
 {
-  "name": "Owner test: 'mujhy elaj karwana hia' asks kindly what the problem is; 'bukhar hai' suggests General Medicine (no diagnosis); haan books it",
+  "name": "Owner test: 'mujhy elaj karwana hia' asks kindly what the problem is; 'bukhar hai' lists the General Medicine doctors with days, hours and fees and waits; haan, then the doctor, books it",
   "turns": [
     {
       "say": "mujhy elaj karwana hia",
@@ -24,8 +24,8 @@
       "say": "bukhar hai",
       "expect": [
         "General Medicine",
-        "diagnosis nahi",
-        "Kya main aap ki booking kar doon?"
+        "Dr. Hassan Mirza",
+        "Aap kis doctor se milna chahenge?"
       ],
       "forbid": [
         "nahi maloom",

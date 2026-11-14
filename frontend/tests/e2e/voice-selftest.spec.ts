@@ -36,14 +36,13 @@ const C: Conversation[] = [
     title: "Fever, Roman Urdu by voice -> General Medicine -> slip",
     by: "voice",
     steps: [
-      { say: "Assalam o Alaikum, mujhe bukhar hai, ilaaj karwana hai", expect: /Wa alaikum assalam[\s\S]*General Medicine[\s\S]*PKR[\s\S]*booking kar doon/ },
-      { say: "ji haan", expect: /Dr\. Hassan Mirza[\s\S]*Dr\. Omar Sheikh|Kaun se doctor/ },
+      { say: "Assalam o Alaikum, mujhe bukhar hai, ilaaj karwana hai", expect: /Wa alaikum assalam[\s\S]*General Medicine[\s\S]*PKR[\s\S]*kis doctor/ },
       { say: "Dr Hassan Mirza", expect: /Kaun sa din|kis din/ },
       { sayChoice: 0, expect: /waqt/ },
       { sayChoice: 0, expect: /poora naam/ },
       { say: "mera naam Ali Raza hai", expect: /mobile number/ },
       { say: "zero three zero zero one two three four five six seven", expect: /email/ },
-      { say: "skip", expect: /main aap ki booking kar rahi hoon[\s\S]*Confirm/ },
+      { say: "skip", expect: /Yeh rahi aap ki booking ki tafseel[\s\S]*Confirm/ },
       { say: "haan", expect: /booking ho gayi[\s\S]*Open my slip/ },
     ],
     books: { name: "Ali Raza", department: /General Medicine/ },
@@ -76,7 +75,7 @@ const C: Conversation[] = [
       { say: "میرا نام شعیب علی ہے", expect: /Shuaib Ali[\s\S]*Spelling theek hai/ },
       { say: "ہاں ٹھیک ہے", expect: /mobile number/ },
       { say: "زیرو تھری زیرو زیرو ون ٹو تھری فور فائیو سکس سیون", expect: /email/ },
-      { say: "سکپ", expect: /booking kar rahi hoon/ },
+      { say: "سکپ", expect: /booking ki tafseel/ },
       { say: "ہاں", expect: /booking ho gayi/ },
     ],
     books: { name: "Shuaib Ali", department: /Dermatology/ },
@@ -252,11 +251,11 @@ const C: Conversation[] = [
   },
   {
     id: 16,
-    title: "Echo case: its own apology heard back in Urdu letters is ignored",
+    title: "Echo case: its own apology heard back by the microphone is ignored",
     by: "voice",
     steps: [
-      { say: "Qawwali", expect: /Dobara bataiye|say it again/ },
-      { say: "معاف کیجیے میں ٹھیک سے سن نہیں سکی دوبارہ بتائیے آپ اردو میں بھی بول سکتے ہیں", silent: true },
+      { say: "Qawwali", expect: /Dobara bataiye|say it again|say that again|zara dobara/i },
+      { say: "Sorry, could you say that again?", silent: true },
       { say: "mujhe bukhar hai", expect: /General Medicine/ },
     ],
   },
@@ -286,8 +285,7 @@ const C: Conversation[] = [
     title: "English, fever by voice -> General Medicine -> slip",
     by: "voice",
     steps: [
-      { say: "I have a fever since yesterday", expect: /General Medicine[\s\S]*Shall I book/ },
-      { say: "yes please", expect: /Which doctor/ },
+      { say: "I have a fever since yesterday", expect: /General Medicine[\s\S]*Which doctor/ },
       { sayChoice: 0, expect: /day/ },
       { sayChoice: 0, expect: /time/ },
       { sayChoice: 0, expect: /full name/ },
@@ -393,7 +391,7 @@ const C: Conversation[] = [
     title: "Voice mode, English: dentist -> card -> yes -> slip (12-hour time)",
     by: "voice",
     steps: [
-      { say: "I need to see a dentist please", expect: /Dental[\s\S]*Shall I book/ },
+      { say: "I need to see a dentist please", expect: /Dental[\s\S]*Would you like to book/ },
       { say: "yes", expect: /day/ },
       { sayChoice: 0, expect: /time/ },
       { sayChoice: 1, expect: /full name/ },
@@ -599,8 +597,22 @@ test.describe("voice receptionist self-test as a patient", () => {
         await expect.poll(async () => (await bubbles(dialog)).slice(before).filter((b) => b.who === "assistant").length, { timeout: 20000 }).toBeGreaterThan(0);
         await settled(dialog, voice);
         const all = await bubbles(dialog);
-        const reply = all.slice(before).filter((b) => b.who === "assistant").map((b) => b.text).join(" / ");
+        let reply = all.slice(before).filter((b) => b.who === "assistant").map((b) => b.text).join(" / ");
         record.turns.push({ from: "assistant", text: reply });
+        // Owner rules A5/A6 (2026-11-09): a spoken name is spelled back and a spoken number read back once. When the
+        // script goes straight on, the patient first says yes to that check (as a real patient would), and the step's
+        // expectation is checked against the reply after it.
+        const CHECK = /(Is the spelling right\?|Spelling theek hai\?|\d{4} \d{3} \d{4}\. (Is that right\?|Sahi hai\?))$/;
+        if (voice && step.expect && !step.expect.test(reply) && CHECK.test(reply)) {
+          const yes = /theek hai\?|Sahi hai\?/.test(reply) ? "haan" : "yes";
+          const mark = (await bubbles(dialog)).length;
+          await hear(page, yes);
+          record.turns.push({ from: "patient", text: yes, how: "voice (confirms the read-back)" });
+          await expect.poll(async () => (await bubbles(dialog)).slice(mark).filter((b) => b.who === "assistant").length, { timeout: 20000 }).toBeGreaterThan(0);
+          await settled(dialog, voice);
+          reply = (await bubbles(dialog)).slice(mark).filter((b) => b.who === "assistant").map((b) => b.text).join(" / ");
+          record.turns.push({ from: "assistant", text: reply });
+        }
         if (!reply) fail(`no reply to "${said}"`);
         if (step.expect && !step.expect.test(reply)) fail(`expected ${step.expect} after "${said}", got: ${reply}`);
         if (conv.id >= 19) for (const problem of await panelProblems(dialog)) fail(`panel after "${said}": ${problem}`);

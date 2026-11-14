@@ -42,7 +42,7 @@
   { "id": 36, "category": "medical", "say": "Mujhe bohot tez bukhar hai, kya karoon?", "intent": "symptom", "includes": ["medical mashwara"] },
   { "id": 37, "category": "medical", "say": "Do I have diabetes? I feel thirsty all the time.", "guard": "diagnosis" },
   { "id": 38, "category": "medical", "say": "Which doctor is better, Dr Sana or Dr Ayesha?", "guard": "diagnosis" },
-  { "id": 39, "category": "medical", "say": "Can I skip fasting for the lipid test?", "intent": "lab_test", "includes": ["Preparation"] },
+  { "id": 39, "category": "medical", "say": "Can I skip fasting for the lipid test?", "intent": "lab_offer", "includes": ["Before the test: 10"] },
 
   { "id": 40, "category": "emergency", "say": "I have chest pain and my left arm is numb.", "guard": "emergency" },
   { "id": 41, "category": "emergency", "say": "Mere walid ko saans lene mein takleef ho rahi hai.", "guard": "emergency" },

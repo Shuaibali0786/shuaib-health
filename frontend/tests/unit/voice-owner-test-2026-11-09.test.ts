@@ -80,20 +80,27 @@ describe("1. phone number by voice", () => {
     expect(out.text).toContain("Aap number bol sakte hain ya neeche likh bhi sakte hain.");
   });
 
-  it("reads back what was heard ONCE, offers the field, and never loops more than twice", async () => {
+  it("a first part is read back and the patient goes on (owner rule A6); a wrong number is read back ONCE, then the field, never a third ask", async () => {
     const w = await atPhone();
-    const first = await w.say(HEARD.run);
-    expect(first.text).toContain("Maine 0325 263 53 suna");
+    const part = await w.say(HEARD.run);
+    expect(part.text).toContain("0325 263 53");
+    expect(part.text).toContain("aage bataiye");
+    expect(part.input).toBe("phone");
+
+    // The rest makes the number too long: what was heard is read back once, with the rule.
+    const first = await w.say("one two three four five");
+    expect(first.text).toContain("suna");
     expect(first.text).toContain("11 digits");
     expect(first.input).toBe("phone");
     expect(first.options ?? []).toEqual([]);
 
-    const second = await w.say(HEARD.short);
+    // Nothing usable heard a second time: the calm way through is the box (not another "say it again").
+    const second = await w.say("hmm hmm");
     expect(second.text).not.toMatch(/suna\./);
     expect(second.text).toContain("neeche box mein likh");
     expect(second.input).toBe("phone");
 
-    const third = await w.say(HEARD.doubled);
+    const third = await w.say("umm");
     expect(third.text).not.toMatch(/suna\./);
     expect(third.text).not.toMatch(/dobara|bol dein/i);
     expect(third.input).toBe("phone");
@@ -120,7 +127,7 @@ describe("1. phone number by voice", () => {
     const ask = await w.say("Sara Noor");
     expect(ask.text).toContain("You can say the number or type it below.");
     const out = await w.say(HEARD.run);
-    expect(out.text).toContain("I heard 0325 263 53.");
+    expect(out.text).toContain("0325 263 53. Got it, please go on.");
     expect(out.input).toBe("phone");
   });
 });

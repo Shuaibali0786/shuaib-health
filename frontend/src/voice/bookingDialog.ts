@@ -17,14 +17,14 @@ import { groupPhone, groupReference, speakEmail, speakPhone, speakReference } fr
 import { clinicClosedOn, doctorsOf, findDepartment, findDoctors, labDepartment, labItem, resolveLabTest } from "./entities";
 import { T } from "./phrases";
 import { parseDate, speakDate, speakTime } from "./parse/date";
-import { cleanReason, declines, extractEmail, extractName, spellEmail } from "./parse/name";
+import { cleanReason, confirmsSpelling, declines, extractEmail, extractName, spellEmail } from "./parse/name";
 import { extractPhone, RESTART_NUMBER, spokenDigits, withoutPhone } from "./parse/phone";
 import { parseTimes } from "./parse/time";
 import { confirmsBooking, parseYesNo } from "./parse/yesno";
 import { EMPTY_DRAFT, type BookingDraft, type BookingPhase, type VoiceLang } from "./types";
 import { complains } from "./understand";
 
-export type Ask = "fullName" | "nameCheck" | "phone" | "reason" | "doctor" | "date" | "time" | "email" | "emailCheck" | "partOfDay" | null;
+export type Ask = "fullName" | "nameCheck" | "phone" | "phoneCheck" | "reason" | "doctor" | "date" | "time" | "email" | "emailCheck" | "partOfDay" | null;
 
 export type BookingState = {
   phase: BookingPhase;
@@ -54,6 +54,12 @@ export type BookingState = {
   emailBox?: "unclear" | "wrong";
   /** A detail the patient said was wrong ("naam galat hai"): its new value is confirmed as a change, not welcomed as new. */
   fixing?: "fullName" | "phone";
+  /** Turns in a row where the name was asked and not understood: one calm re-ask, then the name box. */
+  nameTries?: number;
+  /** The whole mobile number was heard by voice: read it back in groups and ask "Is that right?" once. */
+  phoneCheck?: boolean;
+  /** The time the patient asked for is not free: the nearest real times were offered, wait for their choice. */
+  offeredTimes?: string[];
 };
 
 /**
@@ -104,8 +110,8 @@ export type DialogReply = {
   readBack?: boolean;
   /** Two to four short answers the patient can tap (or say) instead of answering in their own words. */
   options?: string[];
-  /** A field to type the answer into, shown under the reply (the mobile number: a numeric keypad on phones; the email). */
-  input?: "phone" | "email";
+  /** A field to type the answer into, shown under the reply (the mobile number: a numeric keypad on phones; the email; the name). */
+  input?: "phone" | "email" | "name";
 };
 
 type Input = {
@@ -115,6 +121,8 @@ type Input = {
   confirmable: boolean;
   /** The turn was heard in Urdu letters (already written in English letters in `text`): a name from it is checked. */
   script?: boolean;
+  /** The turn was spoken (not typed): a name or a whole mobile number is read back once to be sure. */
+  spoken?: boolean;
 };
 
 const FIELD_LABELS = {
@@ -187,7 +195,8 @@ function dayProblem(status: string, date: string, lang: VoiceLang): string {
 
 type Change = { field: keyof typeof FIELD_LABELS; was: boolean };
 
-type Applied = { state: BookingState; changes: Change[]; phoneProblem: "partial" | "invalid" | "unheard" | null; ambiguousDoctors: string[]; emailProblem?: boolean };
+/** `phoneProblem`: "progress" is a good first part of the number (read back, then "please go on"), not a failure. */
+type Applied = { state: BookingState; changes: Change[]; phoneProblem: "progress" | "rejected" | "partial" | "invalid" | "unheard" | null; ambiguousDoctors: string[]; emailProblem?: boolean };
 
 function clearRequested(state: BookingState, text: string): BookingState {
   const t = text.toLowerCase();
@@ -204,7 +213,7 @@ function clearRequested(state: BookingState, text: string): BookingState {
   return next;
 }
 
-function applyUtterance(start: BookingState, text: string, deps: DialogDeps, script = false): Applied {
+function applyUtterance(start: BookingState, text: string, deps: DialogDeps, script = false, spoken = false): Applied {
   const { pack } = deps;
   let state = clearRequested(start, text);
   const changes: Change[] = [];
@@ -212,12 +221,26 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
   const orig = start.draft;
   let phoneProblem: Applied["phoneProblem"] = null;
   let ambiguousDoctors: string[] = [];
-  const asking = state.asking;
+  let asking = state.asking;
   const draft = () => state.draft;
 
-  // "Maine naam Shuaib Ali likha hai. Spelling theek hai?"
+  // Going straight on to the next detail (the mobile number, an email) instead of answering "Is that right?" means it
+  // was right, as at a front desk: the check is closed and the answer is read as the next detail.
+  if (asking === "nameCheck" && (spokenDigits(text, { fuzzy: true }).replace(/\D/g, "").length >= 4 || extractEmail(text))) {
+    changes.push({ field: "fullName", was: false });
+    state = { ...state, nameCheck: false, typeName: false, asking: "phone" };
+    asking = "phone";
+  }
+  if (asking === "phoneCheck" && (extractEmail(text) || (declines(text) && !/\b(no|nahi|nahin)\b/i.test(text)))) {
+    changes.push({ field: "phone", was: false });
+    state = { ...state, phoneCheck: false, asking: "email" };
+    asking = "email";
+  }
+
+  // "I've written your name as Ali Raza. Is the spelling right?" Any yes word confirms ("spelling sahi hai", even heard
+  // as "Aspilng sahi hai"); a confirmation is never taken as a new name.
   if (asking === "nameCheck") {
-    const yes = parseYesNo(text) === "yes" || /^(ji|jee|haan|han|ok|okay|sahi|theek|thik|correct|right)\b/i.test(text.trim()) && !/\b(nahi|nahin|no|galat|ghalat|wrong)\b/i.test(text);
+    const yes = confirmsSpelling(text) || parseYesNo(text) === "yes";
     const typed = !script ? extractName(text, true) : null;
     if (yes) {
       changes.push({ field: "fullName", was: false });
@@ -238,8 +261,27 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
   if (name) {
     if (orig.fullName !== name) changes.push({ field: "fullName", was: orig.fullName !== null || start.fixing === "fullName" });
     state = withDraft(state, { fullName: name }, orig.fullName && orig.fullName !== name ? "fullName" : undefined);
-    // Heard in Urdu letters: written in English letters, so the patient checks the spelling once.
-    state = { ...state, nameCheck: script, typeName: false };
+    // Said aloud (or heard in Urdu letters): the patient checks the spelling once. A typed name is taken as typed.
+    state = { ...state, nameCheck: script || spoken, typeName: false, nameTries: 0 };
+  } else if (asking === "fullName" && !WRONG.test(text.toLowerCase())) {
+    // Not understood: one calm re-ask, then the name box (owner: never ask a third time).
+    state = { ...state, nameTries: (state.nameTries ?? 0) + 1 };
+  }
+
+  // "0324 526 6535. Is that right?": yes keeps it; "no" asks again (counts as a try); a whole new number replaces it.
+  if (asking === "phoneCheck") {
+    const fresh = extractPhone(text, "", { fuzzy: true });
+    if (fresh.status === "complete" && fresh.e164 !== orig.phone) {
+      changes.push({ field: "phone", was: true });
+      return { state: { ...withDraft(state, { phone: fresh.e164, phonePartial: "" }, "phone"), phoneCheck: true }, changes, phoneProblem, ambiguousDoctors };
+    }
+    if (confirmsSpelling(text) || parseYesNo(text) === "yes") {
+      changes.push({ field: "phone", was: false });
+      return { state: { ...state, phoneCheck: false }, changes, phoneProblem, ambiguousDoctors };
+    }
+    if (/\b(no|nahi|nahin|galat|ghalat|wrong|incorrect|not right)\b/i.test(text)) {
+      return { state: { ...withDraft(state, { phone: null, phonePartial: "" }), phoneCheck: false, phoneTries: (state.phoneTries ?? 0) + 1, phoneHeard: "" }, changes, phoneProblem: "rejected", ambiguousDoctors };
+    }
   }
 
   // "s-o-h-a-i-l at gmail dot com, sahi hai?": yes keeps it; a new email replaces it; "nahi" asks to type it.
@@ -292,8 +334,14 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
     if (heard.status === "complete") {
       if (orig.phone !== heard.e164) changes.push({ field: "phone", was: orig.phone !== null || start.fixing === "phone" });
       state = withDraft(state, { phone: heard.e164, phonePartial: "" }, orig.phone && orig.phone !== heard.e164 ? "phone" : undefined);
-      state = { ...state, phoneTries: 0 };
-    } else if (heard.status === "partial" && (asking === "phone" || digits.length >= 4)) {
+      // Said aloud: the whole number is read back once in groups ("0324 526 6535. Is that right?"). Typed: taken as typed.
+      state = { ...state, phoneTries: 0, phoneCheck: spoken && asking === "phone" };
+    } else if (heard.status === "partial" && asking === "phone") {
+      // Owner rule A6: a number said in small parts ("zero three two four", then "five two six") is collected across
+      // turns; each part is read back and the patient goes on. Not a failed try.
+      phoneProblem = "progress";
+      state = withDraft(state, { phonePartial: heard.digits });
+    } else if (heard.status === "partial" && digits.length >= 4) {
       phoneProblem = "partial";
       state = withDraft(state, { phonePartial: heard.digits });
     } else if (heard.status === "invalid") {
@@ -302,7 +350,7 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
     } else if (asking === "phone" && !RESTART_NUMBER.test(text)) {
       phoneProblem = "unheard";
     }
-    if (phoneProblem && asking === "phone") {
+    if (phoneProblem && phoneProblem !== "progress" && asking === "phone") {
       const heardNow = heard.status === "partial" || heard.status === "invalid" ? heard.digits : "";
       state = { ...state, phoneTries: (state.phoneTries ?? 0) + 1, phoneHeard: heardNow };
     }
@@ -315,7 +363,7 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
 
   // While a personal detail is asked (name, phone, email), the answer is only that detail: "ayesha at gmail dot com"
   // must not pick Dr. Ayesha, and "0300..." is not a time. A clear change ("date galat hai, friday karo") still counts.
-  const detailOnly = (asking === "fullName" || asking === "email" || asking === "emailCheck" || asking === "phone" || asking === "nameCheck") && !WRONG.test(text.toLowerCase());
+  const detailOnly = (asking === "fullName" || asking === "email" || asking === "emailCheck" || asking === "phone" || asking === "phoneCheck" || asking === "nameCheck") && !WRONG.test(text.toLowerCase());
   if (detailOnly) return { state, changes, phoneProblem, ambiguousDoctors, emailProblem };
 
   // A lab test named at any point ("CBC", "blood test", "khoon ka test") books the lab and its doctor: never asked again.
@@ -385,7 +433,8 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
 
 // --- Slot settling: turn doctor + date + time into one real free slot ---------------------------------
 
-type Settled = { state: BookingState; message: string | null };
+/** `asks`: the message already ends with the question (the nearest free times), so no second question follows. */
+type Settled = { state: BookingState; message: string | null; asks?: boolean };
 
 async function settle(start: BookingState, deps: DialogDeps, lang: VoiceLang): Promise<Settled> {
   let state = start;
@@ -428,12 +477,20 @@ async function settle(start: BookingState, deps: DialogDeps, lang: VoiceLang): P
     return { state: { ...withDraft(state, { time: null, startsAt: null }), pendingTimes: matches, asking: "partOfDay" }, message: null };
   }
   // None of the readings is free: say so and offer the nearest real times.
-  const target = minutes((want[0] as string) ?? "12:00");
+  // "1 baje" is 01:00 or 13:00: the reading inside clinic hours is the one the patient meant (owner Part D, #14).
+  const likely = want.find((t) => t >= "08:00" && t <= "21:00") ?? (want[0] as string);
+  const target = minutes(likely ?? "12:00");
   const nearest = [...free].sort((a, b) => Math.abs(minutes(a) - target) - Math.abs(minutes(b) - target)).slice(0, 3).sort();
-  const wanted = speakTime(want[0] as string);
+  const wanted = speakTime(likely);
+  // Owner test 2026-11-09: never book a time the patient did not choose. Say so, offer the nearest REAL times, and wait.
   return {
-    state: { ...withDraft(state, { time: null, startsAt: null }), pendingTimes: [] },
-    message: T(lang, `${wanted} isn't free on ${speakDate(date)}. The nearest free times are ${joinList(nearest.map(speakTime), lang)}.`, `${wanted} par ${speakDate(date)} ko slot khali nahi. Qareeb ke khali waqt ${joinList(nearest.map(speakTime), lang)} hain.`),
+    state: { ...withDraft(state, { time: null, startsAt: null }), pendingTimes: [], offeredTimes: nearest },
+    message: T(
+      lang,
+      `${wanted} isn't available on ${speakDate(date)}. The nearest times are ${joinList(nearest.map(speakTime), lang)}. Which would you like?`,
+      `${wanted} ${speakDate(date)} ko available nahi. Qareeb ke waqt ${joinList(nearest.map(speakTime), lang)} hain. Aap ko kaun sa chahiye?`,
+    ),
+    asks: true,
   };
 }
 
@@ -448,6 +505,7 @@ function nextAsk(state: BookingState): Ask {
   if (!d.fullName) return "fullName";
   if (state.nameCheck) return "nameCheck";
   if (!d.phone) return "phone";
+  if (state.phoneCheck) return "phoneCheck";
   if (!d.emailAnswered) return "email";
   if (state.emailCheck && d.email) return "emailCheck";
   return null;
@@ -459,18 +517,21 @@ function question(state: BookingState, deps: DialogDeps, lang: VoiceLang, ask: A
   const slots = d.doctorSlug ? state.slots[d.doctorSlug] : undefined;
   switch (ask) {
     case "fullName":
-      if (state.typeName) return T(lang, "No problem. Please type your name in English letters in the box below.", "Koi baat nahi. Apna naam neeche box mein English letters mein likh dein.");
+      if (state.typeName || (state.nameTries ?? 0) >= 2) return T(lang, "No problem. Please type your name in the box below.", "Koi baat nahi. Apna naam neeche box mein likh dein.");
+      if ((state.nameTries ?? 0) === 1) return T(lang, "Sorry, I didn't catch your name. Could you say it once more, or type it in the box below?", "Maaf kijiye, naam theek se sun nahi saki. Ek dafa phir bata dein, ya neeche box mein likh dein.");
       return T(lang, "May I have your full name, please?", "Aap ka poora naam kya hai?");
     case "nameCheck":
       return T(lang, `I've written your name as ${d.fullName}. Is the spelling right?`, `Maine aap ka naam ${d.fullName} likha hai. Spelling theek hai?`);
     case "phone": {
       const either = T(lang, "You can say the number or type it below.", "Aap number bol sakte hain ya neeche likh bhi sakte hain.");
       const tries = state.phoneTries ?? 0;
-      if (problem && tries >= 2) {
+      // "No, that's wrong" at the number check: the patient corrected it, nothing was misheard (owner Part D, #4).
+      if (problem === "rejected" && tries < 3) return T(lang, "No problem. Please tell me the number again, slowly, or type it in the box below.", "Koi baat nahi. Number dobara aahista aahista bata dein, ya neeche box mein likh dein.");
+      if (problem && problem !== "progress" && tries >= 2) {
         // Never a third "please say it again": the typed field is the calm way through.
         return T(lang, "I'm having trouble hearing the number. Please type it in the box below: 11 digits starting with 03.", "Mujhe number theek se sunai nahi de raha. Barah-e-meherbani neeche box mein likh dein: 03 se shuru hone wale 11 digits.");
       }
-      if (problem) {
+      if (problem && problem !== "progress") {
         // Once: what was heard, read back, and both ways to answer.
         const heard = state.phoneHeard ? groupDigits(state.phoneHeard) : "";
         const said = heard ? T(lang, `I heard ${heard}.`, `Maine ${heard} suna.`) : T(lang, "I couldn't hear the number clearly.", "Mujhe number saaf sunai nahi diya.");
@@ -478,8 +539,11 @@ function question(state: BookingState, deps: DialogDeps, lang: VoiceLang, ask: A
         const next = problem === "partial" && heard ? T(lang, "Say the rest, or the whole number again, or type it below.", "Baaqi number bata dein, ya poora number dobara, ya neeche likh dein.") : T(lang, "Please say it once more, or type it in the box below.", "Ek dafa phir bol dein, ya neeche box mein likh dein.");
         return [said, rule, next].join(" ");
       }
-      return `${T(lang, "What is your mobile number? Please say the digits slowly.", "Aap ka mobile number kya hai? Aahista aahista digits bata dein.")} ${either}`;
+      if (problem === "progress" && d.phonePartial) return T(lang, `${groupDigits(d.phonePartial)}. Got it, please go on.`, `${groupDigits(d.phonePartial)}. Theek hai, aage bataiye.`);
+      return `${T(lang, "Please tell me your mobile number slowly. You can say it in small parts, like zero three two four, then five two six, then six five three five.", "Apna mobile number aahista aahista bataiye. Aap chhote hisson mein bhi bol sakte hain, jaise zero three two four, phir five two six, phir six five three five.")} ${either}`;
     }
+    case "phoneCheck":
+      return T(lang, `${groupPhone(d.phone as string)}. Is that right?`, `${groupPhone(d.phone as string)}. Sahi hai?`);
     case "reason":
       return T(lang, "What is the visit for? A few words are fine.", "Visit ki wajah kya hai? Chand alfaaz kaafi hain.");
     case "doctor": {
@@ -542,7 +606,8 @@ function readBack(state: BookingState, deps: DialogDeps, lang: VoiceLang): { tex
       .filter(Boolean)
       .join(" ");
   // The chat shows the filled card and one short line; the details are also read aloud (phone digit by digit).
-  const doing = T(lang, "Thank you! I'm making your booking now.", "Shukriya! Ji, main aap ki booking kar rahi hoon.");
+  // Nothing is booked yet: the card is shown, and the patient confirms (owner rule A5, step 8).
+  const doing = T(lang, "Thank you! Here are your booking details.", "Shukriya! Yeh rahi aap ki booking ki tafseel.");
   const ask = confirmLine(lang);
   return { text: `${doing} ${ask}`, spoken: `${doing} ${head} ${lines(true, true)} ${rules} ${ask}` };
 }
@@ -554,10 +619,11 @@ function emailCheckLine(email: string, lang: VoiceLang, spoken: boolean): string
 }
 
 /** The field shown under the reply for the question being asked: the mobile number, or the email after one unclear try. */
-export function inputFor(state: BookingState | null): "phone" | "email" | undefined {
+export function inputFor(state: BookingState | null): "phone" | "email" | "name" | undefined {
   if (!state || state.phase !== "collecting") return undefined;
   if (state.asking === "phone") return "phone";
   if (state.asking === "email" && state.emailBox) return "email";
+  if (state.asking === "fullName" && (state.typeName || (state.nameTries ?? 0) >= 1)) return "name";
   return undefined;
 }
 
@@ -578,24 +644,25 @@ function changeSentence(applied: Applied, state: BookingState, deps: DialogDeps,
   const d = state.draft;
   switch (first1.field) {
     case "date":
-      return d.date ? T(lang, `Done, ${speakDate(d.date)}.`, `Theek hai, ${speakDate(d.date)}.`) : "";
+      return d.date ? T(lang, `Sure, ${speakDate(d.date)}.`, `Theek hai, ${speakDate(d.date)}.`) : "";
     case "doctor":
-      return T(lang, `Done, ${doctorOf(deps.pack, d.doctorSlug)?.name ?? "the new doctor"}.`, `Theek hai, ${doctorOf(deps.pack, d.doctorSlug)?.name ?? "naye doctor"}.`);
+      return T(lang, `Sure, ${doctorOf(deps.pack, d.doctorSlug)?.name ?? "the new doctor"}.`, `Theek hai, ${doctorOf(deps.pack, d.doctorSlug)?.name ?? "naye doctor"}.`);
     case "fullName":
-      return T(lang, `Done, ${d.fullName}.`, `Theek hai, ${d.fullName}.`);
+      return T(lang, `Sure, ${d.fullName}.`, `Theek hai, ${d.fullName}.`);
     case "phone":
-      return d.phone ? T(lang, `Done, ${groupPhone(d.phone)}.`, `Theek hai, ${groupPhone(d.phone)}.`) : "";
+      return d.phone ? T(lang, `Sure, ${groupPhone(d.phone)}.`, `Theek hai, ${groupPhone(d.phone)}.`) : "";
     case "email":
-      return T(lang, "Done, I've updated your email.", "Theek hai, email badal di.");
+      return T(lang, "Sure, I've updated your email.", "Theek hai, email badal di.");
     default:
-      return T(lang, "Done, updated.", "Theek hai, badal diya.");
+      return T(lang, "Sure, updated.", "Theek hai, badal diya.");
   }
 }
 
 /** A short warm acknowledgement of something newly heard (not a correction). */
 function welcomeSentence(applied: Applied, state: BookingState, deps: DialogDeps, lang: VoiceLang): string {
   const newName = applied.changes.find((c) => c.field === "fullName" && !c.was);
-  if (newName && state.draft.fullName) return T(lang, `Nice to meet you, ${first(state.draft.fullName)}.`, `Aap se mil kar khushi hui, ${first(state.draft.fullName)}.`);
+  // While the spelling is being checked, the welcome waits until it is confirmed (said once, not twice).
+  if (newName && state.draft.fullName && !state.nameCheck) return T(lang, `Nice to meet you, ${first(state.draft.fullName)}.`, `Aap se mil kar khushi hui, ${first(state.draft.fullName)}.`);
   const newDoctor = applied.changes.find((c) => c.field === "doctor" && !c.was);
   const doc = doctorOf(deps.pack, state.draft.doctorSlug);
   const test = labItem(deps.pack, state.draft.labTestSlug);
@@ -638,7 +705,7 @@ export async function bookingStep(start: BookingState, input: Input, deps: Dialo
     }
     // A correction wins over a plain "no": "no, make it the 14th" changes the date and reads it back again.
     const before = JSON.stringify(state.draft);
-    const applied = applyUtterance({ ...state, phase: "collecting" }, text, deps, input.script);
+    const applied = applyUtterance({ ...state, phase: "collecting" }, text, deps, input.script, input.spoken);
     if (JSON.stringify(applied.state.draft) !== before || applied.state.pendingTimes.length > 0) {
       return collect({ ...applied.state, phase: "collecting", key: null }, applied, deps, lang);
     }
@@ -649,7 +716,7 @@ export async function bookingStep(start: BookingState, input: Input, deps: Dialo
     return reply(state, T(lang, "Please say yes or tap Confirm, or tell me what to change.", "Haan kahein ya Confirm dabaiye, ya bata dein ke kya badalna hai."), { readBack: true });
   }
 
-  const applied = applyUtterance(state, text, deps, input.script);
+  const applied = applyUtterance(state, text, deps, input.script, input.spoken);
   return collect(applied.state, applied, deps, lang, text);
 }
 
@@ -675,6 +742,7 @@ function optionsFor(state: BookingState, deps: DialogDeps, lang: VoiceLang, ask:
   if (ask === "partOfDay") return [...state.pendingTimes].sort().map(speakTime);
   if (ask === "email") return ["Skip"];
   if (ask === "nameCheck") return [T(lang, "Yes, it's right", "Haan, theek hai"), T(lang, "No, it's wrong", "Nahi, galat hai")];
+  if (ask === "phoneCheck") return [T(lang, "Yes, that's right", "Haan, sahi hai"), T(lang, "No, it's wrong", "Nahi, galat hai")];
   if (ask === "emailCheck") return [T(lang, "Yes, it's right", "Haan, sahi hai"), T(lang, "No, it's wrong", "Nahi, galat hai"), "Skip"];
   return [];
 }
@@ -696,7 +764,7 @@ async function collect(start: BookingState, applied: Applied, deps: DialogDeps, 
   const angry = complains(text);
   const misses = missed || angry ? Math.max(start.misses + 1, angry ? 2 : 0) : 0;
   state = { ...state, misses };
-  const sorry = misses >= 2 ? (angry ? T(lang, "Sorry about that! I'm booking it for you now.", "Maaf kijiye! Main aap ki booking kar rahi hoon.") : T(lang, "Sorry, I didn't quite get that.", "Maaf kijiye, main theek se samajh nahi saki.")) : "";
+  const sorry = misses >= 2 ? (angry ? T(lang, "I'm sorry for the wait. Let's finish this quickly.", "Der ke liye maaf kijiye. Jaldi mukammal karte hain.") : T(lang, "Sorry, I didn't quite get that.", "Maaf kijiye, main theek se samajh nahi saki.")) : "";
   const lead = [sorry, changeSentence(applied, state, deps, lang) || welcomeSentence(applied, state, deps, lang), settled.message ?? ""].filter(Boolean).join(" ");
 
   if (ask === null) {
@@ -705,13 +773,20 @@ async function collect(start: BookingState, applied: Applied, deps: DialogDeps, 
     return reply(state, [lead, rb.text].filter(Boolean).join(" "), { spoken: [lead, rb.spoken].filter(Boolean).join(" "), readBack: true });
   }
   state = { ...state, phase: "collecting", asking: ask };
-  const options = optionsFor(state, deps, lang, ask);
+  if (!settled.asks && ask !== "time") state = { ...state, offeredTimes: undefined };
+  const offered = settled.asks && ask === "time" && state.offeredTimes?.length ? state.offeredTimes.map(speakTime) : null;
+  const options = offered ?? optionsFor(state, deps, lang, ask);
   const box = inputFor(state);
   const field: Partial<DialogReply> = box ? { input: box } : {};
   const hint = ask === "phone" || box ? "" : misses >= 2 ? (options.length ? T(lang, "You can also tap one of the choices below.", "Aap neeche diye gaye options mein se chun bhi sakte hain.") : (MISSED_HINT[ask as NonNullable<Ask>]?.[lang === "roman" ? 1 : 0] ?? "")) : "";
-  const shown = [lead, question(state, deps, lang, ask, applied.phoneProblem, applied.ambiguousDoctors), hint].filter(Boolean).join(" ");
+  const shown = [lead, offered ? "" : question(state, deps, lang, ask, applied.phoneProblem, applied.ambiguousDoctors), offered ? "" : hint].filter(Boolean).join(" ");
   // The email check is spoken letter by letter (the screen shows "s-o-h-a-i-l").
-  const spoken = ask === "emailCheck" && state.draft.email ? [lead, emailCheckLine(state.draft.email, lang, true)].filter(Boolean).join(" ") : undefined;
+  const spoken =
+    ask === "emailCheck" && state.draft.email
+      ? [lead, emailCheckLine(state.draft.email, lang, true)].filter(Boolean).join(" ")
+      : ask === "phoneCheck" && state.draft.phone
+        ? [lead, T(lang, `${speakPhone(state.draft.phone)}. Is that right?`, `${speakPhone(state.draft.phone)}. Sahi hai?`)].filter(Boolean).join(" ")
+        : undefined;
   return reply(state, shown, { ...(options.length ? { options } : {}), ...field, ...(spoken ? { spoken } : {}) });
 }
 
@@ -746,8 +821,8 @@ async function submit(start: BookingState, deps: DialogDeps, lang: VoiceLang): P
       const base = (ref: string) =>
         T(
           lang,
-          `You're booked, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Your reference is ${ref}. Tap Open my slip, download the slip, save it on your phone, and bring it with you to the clinic.`,
-          `Aap ki booking ho gayi, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Aap ka reference ${ref} hai. Open my slip dabaiye. Slip download karke mobile mein save karein aur clinic aate waqt saath laayein.`,
+          `You're booked, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Your reference is ${ref}. Tap Open my slip, download it, and show it at reception.`,
+          `Aap ki booking ho gayi, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Aap ka reference ${ref} hai. Open my slip dabaiye, slip download karein aur reception par dikha dein.`,
         );
       return reply(done, base(groupReference(v.reference)), { spoken: base(speakReference(v.reference)), booked: v });
     }

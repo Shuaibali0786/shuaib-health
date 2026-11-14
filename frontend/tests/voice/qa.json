@@ -25,7 +25,7 @@
   { "id": 24, "say": "Which tests are for diabetes?", "includes": ["Fasting Blood Sugar"] },
   { "id": 25, "say": "Dr Sana Farooqui fee", "includes": ["PKR 2,500"] },
   { "id": 26, "say": "Clinic kab khulta hai?", "includes": ["9 AM – 9 PM"] },
-  { "id": 27, "say": "What is the preparation for the CBC test?", "includes": ["No preparation needed"] },
+  { "id": 27, "say": "What is the preparation for the CBC test?", "includes": ["No preparation"] },
   { "id": 28, "say": "Do you have a cardiologist?", "includes": ["Dr. Imran Qureshi"] },
   { "id": 29, "say": "How many doctors do you have?", "includes": ["doctors"] },
   { "id": 30, "say": "What is the price of the FBS test?", "includes": ["PKR 400"] }

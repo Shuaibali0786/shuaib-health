@@ -12,7 +12,7 @@ import { splitSentences } from "./chunk";
 import { CHECKING, STILL_THERE, TAP_TO_TALK, T, welcomeLine } from "./phrases";
 import type { Conversation, RouterResult } from "./router";
 import { urduToLatin } from "./language";
-import { forSpeech } from "./speechText";
+import { forSpeech, pronounce } from "./speechText";
 import type { SpeechPort, Turn, VoiceInfo, VoiceLang, VoiceState } from "./types";
 import { urduSpeech } from "./urduSpeech";
 import { pickVoiceSet } from "./voicePicker";
@@ -47,7 +47,8 @@ export type SessionOptions = {
   /** What the browser listens for. Indian English hears English and Roman Urdu (spoken Hinglish) best. */
   listenCode?: string;
   /**
-   * How long the patient may pause mid-sentence before the turn is taken as finished (default 1300 ms). Listening
+   * How long the patient may pause mid-sentence before the turn is taken as finished (default 1800 ms: owner rule A3,
+   * "never cut them off"). Listening
    * splits a sentence at short pauses; joining the pieces is what "waiting for the patient to finish" means. Zero in tests.
    */
   endOfTurnMs?: number;
@@ -62,7 +63,7 @@ const ECHO_MIN_WORDS = 4;
 /** Its own voice can come back a moment after it stopped (room echo, a slow recogniser). */
 const ECHO_WINDOW_MS = 8000;
 /** A little slower than the default: warmer, easier to follow. */
-const SPEECH_RATE = 0.95;
+const SPEECH_RATE = 0.92;
 const GREETING = /^(assalam|wa alaikum|salam)/i;
 
 /** Words in any script (Urdu letters kept), lower case, without punctuation. */
@@ -163,7 +164,7 @@ export class VoiceSession {
     this.welcomeLang = options.welcomeLang ?? "en";
     this.openingDone = Boolean(options.skipOpening);
     this.pauseMs = options.pauseMs ?? 220;
-    this.endOfTurnMs = options.endOfTurnMs ?? 1300;
+    this.endOfTurnMs = options.endOfTurnMs ?? 1800;
     this.resumeMs = options.resumeMs ?? 400;
     this.listenLang = options.listenCode ?? "en-US";
     if (!this.openingDone) this.conversation.ctx.lang = this.welcomeLang;
@@ -390,7 +391,7 @@ export class VoiceSession {
 
     let result: RouterResult;
     try {
-      result = await this.conversation.turn(text, { confirmable });
+      result = await this.conversation.turn(text, { confirmable, spoken: !fromText });
     } catch {
       if (this.ackTimer) clearTimeout(this.ackTimer);
       this.ackTimer = null;
@@ -404,23 +405,26 @@ export class VoiceSession {
     // Listening follows the caller's language: Roman Urdu or Urdu script switches to Urdu listening (ur-PK, which Chrome
     // supports). A spoken turn nothing could be made of usually means the wrong listening language ("CBC test karwana"
     // heard in English becomes "Qawwali"): switch once and ask again, instead of saying "I don't know".
+    // Owner test 2026-11-09 (B5): most patients speak English. A misheard English line must never move the call to Urdu
+    // (switching listening to Urdu turned the next English sentences into Urdu letters, read back as Roman Urdu). So a
+    // turn nothing could be made of is asked again, politely, in the CURRENT language; listening switches to Urdu only
+    // when the conversation itself is in Roman Urdu (clear Urdu words), and back to English on clear English.
     const garbled = !fromText && (result.intent === "unknown" || result.intent === "guide_unknown");
+    const callLang = this.conversation.ctx.lang;
     if (garbled && !this.switchedSinceUnderstood) {
-      const toUrdu = this.listenLang.startsWith("en");
-      this.setListenLang(toUrdu ? "ur-PK" : "en-US");
       this.switchedSinceUnderstood = true;
-      this.conversation.ctx.lang = toUrdu ? "roman" : "en";
+      if (callLang === "roman" && this.listenLang.startsWith("en")) this.setListenLang("ur-PK");
       result = this.conversation.replaceLast({
         ...result,
-        lang: this.conversation.ctx.lang,
         intent: "heard_again",
         links: undefined,
         spoken: undefined,
-        text: toUrdu ? "Maaf kijiye, main theek se sun nahi saki. Dobara bataiye, aap Urdu mein bhi bol sakte hain." : "Sorry, I didn't catch that. Please say it again, in English or Urdu.",
+        text: T(callLang, "Sorry, could you say that again?", "Maaf kijiye, zara dobara bata dein?"),
       });
     } else if (!garbled) {
       this.switchedSinceUnderstood = false;
       if (result.lang === "roman" && this.listenLang.startsWith("en")) this.setListenLang("ur-PK");
+      if (result.lang === "en" && this.listenLang.startsWith("ur")) this.setListenLang("en-US");
     }
     this.events.onResult(result);
     if (result.urgent) {
@@ -501,7 +505,8 @@ export class VoiceSession {
       const clean = forSpeech(sentence);
       // An Urdu voice reads Urdu script best, so a Roman Urdu sentence is rewritten for it (the caption stays Roman).
       const romanUrdu = GREETING.test(sentence) || detectLang(sentence) === "roman";
-      const spoken = voice.urdu && romanUrdu ? urduSpeech(clean) : clean;
+      // An English voice says our Urdu names the right way ("Aa-ee-sha", not "Alisha"); an Urdu voice reads Urdu script.
+      const spoken = voice.urdu && romanUrdu ? urduSpeech(clean) : pronounce(clean);
       cancelled = await new Promise<boolean>((resolve) => {
         this.port.speak([spoken], { lang: voice.lang, voice: voice.info, rate: SPEECH_RATE }, {
           onStart: () => {

@@ -6,12 +6,57 @@ import type { KnowledgePack } from "@/agent/types";
 
 type PackDoctor = KnowledgePack["doctors"][number];
 
-/** Two words are the same name when equal or when one is a clear prefix of the other ("ayesha" / "ayeshaa"). */
-function same(a: string, b: string): boolean {
+/**
+ * How a word SOUNDS (owner test 2026-11-09: "Drmitoloji", "dermitology", "darm" for Dermatology were not understood):
+ * similar consonants merged (c/k/q, s/z, j/g, d/t, b/p, v/w), vowels and h dropped after the first letter, doubles
+ * collapsed. "dermatology", "dermitology" and "drmitoloji" all become "trmtlj".
+ */
+export function soundKey(word: string): string {
+  const s = word
+    .toLowerCase()
+    .replace(/[^a-z]/g, "")
+    .replace(/ph/g, "f")
+    .replace(/[ckq]/g, "k")
+    .replace(/[sz]/g, "s")
+    .replace(/[jg]/g, "j")
+    .replace(/[dt]/g, "t")
+    .replace(/[bp]/g, "p")
+    .replace(/[vw]/g, "w");
+  return ((s[0] ?? "") + s.slice(1).replace(/[aeiouyh]/g, "")).replace(/(.)\1+/g, "$1");
+}
+
+/** Levenshtein distance, for short sound keys only. */
+function distance(a: string, b: string): number {
+  const row = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i += 1) {
+    let prev = row[0] as number;
+    row[0] = i;
+    for (let j = 1; j <= b.length; j += 1) {
+      const keep = row[j] as number;
+      row[j] = Math.min((row[j] as number) + 1, (row[j - 1] as number) + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = keep;
+    }
+  }
+  return row[b.length] as number;
+}
+
+/**
+ * Two words are the same name when equal, when one is a clear prefix of the other ("ayesha" / "ayeshaa"), or when they
+ * SOUND the same: equal sound keys of 4+ letters, or keys of 5+ letters one sound apart ("cardiolgy", "dentel").
+ * With `prefix` (department names), a short spoken stem also counts ("darm" for Dermatology, "gaynee" for Gynecology).
+ */
+function same(a: string, b: string, prefix = false): boolean {
   if (a === b) return true;
   const short = Math.min(a.length, b.length);
   if (short < 4) return false;
-  return a.startsWith(b) || b.startsWith(a);
+  if (a.startsWith(b) || b.startsWith(a)) return true;
+  const ka = soundKey(a);
+  const kb = soundKey(b);
+  if (ka.length >= 4 && ka === kb) return true;
+  // Short names said differently ("Mariam" / "Maryam", "Zenab" / "Zainab"): the same sound, 5+ letters each.
+  if (ka.length >= 3 && ka === kb && short >= 5) return true;
+  if (ka.length >= 5 && kb.length >= 5 && distance(ka, kb) <= 1) return true;
+  return prefix && ka.length >= 3 && kb.length >= 5 && kb.startsWith(ka);
 }
 
 /** Doctors whose name words appear in the text; the best score only. Empty when none match. */
@@ -39,7 +84,7 @@ const DEPARTMENT_WORDS: Record<string, string[]> = {
   dental: ["dental", "dentist", "teeth", "tooth", "daant", "dant"],
   cardiology: ["heart", "cardiologist", "dil"],
   pediatrics: ["child", "children", "kids", "kid", "baby", "bacha", "bachay", "bachi", "paediatric", "pediatrician"],
-  gynecology: ["gynae", "gynaecologist", "gynecologist", "women", "lady", "pregnancy", "pregnant"],
+  gynecology: ["gynae", "gaynee", "gayni", "gaini", "gynie", "gyny", "gaine", "gynaecologist", "gynecologist", "women", "lady", "pregnancy", "pregnant"],
   "general-medicine": ["general", "physician", "family", "fever", "bukhar", "flu", "zukam", "khansi", "cough", "checkup"],
 };
 
@@ -49,8 +94,8 @@ export function findDepartment(text: string, pack: KnowledgePack, options: { sym
   const bookable = pack.departments.filter((d) => pack.doctors.some((doc) => doc.departmentSlug === d.slug));
   for (const dept of bookable) {
     const names = [...nameTokens(dept.name), ...nameTokens(dept.slug)];
-    if (words.some((w) => w.length >= 4 && names.some((n) => same(w, n)))) return dept.slug;
-    if ((DEPARTMENT_WORDS[dept.slug] ?? []).some((k) => words.includes(k))) return dept.slug;
+    if (words.some((w) => w.length >= 4 && names.some((n) => same(w, n, true)))) return dept.slug;
+    if ((DEPARTMENT_WORDS[dept.slug] ?? []).some((k) => words.includes(k) || (k.length >= 6 && words.some((w) => w.length >= 5 && same(w, k))))) return dept.slug;
   }
   if (options.symptoms === false) return null;
   const bySymptom = departmentForSymptoms(text, pack);
@@ -73,7 +118,8 @@ type PackLabTest = KnowledgePack["labTests"][number];
 
 /** The lab test a caller names ("CBC", "thyroid test", "lipid profile"), from the public catalog only. */
 export function findLabTest(text: string, pack: KnowledgePack): PackLabTest | null {
-  const words = cleanText(text).split(" ").filter((w) => w.length >= 3 && !["test", "tests", "blood", "complete", "count", "profile", "karwana", "karwani", "karana"].includes(w));
+  const words = cleanText(text).split(" ").filter((w) => w.length >= 3 && !["test", "tests", "blood", "complete", "count", "profile", "karwana", "karwani", "karana", "fast", "fasting", "before", "need", "after", "results", "result", "report"].includes(w));
+  // ("Do I need to FAST before a lipid profile?" is about the Lipid Profile, not the Fasting Blood Sugar test.)
   let top: { test: PackLabTest; score: number } | null = null;
   for (const test of pack.labTests) {
     const names = [test.name, test.slug, ...test.aka].flatMap((label) => nameTokens(label));

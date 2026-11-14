@@ -30,11 +30,13 @@ describe("voice chunking", () => {
   });
 
   it("reads a reference character by character in groups of four", () => {
-    expect(groupReference("7K3M9P2QXA")).toBe("7K3M 9P2Q XA");
-    expect(speakReference("7K3M9P2QXA")).toBe("7, K, 3, M. 9, P, 2, Q. X, A");
+    expect(groupReference("7K3M9P2QXA")).toBe("7K3M9-P2QXA");
+    expect(speakReference("7K3M9P2QXA")).toBe("7, K, 3, M, 9. Then, P, 2, Q, X, A");
     // A hyphen or lower case in the reference is ignored.
-    expect(groupReference("7k3m9-p2qxa")).toBe("7K3M 9P2Q XA");
-    expect(speakReference("7K3M9-P2QXA")).toBe("7, K, 3, M. 9, P, 2, Q. X, A");
+    expect(groupReference("7k3m9-p2qxa")).toBe("7K3M9-P2QXA");
+    // The owner's booking: the chat card shows the reference exactly like the slip.
+    expect(groupReference("XP75N-MYDWQ")).toBe("XP75N-MYDWQ");
+    expect(speakReference("XP75N-MYDWQ")).toBe("X, P, 7, 5, N. Then, M, Y, D, W, Q");
   });
 
   it("reads an email the way people say it", () => {
