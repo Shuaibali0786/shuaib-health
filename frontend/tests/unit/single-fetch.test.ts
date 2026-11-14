@@ -18,6 +18,8 @@ describe("single fetch call site", () => {
       "lib/api/http.ts",
       "lib/booking/backend.ts",
       "lib/booking/client.ts",
+      // Feature 013: the voice receptionist's optional AI brain (off by default) calls only this site's /api/voice/brain.
+      "voice/brain.ts",
     ]);
   });
 });

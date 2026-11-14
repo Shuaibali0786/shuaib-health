@@ -1,0 +1,15 @@
+{
+  "name": "Owner 2026-11-09: 'Sohail gmail dot com' is understood, read back letter by letter, and a 'no' shows the email box; the typed email is kept",
+  "turns": [
+    { "say": "book an appointment with Dr Bilal", "expect": ["Which day"] },
+    { "say": "monday", "expect": ["Monday 9 November"] },
+    { "say": "10", "expect": ["full name"] },
+    { "say": "Sara Noor", "expect": ["mobile"] },
+    { "say": "03111234567", "expect": ["email"] },
+    { "say": "Sohail gmail dot com", "expect": ["s-o-h-a-i-l at gmail dot com", "Is that right"], "submits": 0 },
+    { "say": "no", "expect": ["type your email in the box below"], "submits": 0 },
+    { "say": "sohail.khan@gmail.com", "expect": ["tap Confirm"], "submits": 0 },
+    { "say": "sab theek hai", "expect": ["You're booked"], "submits": 1 }
+  ],
+  "final": { "bookings": 1, "payload": { "email": "sohail.khan@gmail.com" } }
+}

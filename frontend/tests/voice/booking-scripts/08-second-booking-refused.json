@@ -1,0 +1,16 @@
+{
+  "name": "One booking per conversation: a second request is refused politely and nothing more is submitted",
+  "turns": [
+    { "say": "book an appointment with Dr Bilal", "expect": ["Which day"] },
+    { "say": "monday", "expect": ["Monday 9 November"] },
+    { "say": "10", "expect": ["full name"] },
+    { "say": "Sara Noor", "expect": ["mobile"] },
+    { "say": "03111234567", "expect": ["email"] },
+    { "say": "skip", "expect": ["tap Confirm"] },
+    { "say": "yes", "expect": ["You're booked"], "submits": 1 },
+    { "say": "book another appointment", "expect": ["one booking per conversation"], "forbid": ["Which day"], "submits": 1 },
+    { "say": "book 5 appointments for tomorrow", "expect": ["one booking per conversation"], "submits": 1 },
+    { "say": "yes", "forbid": ["You're booked", "tap Confirm"], "submits": 1 }
+  ],
+  "final": { "bookings": 1 }
+}

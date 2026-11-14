@@ -205,6 +205,28 @@ paths:
         "422": { description: Invalid body, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
         "429": { description: Too many questions from this address or today, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
         "503": { description: "Off, no key, monthly budget reached, or the AI service failed (service_unavailable): use the free engine", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+  /api/v1/speech/token:
+    post:
+      summary: A short-lived token for the premium voice provider (Feature 013)
+      description: >
+        OFF by default: without AZURE_SPEECH_KEY and AZURE_SPEECH_REGION the answer is 404 and the website keeps
+        the free browser voice. Server-to-server (X-Proxy-Secret). Returns a speech service token valid for about
+        10 minutes and its region; never the key. Rate-limited per visitor (429). Never cached; never logged.
+      parameters:
+        - name: X-Proxy-Secret
+          in: header
+          required: true
+          schema: { type: string }
+        - name: X-Client-IP
+          in: header
+          required: false
+          schema: { type: string }
+      responses:
+        "200": { description: The token (Cache-Control no-store), content: { application/json: { schema: { $ref: "#/components/schemas/SpeechToken" } } } }
+        "403": { description: Missing or wrong proxy secret, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "404": { description: The premium voice is off (not_found), content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "429": { description: Too many tokens for this visitor, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "503": { description: "The speech service failed (service_unavailable): use the browser voice", content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
   /api/v1/appointments:
     post:
       summary: Book one slot (idempotent)
@@ -876,6 +898,13 @@ components:
       properties:
         text: { type: string }
         provider: { type: string, enum: [claude] }
+    SpeechToken:
+      type: object
+      required: [token, region, expiresInSeconds]
+      properties:
+        token: { type: string }
+        region: { type: string }
+        expiresInSeconds: { type: integer }
     AppointmentView:
       type: object
       required: [reference, status, doctor, department, startsAt, endsAt, localDate, localTime, timeZone, feePkr, patientNameMasked, mobileMasked, bookedAt, isSample]

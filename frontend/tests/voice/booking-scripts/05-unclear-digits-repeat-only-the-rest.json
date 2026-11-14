@@ -1,0 +1,14 @@
+{
+  "name": "A number said in parts (owner rule A6): each part is read back and the patient goes on; the parts make the number",
+  "turns": [
+    { "say": "book an appointment with Dr Bilal", "expect": ["Which day"] },
+    { "say": "tuesday", "expect": ["Tuesday 10 November"] },
+    { "say": "10", "expect": ["full name"] },
+    { "say": "Sara Noor", "expect": ["mobile"] },
+    { "say": "zero three one one one two three", "expect": ["0311 123", "please go on"], "forbid": ["email"] },
+    { "say": "four five six seven", "expect": ["email"] },
+    { "say": "skip", "expect": ["zero three one one, one two three, four five six seven", "tap Confirm"] },
+    { "say": "yes", "expect": ["You're booked"], "submits": 1 }
+  ],
+  "final": { "bookings": 1, "payload": { "mobile": "+923111234567", "startsAt": "2026-11-10T05:00:00Z" } }
+}

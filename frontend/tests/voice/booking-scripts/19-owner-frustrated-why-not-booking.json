@@ -1,0 +1,39 @@
+{
+  "name": "Owner test: 'yaar main aapko bol raha hun booking kyon nahin kar rahi ho' gets an apology and tappable choices (never 'Aapko' as a name, never the same question alone)",
+  "turns": [
+    {
+      "say": "booking karo",
+      "expect": [
+        "zaroor"
+      ],
+      "options": [
+        "Blood test (CBC)",
+        "General Medicine"
+      ]
+    },
+    {
+      "say": "yaar main aapko bol raha hun booking kyon nahin kar rahi ho",
+      "expect": [
+        "Maaf kijiye",
+        "options mein se chun"
+      ],
+      "options": [
+        "Blood test (CBC)"
+      ],
+      "forbid": [
+        "Aapko",
+        "khushi hui"
+      ]
+    },
+    {
+      "say": "Blood test (CBC)",
+      "expect": [
+        "Pathology Lab",
+        "Kaun sa din"
+      ]
+    }
+  ],
+  "final": {
+    "bookings": 0
+  }
+}

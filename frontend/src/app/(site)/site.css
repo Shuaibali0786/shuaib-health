@@ -40,6 +40,10 @@
 @layer base {
   html {
     color-scheme: light;
+    /* Owner B1 (2026-11-09): nothing may make the page wider than the screen (large phone text, a long word). If it
+       did, the layout viewport would widen and the fixed "Ask us" button (right: 1rem) would sit off the screen.
+       clip (not hidden) keeps the sticky header working. */
+    overflow-x: clip;
     /* Sticky header height, so focused elements are never hidden under it (WCAG 2.2 2.4.11). */
     scroll-padding-top: 4.5rem;
     -webkit-text-size-adjust: 100%;
@@ -168,5 +172,45 @@
 @media (prefers-reduced-motion: no-preference) {
   .preset-switcher a {
     transition: background-color 160ms ease, color 160ms ease;
+  }
+}
+
+/* Feature 013: the mic inside the "Ask us" button glows gently, so voice is easy to find. Still with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .assistant-mic {
+    animation: assistant-mic-glow 3.2s ease-in-out infinite;
+  }
+}
+@keyframes assistant-mic-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-gold-300) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-gold-300) 45%, transparent);
+  }
+}
+
+/* Home hero: the three fact cards float gently up and down, each at its own pace. Still with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-float {
+    animation: hero-float 6s ease-in-out infinite;
+  }
+  .hero-float-2 {
+    animation-duration: 7s;
+    animation-delay: -2s;
+  }
+  .hero-float-3 {
+    animation-duration: 6.5s;
+    animation-delay: -4s;
+  }
+}
+@keyframes hero-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -6px;
   }
 }

@@ -7,7 +7,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { loadKnowledgePack } from "@/agent/knowledge";
 import { AssistantLauncher } from "@/components/agent/AssistantLauncher";
-import { getAssistantProvider, isAssistantEnabled } from "@/lib/demo";
+import { getAssistantProvider, getVoiceBrain, getVoiceProvider, isAssistantEnabled, isVoiceEnabled } from "@/lib/demo";
 import { getSiteConfig } from "@/lib/content";
 import { siteUrl } from "@/lib/seo";
 import { THEME_COLOR } from "../theme-color";
@@ -56,7 +56,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const assistantPack = isAssistantEnabled() ? await loadKnowledgePack() : null;
   return (
     <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
-      <body className="flex min-h-screen flex-col">
+      {/* With the assistant on, phones keep room at the bottom so the floating "Ask us" button never covers the last
+          buttons of a page (owner B1). */}
+      <body className={`flex min-h-screen flex-col ${assistantPack ? "max-xl:pb-[calc(4.5rem+env(safe-area-inset-bottom))]" : ""}`}>
         <SkipLink />
         <AnnouncementBar />
         <NoticeBar />
@@ -65,7 +67,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <SiteFooter />
-        {assistantPack ? <AssistantLauncher pack={assistantPack} provider={getAssistantProvider()} /> : null}
+        {assistantPack ? <AssistantLauncher pack={assistantPack} provider={getAssistantProvider()} voice={isVoiceEnabled()} voiceProvider={getVoiceProvider()} voiceBrain={getVoiceBrain()} /> : null}
       </body>
     </html>
   );

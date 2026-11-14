@@ -1,0 +1,14 @@
+{
+  "name": "English booking: doctor, day, time, then name, phone, email, one at a time; read-back; yes; slip link",
+  "turns": [
+    { "say": "I want to book an appointment with Dr Maryam", "expect": ["Perfect, Dr. Maryam Baloch", "Which day"], "forbid": ["Ji zaroor"], "submits": 0 },
+    { "say": "friday", "expect": ["Friday 13 November", "11:30 AM"] },
+    { "say": "11:30", "expect": ["full name"] },
+    { "say": "my name is Ali Raza", "expect": ["Ali", "mobile number"] },
+    { "say": "zero three zero zero one two three four five six seven", "expect": ["email", "skip"] },
+    { "say": "ali dot raza at gmail dot com", "expect": ["a-l-i dot r-a-z-a at gmail dot com", "Is that right"], "submits": 0 },
+    { "say": "yes", "expect": ["check these details", "zero three zero zero, one two three, four five six seven", "ali dot raza at gmail dot com", "tap Confirm"], "submits": 0 },
+    { "say": "yes", "expect": ["You're booked", "7K3M9-P2QXA", "Open my slip", "show it at reception"], "forbid": ["Aap", "laayein"], "submits": 1 }
+  ],
+  "final": { "bookings": 1, "payload": { "doctorSlug": "dr-maryam-baloch", "startsAt": "2026-11-13T06:30:00Z", "fullName": "Ali Raza", "mobile": "+923001234567", "email": "ali.raza@gmail.com", "acceptRules": true, "trap": null } }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Owner 2026-11-09: at the filled card 'ok hain sab kuch' is a yes and books (once, after the read-back)",
+  "turns": [
+    { "say": "book an appointment with Dr Bilal", "expect": ["Which day"] },
+    { "say": "monday", "expect": ["Monday 9 November"] },
+    { "say": "10", "expect": ["full name"] },
+    { "say": "Sara Noor", "expect": ["mobile"] },
+    { "say": "03111234567", "expect": ["email"] },
+    { "say": "skip", "expect": ["tap Confirm"], "submits": 0 },
+    { "say": "ok hain sab kuch", "expect": ["You're booked"], "submits": 1 }
+  ],
+  "final": { "bookings": 1 }
+}

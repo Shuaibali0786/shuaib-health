@@ -42,6 +42,7 @@ from app.routers import (
     maintenance,
     packages,
     slots,
+    speech,
 )
 from app.settings import Settings, get_settings
 
@@ -121,6 +122,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(slots.router)
     api.include_router(appointments.router)
     api.include_router(assistant.router)
+    api.include_router(speech.router)
     api.include_router(admin_auth.router)
     api.include_router(admin_staff.router)
     api.include_router(admin_bookings.router)

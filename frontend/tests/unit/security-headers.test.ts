@@ -70,6 +70,13 @@ describe("header sets", () => {
     expect(common.find((h) => h.key === "X-Frame-Options")?.value).toBe("DENY");
   });
 
+  it("the microphone is blocked unless voice is on, and then only for this site itself", () => {
+    const policy = (options?: { microphone?: boolean }) => commonSecurityHeaders("enforce", options).find((h) => h.key === "Permissions-Policy")?.value;
+    expect(policy()).toBe("camera=(), microphone=(), geolocation=(), payment=(), usb=()");
+    expect(policy({ microphone: true })).toBe("camera=(), microphone=(self), geolocation=(), payment=(), usb=()");
+    expect(commonSecurityHeaders("off", { microphone: true })).toEqual([]);
+  });
+
   it("report mode uses Report-Only for the CSP, enforce mode the enforced header", () => {
     expect(names(publicSiteHeaders("report"))).toEqual(["Referrer-Policy", "Content-Security-Policy-Report-Only"]);
     expect(names(publicSiteHeaders("enforce"))).toEqual(["Referrer-Policy", "Content-Security-Policy"]);
@@ -122,4 +129,17 @@ describe("header sets", () => {
     expect(re.test("/api/booking/slots")).toBe(true);
   });
 
+});
+
+describe("Feature 013: the premium voice provider's CSP", () => {
+  it("adds only the speech service domains and blob audio, and only when the premium voice is on", () => {
+    const csp = (speech: boolean) => publicSiteHeaders("enforce", undefined, { speech }).find((h) => h.key === "Content-Security-Policy")?.value ?? "";
+    expect(csp(false)).toContain("connect-src 'self';");
+    expect(csp(false)).not.toContain("speech.microsoft.com");
+    expect(csp(false)).not.toContain("media-src");
+    expect(csp(true)).toContain("connect-src 'self' https://*.tts.speech.microsoft.com wss://*.tts.speech.microsoft.com wss://*.stt.speech.microsoft.com;");
+    expect(csp(true)).toContain("media-src 'self' blob:");
+    expect(csp(true)).toContain("default-src 'self'");
+    expect(csp(true)).toContain("frame-ancestors 'none'");
+  });
 });

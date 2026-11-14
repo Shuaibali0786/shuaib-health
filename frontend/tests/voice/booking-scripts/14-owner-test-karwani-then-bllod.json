@@ -1,0 +1,47 @@
+{
+  "name": "Owner test: 'mujhy test karwani hia' asks which test; 'bllod ki' means the CBC; haan starts the lab booking",
+  "turns": [
+    {
+      "say": "mujhy test karwani hia",
+      "expect": [
+        "Kaun sa test karwana hai",
+        "CBC (blood test)"
+      ],
+      "options": [
+        "CBC (blood test)"
+      ],
+      "forbid": [
+        "nahi maloom",
+        "I don't know",
+        "Sample Road"
+      ]
+    },
+    {
+      "say": "bllod ki",
+      "expect": [
+        "Complete Blood Count (CBC)",
+        "PKR 800",
+        "Pathology Lab",
+        "Kya main aap ki booking kar doon?"
+      ],
+      "forbid": [
+        "nahi maloom",
+        "I don't know",
+        "Sample Road"
+      ]
+    },
+    {
+      "say": "haan",
+      "expect": [
+        "zaroor",
+        "Kaun sa din"
+      ],
+      "forbid": [
+        "kis doctor"
+      ]
+    }
+  ],
+  "final": {
+    "bookings": 0
+  }
+}

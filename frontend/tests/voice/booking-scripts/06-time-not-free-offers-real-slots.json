@@ -1,0 +1,14 @@
+{
+  "name": "A time that is not free is never booked: the assistant offers the nearest real times",
+  "turns": [
+    { "say": "book an appointment with Dr Bilal", "expect": ["Which day"] },
+    { "say": "friday", "expect": ["Friday 13 November"] },
+    { "say": "9:15", "expect": ["9:15 AM isn't available", "9:00 AM", "11:30 AM"], "forbid": ["full name"], "submits": 0 },
+    { "say": "9", "expect": ["full name"], "forbid": ["9:15"] },
+    { "say": "Sara Noor", "expect": ["mobile"] },
+    { "say": "03111234567", "expect": ["email"] },
+    { "say": "skip", "expect": ["Friday 13 November at 9:00 AM", "tap Confirm"] },
+    { "say": "yes", "expect": ["You're booked"], "submits": 1 }
+  ],
+  "final": { "bookings": 1, "payload": { "startsAt": "2026-11-13T04:00:00Z" } }
+}

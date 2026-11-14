@@ -36,9 +36,14 @@ export type KnowledgePack = {
     address: string[];
     hours: string;
     labHours: string;
+    /** The same opening rules the contact page shows (days such as "mon", times "09:00"), for "is the clinic open today?". */
+    openingRules: Array<{ days: string[]; opens: string; closes: string }>;
+    /** The clinic's time zone ("today" means the clinic's today). */
+    timeZone: string;
   };
   departments: Array<{ slug: string; name: string; summary: string }>;
-  doctors: Array<{ slug: string; name: string; specialty: string; departmentSlug: string; departmentName: string; feePkr: number; days: string[] }>;
+  /** `hours`: the earliest start and latest end of the weekly sessions (clinic time, "HH:MM"), for "10 AM to 4 PM". */
+  doctors: Array<{ slug: string; name: string; specialty: string; departmentSlug: string; departmentName: string; feePkr: number; days: string[]; hours?: { start: string; end: string } }>;
   labTests: Array<{ slug: string; name: string; aka: string[]; pricePkr: number; sampleType: string; reportTime: string; preparation: string; homeCollection: boolean }>;
   packages: Array<{ slug: string; name: string; pricePkr: number; whoFor: string; preparation: string }>;
   faqs: Array<{ question: string; answer: string; groupSlug: string }>;

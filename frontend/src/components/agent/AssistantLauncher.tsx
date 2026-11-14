@@ -1,21 +1,33 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Mic } from "lucide-react";
 import { useEffect, useRef, useState, type ComponentType } from "react";
 
 import type { ProviderId } from "@/agent/registry";
 import type { KnowledgePack } from "@/agent/types";
 
 import type { AssistantPanelProps } from "./AssistantPanel";
+import { primeMicrophone, type MicResult } from "@/voice/microphone";
+
+import type { VoicePrefs } from "./voice/VoiceMode";
+
+const DEFAULT_PREFS: VoicePrefs = { opened: false };
 
 /**
- * The gold "Ask us" button (Feature 010). The panel, the engine and their styles are loaded only on the
- * first click, so pages that never open the chat pay for this small button only.
+ * The "Ask us" button (Feature 010). The panel, the engine and their styles are loaded only on the first click, so
+ * pages that never open the chat pay for this small button only.
+ *
+ * Feature 013 (VOICE_ENABLED): ONE button, with the microphone clearly inside it (owner decision 2026-11-08: no
+ * separate "Talk to us" bubble). "Ask us" opens the chat; the round mic inside opens it straight into voice mode
+ * (the tap is also what lets the browser play sound and ask for the microphone).
  */
-export function AssistantLauncher({ pack, provider = "local" }: { pack: KnowledgePack; provider?: ProviderId }) {
+export function AssistantLauncher({ pack, provider = "local", voice = false, voiceProvider = "browser", voiceBrain = "rules" }: { pack: KnowledgePack; provider?: ProviderId; voice?: boolean; voiceProvider?: "browser" | "azure"; voiceBrain?: "rules" | "gemini" | "openrouter" }) {
   const [Panel, setPanel] = useState<ComponentType<AssistantPanelProps> | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [startInVoice, setStartInVoice] = useState(false);
+  const [prefs, setPrefs] = useState<VoicePrefs>(DEFAULT_PREFS);
+  const [micCheck, setMicCheck] = useState<Promise<MicResult> | null>(null);
   const button = useRef<HTMLButtonElement>(null);
   const returnFocus = useRef(false);
 
@@ -27,7 +39,10 @@ export function AssistantLauncher({ pack, provider = "local" }: { pack: Knowledg
     }
   }, [open]);
 
-  async function show() {
+  async function show(inVoice = false) {
+    // Ask for the microphone right now, inside the tap, so the browser's permission prompt comes from a real action.
+    setMicCheck(inVoice ? primeMicrophone() : null);
+    setStartInVoice(inVoice);
     if (!Panel) {
       setLoading(true);
       try {
@@ -48,19 +63,42 @@ export function AssistantLauncher({ pack, provider = "local" }: { pack: Knowledg
   return (
     <>
       {open ? null : (
-        <button
-          ref={button}
-          type="button"
-          onClick={() => void show()}
-          aria-haspopup="dialog"
-          aria-busy={loading}
-          className="assistant-launcher fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 inline-flex min-h-12 items-center gap-2 rounded-pill bg-navy-900 px-5 font-semibold text-white shadow-lift md:right-6 md:bottom-6"
-        >
-          <MessageCircle className="size-5 text-gold-300" aria-hidden="true" />
-          Ask us
-        </button>
+        // Owner B1 (2026-11-09). A floating pill always covers some button while a page scrolls (the device matrix found
+        // day filters, test chips, department cards and "View profile" under it from 360 px to 1440 px). So:
+        // - below 1280 px (phones, tablets, iPad landscape) it is a slim bar across the bottom, above the device's own
+        //   bottom inset; the page keeps the same room at the bottom (site layout), so nothing is ever trapped under it;
+        // - from 1280 px it is two round buttons stacked in the empty margin beside the 1200 px page, never over content.
+        <div className="assistant-dock fixed inset-x-0 bottom-0 z-[55] flex justify-end border-t border-border bg-white/95 px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur xl:inset-x-auto xl:right-2 xl:bottom-6 xl:block xl:border-0 xl:bg-transparent xl:p-0 xl:backdrop-blur-none">
+          <div className="inline-flex items-center gap-1 rounded-pill bg-navy-900 p-1 shadow-lift xl:flex-col xl:rounded-[1.75rem]">
+            <button
+              ref={button}
+              type="button"
+              onClick={() => void show(false)}
+              aria-haspopup="dialog"
+              aria-busy={loading}
+              className="assistant-launcher inline-flex min-h-11 items-center gap-2 rounded-pill pr-3 pl-4 font-semibold text-white hover:bg-white/10 xl:size-14 xl:flex-col xl:justify-center xl:gap-0.5 xl:p-0 xl:text-[11px] xl:leading-none"
+            >
+              <MessageCircle className="size-5 text-gold-300" aria-hidden="true" />
+              Ask us
+            </button>
+            {voice ? (
+              <button
+                type="button"
+                onClick={() => void show(true)}
+                aria-haspopup="dialog"
+                aria-label="Talk by voice, in English or Urdu"
+                title="Talk by voice (English / Urdu)"
+                className="assistant-mic inline-flex size-11 items-center justify-center rounded-full bg-gold-300 xl:size-14 text-navy-900 hover:bg-gold-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <Mic className="size-5" aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+        </div>
       )}
-      {open && Panel ? <Panel pack={pack} provider={provider} onClose={close} /> : null}
+      {open && Panel ? (
+        <Panel pack={pack} provider={provider} onClose={close} voice={voice} startInVoice={startInVoice} voicePrefs={prefs} onVoicePrefs={(patch) => setPrefs((p) => ({ ...p, ...patch }))} micCheck={micCheck} voiceProvider={voiceProvider} voiceBrain={voiceBrain} />
+      ) : null}
     </>
   );
 }

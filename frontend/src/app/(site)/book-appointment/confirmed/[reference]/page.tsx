@@ -10,7 +10,7 @@ import { ApiError } from "@/lib/api/http";
 import { callBooking, clientIpFrom, type BackendResult } from "@/lib/booking/backend";
 import { displayReference, parseReference } from "@/lib/booking/reference";
 import { AppointmentViewSchema } from "@/lib/booking/schemas";
-import { getClinicRules, getSiteConfig } from "@/lib/content";
+import { getClinicRules, getHealthPackages, getLabTestBySlug, getSiteConfig } from "@/lib/content";
 import { ROUTES } from "@/lib/routes";
 
 // A confirmation is private to whoever holds the link: never indexed, never sent as a referrer.
@@ -37,14 +37,30 @@ async function lookup(reference: string): Promise<BackendResult | null> {
   }
 }
 
-export default async function ConfirmedPage({ params }: { params: Promise<{ reference: string }> }) {
+/**
+ * A lab test booked by the voice receptionist links here with `?test=<slug>`. The slip then shows the test and its public
+ * price instead of the doctor's fee. Only a real catalog test counts, and only on a Pathology Lab booking, so no other
+ * booking's slip can be dressed up with a test line. It is display only: nothing is stored or priced from the link.
+ */
+async function labTestFor(slug: string | undefined, departmentSlug: string) {
+  if (!slug || !/^[a-z0-9-]{1,80}$/.test(slug) || !/lab|patholog/i.test(departmentSlug)) return undefined;
+  const test = await getLabTestBySlug(slug);
+  if (test) return { name: test.name, pricePkr: test.pricePkr };
+  // A health package booked by the voice receptionist (also at the lab): its name and package price.
+  const pkg = (await getHealthPackages()).find((p) => p.slug === slug);
+  return pkg ? { name: `${pkg.name} package`, pricePkr: pkg.packagePricePkr } : undefined;
+}
+
+export default async function ConfirmedPage({ params, searchParams }: { params: Promise<{ reference: string }>; searchParams: Promise<{ test?: string | string[] }> }) {
   const reference = parseReference((await params).reference);
   if (!reference) notFound();
+  const testParam = (await searchParams).test;
 
   const [site, rules, result] = await Promise.all([getSiteConfig(), getClinicRules(), lookup(reference)]);
   const view = result?.status === 200 ? AppointmentViewSchema.safeParse(result.body) : null;
 
   if (view?.success) {
+    const labTest = await labTestFor(typeof testParam === "string" ? testParam : undefined, view.data.department.slug);
     return (
       <>
         <PageHeader trail={TRAIL} title="Your appointment is booked" intro="Keep your reference. This page is private to you." />
@@ -56,10 +72,11 @@ export default async function ConfirmedPage({ params }: { params: Promise<{ refe
           {/* The bottom padding keeps the sticky mobile Download button from hiding the last rows. */}
           <div className="flex flex-col gap-5 pb-28 lg:grid lg:grid-cols-[minmax(0,28rem)_20rem] lg:grid-rows-[auto_1fr] lg:items-start lg:justify-center lg:gap-x-8 lg:gap-y-3 lg:pb-0">
             <div className="lg:row-span-2">
-              <ConfirmationCard view={view.data} site={site} />
+              <ConfirmationCard view={view.data} site={site} labTest={labTest} />
             </div>
             <ConfirmationActions
               view={view.data}
+              labTest={labTest}
               clinic={{ name: site.name, address: site.address, phoneDisplay: site.generalPhone.display, phoneTel: site.generalPhone.tel, emergencyDisplay: site.emergencyPhone.display }}
             />
           </div>
