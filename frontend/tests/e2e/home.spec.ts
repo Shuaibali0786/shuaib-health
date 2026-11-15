@@ -10,9 +10,11 @@ test.describe("Home page", () => {
   test("shows one slim demo banner at the top and the full demo notice, exactly, in the footer", async ({ page }) => {
     const banner = page.getByTestId("announcement-bar");
     await expect(banner).toBeVisible();
-    await expect(banner).toContainText("Portfolio demo — not a real clinic");
+    // The exact notice (constitution I) is in the banner and in the footer.
+    await expect(banner).toContainText(NOTICE);
     await expect(banner.getByRole("button")).toBeVisible();
-    await expect(page.getByText(NOTICE)).toHaveCount(1);
+    await expect(page.getByText(NOTICE)).toHaveCount(2);
+    await expect(page.getByText(NOTICE).first()).toBeVisible();
     await expect(page.locator("footer").getByText(NOTICE)).toBeVisible();
     // Nothing else is stacked above the header.
     const bannerBox = await banner.boundingBox();
