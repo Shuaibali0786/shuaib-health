@@ -6,9 +6,18 @@ test.describe("Home page", () => {
     await page.goto("/");
   });
 
-  test("shows the demo notice exactly, at the top and in the footer", async ({ page }) => {
-    await expect(page.getByText(NOTICE)).toHaveCount(2);
-    await expect(page.getByText(NOTICE).first()).toBeVisible();
+  // Owner 2026-11-15: ONE slim banner at the top (it replaces the two dark bars); the footer keeps the full notice.
+  test("shows one slim demo banner at the top and the full demo notice, exactly, in the footer", async ({ page }) => {
+    const banner = page.getByTestId("announcement-bar");
+    await expect(banner).toBeVisible();
+    await expect(banner).toContainText("Portfolio demo — not a real clinic");
+    await expect(banner.getByRole("button")).toBeVisible();
+    await expect(page.getByText(NOTICE)).toHaveCount(1);
+    await expect(page.locator("footer").getByText(NOTICE)).toBeVisible();
+    // Nothing else is stacked above the header.
+    const bannerBox = await banner.boundingBox();
+    expect(bannerBox?.height).toBeLessThanOrEqual(41);
+    expect((await page.locator("header").boundingBox())?.y).toBeLessThanOrEqual(42);
   });
 
   test("header: logo, navigation or menu, emergency phone and Book Appointment", async ({ page, isMobile }) => {
@@ -34,18 +43,27 @@ test.describe("Home page", () => {
     }
   });
 
-  test("hero: one h1, both buttons and exactly three honest fact cards", async ({ page }) => {
+  test("hero: one h1, both buttons, exactly three honest fact cards and a strip of real counts", async ({ page }) => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Care that feels calm and clear");
 
     const hero = page.locator("section[aria-labelledby='hero-title']");
     await expect(hero.getByRole("link", { name: "Book Appointment" })).toHaveAttribute("href", "/book-appointment");
     await expect(hero.getByRole("link", { name: "Find a Doctor" })).toHaveAttribute("href", "/doctors");
-    await expect(hero.getByRole("listitem")).toHaveText([
+    await expect(hero.locator("li.hero-float")).toHaveText([
       "Open Mon–Sat, 9 AM – 9 PM PKT",
       "Lab reports online",
       "Home sample collection",
     ]);
+    // Owner 2026-11-15: the trust strip counts the demo data (9 doctors, 7 departments, 26 lab tests) and says so.
+    const strip = hero.getByTestId("trust-strip");
+    await expect(strip).toContainText("9 doctors");
+    await expect(strip).toContainText("7 departments");
+    await expect(strip).toContainText("26 lab tests");
+    await expect(strip).toContainText("24/7 online booking");
+    await expect(strip).toContainText("sample data");
+    await expect(strip).not.toContainText("AI receptionist"); // voice is off in this build
+    await expect(page.getByTestId("talk-to-ayesha")).toHaveCount(0);
   });
 
   test("sections appear in the required order", async ({ page }) => {
@@ -114,11 +132,11 @@ test.describe("first screen on phones", () => {
     [390, 844],
     [412, 915],
   ] as const) {
-    test(`at ${width}x${height} the notice, header, headline and both hero buttons are visible without scrolling`, async ({ page }) => {
+    test(`at ${width}x${height} the banner, header, headline and both hero buttons are visible without scrolling`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto("/");
       const hero = page.locator("section[aria-labelledby='hero-title']");
-      await expect(page.getByText(NOTICE).first()).toBeInViewport();
+      await expect(page.getByTestId("announcement-bar")).toBeInViewport({ ratio: 1 });
       await expect(page.locator("header").getByRole("link", { name: "Shuaib Health home" })).toBeInViewport();
       await expect(page.getByRole("button", { name: /menu/i })).toBeInViewport();
       await expect(page.getByRole("heading", { level: 1 })).toBeInViewport();

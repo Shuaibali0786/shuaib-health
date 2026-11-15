@@ -1,49 +1,131 @@
 # Shuaib Health
 
-A **portfolio demo** of a premium, white-label clinic system: a fast public website, online booking with a
-QR/PDF slip, a private staff dashboard (the Command Centre), specialty presets and an assistant. Built for
-clinics in Pakistan, the Gulf and the UK.
+[![CI](https://github.com/Shuaibali0786/shuaib-health/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Shuaibali0786/shuaib-health/actions/workflows/ci.yml)
 
-> **Portfolio demo — not a real clinic, not medical advice.**
-> Designed & built by [Shuaib Ali](https://github.com/Shuaibali0786).
+**A clinic website with online booking, a staff dashboard and an AI voice receptionist that books appointments in English and Urdu.**
+
+> **Portfolio demo: not a real clinic, not medical advice.** All names, numbers and bookings are sample data.
+> Designed and built by [Shuaib Ali](https://github.com/Shuaibali0786).
+
+- **Live demo:** https://shuaib-health-web.vercel.app
+- **Demo dashboard:** open the live site and click **View Demo Dashboard** in the top bar (read-only, no password, nothing is saved).
+- **Case study:** [`docs/marketing/case-study.md`](docs/marketing/case-study.md)
+
+| Home, with the AI receptionist | Voice mode in a booking |
+|---|---|
+| ![Home page](docs/marketing/gig-1-home-hero.png) | ![Voice mode](docs/marketing/gig-2-voice-panel.png) |
+
+| Booking summary | Staff dashboard (demo) | On a phone |
+|---|---|---|
+| ![Booking card](docs/marketing/gig-3-booking-confirm-card.png) | ![Dashboard](docs/marketing/gig-5-staff-dashboard-demo.png) | ![Mobile](docs/marketing/gig-6-mobile-view.png) |
 
 ## Features
 
 | | What it does |
 |---|---|
-| **Clinic website** | Home, departments, doctors with weekly schedules and fees, lab tests with preparation and report time, health packages, health tips, FAQ, contact with an opt-in map. Mobile first, light and fast. |
-| **Online booking** | Department → doctor → date → time → details. Real free slots from the server, double booking blocked in the database, rate-limited. |
-| **Booking slip** | Confirmation with a reference, a PDF slip with a QR code, print, calendar file and a share link. Personal details are masked. |
-| **Command Centre** | Staff dashboard: today's agenda by doctor, live status flow with undo, search and filters with quick date ranges, insights charts, doctors today, audit log, staff roles, print list. Light and night themes. |
+| **Clinic website** | Doctors with weekly schedules and fees, departments, lab tests with preparation and report time, health packages, health tips, FAQ and contact. Mobile first. |
+| **Online booking** | Department, doctor, day, time, details. Free slots come from the server; double booking is blocked in the database; rate-limited. |
+| **Booking slip** | A reference, a PDF slip with a QR code, print, calendar file and share link. Personal details are masked. |
+| **Command Centre** | Staff dashboard: today's agenda by doctor, status flow with undo, search and filters, insights, audit log, staff roles, printable day list. Light and night themes. |
 | **One-click demo** | Visitors open the dashboard with sample data, no password. Nothing is saved. |
-| **Specialty presets** | The same system shown as a Dental, Skin & Aesthetic, Diagnostic Lab or Multi-speciality clinic (`/demo/specialties`). |
-| **Assistant** | "Ask us" chat that answers from the clinic's own data (timings, doctors, tests, fees) and guides to booking; a clinic-owner guide on the demo. Free, no AI key; off by default. |
-| **Security & privacy** | Argon2 passwords, secure cookies, CSRF and Origin checks, server-side roles, audit log, masked phones, no personal data in logs, CSP, secret scanning. |
-| **Quality** | TypeScript strict, 1,400+ unit tests, Playwright end-to-end, accessibility (axe) and visual tests in CI. |
+| **Specialty presets** | The same system as a Dental, Skin & Aesthetic, Diagnostic Lab or Multi-speciality clinic. |
+| **Two-step sign-in** | Authenticator app and backup codes for administrators. |
 
-## Screenshots
+## AI voice receptionist ("Ayesha")
 
-All screenshots use sample data from a local build. Full set: [`docs/showcase/`](docs/showcase/README.md).
+Talk to her from the **Talk to Ayesha** button on the home page, or the mic in the **Ask us** button. She also works by typing.
 
-| Specialty presets | Booking slip | Command Centre |
-|---|---|---|
-| ![Dental preset](docs/showcase/preset-dental-home-desktop.png) | ![Slip](docs/showcase/slip-mobile.png) | ![Overview](docs/showcase/dashboard-overview-desktop.png) |
-| ![Skin & Aesthetic preset](docs/showcase/preset-skin-aesthetic-home-desktop.png) | ![Booking](docs/showcase/booking-step1-mobile.png) | ![Bookings](docs/showcase/dashboard-bookings-desktop.png) |
+- Answers in **English or Urdu** (Roman Urdu or Urdu script) and follows the patient's language.
+- Understands a problem ("I have an allergy", "mujhe bukhar hai"), suggests the right department and lists our doctors with days, hours and fees, then waits for the patient's choice.
+- Books the appointment in the same conversation: day, a free time, name (spelled back), mobile number (read back in groups), optional email, then a full summary before the patient confirms. She never picks a time the patient did not choose.
+- **Safe:** never diagnoses or gives doses; says the emergency number first when a message sounds urgent; books only after the patient's own "yes".
+- **Private:** speech runs in the visitor's browser; **no audio is recorded or stored**.
+- **Resilient:** an optional AI brain (OpenRouter free models) with a built-in rule engine as the fallback; typing always works if the microphone is blocked.
+- Ends warmly with the slip link and a goodbye.
 
-<!-- Placeholder: add the 60–90 s demo video link here (script: docs/showcase/DEMO-VIDEO-SCRIPT.md). -->
-<!-- Placeholder: add the live demo link here once Shuaib approves sharing it. -->
+Details: [`docs/runbooks/voice-receptionist.md`](docs/runbooks/voice-receptionist.md), [`docs/voice-agent/`](docs/voice-agent/).
 
-## Project
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Website and staff app | Next.js 16 (App Router), React 19, TypeScript strict, Tailwind CSS v4 |
+| API | Python 3.12, FastAPI, SQLModel, Alembic |
+| Database | Postgres on Neon (Singapore) |
+| Voice | Browser Web Speech API; optional OpenRouter AI brain with a local rules fallback |
+| Hosting | Vercel (Singapore region), serverless functions and cron |
+| Quality | Vitest, pytest, Playwright, axe accessibility, visual tests, GitHub Actions CI |
+| Operations | Uptime monitoring, Sentry (scrubbed), secret scanning, dependency audits, encrypted daily backups |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  V[Visitor's browser<br/>speech + chat] -->|pages, booking| W[Website + staff app<br/>Next.js on Vercel]
+  W -->|server-side, secret header| A[API<br/>FastAPI on Vercel]
+  A --> D[(Postgres<br/>Neon)]
+  W -.->|optional, server only| B[AI brain<br/>OpenRouter free models]
+  W -. fallback .-> R[Rule engine<br/>built in]
+  S[Staff browser] -->|sign-in, 2-step| W
+  C[Vercel Cron] -->|daily maintenance| A
+```
+
+The browser never talks to the API directly: the website forwards booking calls with a shared secret, so rate limits, lockouts and
+validation live on the server. Rate limits are stored in Postgres, which is what makes them correct on serverless hosting.
+
+## Security and privacy
+
+- Argon2 password hashing, secure HTTP-only cookies, CSRF and Origin checks, roles enforced on the server, an audit log of staff actions.
+- Phone numbers are masked on the slip, in share links and in the dashboard; no personal data in URLs or logs.
+- Content-Security-Policy and security headers; staff pages are never indexed or cached.
+- Secrets live only in environment variables, never in the repository; secret scanning runs in CI.
+- This is a demo with sample data; it makes no medical or legal-compliance claims.
+
+## Run it locally
+
+You need Node 24, Python 3.12 with [uv](https://docs.astral.sh/uv/), and a Postgres database (a free Neon project works).
+
+```bash
+# API
+cd backend
+uv sync
+copy .env.example .env        # then fill in the values (never commit .env)
+uv run alembic upgrade head
+uv run python -m app.seed     # demo data
+uv run uvicorn app.main:app --reload --port 8000
+
+# Website (in a second terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend settings are in `frontend/.env.example`. Voice is off unless `ASSISTANT_ENABLED=true` and `VOICE_ENABLED=true`. More detail:
+[`frontend/README.md`](frontend/README.md) and [`backend/README.md`](backend/README.md).
+
+## Tests and CI
+
+```bash
+cd frontend && npm run lint && npm run typecheck && npm test      # unit tests (about 2,170)
+cd frontend && npm run test:e2e                                    # end-to-end, accessibility, visual
+cd backend  && uv run pytest                                       # API tests (about 1,370)
+```
+
+GitHub Actions runs the backend, frontend, secret-scan and end-to-end jobs on every pull request, with branch protection on `main`.
+
+## Project map
 
 | Part | Folder |
-|------|--------|
-| Website and staff app (Next.js 16, TypeScript, Tailwind v4) | [`frontend/`](frontend/README.md) |
-| API (FastAPI, SQLModel, Neon Postgres) | [`backend/`](backend/README.md) |
+|---|---|
+| Website and staff app | [`frontend/`](frontend/README.md) |
+| API | [`backend/`](backend/README.md) |
+| Specs, plans and tasks | [`specs/`](specs/) |
+| Architecture decisions | [`history/adr/`](history/adr/) |
+| Runbooks (deploy, rollback, backups, admin password reset) | [`docs/runbooks/`](docs/runbooks/) |
+| Portfolio assets (images, demo video draft, case study) | [`docs/marketing/`](docs/marketing/) |
 
-- Project rules: [`.specify/memory/constitution.md`](.specify/memory/constitution.md)
-- How we change things safely: [`docs/SAFE-CHANGE-PLAYBOOK.md`](docs/SAFE-CHANGE-PLAYBOOK.md)
-- Feature specs, plans and tasks: [`specs/`](specs/)
-- Architecture decisions: [`history/adr/`](history/adr/)
-- Prompt history: [`history/prompts/`](history/prompts/)
+## Credits and licence
 
-To run the backend locally on Windows, follow [`backend/README.md`](backend/README.md).
+Photos, icons, fonts and the map are listed with their sources and licences in [`CREDITS.md`](CREDITS.md).
+No open-source licence has been granted for this code yet: it is shared as a portfolio piece, and all rights are reserved unless a
+licence file says otherwise. For work with me, see the case study.

@@ -15,9 +15,11 @@ const FACE = [
 
 const WIDTHS = [
   { width: 1920, height: 1080 },
+  { width: 1440, height: 900 },
   { width: 1366, height: 768 },
   { width: 768, height: 1024 },
   { width: 390, height: 844 },
+  { width: 360, height: 800 },
 ];
 
 const overlaps = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -62,8 +64,18 @@ test.describe("hero: the doctor's face is never covered", () => {
       }));
       // The whole head is inside the photo (not cropped away).
       for (const f of faces) expect(f.y >= p.y && f.y + f.height <= p.y + p.height, "the head is inside the photo").toBe(true);
-      const cards = hero.locator("li");
+      const cards = hero.locator("li.hero-float");
       await expect(cards).toHaveCount(3);
+      // Owner 2026-11-15: the trust strip and the Talk to Ayesha button (voice build) sit in the text column, clear of the
+      // photo and the three cards, and never make the page wider.
+      for (const id of ["trust-strip", "talk-to-ayesha"]) {
+        const el = page.getByTestId(id);
+        if ((await el.count()) === 0) continue;
+        const box = await boxOf(el);
+        expect(overlaps(box, p), `${id} overlaps the photo at ${size.width}px`).toBe(false);
+        for (let i = 0; i < 3; i++) expect(overlaps(box, await boxOf(cards.nth(i))), `${id} overlaps card ${i + 1} at ${size.width}px`).toBe(false);
+        expect(box.x >= 0 && box.x + box.width <= size.width, `${id} is inside the screen at ${size.width}px`).toBe(true);
+      }
       const dock = page.locator(".assistant-dock");
       const dockBox = (await dock.count()) ? await boxOf(dock) : null;
       // Owner B1 (2026-11-09): below 1280 px "Ask us" is a bar across the bottom (the bottom edge of the screen: the page
@@ -126,7 +138,7 @@ test.describe("hero: the doctor's face is never covered", () => {
   test("the cards float gently, and stay still with reduced motion", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop", "desktop only");
     await page.goto("/");
-    const card = page.locator("section[aria-labelledby='hero-title'] li").first();
+    const card = page.locator("section[aria-labelledby='hero-title'] li.hero-float").first();
     expect(await card.evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
     await page.emulateMedia({ reducedMotion: "no-preference" });
     expect(await card.evaluate((el) => getComputedStyle(el).animationName)).toBe("hero-float");

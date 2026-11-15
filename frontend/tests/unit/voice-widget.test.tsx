@@ -367,3 +367,30 @@ describe("voice mode", () => {
     expect(log).toHaveTextContent("Please tap Open my slip and download it.");
   }, 30000);
 });
+
+describe("the Home hero's Talk to Ayesha button (owner 2026-11-15)", () => {
+  it("the open-voice event opens the assistant straight into voice mode, only when voice is on", async () => {
+    const { OPEN_VOICE_EVENT } = await import("@/components/agent/AssistantLauncher");
+    const { unmount } = render(<AssistantLauncher pack={pack} />);
+    act(() => {
+      window.dispatchEvent(new Event(OPEN_VOICE_EVENT));
+    });
+    expect(screen.queryByRole("dialog")).toBeNull(); // voice is off: nothing opens
+    unmount();
+
+    render(<AssistantLauncher pack={pack} voice />);
+    act(() => {
+      window.dispatchEvent(new Event(OPEN_VOICE_EVENT));
+    });
+    const dialog = await screen.findByRole("dialog", { name: /Ask Shuaib Health/ });
+    expect(await within(dialog).findByTestId("voice-mode")).toBeInTheDocument();
+  });
+
+  it("the bottom pill is a transparent glass pill: no solid white band, taps only on the pill", () => {
+    render(<AssistantLauncher pack={pack} voice />);
+    const dock = document.querySelector(".assistant-dock") as HTMLElement;
+    expect(dock.className).toContain("pointer-events-none");
+    expect(dock.className).not.toMatch(/bg-white|border-t/);
+    expect((dock.firstElementChild as HTMLElement).className).toContain("pointer-events-auto");
+  });
+});

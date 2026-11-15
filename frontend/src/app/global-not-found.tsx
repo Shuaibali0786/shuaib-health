@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { NoticeBar } from "@/components/layout/NoticeBar";
+import { isDemoEnabled } from "@/lib/demo";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SkipLink } from "@/components/layout/SkipLink";
@@ -38,7 +39,7 @@ export default function GlobalNotFound() {
       <body className="flex min-h-screen flex-col">
         <SkipLink />
         <AnnouncementBar />
-        <NoticeBar />
+        {isDemoEnabled() ? null : <NoticeBar />}
         <SiteHeader />
         <main id="main-content" tabIndex={-1} className="flex-1">
           <NotFound />

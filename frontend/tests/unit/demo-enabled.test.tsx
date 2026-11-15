@@ -79,3 +79,14 @@ describe("DEMO_ENABLED off", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe("one slim banner (owner 2026-11-15)", () => {
+  it("the banner says portfolio demo, not a real clinic, and holds the demo dashboard link; the second dark bar is not rendered", () => {
+    vi.stubEnv("DEMO_ENABLED", "true");
+    const html = renderToStaticMarkup(<AnnouncementBar />);
+    expect(html).toContain("Portfolio demo — not a real clinic");
+    expect(html).toContain("View Demo Dashboard");
+    expect(html).not.toContain("see how the clinic team runs everything");
+    vi.unstubAllEnvs();
+  });
+});
