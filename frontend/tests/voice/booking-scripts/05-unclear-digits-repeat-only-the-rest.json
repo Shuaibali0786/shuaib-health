@@ -8,7 +8,7 @@
     { "say": "zero three one one one two three", "expect": ["0311 123", "please go on"], "forbid": ["email"] },
     { "say": "four five six seven", "expect": ["email"] },
     { "say": "skip", "expect": ["zero three one one, one two three, four five six seven", "tap Confirm"] },
-    { "say": "yes", "expect": ["You're booked"], "submits": 1 }
+    { "say": "yes", "expect": ["You're all set"], "submits": 1 }
   ],
   "final": { "bookings": 1, "payload": { "mobile": "+923111234567", "startsAt": "2026-11-10T05:00:00Z" } }
 }

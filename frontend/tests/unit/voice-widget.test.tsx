@@ -146,7 +146,7 @@ describe("the chat", () => {
     expect(g.__posts).toHaveLength(0);
     // Tapping Confirm is the patient's own yes (in their language).
     await user.click(within(card).getByRole("button", { name: "Confirm" }));
-    await waitFor(() => expect(log).toHaveTextContent("slip download karein aur reception par dikha dein."));
+    await waitFor(() => expect(log).toHaveTextContent("Open my slip dabaiye aur slip download kar lein."));
     expect(g.__posts).toHaveLength(1);
     const slip = within(dialog).getByTestId("voice-slip");
     expect(within(slip).getByTestId("voice-booked-test")).toHaveTextContent("Complete Blood Count (CBC) - PKR 800 (sample)");
@@ -320,9 +320,17 @@ describe("voice mode", () => {
     const user = userEvent.setup();
     const dialog = await openVoiceByBubble(user);
     await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
+    // Two quiet retries first (owner 2026-11-14), then ONE short line, said once.
+    for (let i = 0; i < 2; i += 1) {
+      act(() => port().fail("network"));
+      expect(within(dialog).queryByText(/having trouble/)).toBeNull();
+      // Listening is restarted quietly.
+      await waitFor(() => expect(port().listening).toBe(true), { timeout: 3000 });
+    }
     act(() => port().fail("network"));
-    expect(await within(dialog).findByText("Voice listening works most reliably in the Chrome browser")).toBeInTheDocument();
-    expect(within(dialog).getByText(/You can also type below/)).toBeInTheDocument();
+    expect(await within(dialog).findByText("Voice is having trouble in this browser. Please type below, or try Chrome.")).toBeInTheDocument();
+    expect(within(dialog).queryAllByText(/type below|type your message below/i)).toHaveLength(1);
+    expect(within(dialog).queryByText(/Voice listening works most reliably/)).toBeNull();
   });
 
   it("books by voice: one item at a time, a summary card, a spoken yes after the read-back, and the slip link", async () => {
@@ -356,6 +364,6 @@ describe("voice mode", () => {
     expect(g.__posts).toHaveLength(1);
     expect(within(slip).getByTestId("voice-reference")).toHaveTextContent("7K3M9-P2QXA");
     expect(within(slip).getByRole("link", { name: /^Open my slip/ })).toHaveAttribute("href", "/book-appointment/confirmed/7K3M9P2QXA");
-    expect(log).toHaveTextContent("Tap Open my slip, download it, and show it at reception.");
+    expect(log).toHaveTextContent("Please tap Open my slip and download it.");
   }, 30000);
 });

@@ -137,7 +137,7 @@ export default function VoiceMode({ conversation, welcomeLang, provider, prefs, 
         {/* With the chat shown, its text is right there: no caption (no duplicate text, more room on a small phone). */}
         {showChat ? null : (
           <div className="mt-2 w-full">
-            <Captions you={interim} assistant={caption ?? lastCaption} heard={heard} live={Boolean(caption)} />
+            <Captions you={interim} assistant={caption ?? lastCaption} heard={heard} live={Boolean(caption)} lang={conversation.ctx.lang} />
           </div>
         )}
         <div data-testid="voice-controls" className="mt-3 flex items-center justify-center gap-4 sm:gap-6">

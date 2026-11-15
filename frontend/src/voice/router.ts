@@ -11,7 +11,7 @@ import type { AppointmentView } from "@/lib/booking/schemas";
 import { departmentForSymptoms } from "@/agent/localEngine";
 import { formatPkr, formatTime } from "@/lib/format";
 
-import { bookingStep, currentQuestion, inputFor, newBookingState, type BookingState, type DialogDeps } from "./bookingDialog";
+import { bookingStep, currentQuestion, inputFor, newBookingState, withoutEmptyValues, type BookingState, type DialogDeps } from "./bookingDialog";
 import { clinicNow, dayName, doctorsOf, findDepartment, findDoctors, findLabTest, findPackage, labDepartment, labItem, mentionsLabTest, mentionsPackage, openDayNames, openingOn, resolveLabTest } from "./entities";
 import { hasUrduScript, replyLanguage, requestedLanguage, urduToLatin } from "./language";
 import type { Brain } from "./brain";
@@ -78,6 +78,8 @@ export type RouterResult = {
   awaiting?: Awaiting;
   /** A field to type the answer into, under the reply (the mobile number, or the email after one unclear try). */
   input?: "phone" | "email" | "name";
+  /** The goodbye after a booking: spoken, then the call ends politely (the mic closes, the slip stays on screen). */
+  endCall?: boolean;
 };
 
 const BOOK_WORDS = /\b(book|booking|appointment|appoint|reserve|reservation|slot|apointment|appointmnt)\b/;
@@ -360,7 +362,9 @@ function helloBack(raw: string, lang: VoiceLang): string {
 }
 
 // "Good mroning", "gud evning", "good afternon": the recogniser's and the keyboard's spellings of the time of day.
-const GOOD = /^(?:good|gud|gd|goood|god|gooood) (\w+)/;
+// Owner real-device test 2026-11-14: "Hi, good morning" got "Glad to hear that!" ("good" read as "I'm good"). A
+// leading "hi" / "hello" / "ji" is part of the greeting.
+const GOOD = /^(?:(?:hi|hello|hey|helo|hallo|ji|jee|sir)\s+)*(?:good|gud|gd|goood|god|gooood) (\w+)/;
 const PART_OF_DAY: Array<[RegExp, string]> = [
   [/^(m\w*r\w*n\w*|mor\w*)$/, "Good morning!"],
   [/^af\w*$/, "Good afternoon!"],
@@ -411,6 +415,21 @@ export function smallTalkOf(raw: string): Talk | null {
   if (!talk.how && !talk.fine && !talk.thanks && !talk.bye) return null;
   const rest = [HOW_ARE_YOU, FINE, THANKS, BYE, SALAM].reduce((s, re) => s.replace(new RegExp(re.source, "g"), " "), clean);
   return rest.split(" ").filter(Boolean).every((w) => TALK_FILLER.has(w)) ? talk : null;
+}
+
+const CLOSING = /^(ok|okay|theek hai|thik hai|theek|thik|acha|achha|accha|done)( (hai|ji|jee|bas|bus|sab|thanks|thank you|shukriya))*$|^(bas|bus|that s all|that s it|nothing else|bas itna hi|aur kuch nahi|kuch nahi|no thanks|nahi shukriya)$/;
+
+/**
+ * The goodbye after a booking (owner 2026-11-14), in the patient's language; null when the turn is not a closing.
+ * An English-speaking patient's "Allah Hafiz" gets "Allah Hafiz, take care!".
+ */
+export function closingReply(raw: string, lang: VoiceLang): string | null {
+  const clean = cleanText(urduToLatin(raw));
+  const talk = smallTalkOf(raw);
+  const closing = (talk && (talk.thanks || talk.bye)) || CLOSING.test(clean);
+  if (!closing) return null;
+  if (lang !== "roman" && /\b(allah hafiz|khuda hafiz)\b/.test(clean)) return "Allah Hafiz, take care!";
+  return T(lang, "You're very welcome! Take care. Goodbye.", "Koi baat nahi, aap ka shukriya. Allah Hafiz!");
 }
 
 /** A warm answer to small talk; with `help`, ends by offering help. */
@@ -733,7 +752,17 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
       readBack: out.readBack,
       options: out.options,
       input: out.input,
+      // The booked message ends with the goodbye: the call ends politely after it (owner 2026-11-14).
+      ...(out.booked ? { endCall: true } : {}),
     };
+  }
+
+  // After the booking, "thank you", "bye", "shukriya", "Allah Hafiz", "theek hai bas" close the call warmly.
+  if (patient && (ctx.booking?.phase === "booked" || ctx.bookingsMade >= 1)) {
+    // A goodbye says nothing about the patient's language: "Allah Hafiz" from an English call stays English.
+    const callLang = ctx.langLock ?? ctx.lang;
+    const bye = closingReply(latin, callLang);
+    if (bye) return { ...base, lang: callLang, offer: null, intent: "goodbye", text: bye, options: [], endCall: true };
   }
 
   if (patient) {
@@ -777,7 +806,7 @@ export async function routeTurn(ctx: RouterContext, input: RouterInput): Promise
     }
     // A greeting alone ("good mroning", "AOA ji") is greeted back warmly, never asked "what is the problem?".
     if (greetingOnly(input.text)) {
-      return { ...base, intent: "greeting", text: `${greet || T(lang, "Hello!", "Assalam o Alaikum!")} ${T(lang, "How can I help you today?", "Bataiye, main aap ki kya madad kar sakti hoon?")}`, options: startChoices(ctx.pack, lang), awaiting: "problem" };
+      return { ...base, intent: "greeting", text: `${greet || T(lang, "Hello!", "Assalam o Alaikum!")} ${T(lang, "How can I help you today?", "Main aap ki kya madad kar sakti hoon?")}`, options: startChoices(ctx.pack, lang), awaiting: "problem" };
     }
     const yesNo = [T(lang, "Yes, book it", "Ji haan, booking karein"), T(lang, "No, thanks", "Nahi, shukriya")];
     const labOffer = (t: KnowledgePack["labTests"][number]): RouterResult => ({ ...base, offer: { kind: "lab", testSlug: t.slug }, intent: "lab_offer", text: [greet, labExplanation(ctx, t, lang)].filter(Boolean).join(" "), links: [{ label: t.name, href: `/lab-tests/${t.slug}` }], options: yesNo });
@@ -1052,9 +1081,11 @@ function varied(sentence: string, used: Set<string>): string | null {
  * Owner rules (2026-11-08): never the same sentence twice in a row, and at most one apology in a conversation (after
  * that: choices to tap and a calm wait). Emergencies, the booking read-back and the booked message are never changed.
  */
-export function polishReply(result: RouterResult, previous: string, apologised: boolean, pack: KnowledgePack): { result: RouterResult; apologised: boolean } {
+export function polishReply(raw: RouterResult, previous: string, apologised: boolean, pack: KnowledgePack): { result: RouterResult; apologised: boolean } {
+  // No reply ever shows or speaks "null", "undefined" or "NaN" (owner real-device test 2026-11-14: "Sure, null.").
+  const result: RouterResult = { ...raw, text: withoutEmptyValues(raw.text), ...(raw.spoken === undefined ? {} : { spoken: withoutEmptyValues(raw.spoken) }) };
   // "What did you say?" is answered with the same words on purpose.
-  if (result.urgent || result.booked || result.readBack || result.intent === "repeat") return { result, apologised: apologised || APOLOGY.test(result.text) };
+  if (result.urgent || result.booked || result.readBack || result.intent === "repeat" || result.endCall) return { result, apologised: apologised || APOLOGY.test(result.text) };
   const before = new Set(sentencesOf(previous).map(norm));
   let sorry = apologised;
   const kept: string[] = [];

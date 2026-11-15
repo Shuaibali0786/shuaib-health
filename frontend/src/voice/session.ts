@@ -62,6 +62,9 @@ const ECHO_OVERLAP = 0.7;
 const ECHO_MIN_WORDS = 4;
 /** Its own voice can come back a moment after it stopped (room echo, a slow recogniser). */
 const ECHO_WINDOW_MS = 8000;
+/** Quiet restarts of a dropped listening service before the "type below, or try Chrome" line is shown. */
+const NETWORK_RETRIES = 2;
+const NETWORK_RETRY_MS = 700;
 /** A little slower than the default: warmer, easier to follow. */
 const SPEECH_RATE = 0.92;
 const GREETING = /^(assalam|wa alaikum|salam)/i;
@@ -135,6 +138,8 @@ export class VoiceSession {
   private state: VoiceState = "idle";
   private ended = false;
   private stopped = false;
+  /** Silent restarts after the browser's listening service could not be reached (Edge), since the last good turn. */
+  private networkRetries = 0;
   private voices: VoiceInfo[] = [];
   private voicesPromise: Promise<void> | null = null;
   /** The one voice for the whole conversation: chosen from the caller's first sentence, then never switched. */
@@ -287,6 +292,7 @@ export class VoiceSession {
     // Its own voice coming back a moment after it stopped (in any script) is not the patient.
     if (Date.now() - this.spokeUntil < ECHO_WINDOW_MS && isEcho(text, this.recent)) return;
     this.silenceCount = 0;
+    this.networkRetries = 0;
     this.pending.push(text);
     if (this.endOfTurnMs <= 0) {
       this.flushPending();
@@ -314,6 +320,17 @@ export class VoiceSession {
     if (code === "silence") return;
     this.port.stopListening();
     this.clearSilence();
+    // Owner real-device test 2026-11-14 (Edge, mid-call): the listening service drops now and then. Restart it
+    // quietly, twice at most, before saying anything; the conversation (and the booking) carries on either way.
+    if (code === "network" && this.networkRetries < NETWORK_RETRIES && !this.ended) {
+      this.networkRetries += 1;
+      if (this.resumeTimer) clearTimeout(this.resumeTimer);
+      this.resumeTimer = setTimeout(() => {
+        this.resumeTimer = null;
+        if (this.speaking === 0 && !this.stopped) this.beginListening();
+      }, NETWORK_RETRY_MS);
+      return;
+    }
     this.events.onNotice(code === "denied" ? "mic_denied" : code === "network" ? "network" : "mic_unavailable");
     this.setState("idle");
   }
@@ -434,6 +451,9 @@ export class VoiceSession {
       this.speaking = 0;
     }
     this.events.onTurn({ id: this.turnId++, from: "assistant", text: result.text, links: result.links, voice: true });
+    // The goodbye after a booking ends the call politely: it is spoken, then the mic stays closed (the slip stays on
+    // screen; a tap on the mic talks again).
+    if (result.endCall) this.stopped = true;
     await this.speak(result.spoken ?? result.text, { readBack: Boolean(result.readBack) });
   }
 

@@ -4,7 +4,7 @@ import { CircleAlert } from "lucide-react";
 
 import type { Notice } from "@/voice/session";
 
-type Copy = { title: string; body: string; steps?: string[]; action?: string };
+type Copy = { title: string; body?: string; steps?: string[]; action?: string };
 
 const COPY: Record<Notice, Copy> = {
   mic_denied: {
@@ -37,9 +37,9 @@ const COPY: Record<Notice, Copy> = {
     body: "I will show my answers as text instead.",
   },
   network: {
-    // Edge on Windows often cannot reach its own listening service; Chrome's works. Until the premium voice is on.
-    title: "Voice listening works most reliably in the Chrome browser",
-    body: "This browser could not reach its listening service. You can also type below, and I will still answer aloud.",
+    // Edge on Windows often cannot reach its own listening service; Chrome's works. Owner real-device test 2026-11-14:
+    // shown only after two quiet retries, as ONE short line (the old box said "type below" twice).
+    title: "Voice is having trouble in this browser. Please type below, or try Chrome.",
     action: "Try again",
   },
   tap_to_talk: {
@@ -58,7 +58,7 @@ export function MicHelp({ notice, onAction, onDismiss }: { notice: Notice | null
       <CircleAlert className="mt-0.5 size-5 shrink-0 text-navy-900" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-navy-900">{copy.title}</p>
-        <p className="mt-0.5">{copy.body}</p>
+        {copy.body ? <p className="mt-0.5">{copy.body}</p> : null}
         {copy.steps ? (
           <ol className="mt-1.5 list-decimal space-y-1.5 pl-5">
             {copy.steps.map((step) => (
@@ -66,7 +66,7 @@ export function MicHelp({ notice, onAction, onDismiss }: { notice: Notice | null
             ))}
           </ol>
         ) : null}
-        <p className="mt-1.5">You can also type your message below; I will still read my answers aloud.</p>
+        {/type/i.test(`${copy.title} ${copy.body ?? ""}`) ? null : <p className="mt-1.5">You can also type your message below; I will still read my answers aloud.</p>}
         <div className="mt-2 flex flex-wrap gap-2">
           {copy.action ? (
             <button type="button" onClick={onAction} className="min-h-11 rounded-control bg-navy-900 px-4 text-sm font-semibold text-white">

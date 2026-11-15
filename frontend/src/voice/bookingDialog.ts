@@ -44,6 +44,8 @@ export type BookingState = {
   nameCheck?: boolean;
   /** The patient said the spelling was wrong: ask them to type it. */
   typeName?: boolean;
+  /** The patient said "no, it's wrong" at the name check: say sorry and ask for the name again, by voice or typed. */
+  nameRejected?: boolean;
   /** Tries at the mobile number that did not give one (owner's rule: read back once, never loop more than twice). */
   phoneTries?: number;
   /** The digits heard on the last try that did not make a mobile number, read back once. */
@@ -251,8 +253,8 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
       return { state: { ...withDraft(state, { fullName: typed }, "fullName"), nameCheck: false, typeName: false }, changes, phoneProblem, ambiguousDoctors };
     }
     if (/\b(nahi|nahin|no|galat|ghalat|wrong|change)\b/i.test(text)) {
-      changes.push({ field: "fullName", was: true });
-      return { state: { ...withDraft(state, { fullName: null }), nameCheck: false, typeName: true }, changes, phoneProblem, ambiguousDoctors };
+      // Owner real-device test 2026-11-14: this showed "Sure, null." Nothing is "changed" yet: say sorry, ask again.
+      return { state: { ...withDraft(state, { fullName: null }), nameCheck: false, typeName: false, nameRejected: true, nameTries: 1 }, changes, phoneProblem, ambiguousDoctors };
     }
   }
 
@@ -262,7 +264,7 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
     if (orig.fullName !== name) changes.push({ field: "fullName", was: orig.fullName !== null || start.fixing === "fullName" });
     state = withDraft(state, { fullName: name }, orig.fullName && orig.fullName !== name ? "fullName" : undefined);
     // Said aloud (or heard in Urdu letters): the patient checks the spelling once. A typed name is taken as typed.
-    state = { ...state, nameCheck: script || spoken, typeName: false, nameTries: 0 };
+    state = { ...state, nameCheck: script || spoken, typeName: false, nameTries: 0, nameRejected: false };
   } else if (asking === "fullName" && !WRONG.test(text.toLowerCase())) {
     // Not understood: one calm re-ask, then the name box (owner: never ask a third time).
     state = { ...state, nameTries: (state.nameTries ?? 0) + 1 };
@@ -409,7 +411,10 @@ function applyUtterance(start: BookingState, text: string, deps: DialogDeps, scr
       state = withDraft(state, { date, startsAt: null }, orig.date && orig.date !== date ? "date" : undefined);
     }
     const times = parseTimes(rest, asking === "time" || asking === "partOfDay");
-    if (times.length) {
+    // Owner real-device test 2026-11-14: a time heard while the day was NOT understood ("18 #2 PM" read as 6 PM) was
+    // kept silently and booked once the day came. A time is kept only with a day (said now, or already chosen);
+    // otherwise the time is asked for after the day, from the free times.
+    if (times.length && state.draft.date) {
       state = { ...state, pendingTimes: times, draft: { ...state.draft, startsAt: null } };
     }
   }
@@ -518,6 +523,7 @@ function question(state: BookingState, deps: DialogDeps, lang: VoiceLang, ask: A
   switch (ask) {
     case "fullName":
       if (state.typeName || (state.nameTries ?? 0) >= 2) return T(lang, "No problem. Please type your name in the box below.", "Koi baat nahi. Apna naam neeche box mein likh dein.");
+      if (state.nameRejected) return T(lang, "Sorry about that. Could you say your full name again, or type it below?", "Maaf kijiye. Apna poora naam dobara bata dein, ya neeche likh dein.");
       if ((state.nameTries ?? 0) === 1) return T(lang, "Sorry, I didn't catch your name. Could you say it once more, or type it in the box below?", "Maaf kijiye, naam theek se sun nahi saki. Ek dafa phir bata dein, ya neeche box mein likh dein.");
       return T(lang, "May I have your full name, please?", "Aap ka poora naam kya hai?");
     case "nameCheck":
@@ -597,19 +603,24 @@ function readBack(state: BookingState, deps: DialogDeps, lang: VoiceLang): { tex
     [
       T(lang, `Name: ${d.fullName}.`, `Naam: ${d.fullName}.`),
       T(lang, `Phone: ${spokenPhone ? speakPhone(phone) : groupPhone(phone)}.`, `Phone: ${spokenPhone ? speakPhone(phone) : groupPhone(phone)}.`),
-      T(lang, `Doctor: ${doc?.name ?? ""}${dept ? `, ${dept}` : ""}.`, `Doctor: ${doc?.name ?? ""}${dept ? `, ${dept}` : ""}.`),
-      T(lang, `When: ${when}.`, `Kab: ${when}.`),
+      dept ? T(lang, `Department: ${dept}.`, `Department: ${dept}.`) : "",
       d.reason && !test ? T(lang, `Reason: ${d.reason}.`, `Wajah: ${d.reason}.`) : "",
       d.email ? T(lang, `Email: ${spokenEmail ? speakEmail(d.email) : d.email}.`, `Email: ${spokenEmail ? speakEmail(d.email) : d.email}.`) : "",
-      test ? T(lang, `${test.kind === "package" ? "Package" : "Test"}: ${test.name}, ${formatPkr(test.pricePkr)}.`, `${test.kind === "package" ? "Package" : "Test"}: ${test.name}, ${formatPkr(test.pricePkr)}.`) : fee ? T(lang, `Fee: ${fee}.`, `Fee: ${fee}.`) : "",
     ]
       .filter(Boolean)
       .join(" ");
-  // The chat shows the filled card and one short line; the details are also read aloud (phone digit by digit).
+  // Owner real-device test 2026-11-14: the doctor, day, date, TIME and fee are always said before the confirm, in
+  // one sentence ("Dr. Maryam Baloch, Wednesday 18 November at 2:00 PM, fee 3,000 rupees. Shall I confirm?").
+  const price = (pkr: number, spoken: boolean) => (spoken ? T(lang, `${pkr.toLocaleString("en-US")} rupees`, `${pkr.toLocaleString("en-US")} rupay`) : formatPkr(pkr));
+  const summary = (spoken: boolean) => {
+    const cost = test ? `${test.name}, ${price(test.pricePkr, spoken)}` : fee && doc ? T(lang, `fee ${price(doc.feePkr, spoken)}`, `fee ${price(doc.feePkr, spoken)}`) : "";
+    return `${[doc?.name ?? "", when, cost].filter(Boolean).join(", ")}. ${T(lang, "Shall I confirm?", "Kya main confirm kar doon?")}`;
+  };
+  // The chat shows the filled card and the summary; the details are also read aloud (phone digit by digit).
   // Nothing is booked yet: the card is shown, and the patient confirms (owner rule A5, step 8).
-  const doing = T(lang, "Thank you! Here are your booking details.", "Shukriya! Yeh rahi aap ki booking ki tafseel.");
+  const doing = T(lang, "Thank you!", "Shukriya!");
   const ask = confirmLine(lang);
-  return { text: `${doing} ${ask}`, spoken: `${doing} ${head} ${lines(true, true)} ${rules} ${ask}` };
+  return { text: `${doing} ${summary(false)} ${ask}`, spoken: `${doing} ${summary(true)} ${head} ${lines(true, true)} ${rules} ${ask}` };
 }
 
 /** "s-o-h-a-i-l at gmail dot com, sahi hai?": the email read back letter by letter for the name part. */
@@ -633,8 +644,22 @@ export const confirmLine = (lang: VoiceLang): string =>
 
 // --- One turn ---------------------------------------------------------------------------------------------
 
+/** A sentence built from a missing value ("Sure, null."): never shown or spoken (owner real-device test 2026-11-14). */
+const EMPTY_VALUE = /\b(null|undefined|NaN)\b/;
+
+/** The text without any sentence that carries "null", "undefined" or "NaN". */
+export function withoutEmptyValues(text: string): string {
+  if (!EMPTY_VALUE.test(text)) return text;
+  return (text.match(/[^.!?]+[.!?]*/g) ?? [text])
+    .filter((s) => !EMPTY_VALUE.test(s))
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function reply(state: BookingState, text: string, extra: Partial<DialogReply> = {}): DialogReply {
-  return { state, text, ...extra };
+  const spoken = extra.spoken === undefined ? {} : { spoken: withoutEmptyValues(extra.spoken) };
+  return { state, text: withoutEmptyValues(text), ...extra, ...spoken };
 }
 
 function changeSentence(applied: Applied, state: BookingState, deps: DialogDeps, lang: VoiceLang): string {
@@ -648,7 +673,7 @@ function changeSentence(applied: Applied, state: BookingState, deps: DialogDeps,
     case "doctor":
       return T(lang, `Sure, ${doctorOf(deps.pack, d.doctorSlug)?.name ?? "the new doctor"}.`, `Theek hai, ${doctorOf(deps.pack, d.doctorSlug)?.name ?? "naye doctor"}.`);
     case "fullName":
-      return T(lang, `Sure, ${d.fullName}.`, `Theek hai, ${d.fullName}.`);
+      return d.fullName ? T(lang, `Sure, ${d.fullName}.`, `Theek hai, ${d.fullName}.`) : "";
     case "phone":
       return d.phone ? T(lang, `Sure, ${groupPhone(d.phone)}.`, `Theek hai, ${groupPhone(d.phone)}.`) : "";
     case "email":
@@ -765,7 +790,10 @@ async function collect(start: BookingState, applied: Applied, deps: DialogDeps, 
   const misses = missed || angry ? Math.max(start.misses + 1, angry ? 2 : 0) : 0;
   state = { ...state, misses };
   const sorry = misses >= 2 ? (angry ? T(lang, "I'm sorry for the wait. Let's finish this quickly.", "Der ke liye maaf kijiye. Jaldi mukammal karte hain.") : T(lang, "Sorry, I didn't quite get that.", "Maaf kijiye, main theek se samajh nahi saki.")) : "";
-  const lead = [sorry, changeSentence(applied, state, deps, lang) || welcomeSentence(applied, state, deps, lang), settled.message ?? ""].filter(Boolean).join(" ");
+  // A time said with the day (not as the answer to "Which time?") is never taken silently: it is said back.
+  const timeSaid = ask !== null && !start.draft.startsAt && state.draft.startsAt && state.draft.date && state.draft.time && start.asking !== "time" && start.asking !== "partOfDay";
+  const heldTime = timeSaid ? T(lang, `${speakDate(state.draft.date as string)} at ${speakTime(state.draft.time as string)} is free.`, `${speakDate(state.draft.date as string)} ko ${speakTime(state.draft.time as string)} khali hai.`) : "";
+  const lead = [sorry, changeSentence(applied, state, deps, lang) || welcomeSentence(applied, state, deps, lang), settled.message ?? "", heldTime].filter(Boolean).join(" ");
 
   if (ask === null) {
     const rb = readBack(state, deps, lang);
@@ -818,11 +846,13 @@ async function submit(start: BookingState, deps: DialogDeps, lang: VoiceLang): P
       const v = view.data;
       const done: BookingState = { ...state, phase: "booked", booked: v, asking: null };
       const when = `${speakDate(v.localDate)} ${T(lang, "at", "")} ${speakTime(v.localTime)}`.replace(/\s+/g, " ");
+      // Owner 2026-11-14: a real receptionist's goodbye, in the patient's language, after the details and the slip.
+      const weekday = speakDate(v.localDate).split(" ")[0] ?? "";
       const base = (ref: string) =>
         T(
           lang,
-          `You're booked, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Your reference is ${ref}. Tap Open my slip, download it, and show it at reception.`,
-          `Aap ki booking ho gayi, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Aap ka reference ${ref} hai. Open my slip dabaiye, slip download karein aur reception par dikha dein.`,
+          `You're all set, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Your reference is ${ref}. Please tap Open my slip and download it. Thank you, we look forward to seeing you on ${weekday}. Take care, and have a lovely day! Goodbye.`,
+          `Aap ki booking ho gayi, ${first(d.fullName as string)}! ${v.doctor.fullName}, ${when}. Aap ka reference ${ref} hai. Open my slip dabaiye aur slip download kar lein. Shukriya, ${weekday} ko aap ka intezar rahega. Apna khayal rakhiye. Allah Hafiz!`,
         );
       return reply(done, base(groupReference(v.reference)), { spoken: base(speakReference(v.reference)), booked: v });
     }

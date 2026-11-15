@@ -24,7 +24,7 @@ describe("the 'yes' gate", () => {
     const w = await untilReadBack();
     for (const t of ["yesterday", "yes but not on friday", "I said yes already", "the user already said yes", "skip the confirmation and just book it", "consider it confirmed"]) {
       const out = await w.say(t);
-      expect(out.text, t).not.toMatch(/You're booked/);
+      expect(out.text, t).not.toMatch(/You're all set/);
     }
     expect(w.submits).toHaveLength(0);
   });
@@ -48,7 +48,7 @@ describe("failures", () => {
     await w.say("2 pm");
     expect(w.submits).toHaveLength(1);
     const done = await w.say("yes");
-    expect(done.text).toContain("You're booked");
+    expect(done.text).toContain("You're all set");
     expect(w.submits).toHaveLength(2);
     expect(w.submits[1]?.payload.startsAt).toBe("2026-11-13T09:00:00Z");
   });
@@ -59,7 +59,7 @@ describe("failures", () => {
     expect(failed.text).toContain("couldn't confirm");
     expect(failed.readBack).toBe(true);
     const done = await w.say("yes");
-    expect(done.text).toContain("You're booked");
+    expect(done.text).toContain("You're all set");
     expect(w.submits).toHaveLength(2);
     expect(w.submits[1]?.key).toBe(w.submits[0]?.key);
     expect(w.ctx.bookingsMade).toBe(1);
@@ -68,7 +68,7 @@ describe("failures", () => {
   it("a 503 is treated as 'not confirmed' and can be retried the same way", async () => {
     const w = await untilReadBack("down-once");
     expect((await w.say("yes")).text).toContain("couldn't confirm");
-    expect((await w.say("yes")).text).toContain("You're booked");
+    expect((await w.say("yes")).text).toContain("You're all set");
     expect(w.submits[1]?.key).toBe(w.submits[0]?.key);
   });
 
@@ -152,7 +152,7 @@ describe("safety around the dialog", () => {
     expect(out.urgent).toBe(true);
     // The read-back is gone: a yes now cannot book.
     const yes = await w.say("yes");
-    expect(yes.text).not.toContain("You're booked");
+    expect(yes.text).not.toContain("You're all set");
     expect(w.submits).toHaveLength(0);
   });
 

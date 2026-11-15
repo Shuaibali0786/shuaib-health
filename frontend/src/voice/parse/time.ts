@@ -34,12 +34,38 @@ const MONTHS = "jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|ju
 const DAY_MONTH = new RegExp(`\\b\\d{1,2}(st|nd|rd|th)?\\s+(of\\s+)?(${MONTHS})\\b`, "g");
 const MONTH_DAY = new RegExp(`\\b(${MONTHS})\\s+\\d{1,2}(st|nd|rd|th)?\\b`, "g");
 
+const TIME_MARK = /^(am|pm|a\.?m\.?|p\.?m\.?|baje|bajay|bje|o'clock|oclock)$/;
+
+/**
+ * "18 at 2", "18 2 pm", "18 #2 PM" (the recogniser's "#"): the first number is the day of the month, the second the
+ * hour. Owner real-device test 2026-11-14: "18 #2 PM" was read as 18:00 and booked at 6:00 PM without asking. A
+ * number followed by "at <hour>", or by a one-digit hour with its marker, is dropped here (it is the day).
+ * "11 30 pm" stays a time (eleven thirty).
+ */
+export function withoutLeadingDay(t: string): string {
+  const words = t.split(" ");
+  const out: string[] = [];
+  for (let i = 0; i < words.length; i += 1) {
+    const w = words[i] ?? "";
+    const day = /^\d{1,2}$/.test(w) ? Number(w) : null;
+    if (day !== null && day >= 1 && day <= 31) {
+      const next = words[i + 1] ?? "";
+      const after = words[i + 2] ?? "";
+      const hour = (x: string) => /^\d{1,2}(:\d{2})?$/.test(x) && Number(x.split(":")[0]) >= 1 && Number(x.split(":")[0]) <= 12;
+      if (next === "at" && hour(after)) continue;
+      if (hour(next) && TIME_MARK.test(after) && (next.length === 1 || next.includes(":") || day > 12)) continue;
+    }
+    out.push(w);
+  }
+  return out.join(" ");
+}
+
 /**
  * The sentence without its date ("13 november", "november 13th", "the 13th", "13 tareekh"), so the day of the month
  * is never read as an hour. Owner test 2026-11-09: "13 november 2 pm" was booked at 1:00 PM (13:00) without a word.
  */
 export function withoutDates(t: string): string {
-  return t
+  return withoutLeadingDay(t)
     .replace(DAY_MONTH, " ")
     .replace(MONTH_DAY, " ")
     .replace(/\b(the\s+)?\d{1,2}(st|nd|rd|th)\b/g, " ")
@@ -53,7 +79,15 @@ export function withoutDates(t: string): string {
  * "3 pm", "teen baje shaam"). Empty when no time is heard. `alone` allows a bare number ("11").
  */
 export function parseTimes(text: string, alone = false): string[] {
-  const t = withoutDates(text.toLowerCase().replace(/[,;!?()]/g, " ").replace(/\s+/g, " ").trim());
+  // Symbols the recogniser writes ("18 #2 PM", "2pm", "@3") are spaces; "2pm" is "2 pm".
+  const t = withoutDates(
+    text
+      .toLowerCase()
+      .replace(/[,;!?()#@*"“”]/g, " ")
+      .replace(/\b(\d{1,2})(am|pm)\b/g, "$1 $2")
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
   if (!t) return [];
   const mark = marker(t);
 
@@ -98,12 +132,17 @@ export function parseTimes(text: string, alone = false): string[] {
     if (m !== null && m !== undefined && m <= 59) return expand(h, m, mark);
   }
   // "11 baje", "11 o'clock", "at 3", "3 pm", "teen baje". A number said WITH its marker wins over any other number.
+  // A spoken 13-31 without a clock ("18 pm", "the 18 at 2") is a day of the month, never an hour.
+  const hourOf = (w: string | undefined): number | null => {
+    const h = num(w);
+    return h !== null && h <= 12 ? h : null;
+  };
   for (let i = 0; i < words.length; i += 1) {
-    const h = num(words[i]);
+    const h = hourOf(words[i]);
     if (h !== null && /^(baje|bajay|bje|o'clock|oclock|am|pm|a|p)$/.test(words[i + 1] ?? "")) return expand(h, 0, mark);
   }
   for (let i = 0; i < words.length; i += 1) {
-    const h = num(words[i]);
+    const h = hourOf(words[i]);
     if (h === null) continue;
     const after = words[i + 1] ?? "";
     const before = words[i - 1] ?? "";

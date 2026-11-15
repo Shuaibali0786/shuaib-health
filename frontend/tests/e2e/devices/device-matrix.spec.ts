@@ -244,7 +244,7 @@ test.describe("device matrix", () => {
     await say(digits, /Is that right/);
     await say("yes", /email/);
     await say("skip", /tap Confirm/);
-    await say("yes", /You're booked/);
+    await say("yes", /You're all set/);
     await expect(dialog.getByTestId("voice-slip").getByTestId("voice-reference")).toHaveText(/^[0-9A-Z]{5}-[0-9A-Z]{5}$/);
   });
 

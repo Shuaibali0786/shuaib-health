@@ -293,6 +293,28 @@ describe("silence", () => {
   });
 });
 
+describe("the goodbye ends the call politely (owner real-device test 2026-11-14)", () => {
+  it("after the booked message and its goodbye are spoken, the mic stays closed; a tap talks again", async () => {
+    const t = build({ skipOpening: true });
+    void t.session.start();
+    await settle(t.port);
+    for (const line of ["I want to book with Dr Maryam Baloch", "13 at 2 pm", "my name is Sohail Ahmed", "yes", "zero three zero zero one two three four five six seven", "yes", "skip", "yes"]) {
+      t.port.hear(line);
+      await settle(t.port);
+    }
+    expect(t.booked).toBe(1);
+    expect(said(t.port)).toContain("Take care, and have a lovely day! Goodbye.");
+    expect(t.port.listening).toBe(false);
+    expect(t.states.at(-1)).toBe("idle");
+    t.session.toggleMic();
+    expect(t.port.listening).toBe(true);
+    t.port.hear("thank you");
+    await settle(t.port);
+    expect(said(t.port)).toContain("You're very welcome! Take care. Goodbye.");
+    expect(t.port.listening).toBe(false);
+  });
+});
+
 describe("microphone and browser problems", () => {
   it("microphone refused: tells the panel, stops, and the text box still works", async () => {
     const t = build({ skipOpening: true });
@@ -306,10 +328,18 @@ describe("microphone and browser problems", () => {
     expect(said(t.port)).toContain("9 AM");
   });
 
-  it("Edge's 'speech service not reachable' (network): a clear notice, and it stops trying", async () => {
+  it("Edge's 'speech service not reachable' (network): two quiet retries, then ONE clear notice, and it stops trying", async () => {
     const t = build({ skipOpening: true });
     void t.session.start();
     await settle(t.port);
+    // Owner real-device test 2026-11-14: the first two drops are restarted silently (nothing shown).
+    for (let i = 0; i < 2; i += 1) {
+      t.port.fail("network");
+      expect(t.notices).not.toContain("network");
+      expect(t.port.listening).toBe(false);
+      await vi.advanceTimersByTimeAsync(800);
+      expect(t.port.listening).toBe(true);
+    }
     t.port.fail("network");
     expect(t.notices).toContain("network");
     expect(t.port.listening).toBe(false);

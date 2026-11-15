@@ -29,7 +29,7 @@ const PATIENTS: Patient[] = [
     { say: "four five six seven", spoken: SPOKEN, expect: /0300 123 4567\. Is that right\?/ },
     { say: "Yes", spoken: SPOKEN, expect: /email/ },
     { say: "Skip", spoken: SPOKEN, expect: /check the card/ },
-    { say: "Yes", spoken: SPOKEN, expect: /You're booked, Emma/ },
+    { say: "Yes", spoken: SPOKEN, expect: /You're all set, Emma/ },
   ] },
   { id: 2, who: "English: asks for a time that is not free, chooses an offered one", lang: "en", books: true, steps: [
     { say: "I'd like to book with Dr Maryam Baloch", expect: /Which day/ },
@@ -38,7 +38,7 @@ const PATIENTS: Patient[] = [
     { say: "Oliver Smith", expect: /mobile/ },
     { say: "03111234501", expect: /email/ },
     { say: "no thanks", expect: /check the card/ },
-    { say: "Yes, confirm", expect: /You're booked/ },
+    { say: "Yes, confirm", expect: /You're all set/ },
   ] },
   { id: 3, who: "English: changes the doctor midway", lang: "en", books: true, steps: [
     { say: "I've had a fever for two days", expect: /Dr\. Hassan Mirza[\s\S]*Dr\. Omar Sheikh[\s\S]*Which doctor would you like\?/ },
@@ -49,7 +49,7 @@ const PATIENTS: Patient[] = [
     { say: "James Taylor", expect: /mobile/ },
     { say: "03111234502", expect: /email/ },
     { say: "skip", expect: /check the card/ },
-    { say: "yes", expect: /You're booked, James! Dr\. Omar Sheikh/ },
+    { say: "yes", expect: /You're all set, James! Dr\. Omar Sheikh/ },
   ] },
   { id: 4, who: "English: a wrong number, then fixed", lang: "en", books: true, steps: [
     { say: "Book me with the dentist please", expect: /Which day/ },
@@ -61,7 +61,7 @@ const PATIENTS: Patient[] = [
     { say: "zero three one one two two two three three three four", spoken: SPOKEN, expect: /0311 222 3334\. Is that right\?/ },
     { say: "Correct", spoken: SPOKEN, expect: /email/ },
     { say: "skip", expect: /check the card/ },
-    { say: "yes", expect: /You're booked/ },
+    { say: "yes", expect: /You're all set/ },
   ] },
   { id: 5, who: "English: gives an email by voice", lang: "en", books: true, steps: [
     { say: "I need to see a skin doctor", expect: /Maryam Baloch[\s\S]*Which day/ },
@@ -73,7 +73,7 @@ const PATIENTS: Patient[] = [
     { say: "03111234504", expect: /email/ },
     { say: "noah wilson at gmail dot com", expect: /n-o-a-h-w-i-l-s-o-n at gmail dot com/ },
     { say: "yes", expect: /check the card/ },
-    { say: "yes", expect: /You're booked/ },
+    { say: "yes", expect: /You're all set/ },
   ] },
   { id: 6, who: "English: fees", lang: "en", steps: [
     { say: "How much does it cost to see the dentist?", expect: /PKR 2,000/ },

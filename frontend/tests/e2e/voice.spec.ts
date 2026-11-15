@@ -78,7 +78,23 @@ async function expectSettled(dialog: ReturnType<Page["getByRole"]>) {
 }
 
 /** The conversation still works after the booking: a question is answered, End leaves voice mode cleanly. */
+/**
+ * Owner 2026-11-14: after the booked message and its goodbye the call ends politely: the mic closes and the slip stays.
+ * A tap on the mic talks again.
+ */
+async function afterGoodbye(dialog: ReturnType<Page["getByRole"]>) {
+  await expect(dialog.getByRole("status").filter({ hasText: "Tap the mic to talk" })).toBeVisible({ timeout: 20000 });
+  await expect(dialog.getByTestId("voice-slip")).toBeVisible();
+  await dialog.getByRole("button", { name: "Tap to talk" }).click();
+}
+
 async function finishCleanly(page: Page, dialog: ReturnType<Page["getByRole"]>, errors: string[]) {
+  // A call that ended with the goodbye is reopened with one tap.
+  if (await dialog.getByTestId("voice-slip").count()) {
+    const tap = dialog.getByRole("button", { name: "Tap to talk" });
+    await expect(tap.or(listening(dialog))).toBeVisible({ timeout: 20000 });
+    if (await tap.isVisible()) await tap.click();
+  }
   await expectSettled(dialog);
   await say(page, "What are your timings?", /Mon–Sat|Monday to Saturday|khula hai/);
   await expectSettled(dialog);
@@ -143,9 +159,17 @@ test.describe("voice receptionist", () => {
     test.skip(!ON, "run with ASSISTANT_ENABLED=true VOICE_ENABLED=true");
     await installFakeWebSpeech(page);
     const dialog = await openVoice(page);
-    await page.evaluate(() => (window as unknown as { __fail: (e: string) => void }).__fail("network"));
-    await expect(dialog.getByText("Voice listening works most reliably in the Chrome browser")).toBeVisible();
-    await expect(dialog.getByText(/You can also type below/)).toBeVisible();
+    // Owner real-device test 2026-11-14: two drops are retried quietly; only the third shows ONE short line.
+    const fail = () => page.evaluate(() => (window as unknown as { __fail: (e: string) => void }).__fail("network"));
+    for (let i = 0; i < 2; i += 1) {
+      await page.waitForFunction(() => typeof (window as unknown as { __sr?: { onerror?: unknown } }).__sr?.onerror === "function");
+      await fail();
+      await page.waitForTimeout(900);
+      await expect(dialog.getByText(/having trouble/)).toHaveCount(0);
+    }
+    await fail();
+    await expect(dialog.getByText("Voice is having trouble in this browser. Please type below, or try Chrome.")).toBeVisible();
+    await expect(dialog.getByText(/type below|type your message below/i)).toHaveCount(1);
     await dialog.getByLabel("Your question").fill("timings");
     await dialog.getByLabel("Your question").press("Enter");
     await expect(dialog.getByRole("log")).toContainText("Mon–Sat");
@@ -224,6 +248,8 @@ test.describe("voice receptionist", () => {
     await expect(slipPage.getByText("Dr. Bilal Ansari").first()).toBeVisible();
     await slipPage.close();
     await expect.poll(() => spokenText(page), { timeout: 10000 }).toMatch(/Your reference is [0-9A-Z]/);
+    await expect.poll(() => spokenText(page), { timeout: 15000 }).toContain("Take care, and have a lovely day! Goodbye.");
+    await afterGoodbye(dialog);
     await say(page, "book another appointment", /one booking per conversation/);
     await finishCleanly(page, dialog, errors);
   });
@@ -255,7 +281,7 @@ test.describe("voice receptionist", () => {
     await card.getByRole("button", { name: "Confirm" }).click();
     const slip = dialog.getByTestId("voice-slip");
     await expect(slip).toBeVisible({ timeout: 10000 });
-    await expect(dialog.getByRole("log")).toContainText("slip download karein aur reception par dikha dein.");
+    await expect(dialog.getByRole("log")).toContainText("Open my slip dabaiye aur slip download kar lein.");
     await expect(slip.getByTestId("voice-booked-test")).toContainText("Complete Blood Count (CBC) - PKR 800 (sample)");
     const link = slip.getByRole("link", { name: OPEN_SLIP });
     await expect(link).toHaveAttribute("href", /\?test=complete-blood-count$/);
@@ -372,7 +398,7 @@ test.describe("voice receptionist", () => {
     await card.getByRole("button", { name: "Confirm" }).click();
     const slip = dialog.getByTestId("voice-slip");
     await expect(slip).toBeVisible({ timeout: 10000 });
-    await expect(log).toContainText("slip download karein aur reception par dikha dein.");
+    await expect(log).toContainText("Open my slip dabaiye aur slip download kar lein.");
     const link = slip.getByRole("link", { name: OPEN_SLIP });
     const [slipPage] = await Promise.all([page.context().waitForEvent("page"), link.click()]);
     await slipPage.waitForLoadState();

@@ -56,7 +56,23 @@ function dayOfMonth(day: number, month: number | null, now: Date): string | null
   return null;
 }
 
-const NOISE = /[,.;:!?()'’]/g;
+const NOISE = /[,.;:!?()'’#@*"“”]/g;
+
+// "eighteen", "eighteenth": the day of the month in words (the recogniser sometimes writes them out).
+const UNITS = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const ORD = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth"];
+const DAY_WORDS: Record<string, number> = {};
+for (let n = 1; n <= 31; n += 1) {
+  const tens = n >= 30 ? "thirty" : n >= 20 ? "twenty" : "";
+  const unit = n % 10;
+  const cardinal = n < 20 ? UNITS[n] : unit ? `${tens} ${UNITS[unit]}` : tens;
+  const ordinal = n < 20 ? ORD[n] : unit ? `${tens} ${ORD[unit]}` : `${tens.slice(0, -1)}ieth`;
+  if (cardinal) DAY_WORDS[cardinal] = n;
+  if (ordinal) DAY_WORDS[ordinal] = n;
+}
+const DAY_WORD_RE = new RegExp(`\\b(${Object.keys(DAY_WORDS).sort((a, b) => b.length - a.length).join("|")})\\b`);
+const HOUR_WORD = "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|\\d{1,2}";
+const TIME_AFTER = `(?:at\\s+)?(?:${HOUR_WORD})(?:[:.]\\d{2})?\\s*(?:am|pm|a m|p m|baje|bajay|o clock|oclock)\\b|at\\s+(?:${HOUR_WORD})\\b`;
 
 /**
  * A date from one utterance, or null. `alone` is true when the caller was just asked for the date, so a
@@ -86,6 +102,21 @@ export function parseDate(text: string, now: Date, alone = false): string | null
   const marked = /\b(?:tareekh|tarikh|date|on the)\s+(\d{1,2})\b|\b(\d{1,2})\s+(?:tareekh|tarikh|ko)\b/.exec(t);
   const markedDay = marked?.[1] ?? marked?.[2];
   if (markedDay) return dayOfMonth(Number(markedDay), month, now);
+  // Owner real-device test 2026-11-14: "18 #2 PM", "18 at 2", "eighteen two pm": a day number followed by a time.
+  const withTime = new RegExp(`\\b(\\d{1,2})\\s+(?:${TIME_AFTER})`).exec(t);
+  if (withTime?.[1] && !/^\d{1,2}\s+\d{2}\b/.test(t.slice(withTime.index))) return dayOfMonth(Number(withTime[1]), month, now);
+  const wordDay = DAY_WORD_RE.exec(t);
+  if (wordDay?.[1]) {
+    const after = t.slice(wordDay.index + wordDay[0].length).trim();
+    const before = t.slice(0, wordDay.index).trim();
+    const n = DAY_WORDS[wordDay[1]] ?? 0;
+    // "eighteenth", "the eighteen", "eighteen november", "eighteen two pm" (not "two pm" alone: that is a time).
+    if (/(st|nd|rd|th)$/.test(wordDay[1]) && !/^(second)$/.test(wordDay[1])) return dayOfMonth(n, month, now);
+    if (month !== null || /\bthe$/.test(before) || new RegExp(`^(?:${TIME_AFTER})`).test(after) || (alone && !after)) return dayOfMonth(n, month, now);
+  }
+  // "Wednesday 18" / "Wednesday the 18": the number is the date (the weekday must agree, or the number wins).
+  const weekdayDay = /\b(?:sunday|monday|tuesday|wednesday|thursday|friday|saturday)\s+(?:the\s+)?(\d{1,2})\b(?!\s*(?:am|pm|baje|o clock))/.exec(t);
+  if (weekdayDay?.[1]) return dayOfMonth(Number(weekdayDay[1]), month, now);
 
   for (const w of words) {
     const day = WEEKDAYS[w];

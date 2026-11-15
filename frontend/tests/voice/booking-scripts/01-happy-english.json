@@ -8,7 +8,7 @@
     { "say": "zero three zero zero one two three four five six seven", "expect": ["email", "skip"] },
     { "say": "ali dot raza at gmail dot com", "expect": ["a-l-i dot r-a-z-a at gmail dot com", "Is that right"], "submits": 0 },
     { "say": "yes", "expect": ["check these details", "zero three zero zero, one two three, four five six seven", "ali dot raza at gmail dot com", "tap Confirm"], "submits": 0 },
-    { "say": "yes", "expect": ["You're booked", "7K3M9-P2QXA", "Open my slip", "show it at reception"], "forbid": ["Aap", "laayein"], "submits": 1 }
+    { "say": "yes", "expect": ["You're all set", "7K3M9-P2QXA", "Open my slip", "Please tap Open my slip and download it", "Goodbye"], "forbid": ["Aap", "laayein"], "submits": 1 }
   ],
   "final": { "bookings": 1, "payload": { "doctorSlug": "dr-maryam-baloch", "startsAt": "2026-11-13T06:30:00Z", "fullName": "Ali Raza", "mobile": "+923001234567", "email": "ali.raza@gmail.com", "acceptRules": true, "trap": null } }
 }

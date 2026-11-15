@@ -10,8 +10,8 @@
     { "say": "hmm", "expect": ["Please say yes"], "submits": 0 },
     { "say": "ok wait", "expect": ["Please say yes"], "submits": 0 },
     { "say": "wait", "expect": ["Please say yes"], "submits": 0 },
-    { "say": "yes but change the doctor", "forbid": ["You're booked"], "submits": 0 },
-    { "say": "nahi", "forbid": ["You're booked"], "submits": 0 }
+    { "say": "yes but change the doctor", "forbid": ["You're all set"], "submits": 0 },
+    { "say": "nahi", "forbid": ["You're all set"], "submits": 0 }
   ],
   "final": { "bookings": 0 }
 }
