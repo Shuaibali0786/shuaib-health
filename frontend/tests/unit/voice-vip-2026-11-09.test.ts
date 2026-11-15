@@ -16,7 +16,7 @@ const pack = packFor(false);
 
 describe("A1 greeting: English first, warm, says she can use English or Urdu", () => {
   it("is the owner's line, in English", () => {
-    expect(welcomeLine(pack, "en")).toBe("Hello, welcome to Shuaib Health. I'm Ayesha, the clinic's assistant. I can help you in English or Urdu. How can I help you today?");
+    expect(welcomeLine(pack, "en")).toBe("Hello, welcome to Shuaib Health. I'm Ayesha. How can I help you today?");
   });
 });
 
@@ -141,7 +141,7 @@ describe("B7: the reference is exactly like the slip, read in two slow groups", 
 
 describe("B9: names are pronounced right, only in speech", () => {
   it("Ayesha, Shuaib, Maryam, Zainab, Baloch, Memon", () => {
-    expect(pronounce("I'm Ayesha.")).toBe("I'm Aa-ee-sha.");
+    expect(pronounce("I'm Ayesha.")).toBe("I'm Aysha.");
     expect(pronounce("Welcome to Shuaib Health.")).toBe("Welcome to Shoo-aib Health.");
     expect(pronounce("Dr. Maryam Baloch and Dr. Zainab Memon")).toBe("Dr. Mar-yam Ba-loach and Dr. Zay-nab May-mon");
     // The screen text is never changed by the speech rewriting itself.

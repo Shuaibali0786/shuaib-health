@@ -36,7 +36,7 @@ export function speakable(sentence: string): string {
 // the voice speaks changes; the screen keeps the real spelling. Syllables with hyphens make English voices (Chrome on
 // Windows and Android, Safari) stress them the Urdu way.
 const PRONOUNCE: Array<[RegExp, string]> = [
-  [/\bAyesha\b/g, "Aa-ee-sha"],
+  [/\bAyesha\b/g, "Aysha"],
   [/\bShuaib\b/g, "Shoo-aib"],
   [/\bMaryam\b/g, "Mar-yam"],
   [/\bZainab\b/g, "Zay-nab"],

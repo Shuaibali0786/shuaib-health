@@ -82,7 +82,7 @@ describe("1 (critical): a time is never picked without the patient choosing it",
     const card = w.ctx.booking;
     expect(card?.phase).toBe("awaiting_yes");
     const last = w.log.at(-1);
-    expect(last?.text).toContain("Dr. Maryam Baloch, Friday 13 November at 2:00 PM, fee PKR 3,000. Shall I confirm?");
+    expect(last?.text).toContain("Dr. Maryam Baloch, Friday 13 November at 2:00 PM, fee PKR 3,000. Phone: 0300 123 4567. Shall I confirm?");
     expect(last?.spoken).toContain("Dr. Maryam Baloch, Friday 13 November at 2:00 PM, fee 3,000 rupees. Shall I confirm?");
   });
 });

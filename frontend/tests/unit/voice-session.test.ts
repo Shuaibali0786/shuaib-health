@@ -76,10 +76,10 @@ describe("the welcome", () => {
     const t = build();
     void t.session.start();
     await settle(t.port);
-    expect(t.turns[0]?.text).toBe("Hello, welcome to Shuaib Health. I'm Ayesha, the clinic's assistant. I can help you in English or Urdu. How can I help you today?");
+    expect(t.turns[0]?.text).toBe("Hello, welcome to Shuaib Health. I'm Ayesha. How can I help you today?");
     expect(said(t.port)).not.toMatch(/record/i); // "audio is never recorded" is small text, not spoken
-    // Neerja (Indian English, natural) reads English AND Roman Urdu well, so she is the one voice of the call.
-    expect(t.port.spoken[0]?.voice).toContain("Neerja");
+    // Owner 2026-11-15: an English call gets the most natural female English voice: Aria first (then Jenny, Google US English, any en-US female).
+    expect(t.port.spoken[0]?.voice).toContain("Aria");
     expect(t.port.listening).toBe(true);
     expect(t.port.listenLang).toBe("en-US");
     expect(t.states.at(-1)).toBe("listening");
@@ -96,7 +96,7 @@ describe("the welcome", () => {
     await settle(t.port);
     expect(t.turns.at(-1)?.text).toContain("We are open");
     expect(new Set(t.port.spoken.map((s) => s.voice))).toEqual(new Set([t.port.spoken[0]?.voice]));
-    expect(t.port.spoken[0]?.voice).toContain("Neerja");
+    expect(t.port.spoken[0]?.voice).toContain("Aria");
   });
 
   it("with no South Asian English voice: a Roman Urdu call uses the Urdu voice (in Urdu script) for everything", async () => {
@@ -145,9 +145,9 @@ describe("one voice, automatic language", () => {
     expect(t.turns.at(-1)?.text).not.toContain("We are open");
     const voices = new Set(t.port.spoken.map((s) => s.voice));
     expect(voices.size).toBe(1);
-    expect([...voices][0]).toContain("Neerja");
+    expect([...voices][0]).toContain("Aria");
     // Owner rule A7 (2026-11-09): a little slower, calm.
-    expect(t.port.spokenRates.every((r) => r === 0.92)).toBe(true);
+    expect(t.port.spokenRates.every((r) => r === 0.95)).toBe(true);
   });
 
   it("shows captions sentence by sentence and clears them after speaking", async () => {

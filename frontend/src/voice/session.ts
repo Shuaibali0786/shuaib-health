@@ -15,7 +15,7 @@ import { urduToLatin } from "./language";
 import { forSpeech, pronounce } from "./speechText";
 import type { SpeechPort, Turn, VoiceInfo, VoiceLang, VoiceState } from "./types";
 import { urduSpeech } from "./urduSpeech";
-import { pickVoiceSet } from "./voicePicker";
+import { pickVoiceSet, preferredEnglishFemale } from "./voicePicker";
 
 export type Notice = "mic_denied" | "mic_unavailable" | "listen_unsupported" | "speak_unsupported" | "network" | "tap_to_talk";
 
@@ -66,7 +66,7 @@ const ECHO_WINDOW_MS = 8000;
 const NETWORK_RETRIES = 2;
 const NETWORK_RETRY_MS = 700;
 /** A little slower than the default: warmer, easier to follow. */
-const SPEECH_RATE = 0.92;
+const SPEECH_RATE = 0.95;
 const GREETING = /^(assalam|wa alaikum|salam)/i;
 
 /** Words in any script (Urdu letters kept), lower case, without punctuation. */
@@ -479,7 +479,9 @@ export class VoiceSession {
   private pickOne(lang: VoiceLang): { info: VoiceInfo | null; lang: string; urdu: boolean } {
     const set = pickVoiceSet(this.voices, "female");
     const southAsian = set.romanFallback && /^en-(in|pk)/i.test(set.romanFallback.lang) ? set.romanFallback : null;
-    const info = southAsian ?? (lang === "roman" ? (set.urdu ?? set.english) : (set.english ?? set.urdu));
+    // An English call (owner 2026-11-15) gets the most natural female English voice (Aria, Jenny, Google US English, any
+    // en-US female); a Roman Urdu call keeps the South Asian English voice that reads Roman Urdu best.
+    const info = lang === "en" ? (preferredEnglishFemale(this.voices) ?? southAsian ?? set.english ?? set.urdu) : (southAsian ?? set.urdu ?? set.english);
     return { info, lang: info?.lang ?? (lang === "roman" ? "en-IN" : "en-US"), urdu: Boolean(info?.lang.toLowerCase().startsWith("ur")) };
   }
 
@@ -525,7 +527,7 @@ export class VoiceSession {
       const clean = forSpeech(sentence);
       // An Urdu voice reads Urdu script best, so a Roman Urdu sentence is rewritten for it (the caption stays Roman).
       const romanUrdu = GREETING.test(sentence) || detectLang(sentence) === "roman";
-      // An English voice says our Urdu names the right way ("Aa-ee-sha", not "Alisha"); an Urdu voice reads Urdu script.
+      // An English voice says our Urdu names the right way ("Aysha", not "Alisha"); an Urdu voice reads Urdu script.
       const spoken = voice.urdu && romanUrdu ? urduSpeech(clean) : pronounce(clean);
       cancelled = await new Promise<boolean>((resolve) => {
         this.port.speak([spoken], { lang: voice.lang, voice: voice.info, rate: SPEECH_RATE }, {

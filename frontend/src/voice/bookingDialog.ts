@@ -614,7 +614,9 @@ function readBack(state: BookingState, deps: DialogDeps, lang: VoiceLang): { tex
   const price = (pkr: number, spoken: boolean) => (spoken ? T(lang, `${pkr.toLocaleString("en-US")} rupees`, `${pkr.toLocaleString("en-US")} rupay`) : formatPkr(pkr));
   const summary = (spoken: boolean) => {
     const cost = test ? `${test.name}, ${price(test.pricePkr, spoken)}` : fee && doc ? T(lang, `fee ${price(doc.feePkr, spoken)}`, `fee ${price(doc.feePkr, spoken)}`) : "";
-    return `${[doc?.name ?? "", when, cost].filter(Boolean).join(", ")}. ${T(lang, "Shall I confirm?", "Kya main confirm kar doon?")}`;
+    // Owner 2026-11-15: the patient's full number is shown on screen, grouped ("0324 526 6535"); only the slip masks it.
+    const mobile = spoken ? "" : ` ${T(lang, "Phone", "Phone")}: ${groupPhone(phone)}.`;
+    return `${[doc?.name ?? "", when, cost].filter(Boolean).join(", ")}.${mobile} ${T(lang, "Shall I confirm?", "Kya main confirm kar doon?")}`;
   };
   // The chat shows the filled card and the summary; the details are also read aloud (phone digit by digit).
   // Nothing is booked yet: the card is shown, and the patient confirms (owner rule A5, step 8).

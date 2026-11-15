@@ -15,8 +15,8 @@ export function welcomeLine(pack: KnowledgePack, lang: VoiceLang): string {
   const clinic = pack.clinic.name;
   return T(
     lang,
-    `Hello, welcome to ${clinic}. I'm ${ASSISTANT_NAME}, the clinic's assistant. I can help you in English or Urdu. How can I help you today?`,
-    `Assalam o Alaikum, ${clinic} mein khush aamdeed. Main ${ASSISTANT_NAME} hoon, clinic ki assistant. Main English ya Urdu mein madad kar sakti hoon. Bataiye, kya madad karoon?`,
+    `Hello, welcome to ${clinic}. I'm ${ASSISTANT_NAME}. How can I help you today?`,
+    `Assalam o Alaikum, ${clinic} mein khush aamdeed. Main ${ASSISTANT_NAME} hoon. Bataiye, kya madad karoon?`,
   );
 }
 

@@ -103,6 +103,23 @@ export function pickVoiceSet(voices: VoiceInfo[], gender: VoiceGender): VoiceSet
   return { english, urdu, romanFallback };
 }
 
+/**
+ * The most natural FEMALE English voice for an English call (owner 2026-11-15, luxury feel), in this order:
+ * "Microsoft Aria Online (Natural)", "Microsoft Jenny Online (Natural)", "Google US English", then any en-US female.
+ * Null when the device has none of them (the caller then falls back to the usual pick). Never a male voice.
+ */
+export function preferredEnglishFemale(voices: VoiceInfo[]): VoiceInfo | null {
+  const notMale = (v: VoiceInfo) => voiceGender(v) !== "male";
+  const named = (re: RegExp) => voices.find((v) => re.test(v.name) && /^en/i.test(v.lang) && notMale(v));
+  return (
+    named(/\baria\b.*(online|natural)|(online|natural).*\baria\b/i) ??
+    named(/\bjenny\b.*(online|natural)|(online|natural).*\bjenny\b/i) ??
+    voices.find((v) => /^google us english$/i.test(v.name.trim())) ??
+    voices.find((v) => /^en[-_]us$/i.test(v.lang) && voiceGender(v) === "female") ??
+    null
+  );
+}
+
 export type VoiceChoice = {
   voice: VoiceInfo | null;
   /** The language tag for the utterance (so the browser still picks a sensible voice when none is chosen). */

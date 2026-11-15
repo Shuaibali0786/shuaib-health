@@ -278,7 +278,7 @@ describe("voice mode", () => {
     expect(await within(dialog).findByTestId("voice-mode")).toBeInTheDocument();
     expect(within(dialog).getByTestId("voice-orb")).toBeInTheDocument();
     await waitFor(() => expect(statusOf(dialog)).toHaveTextContent("Listening..."));
-    expect(within(dialog).getByRole("log")).toHaveTextContent("Hello, welcome to Shuaib Health. I'm Ayesha, the clinic's assistant. I can help you in English or Urdu. How can I help you today?");
+    expect(within(dialog).getByRole("log")).toHaveTextContent("Hello, welcome to Shuaib Health. I'm Ayesha. How can I help you today?");
     expect(within(dialog).getByText(/audio is never recorded/)).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Stop listening" })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "End" })).toBeInTheDocument();

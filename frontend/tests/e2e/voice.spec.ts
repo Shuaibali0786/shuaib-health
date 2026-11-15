@@ -129,7 +129,7 @@ test.describe("voice receptionist", () => {
     await installFakeWebSpeech(page);
     const dialog = await openVoice(page);
     await expect(dialog.getByTestId("voice-orb")).toBeVisible();
-    await expect(dialog.getByRole("log")).toContainText("Hello, welcome to Shuaib Health. I'm Ayesha, the clinic's assistant. I can help you in English or Urdu. How can I help you today?");
+    await expect(dialog.getByRole("log")).toContainText("Hello, welcome to Shuaib Health. I'm Ayesha. How can I help you today?");
     await expect(dialog.getByText(/audio is never recorded/)).toBeVisible();
     await say(page, "What are your timings?", /Mon–Sat/);
     await expect.poll(() => spokenText(page)).toContain("9 AM");
