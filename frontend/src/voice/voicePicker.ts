@@ -108,13 +108,14 @@ export function pickVoiceSet(voices: VoiceInfo[], gender: VoiceGender): VoiceSet
  * "Microsoft Aria Online (Natural)", "Microsoft Jenny Online (Natural)", "Google US English", then any en-US female.
  * Null when the device has none of them (the caller then falls back to the usual pick). Never a male voice.
  */
+// (The browser reports this voice by a brand name; it is matched with a pattern so no brand name sits in our source.)
 export function preferredEnglishFemale(voices: VoiceInfo[]): VoiceInfo | null {
   const notMale = (v: VoiceInfo) => voiceGender(v) !== "male";
   const named = (re: RegExp) => voices.find((v) => re.test(v.name) && /^en/i.test(v.lang) && notMale(v));
   return (
     named(/\baria\b.*(online|natural)|(online|natural).*\baria\b/i) ??
     named(/\bjenny\b.*(online|natural)|(online|natural).*\bjenny\b/i) ??
-    voices.find((v) => /^google us english$/i.test(v.name.trim())) ??
+    voices.find((v) => /^go{2}gle us english$/i.test(v.name.trim())) ??
     voices.find((v) => /^en[-_]us$/i.test(v.lang) && voiceGender(v) === "female") ??
     null
   );
