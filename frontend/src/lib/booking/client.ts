@@ -1,6 +1,8 @@
 // Browser calls from the booking flow to this site's own booking routes (`/api/booking/...`).
 // The browser never talks to the catalog API itself: these routes add the proxy secret and the
 // visitor's address on the server (see backend.ts). This is the only browser-side `fetch` in src/.
+import * as z from "zod";
+
 import { DoctorSlotsSchema, type DoctorSlots } from "./schemas";
 
 /** The doctor's slots. Throws when the request fails, is refused, or the answer is not the contract's shape. */
@@ -29,4 +31,16 @@ export async function postBooking(payload: unknown, idempotencyKey: string): Pro
   }
   const header = Number(res.headers.get("retry-after"));
   return { status: res.status, body, retryAfter: Number.isFinite(header) && header > 0 ? header : null };
+}
+
+// Feature 013: a short-lived token for the premium voice provider, from this site's own route (`/api/speech/token`),
+// which asks our API; the provider key itself never reaches the browser.
+const SpeechTokenSchema = z.object({ token: z.string().min(10), region: z.string().min(2).max(40), expiresInSeconds: z.number().int().positive() });
+export type SpeechToken = z.infer<typeof SpeechTokenSchema>;
+
+/** A speech token, or a thrown error (the caller then uses the free browser voice). */
+export async function fetchSpeechToken(): Promise<SpeechToken> {
+  const res = await fetch("/api/speech/token", { method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" }, body: "{}" });
+  if (!res.ok) throw new Error(`speech token ${res.status}`);
+  return SpeechTokenSchema.parse(await res.json());
 }

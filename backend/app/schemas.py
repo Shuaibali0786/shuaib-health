@@ -331,3 +331,14 @@ class AssistantQuestion(CamelModel):
 class AssistantAnswer(CamelModel):
     text: str
     provider: Literal["claude"] = "claude"
+
+
+# --- Feature 013: a short-lived token for the premium voice provider ------------------------------
+
+
+class SpeechToken(CamelModel):
+    """A speech service token (valid for about 10 minutes) and its region. Never the key."""
+
+    token: str
+    region: str
+    expires_in_seconds: int

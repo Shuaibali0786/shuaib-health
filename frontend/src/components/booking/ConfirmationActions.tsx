@@ -4,7 +4,7 @@ import { CalendarPlus, Download, MessageCircle, Plus, Printer } from "lucide-rea
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import type { AppointmentView } from "@/lib/booking/schemas";
-import type { SlipClinic } from "@/lib/booking/slip";
+import type { SlipClinic, SlipLabTest } from "@/lib/booking/slip";
 import { whatsappLink } from "@/lib/booking/whatsapp";
 import { ROUTES } from "@/lib/routes";
 
@@ -73,7 +73,7 @@ function Action({ icon, children, ...rest }: { icon: ReactNode; children: ReactN
  * layout: the Download button (sticky at the bottom of the screen on mobile) and the secondary actions.
  * Everything is built from the masked view only, so no file or message can carry personal details.
  */
-export function ConfirmationActions({ view, clinic }: { view: AppointmentView; clinic: SlipClinic }) {
+export function ConfirmationActions({ view, clinic, labTest }: { view: AppointmentView; clinic: SlipClinic; labTest?: SlipLabTest }) {
   const [status, setStatus] = useState("");
   const [calendarNote, setCalendarNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -84,7 +84,7 @@ export function ConfirmationActions({ view, clinic }: { view: AppointmentView; c
     try {
       const [{ buildSlipPdf, slipFileName }, { loadSlipFonts }] = await Promise.all([loadSlip(), import("@/lib/booking/slip-fonts")]);
       const fonts = await loadSlipFonts(); // the website's own fonts, embedded so the PDF looks like this page
-      const outcome = await deliverPdf(buildSlipPdf(view, clinic, fonts), slipFileName(view), `Appointment ${view.reference}`);
+      const outcome = await deliverPdf(buildSlipPdf(view, clinic, fonts, labTest), slipFileName(view), `Appointment ${view.reference}`);
       if (outcome === "downloaded") setStatus("Your slip was downloaded. Look in your Downloads or Files app.");
       else if (outcome === "shared") setStatus("Your slip is ready to save or send.");
     } catch {
@@ -106,7 +106,8 @@ export function ConfirmationActions({ view, clinic }: { view: AppointmentView; c
 
   return (
     <>
-      <div className="sticky bottom-3 z-20 rounded-card border border-border bg-white/95 p-3 shadow-soft backdrop-blur print:hidden lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
+      {/* Sticky above the floating "Ask us" button on phones and tablets, so it never covers Download or Share (owner B1). */}
+      <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 rounded-card border border-border bg-white/95 p-3 shadow-soft backdrop-blur print:hidden lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
         <button
           type="button"
           onClick={download}

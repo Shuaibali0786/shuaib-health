@@ -17,6 +17,11 @@ export const PATIENT_SUGGESTIONS = QUICK_REPLIES.en;
 
 const EMERGENCY =
   /\b(emergency|urgent|chest pain|cant breathe|can t breathe|not breathing|unconscious|bleeding|heart attack|stroke|suicid|overdose|seizure|faint|saans nahi|behosh|khoon beh|dil ka daura)/;
+/** Feature 013: the voice layer runs the same emergency check before any dialog (one source of truth). */
+export function isEmergencyText(text: string): boolean {
+  return EMERGENCY.test(cleanText(text));
+}
+
 const SYMPTOM =
   /\b(pain|ache|fever|cough|dard|bukhar|headache|rash|vomit|vomiting|diarrh|dizzy|diagnos|medicine|medication|dose|tablet|treatment for|cure|symptom|sick|ill|infection|bp|sugar level|pregnan|itch|itching|acne|pimple|khansi|khujli|kharish|ulti|dast|zukam|chakkar|kamzori|toothache|flu|cold|allergy|periods?)\b/;
 
@@ -25,7 +30,7 @@ const SYMPTOM =
 const CHILD = /\b(child|children|kid|kids|baby|infant|bacha|bachay|bachi|bachey|bachon|beta|beti|son|daughter|toddler)\b/;
 const SYMPTOM_DEPARTMENTS: Array<{ slug: string; words: RegExp }> = [
   { slug: "dental", words: /\b(tooth|teeth|toothache|daant|dant|gum|gums|cavity|jaw)\b/ },
-  { slug: "dermatology", words: /\b(skin|rash|itch|itching|khujli|kharish|acne|pimples?|eczema|allergy on skin|daane)\b/ },
+  { slug: "dermatology", words: /\b(skin|rash|itch|itching|khujli|kharish|acne|pimples?|eczema|allergy|allergies|allergic|daane)\b/ },
   { slug: "gynecology", words: /\b(pregnan\w*|period|periods|menstrual|haamla)\b/ },
   { slug: "cardiology", words: /\b(palpitations?|bp|blood pressure|heartbeat)\b/ },
 ];
@@ -178,6 +183,18 @@ function emergencyReply(pack: KnowledgePack, lang: Lang): AgentReply {
     ),
     links: [{ label: `Call ${emergencyPhone}`, href: `tel:${emergencyPhone.replace(/[^\d+]/g, "")}` }],
   };
+}
+
+/**
+ * Feature 013: the department a symptom points to ("skin rash" -> dermatology), or null when no symptom word
+ * is present. The same mapping the chat uses; no diagnosis, only where to start.
+ */
+export function departmentForSymptoms(text: string, pack: KnowledgePack): string | null {
+  const clean = cleanText(text);
+  if (!SYMPTOM.test(clean) && !CHILD.test(clean) && !SYMPTOM_DEPARTMENTS.some((g) => g.words.test(clean))) return null;
+  const matched = SYMPTOM_DEPARTMENTS.find((group) => group.words.test(clean));
+  const slug = CHILD.test(clean) || /\bpediatrics\b/.test(clean) ? PEDIATRICS : (matched?.slug ?? GENERAL);
+  return pack.departments.some((d) => d.slug === slug) ? slug : null;
 }
 
 function symptomReply(clean: string, pack: KnowledgePack, lang: Lang): AgentReply {

@@ -677,6 +677,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/speech/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A short-lived token for the premium voice provider (Feature 013)
+         * @description OFF by default: without AZURE_SPEECH_KEY and AZURE_SPEECH_REGION the answer is 404 and the website keeps the free browser voice. Server-to-server (X-Proxy-Secret). Returns a speech service token valid for about 10 minutes and its region; never the key. Rate-limited per visitor (429). Never cached; never logged.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header: {
+                    "X-Proxy-Secret": string;
+                    "X-Client-IP"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The token (Cache-Control no-store) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SpeechToken"];
+                    };
+                };
+                /** @description Missing or wrong proxy secret */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The premium voice is off (not_found) */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Too many tokens for this visitor */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description The speech service failed (service_unavailable): use the browser voice */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/appointments": {
         parameters: {
             query?: never;
@@ -1494,6 +1572,11 @@ export interface components {
             text: string;
             /** @enum {string} */
             provider?: "claude";
+        };
+        SpeechToken: {
+            token: string;
+            region: string;
+            expiresInSeconds: number;
         };
         AppointmentView: {
             /** @description Display form XXXXX-XXXXX */

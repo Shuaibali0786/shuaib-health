@@ -115,6 +115,11 @@ class Settings(BaseSettings):
     email_alerts_from: str | None = None
     email_alerts_to: str | None = None  # comma-separated clinic addresses
     email_alerts_link: str | None = None  # the Command Centre address shown as a button
+    # Feature 013: the premium voice provider (Azure Speech, free F0 tier). OFF unless both are set;
+    # the API hands the website short-lived tokens, so the key never reaches a browser.
+    azure_speech_key: SecretStr | None = None
+    azure_speech_region: str | None = Field(None, pattern=r"^[a-z0-9]{2,40}$")
+    speech_token_per_ip_per_hour: int = Field(30, ge=1, le=1000)
 
     @field_validator("booking_proxy_secret", "privacy_hash_key", "session_secret", mode="before")
     @classmethod

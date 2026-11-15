@@ -1,4 +1,4 @@
-import { partOfDay, type PartOfDay } from "@/lib/booking/labels";
+import { formatClockTime, partOfDay, type PartOfDay } from "@/lib/booking/labels";
 import type { Slot } from "@/lib/booking/schemas";
 import { cn } from "@/lib/cn";
 
@@ -44,7 +44,7 @@ export function SlotGrid({ slots, selected, onSelect }: SlotGridProps) {
                     onChange={() => onSelect(slot.localTime)}
                     className="absolute inset-0 size-full cursor-pointer opacity-0"
                   />
-                  {slot.localTime}
+                  {formatClockTime(slot.localTime)}
                 </label>
               ))}
             </div>

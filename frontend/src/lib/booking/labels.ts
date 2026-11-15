@@ -41,17 +41,29 @@ export function formatLocalDateWithYear(date: string): string {
   return `${formatLocalDate(date)} ${date.slice(0, 4)}`;
 }
 
-/** "13:45" for an "HH:MM" clinic-local time minus 15 minutes; wraps past midnight. */
+/** "2:00 PM" for an "HH:MM" clinic-local time: what patients see everywhere (owner 2026-11-09: 12-hour time with AM/PM). */
+export function formatClockTime(localTime: string): string {
+  const [hours = 0, minutes = 0] = localTime.split(":").map(Number);
+  const suffix = hours >= 12 ? "PM" : "AM";
+  return `${hours % 12 === 0 ? 12 : hours % 12}:${String(minutes).padStart(2, "0")} ${suffix}`;
+}
+
+/** "2:00 PM (Pakistan time)": an appointment time with its zone, as patients see it. */
+export function appointmentTime(localTime: string, timeZone: string): string {
+  return `${formatClockTime(localTime)} (${zoneLabel(timeZone)})`;
+}
+
+/** "1:45 PM" for an "HH:MM" clinic-local time minus 15 minutes; wraps past midnight. */
 export function arriveByTime(localTime: string): string {
   const [hours = 0, minutes = 0] = localTime.split(":").map(Number);
   const total = (((hours * 60 + minutes - 15) % 1440) + 1440) % 1440;
-  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+  return formatClockTime(`${Math.floor(total / 60)}:${total % 60}`);
 }
 
 /** The long zone name, for example "Pakistan Standard Time". */
-/** "PKT" for the clinic's own zone, otherwise the zone id. */
+/** "Pakistan time" for the clinic's own zone, otherwise the zone id (patient-facing booking times). */
 export function zoneLabel(timeZone: string): string {
-  return timeZone === "Asia/Karachi" ? "PKT" : timeZone;
+  return timeZone === "Asia/Karachi" ? "Pakistan time" : timeZone;
 }
 
 export function timeZoneLabel(timeZone: string, at: Date = new Date()): string {

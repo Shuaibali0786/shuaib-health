@@ -53,14 +53,14 @@ test.describe("confirmation slip", () => {
 
     await test.step("the slip is the luxury design: highlight box, seal, before-you-come, QR and footer", async () => {
       await expect(card).toContainText(/\b20\d\d\b/); // the date carries its year
-      await expect(card).toContainText(/Please arrive by \d\d:\d\d/);
+      await expect(card).toContainText(/Please arrive by \d{1,2}:\d\d (AM|PM)/);
       await expect(card.getByTestId("confirmed-seal")).toContainText("CONFIRMED");
       await expect(card.getByTestId("confirmed-seal")).toContainText("DEMO");
       await expect(card.getByRole("img", { name: `QR code for booking reference ${reference}` })).toBeVisible();
       await expect(card.getByText("Show at reception")).toBeVisible();
       await expect(card.getByRole("heading", { name: "Before you come" })).toBeVisible();
       await expect(card).toContainText("Bring your CNIC and any previous reports.");
-      await expect(card).toContainText(/Booked on \d{1,2} \w{3} 20\d\d, \d\d:\d\d PKT/);
+      await expect(card).toContainText(/Booked on \d{1,2} \w{3} 20\d\d, \d{1,2}:\d\d (AM|PM) Pakistan time/);
       await expect(card).toContainText("Demo booking, no one will contact you");
     });
 
@@ -173,7 +173,7 @@ test.describe("confirmation slip", () => {
       const text = decodeURIComponent(href.split("?text=")[1]!);
       expect(text).toContain(reference);
       expect(text).toContain(name);
-      expect(text).toMatch(/Time: \d\d:\d\d \(PKT\)/);
+      expect(text).toMatch(/Time: \d{1,2}:\d\d (AM|PM) \(Pakistan time\)/);
       expect(text).toMatch(/Clinic phone: /);
       expect(text).not.toMatch(PRIVATE);
       expect(text).not.toContain("****");

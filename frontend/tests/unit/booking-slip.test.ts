@@ -73,7 +73,7 @@ describe("slip PDF", () => {
       "ABCDE-FGHJK",
       "Dr. Imran Qureshi",
       "Tue 6 Oct",
-      "14:00 \\(PKT\\)", // parentheses are escaped inside PDF strings
+      "2:00 PM \\(Pakistan time\\)", // parentheses are escaped inside PDF strings
       "PKR 2,500",
       "12 Example Road",
       "+92 21 111 000 111",
@@ -82,6 +82,14 @@ describe("slip PDF", () => {
     ]) {
       expect(pdf).toContain(expected);
     }
+  });
+
+  it("for a lab test shows the test and its price instead of the doctor's fee", () => {
+    const lab = pdfText(buildSlipPdf(view, clinic, fonts, { name: "Complete Blood Count (CBC)", pricePkr: 800 }));
+    // Parentheses are escaped inside PDF strings.
+    expect(lab).toContain("Complete Blood Count \\(CBC\\) - PKR 800 \\(sample\\)");
+    expect(lab).not.toContain("PKR 2,500");
+    expect(pdfText(buildSlipPdf(view, clinic, fonts))).toContain("PKR 2,500");
   });
 
   it("never contains unmasked patient details", () => {
@@ -135,7 +143,7 @@ describe("WhatsApp message", () => {
   it("has the reference, doctor, date, time and clinic phone, and nothing about the patient", () => {
     const text = whatsappText(view, clinic);
     expect(text).toBe(
-      ["Appointment booked at Shuaib Health", "Reference: ABCDE-FGHJK", "Doctor: Dr. Imran Qureshi", "Date: Tue 6 Oct", "Time: 14:00 (PKT)", "Clinic phone: +92 21 111 000 111"].join("\n"),
+      ["Appointment booked at Shuaib Health", "Reference: ABCDE-FGHJK", "Doctor: Dr. Imran Qureshi", "Date: Tue 6 Oct", "Time: 2:00 PM (Pakistan time)", "Clinic phone: +92 21 111 000 111"].join("\n"),
     );
     expect(text).not.toMatch(FORBIDDEN);
     expect(text).not.toContain("****");
@@ -152,20 +160,20 @@ describe("luxury slip (FR-057a)", () => {
   const pdf = pdfText(buildSlipPdf(view, clinic, fonts));
 
   it("computes arrive-by as the appointment time minus 15 minutes, wrapping past midnight", () => {
-    expect(arriveByTime("14:00")).toBe("13:45");
-    expect(arriveByTime("09:10")).toBe("08:55");
-    expect(arriveByTime("00:05")).toBe("23:50");
+    expect(arriveByTime("14:00")).toBe("1:45 PM");
+    expect(arriveByTime("09:10")).toBe("8:55 AM");
+    expect(arriveByTime("00:05")).toBe("11:50 PM");
   });
 
   it("formats the booking time in the clinic zone", () => {
-    expect(formatBookedOn("2026-10-04T09:05:00Z", "Asia/Karachi")).toBe("4 Oct 2026, 14:05 PKT");
+    expect(formatBookedOn("2026-10-04T09:05:00Z", "Asia/Karachi")).toBe("4 Oct 2026, 2:05 PM Pakistan time");
   });
 
   it("carries the highlight box, seal, before-you-come box, QR label and footer", () => {
     for (const expected of [
       "Tue 6 Oct 2026",
       "Please arrive by ",
-      "13:45",
+      "1:45 PM",
       "CONFIRMED",
       "BOOKED 04 OCT",
       "Before you come",
@@ -173,7 +181,7 @@ describe("luxury slip (FR-057a)", () => {
       "Bring your CNIC and any previous reports.",
       "Emergency? Call 1122.",
       "Show at reception",
-      "Booked on 4 Oct 2026, 14:05 PKT",
+      "Booked on 4 Oct 2026, 2:05 PM Pakistan time",
       "Demo booking, no one will contact you",
     ]) {
       expect(pdf).toContain(expected);
@@ -213,7 +221,7 @@ describe("slip PDF fonts and stamp (the page and the PDF match)", () => {
 
   it("sets the name, date, time, Before you come and the reference in the heading font, the rest in Inter", () => {
     const fontOf = (value: string) => ops.find((op) => op.includes(`(${value})`))?.match(/\/(F\d) /)?.[1];
-    for (const heading of ["Shuaib Health", "Tue 6 Oct 2026", "14:00 \\(PKT\\)", "Before you come", "ABCDE-FGHJK"]) expect(fontOf(heading), heading).toBe("F3");
+    for (const heading of ["Shuaib Health", "Tue 6 Oct 2026", "2:00 PM \\(Pakistan time\\)", "Before you come", "ABCDE-FGHJK"]) expect(fontOf(heading), heading).toBe("F3");
     for (const body of ["Arrive 15 minutes early.", "Show at reception", "VISIT DETAILS"]) expect(["F1", "F2"], body).toContain(fontOf(body));
     const used = new Set(ops.flatMap((op) => [...op.matchAll(/\/(F\d) [\d.]+ Tf/g)].map((m) => m[1])));
     expect([...used].sort()).toEqual(["F1", "F2", "F3"]);
@@ -224,7 +232,7 @@ describe("slip PDF fonts and stamp (the page and the PDF match)", () => {
     expect(pillAt).toBeGreaterThan(-1);
     expect(ops[pillAt + 1]).toContain("(Please arrive by )");
     expect(ops[pillAt + 1]).toContain("1 1 1 rg"); // white text
-    expect(ops[pillAt + 2]).toContain("(13:45)");
+    expect(ops[pillAt + 2]).toContain("(1:45 PM)");
   });
 
   it("draws the watermark at the page's 2 % opacity", () => {

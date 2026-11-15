@@ -132,7 +132,7 @@ const ROMAN_MARKERS = new Set(
     "hai hain kya kitni kitna kitne kab kahan kidhar kaise kaun mujhe chahiye karna krna karein batao bataen bataye bataiye nahi nahin theek thik shukriya shukria " +
     "salam salaam assalam asalam assalamualaikum assalamoalaikum walaikumassalam aoa walaikum alaikum aur dhoondein chunein bhai ji sahab mera meri mere hamein humein liye sakta sakti hota hoti milegi milega milay ghar daant dant pet dard bukhar " +
     "khansi khujli kharish ulti dast zukam chakkar kamzori bacha bachay bachi bachey bachon aaj kal subah sham raat waqt qeemat paisay khulta khulti band karwana karwani " +
-    "dikhana dikhani hafiz khuda allah aap ap"
+    "dikhana dikhani hafiz khuda allah aap ap karo kardo kar ki ka ke ko yaar kyun kyon raha rahi rahe ilaaj takleef sakti sakte karwa"
   ).split(" "),
 );
 // Letters used in Urdu but not in Arabic (ٹ ڈ ڑ ں ھ ے ی ک گ پ چ ژ).

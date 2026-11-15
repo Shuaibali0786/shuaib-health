@@ -50,6 +50,8 @@ export function buildKnowledgePack(input: {
       address: [...input.site.address],
       hours: hoursText(input.site.openingHours),
       labHours: hoursText(input.site.labHours),
+      openingRules: input.site.openingHours.map((rule) => ({ days: [...rule.days], opens: rule.opens, closes: rule.closes })),
+      timeZone: input.site.timeZone,
     },
     departments: input.departments.map((d) => ({ slug: d.slug, name: d.name, summary: d.summary })),
     doctors: input.doctors.map((d) => {
@@ -62,6 +64,7 @@ export function buildKnowledgePack(input: {
         departmentName: dept?.name ?? "",
         feePkr: d.feePkr,
         days: [...new Set(d.schedule.map((s) => s.day))],
+        hours: d.schedule.length ? { start: d.schedule.map((s) => s.start).sort()[0] as string, end: d.schedule.map((s) => s.end).sort().at(-1) as string } : undefined,
       };
     }),
     labTests: input.labTests.map((t) => ({

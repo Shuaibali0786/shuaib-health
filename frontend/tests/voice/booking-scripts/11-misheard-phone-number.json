@@ -1,0 +1,80 @@
+{
+  "name": "A misheard phone number (too many digits, then a landline): read back once, then the typed box; a spoken number still works; nothing else is asked twice",
+  "turns": [
+    {
+      "say": "Dr Bilal se appointment chahiye",
+      "expect": [
+        "Theek hai, Dr. Bilal Ansari",
+        "Kaun sa din"
+      ]
+    },
+    {
+      "say": "jumma ko",
+      "expect": [
+        "Friday 13 November",
+        "Kaun sa waqt"
+      ]
+    },
+    {
+      "say": "11:30",
+      "expect": [
+        "poora naam"
+      ]
+    },
+    {
+      "say": "mera naam Ali Raza hai",
+      "expect": [
+        "mobile number"
+      ]
+    },
+    {
+      "say": "0300 1234 56789",
+      "expect": [
+        "Maine 0300 123 456 789 suna",
+        "11 digits",
+        "neeche box mein likh"
+      ],
+      "forbid": [
+        "email",
+        "poora naam"
+      ],
+      "submits": 0
+    },
+    {
+      "say": "021 3456 7890",
+      "expect": [
+        "neeche box mein likh dein"
+      ],
+      "submits": 0
+    },
+    {
+      "say": "zero three zero zero one two three four five six seven",
+      "expect": [
+        "email"
+      ]
+    },
+    {
+      "say": "skip",
+      "expect": [
+        "zero three zero zero, one two three, four five six seven",
+        "Confirm dabaiye"
+      ],
+      "submits": 0
+    },
+    {
+      "say": "haan kar dein",
+      "expect": [
+        "Aap ki booking ho gayi"
+      ],
+      "submits": 1
+    }
+  ],
+  "final": {
+    "bookings": 1,
+    "payload": {
+      "mobile": "+923001234567",
+      "fullName": "Ali Raza",
+      "startsAt": "2026-11-13T06:30:00Z"
+    }
+  }
+}

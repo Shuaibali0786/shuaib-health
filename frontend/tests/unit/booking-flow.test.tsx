@@ -131,13 +131,13 @@ describe("BookingFlow: the steps", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Evening" })).toBeInTheDocument();
     expect(screen.getByText(/Pakistan Standard Time/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("radio", { name: "14:00" }));
+    await user.click(screen.getByRole("radio", { name: "2:00 PM" }));
     await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(await heading("Your details")).toHaveFocus();
     const summary = screen.getByRole("region", { name: "Your appointment" });
     expect(summary).toHaveTextContent("Dr. Imran Qureshi");
     expect(summary).toHaveTextContent("Tue 6 Oct");
-    expect(summary).toHaveTextContent("14:00");
+    expect(summary).toHaveTextContent("2:00 PM");
     expect(currentUrl()).toBe(`/book-appointment${DETAILS_URL}`);
   });
 
@@ -284,7 +284,7 @@ describe("BookingFlow: the details step", () => {
     await user.click(screen.getByRole("button", { name: "Select Dr. Imran Qureshi" }));
     await user.click(await screen.findByRole("radio", { name: /Tue 6 Oct/ }));
     await user.click(screen.getByRole("button", { name: "Continue" }));
-    await user.click(await screen.findByRole("radio", { name: "14:00" }));
+    await user.click(await screen.findByRole("radio", { name: "2:00 PM" }));
     await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(await screen.findByLabelText(/Full name/)).toHaveValue("Ali Khan");
     expect(screen.getByLabelText(/Mobile number/)).toHaveValue("0300 1234567");
@@ -405,17 +405,17 @@ describe("BookingFlow: a slot that was just taken", () => {
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Sorry, this slot was just taken.");
     await waitFor(() => expect(alert).toHaveFocus());
-    expect(within(alert).getByRole("button", { name: "Tue 6 Oct, 18:00" })).toBeInTheDocument();
-    expect(within(alert).getByRole("button", { name: "Tue 13 Oct, 10:00" })).toBeInTheDocument();
+    expect(within(alert).getByRole("button", { name: "Tue 6 Oct, 6:00 PM" })).toBeInTheDocument();
+    expect(within(alert).getByRole("button", { name: "Tue 13 Oct, 10:00 AM" })).toBeInTheDocument();
     expect(within(alert).getByRole("button", { name: "See all times" })).toBeInTheDocument();
     expect(screen.getByLabelText(/Full name/)).toHaveValue("Ali Khan");
     expect(screen.getByLabelText(/Mobile number/)).toHaveValue("0300 1234567");
     expect(screen.getByLabelText(/Email/)).toHaveValue("ali@example.com");
     expect(screen.getByLabelText(/Reason/)).toHaveValue("Chest pain");
 
-    await user.click(within(alert).getByRole("button", { name: "Tue 6 Oct, 18:00" }));
+    await user.click(within(alert).getByRole("button", { name: "Tue 6 Oct, 6:00 PM" }));
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
-    expect(screen.getByText("Time", { selector: "dt" }).nextElementSibling).toHaveTextContent("18:00");
+    expect(screen.getByText("Time", { selector: "dt" }).nextElementSibling).toHaveTextContent("6:00 PM");
     expect(screen.getByLabelText(/Full name/)).toHaveValue("Ali Khan");
 
     await user.click(screen.getByRole("button", { name: "Confirm booking" }));

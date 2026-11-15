@@ -1,7 +1,7 @@
 // The WhatsApp message for the confirmation slip, built from the masked AppointmentView only (FR-051).
 // Kept apart from slip.ts so the confirmation page can render this link without loading the PDF,
 // QR and calendar code, which ConfirmationActions only imports when the visitor clicks.
-import { formatLocalDate, zoneLabel } from "./labels";
+import { appointmentTime, formatLocalDate } from "./labels";
 import type { AppointmentView } from "./schemas";
 import type { SlipClinic } from "./slip";
 
@@ -11,7 +11,7 @@ export function whatsappText(view: AppointmentView, clinic: SlipClinic): string 
     `Reference: ${view.reference}`,
     `Doctor: ${view.doctor.fullName}`,
     `Date: ${formatLocalDate(view.localDate)}`,
-    `Time: ${view.localTime} (${zoneLabel(view.timeZone)})`,
+    `Time: ${appointmentTime(view.localTime, view.timeZone)}`,
   ];
   if (clinic.phoneDisplay !== "") lines.push(`Clinic phone: ${clinic.phoneDisplay}`);
   return lines.join("\n");

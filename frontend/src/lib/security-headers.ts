@@ -61,14 +61,16 @@ export function cspReportUri(env: Record<string, string | undefined>): string | 
 }
 
 /** Headers for every route, including the staff pages (which keep their own private headers on top). */
-export function commonSecurityHeaders(mode: SecurityHeadersMode): HeaderEntry[] {
+export function commonSecurityHeaders(mode: SecurityHeadersMode, options: { microphone?: boolean } = {}): HeaderEntry[] {
+  // Feature 013: with voice on, this site's own pages (never a frame or another origin) may ask for the microphone.
+  const microphone = options.microphone ? "microphone=(self)" : "microphone=()";
   if (mode === "off") return [];
   return [
     // No `preload`: that is a one-way door the owner has not chosen.
     { key: "Strict-Transport-Security", value: "max-age=31536000" },
     { key: "X-Content-Type-Options", value: "nosniff" },
     { key: "X-Frame-Options", value: "DENY" },
-    { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+    { key: "Permissions-Policy", value: `camera=(), ${microphone}, geolocation=(), payment=(), usb=()` },
   ];
 }
 
@@ -76,9 +78,21 @@ export function commonSecurityHeaders(mode: SecurityHeadersMode): HeaderEntry[] 
  * Referrer policy and CSP for the public site only. The staff routes already send their own
  * `Referrer-Policy` and `Content-Security-Policy` (PRIVATE_HEADERS); they must stay unchanged in every mode.
  */
-export function publicSiteHeaders(mode: SecurityHeadersMode, reportUri?: string): HeaderEntry[] {
+/**
+ * Feature 013 (VOICE_PROVIDER=azure only): the premium voice talks to the speech service directly from the browser
+ * with a short-lived token, over HTTPS and WebSockets, and plays its audio from a blob. Nothing else is added.
+ */
+const SPEECH_CONNECT = "https://*.tts.speech.microsoft.com wss://*.tts.speech.microsoft.com wss://*.stt.speech.microsoft.com";
+
+function cspDirectives(speech: boolean): string[] {
+  if (!speech) return CSP_DIRECTIVES;
+  return [...CSP_DIRECTIVES.map((d) => (d === "connect-src 'self'" ? `connect-src 'self' ${SPEECH_CONNECT}` : d)), "media-src 'self' blob:"];
+}
+
+export function publicSiteHeaders(mode: SecurityHeadersMode, reportUri?: string, options: { speech?: boolean } = {}): HeaderEntry[] {
   if (mode === "off") return [];
-  const csp = (reportUri ? [...CSP_DIRECTIVES, `report-uri ${reportUri}`] : CSP_DIRECTIVES).join("; ");
+  const directives = cspDirectives(Boolean(options.speech));
+  const csp = (reportUri ? [...directives, `report-uri ${reportUri}`] : directives).join("; ");
   return [
     { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
     mode === "report"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { formatLocalDate } from "@/lib/booking/labels";
+import { formatClockTime, formatLocalDate } from "@/lib/booking/labels";
 import type { AlternativeSlot } from "@/lib/booking/schemas";
 
 interface SlotTakenNoticeProps {
@@ -31,7 +31,7 @@ export function SlotTakenNotice({ message, alternatives, onChoose, onSeeAll }: S
             {alternatives.map((alternative) => (
               <li key={alternative.startsAt}>
                 <button type="button" onClick={() => onChoose(alternative)} className={CHOICE}>
-                  {`${formatLocalDate(alternative.localDate)}, ${alternative.localTime}`}
+                  {`${formatLocalDate(alternative.localDate)}, ${formatClockTime(alternative.localTime)}`}
                 </button>
               </li>
             ))}

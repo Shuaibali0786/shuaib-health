@@ -1,0 +1,52 @@
+{
+  "name": "Two unclear answers to the same question: apologise and point to the tappable choices instead of repeating",
+  "turns": [
+    {
+      "say": "book CBC test",
+      "expect": [
+        "Which day"
+      ],
+      "options": [
+        "Monday 9 November",
+        "Tuesday 10 November",
+        "Wednesday 11 November"
+      ]
+    },
+    {
+      "say": "hmm",
+      "forbid": [
+        "Sorry"
+      ]
+    },
+    {
+      "say": "umm ok",
+      "expect": [
+        "Sorry, I didn't quite get that",
+        "tap one of the choices"
+      ],
+      "options": [
+        "Monday 9 November"
+      ]
+    },
+    {
+      "say": "Tuesday 10 November",
+      "expect": [
+        "Which time"
+      ],
+      "options": [
+        "10:00 AM",
+        "11:30 AM",
+        "3:00 PM"
+      ]
+    },
+    {
+      "say": "never mind",
+      "expect": [
+        "stopped the booking"
+      ]
+    }
+  ],
+  "final": {
+    "bookings": 0
+  }
+}

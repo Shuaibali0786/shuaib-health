@@ -90,8 +90,9 @@ test.describe("booking an appointment", () => {
     await expect(card).toContainText("A**** K****");
     await expect(card).toContainText("0300****567");
     await expect(card).toContainText(doctor);
-    await expect(card).toContainText(String(time));
-    await expect(card).toContainText(String(TIME_ZONE_LABEL));
+    // 12-hour time with AM/PM and "(Pakistan time)" (owner 2026-11-09): "14:00" is shown as "2:00 PM".
+    const [hour = 0, minute = 0] = String(time).split(":").map(Number);
+    await expect(card).toContainText(`${hour % 12 === 0 ? 12 : hour % 12}:${String(minute).padStart(2, "0")} ${hour >= 12 ? "PM" : "AM"} (Pakistan time)`);
     await expect(card).toContainText(/PKR [\d,]+/);
     await expect(card).toContainText("Demo booking, no one will contact you");
     await expect(card).not.toContainText("Ali Khan");

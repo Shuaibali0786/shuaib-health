@@ -28,12 +28,23 @@ const site = {
 };
 
 describe("confirmation card", () => {
-  it("shows the date with year, time in PKT and the arrive-by time", () => {
+  it("shows the doctor's fee by default, and for a lab test booked by voice the TEST and its price instead", () => {
+    const { unmount } = render(<ConfirmationCard view={view} site={site} />);
+    expect(screen.getByRole("article")).toHaveTextContent("PKR 2,500 (sample)");
+    unmount();
+    render(<ConfirmationCard view={view} site={site} labTest={{ name: "Complete Blood Count (CBC)", pricePkr: 800 }} />);
+    const card = screen.getByRole("article");
+    expect(card).toHaveTextContent("Complete Blood Count (CBC)");
+    expect(card).toHaveTextContent("PKR 800 (sample)");
+    expect(card).not.toHaveTextContent("PKR 2,500");
+  });
+
+  it("shows the date with year, the 12-hour time in Pakistan time and the arrive-by time", () => {
     render(<ConfirmationCard view={view} site={site} />);
     const card = screen.getByRole("article");
     expect(card).toHaveTextContent("Tue 6 Oct 2026");
-    expect(card).toHaveTextContent("14:00 (PKT)");
-    expect(card).toHaveTextContent("Please arrive by 13:45");
+    expect(card).toHaveTextContent("2:00 PM (Pakistan time)");
+    expect(card).toHaveTextContent("Please arrive by 1:45 PM");
   });
 
   it("has the double-ring CONFIRMED stamp: name on top, DEMO below, booked day and month in the middle", () => {
@@ -69,7 +80,7 @@ describe("confirmation card", () => {
   it("ends with the booking time and the demo notice, and keeps the patient masked", () => {
     render(<ConfirmationCard view={view} site={site} />);
     const card = screen.getByRole("article");
-    expect(card).toHaveTextContent("Booked on 4 Oct 2026, 14:05 PKT");
+    expect(card).toHaveTextContent("Booked on 4 Oct 2026, 2:05 PM Pakistan time");
     expect(card).toHaveTextContent("Demo booking, no one will contact you");
     expect(card).toHaveTextContent("A**** K****");
     expect(card).toHaveTextContent("0300****567");

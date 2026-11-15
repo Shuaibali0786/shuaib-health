@@ -1,0 +1,24 @@
+{
+  "name": "Owner test: 'boking karo blod ki test karnekiay' (three misspellings) books the blood test straight away",
+  "turns": [
+    {
+      "say": "boking karo blod ki test karnekiay",
+      "expect": [
+        "zaroor",
+        "Complete Blood Count (CBC)",
+        "Pathology Lab",
+        "Kaun sa din"
+      ],
+      "forbid": [
+        "kis doctor",
+        "26 lab tests",
+        "nahi maloom",
+        "I don't know",
+        "Sample Road"
+      ]
+    }
+  ],
+  "final": {
+    "bookings": 0
+  }
+}

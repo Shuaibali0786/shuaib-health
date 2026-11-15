@@ -19,7 +19,8 @@ const ADMIN_IGNORE = ["**/stateful/**", "**/offline/**"];
 export default defineConfig({
   testDir: "./tests/e2e",
   // Staff-app specs (Feature 006) run only in the admin-* projects below.
-  testIgnore: ["**/stateful/**", "**/offline/**", "**/admin-*.spec.ts"],
+  // devices/: the long local-only device matrix (playwright.devices.config.ts), never part of this suite or CI.
+  testIgnore: ["**/stateful/**", "**/offline/**", "**/devices/**", "**/admin-*.spec.ts"],
   globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

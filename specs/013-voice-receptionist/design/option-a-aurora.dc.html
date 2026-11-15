@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option A Aurora</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;family=Noto+Nastaliq+Urdu:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#5EEAD4}a:hover{color:#99F6E4}
+</style>
+</helmet>
+<div style="width: 1280px; height: 900px; box-sizing: border-box; padding: 56px; display: flex; gap: 64px; background: linear-gradient(160deg, #06162B 0%, #0B2545 55%, #0E3554 100%); font-family: Inter, system-ui, sans-serif; color: #E6EEF7">
+
+  <!-- Phone: voice mode, speaking state -->
+  <div style="width: 390px; height: 788px; flex-shrink: 0; border-radius: 44px; background: #040F1F; box-shadow: 0 40px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08); display: flex; flex-direction: column; overflow: hidden; position: relative">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 28px 24px 0 24px">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 16px; color: #FFFFFF">Shuaib Health</span>
+        <span style="font-size: 12px; color: #9FB3C8">AI receptionist · demo clinic</span>
+      </div>
+      <div style="display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.08)">
+        <button style="border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; background: #14B8A6; color: #04201D; font: 600 13px Inter, sans-serif">EN</button>
+        <button lang="ur" style="border: 0; border-radius: 999px; padding: 6px 14px; min-height: 36px; background: transparent; color: #C9D6E3; font: 500 14px 'Noto Nastaliq Urdu', serif">اردو</button>
+      </div>
+    </div>
+
+    <!-- Orb -->
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px">
+      <div style="width: 260px; height: 260px; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 50%, rgba(20,184,166,0.35) 0%, rgba(20,184,166,0) 70%)">
+        <div style="width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #A7F3EC 0%, #2DD4BF 22%, #14B8A6 40%, #1D4ED8 75%, #0B2545 100%); box-shadow: 0 0 60px rgba(45,212,191,0.55), 0 0 140px rgba(37,99,235,0.35), inset -18px -24px 50px rgba(11,37,69,0.65)"></div>
+        <svg aria-hidden="true" width="260" height="260" viewBox="0 0 260 260" style="position: absolute; left: 0; top: 0">
+          <path d="M40 130 C 70 100, 95 160, 130 130 S 190 100, 220 130" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2.5" stroke-linecap="round"></path>
+          <path d="M48 138 C 78 118, 100 168, 130 140 S 182 116, 212 138" fill="none" stroke="rgba(167,243,236,0.45)" stroke-width="2" stroke-linecap="round"></path>
+        </svg>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: rgba(20,184,166,0.14); color: #5EEAD4; font-size: 13px; font-weight: 600" aria-live="polite">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #2DD4BF"></span>Speaking · tap or talk to interrupt
+      </div>
+    </div>
+
+    <!-- Captions -->
+    <div style="margin: 0 20px; padding: 16px 18px; border-radius: 20px; background: rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 10px">
+      <p style="margin: 0; font-size: 13px; color: #9FB3C8">You: Dr Ayesha kab baithti hain?</p>
+      <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #FFFFFF">Ji zaroor, Ali. Dr Ayesha Monday, Wednesday aur Saturday ko <span style="color: #5EEAD4">11 se 2 baje</span> tak hoti hain. Kya main booking kar doon?</p>
+    </div>
+
+    <!-- Controls -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 22px 28px 30px 28px">
+      <button aria-label="Mute microphone" style="width: 56px; height: 56px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E6EEF7" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+      </button>
+      <button style="height: 56px; padding: 0 22px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); background: transparent; color: #FFFFFF; font: 600 14px Inter, sans-serif">Interrupt</button>
+      <button aria-label="Voice: female (switch to male)" style="height: 56px; padding: 0 16px; border-radius: 999px; border: 0; background: rgba(255,255,255,0.1); color: #E6EEF7; font: 500 13px Inter, sans-serif">♀ Female</button>
+      <button aria-label="End voice conversation" style="width: 56px; height: 56px; border-radius: 50%; border: 0; background: #E5484D; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Right: system pieces -->
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 28px; min-width: 0">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: #5EEAD4; font-weight: 600">Option A · Aurora</span>
+      <h1 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 40px; line-height: 1.15; color: #FFFFFF">Immersive full-screen call, dark and glowing</h1>
+      <p style="margin: 0; max-width: 620px; font-size: 16px; line-height: 1.6; color: #B7C7D8">Voice mode takes the whole screen on phones and a large centred sheet on desktop. The orb is the hero. It feels like a premium phone call, close to ChatGPT and Gemini Live.</p>
+    </div>
+
+    <!-- Orb states -->
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+      <div style="padding: 18px; border-radius: 20px; background: rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; gap: 12px">
+        <div style="width: 72px; height: 72px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5B7A99, #1B3A5C 60%, #0B2545); box-shadow: 0 0 20px rgba(91,122,153,0.35)"></div>
+        <span style="font-size: 13px; font-weight: 600">Idle</span><span style="font-size: 12px; color: #9FB3C8; text-align: center">slow drift</span>
+      </div>
+      <div style="padding: 18px; border-radius: 20px; background: rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; gap: 12px">
+        <div style="width: 72px; height: 72px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #A7F3EC, #14B8A6 50%, #0F766E); box-shadow: 0 0 0 10px rgba(20,184,166,0.15), 0 0 34px rgba(45,212,191,0.6)"></div>
+        <span style="font-size: 13px; font-weight: 600">Listening</span><span style="font-size: 12px; color: #9FB3C8; text-align: center">breathes with your voice</span>
+      </div>
+      <div style="padding: 18px; border-radius: 20px; background: rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; gap: 12px">
+        <div style="width: 72px; height: 72px; border-radius: 50%; background: conic-gradient(from 40deg, #14B8A6, #2563EB, #0B2545, #2DD4BF, #14B8A6); box-shadow: 0 0 30px rgba(37,99,235,0.5)"></div>
+        <span style="font-size: 13px; font-weight: 600">Thinking</span><span style="font-size: 12px; color: #9FB3C8; text-align: center">swirl · “Ji, checking…”</span>
+      </div>
+      <div style="padding: 18px; border-radius: 20px; background: rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; gap: 12px">
+        <div style="width: 72px; height: 72px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #A7F3EC, #2DD4BF 30%, #1D4ED8 80%); box-shadow: 0 0 36px rgba(45,212,191,0.7)"></div>
+        <span style="font-size: 13px; font-weight: 600">Speaking</span><span style="font-size: 12px; color: #9FB3C8; text-align: center">waves follow each word</span>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 20px">
+      <!-- Summary card -->
+      <div style="flex: 1 1 0; min-width: 0; padding: 22px; border-radius: 22px; background: #FFFFFF; color: #0B2545; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.3)">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 16px">Your booking</span>
+          <span style="font-size: 12px; font-weight: 600; color: #0F766E; background: #CCFBF1; padding: 4px 10px; border-radius: 999px">Not booked yet</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; font-size: 14px">
+          <span style="color: #52606D">Name</span><span style="font-weight: 600">Ali Raza ✓</span>
+          <span style="color: #52606D">Phone</span><span style="font-weight: 600">0300 · 123 · 4567 ✓</span>
+          <span style="color: #52606D">Doctor</span><span style="font-weight: 600">Dr Ayesha, Dermatology</span>
+          <span style="color: #52606D">Date</span><span style="font-weight: 600"><span style="text-decoration: line-through; color: #8A99A8">12 Nov</span> 13 Nov · corrected</span>
+          <span style="color: #52606D">Time</span><span style="font-weight: 600">11:30 (free)</span>
+          <span style="color: #52606D">Email</span><span style="color: #8A99A8">optional, for your slip</span>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #334E68; background: #F0F9FF; padding: 10px 12px; border-radius: 12px">“Shall I confirm?” Say <strong>yes</strong> to book.</p>
+      </div>
+
+      <!-- Entry points -->
+      <div style="width: 300px; display: flex; flex-direction: column; gap: 16px">
+        <div style="align-self: flex-end; padding: 10px 16px; border-radius: 18px 18px 4px 18px; background: #FFFFFF; color: #0B2545; font-size: 14px; font-weight: 600; box-shadow: 0 0 0 4px rgba(20,184,166,0.25), 0 0 30px rgba(45,212,191,0.5)">Talk to us · English / <span lang="ur" style="font-family: 'Noto Nastaliq Urdu', serif">اردو</span></div>
+        <button style="align-self: flex-end; height: 52px; padding: 0 22px; border-radius: 999px; border: 0; background: linear-gradient(135deg, #E8C26A, #C9973B); color: #2A1E05; font: 700 15px Inter, sans-serif">Ask us</button>
+        <div style="padding: 10px; border-radius: 18px; background: #FFFFFF; display: flex; align-items: center; gap: 8px">
+          <label for="qa" style="position: absolute; width: 1px; height: 1px; overflow: hidden">Type a question</label>
+          <input id="qa" placeholder="Type or talk…" style="flex-grow: 1; min-width: 0; border: 0; font: 400 14px Inter, sans-serif; color: #0B2545; outline: none">
+          <button aria-label="Dictate with microphone" style="width: 40px; height: 40px; border-radius: 50%; border: 0; background: #F1F5F9; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B2545" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></button>
+          <button aria-label="Start voice mode" style="width: 40px; height: 40px; border-radius: 50%; border: 0; background: #0B2545; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5EEAD4" stroke-width="2.2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"></path></svg></button>
+          <button aria-label="Send" style="width: 40px; height: 40px; border-radius: 50%; border: 0; background: #14B8A6; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+        </div>
+        <span style="font-size: 12px; color: #9FB3C8; text-align: right">Mic = dictation · waveform = voice mode</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
