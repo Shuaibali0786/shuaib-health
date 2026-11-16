@@ -12,6 +12,8 @@ import { primeMicrophone, type MicResult } from "@/voice/microphone";
 import type { VoicePrefs } from "./voice/VoiceMode";
 
 const DEFAULT_PREFS: VoicePrefs = { opened: false };
+/** Dispatched on `window` by the Home hero button to open the assistant straight into voice mode. */
+export const OPEN_VOICE_EVENT = "assistant:open-voice";
 
 /**
  * The "Ask us" button (Feature 010). The panel, the engine and their styles are loaded only on the first click, so
@@ -39,6 +41,18 @@ export function AssistantLauncher({ pack, provider = "local", voice = false, voi
     }
   }, [open]);
 
+  // The home page's "Talk to Ayesha" button (a server-rendered page cannot reach this state) asks for voice mode with
+  // a window event. It is dispatched inside the click, so the browser still counts it as the visitor's own tap.
+  const showRef = useRef(show);
+  useEffect(() => {
+    showRef.current = show;
+  });
+  useEffect(() => {
+    if (!voice) return;
+    const onOpen = () => void showRef.current(true);
+    window.addEventListener(OPEN_VOICE_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_VOICE_EVENT, onOpen);
+  }, [voice]);
   async function show(inVoice = false) {
     // Ask for the microphone right now, inside the tap, so the browser's permission prompt comes from a real action.
     setMicCheck(inVoice ? primeMicrophone() : null);
@@ -65,13 +79,14 @@ export function AssistantLauncher({ pack, provider = "local", voice = false, voi
       {open ? null : (
         // Owner B1 (2026-11-09). A floating pill always covers some button while a page scrolls (the device matrix found
         // day filters, test chips, department cards and "View profile" under it from 360 px to 1440 px). So:
-        // - below 1700 px (phones, tablets, laptops) it is a slim bar across the bottom, above the device's own
-        //   bottom inset; the page keeps the same room at the bottom (site layout), so nothing is ever trapped under it;
-        // - from 1700 px (owner real-device test 2026-11-14: not a tall vertical pill) it is the same horizontal pill as on
-        //   a phone, "Ask us" + mic side by side, floating bottom-right in the empty margin beside the page (the margin is
-        //   wider than the pill there), so it never covers the hero photo or its cards.
-        <div className="assistant-dock fixed inset-x-0 bottom-0 z-[55] flex justify-end border-t border-border bg-white/95 px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur min-[1700px]:inset-x-auto min-[1700px]:right-6 min-[1700px]:bottom-6 min-[1700px]:block min-[1700px]:border-0 min-[1700px]:bg-transparent min-[1700px]:p-0 min-[1700px]:backdrop-blur-none">
-          <div className="inline-flex items-center gap-1 rounded-pill bg-navy-900 p-1 shadow-lift">
+        // - below 1700 px (phones, tablets, laptops) it is a slim glass pill at the bottom right (owner 2026-11-15: no solid
+        //   white band, so the hero photo is never cut). The full-width bar ignores taps; only the pill takes them, and the
+        //   page keeps the same room at the bottom (site layout), so the end of a page is never trapped under it;
+        // - from 1700 px (owner real-device test 2026-11-14: not a tall vertical pill) it is the same horizontal pill,
+        //   "Ask us" + mic side by side, floating bottom-right in the empty margin beside the page, so it never covers the
+        //   hero photo or its cards.
+        <div className="assistant-dock pointer-events-none fixed inset-x-0 bottom-0 z-[55] flex justify-end px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] min-[1700px]:inset-x-auto min-[1700px]:right-6 min-[1700px]:bottom-6 min-[1700px]:block min-[1700px]:p-0">
+          <div className="pointer-events-auto inline-flex items-center gap-1 rounded-pill bg-navy-900/90 p-1 shadow-lift ring-1 ring-white/25 backdrop-blur-md">
             <button
               ref={button}
               type="button"

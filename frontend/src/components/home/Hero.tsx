@@ -1,11 +1,14 @@
 import { CalendarCheck, Stethoscope } from "lucide-react";
+import { TalkToAyeshaButton } from "@/components/home/TalkToAyeshaButton";
+import { TrustStrip } from "@/components/home/TrustStrip";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconTile } from "@/components/ui/IconTile";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { buildHeroFacts, heroImage } from "@/data/homeContent";
-import { getSiteConfig } from "@/lib/content";
+import { getSiteConfig, loadDepartments, loadDoctors, loadLabTests } from "@/lib/content";
+import { isVoiceEnabled } from "@/lib/demo";
 import { ROUTES } from "@/lib/routes";
 
 /**
@@ -16,10 +19,10 @@ import { ROUTES } from "@/lib/routes";
  */
 const FACT_POSITION = [
   // Owner 2026-11-09 (final polish): fully inside the photo's top-left corner, narrow enough to stay left of the hair.
-  "top-3 left-3 max-w-[40%] sm:top-4 sm:left-4 sm:max-w-[11rem] lg:top-5 lg:left-5 lg:max-w-[12rem]",
+  "top-3 left-3 max-w-[40%] max-[380px]:top-2 max-[380px]:left-2 max-[380px]:max-w-[34%] sm:top-4 sm:left-4 sm:max-w-[11rem] lg:top-5 lg:left-5 lg:max-w-[12rem]",
   // Owner 2026-11-09: inside the photo, lower-left, about a third up from the bottom (left of and below the face).
   // (A little higher on a tablet, where the photo is narrow and the right-hand card sits higher.)
-  "bottom-[30%] left-3 max-w-[50%] sm:bottom-[38%] sm:left-4 sm:max-w-[16rem] lg:bottom-[30%] lg:left-5",
+  "bottom-[30%] left-3 max-w-[50%] max-[380px]:bottom-[34%] sm:bottom-[38%] sm:left-4 sm:max-w-[16rem] lg:bottom-[30%] lg:left-5",
   // 76 px up on a phone: below "Ask us" on the first screen, and above it once the photo is scrolled fully into view.
   "bottom-[4.75rem] right-2 max-w-[50%] sm:bottom-32 sm:max-w-[16rem] lg:bottom-28 lg:-right-6",
 ];
@@ -30,7 +33,8 @@ const FACT_POSITION = [
  * The three cards state only demo-true facts: no counts, awards or ratings.
  */
 export async function Hero() {
-  const { openingHours } = await getSiteConfig();
+  const [{ openingHours }, doctors, departments, labTests] = await Promise.all([getSiteConfig(), loadDoctors(), loadDepartments(), loadLabTests()]);
+  const voice = isVoiceEnabled();
   const heroFacts = buildHeroFacts(openingHours);
   return (
     <section aria-labelledby="hero-title" className="bg-soft-gradient">
@@ -55,7 +59,9 @@ export async function Hero() {
               <Stethoscope className="size-5" aria-hidden="true" />
               Find a Doctor
             </Button>
+            {voice ? <TalkToAyeshaButton /> : null}
           </div>
+          <TrustStrip counts={{ doctors: doctors.ok ? doctors.data.length : undefined, departments: departments.ok ? departments.data.length : undefined, labTests: labTests.ok ? labTests.data.length : undefined }} ai={voice} />
         </div>
 
         <div className="relative mx-auto mt-6 w-full min-w-0 max-w-md lg:mt-0 lg:max-w-none">

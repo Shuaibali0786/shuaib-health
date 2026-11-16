@@ -26,7 +26,7 @@ test.describe("voice panel visuals", () => {
   test("the one Ask us button with the mic inside", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("button", { name: "Talk by voice, in English or Urdu" })).toBeVisible({ timeout: 8000 });
-    await expect(page.locator(".assistant-dock")).toHaveScreenshot("ask-us-with-mic.png", { animations: "disabled" });
+    await expect(page.locator(".assistant-dock > div")).toHaveScreenshot("ask-us-with-mic.png", { animations: "disabled" });
   });
 
   test("voice mode, listening", async ({ page }) => {

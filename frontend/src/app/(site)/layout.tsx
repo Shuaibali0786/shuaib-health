@@ -7,7 +7,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { loadKnowledgePack } from "@/agent/knowledge";
 import { AssistantLauncher } from "@/components/agent/AssistantLauncher";
-import { getAssistantProvider, getVoiceBrain, getVoiceProvider, isAssistantEnabled, isVoiceEnabled } from "@/lib/demo";
+import { getAssistantProvider, getVoiceBrain, getVoiceProvider, isAssistantEnabled, isDemoEnabled, isVoiceEnabled } from "@/lib/demo";
 import { getSiteConfig } from "@/lib/content";
 import { siteUrl } from "@/lib/seo";
 import { THEME_COLOR } from "../theme-color";
@@ -61,7 +61,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className={`flex min-h-screen flex-col ${assistantPack ? "max-[1699px]:pb-[calc(4.5rem+env(safe-area-inset-bottom))]" : ""}`}>
         <SkipLink />
         <AnnouncementBar />
-        <NoticeBar />
+        {isDemoEnabled() ? null : <NoticeBar />}
         <SiteHeader />
         <main id="main-content" tabIndex={-1} className="flex-1">
           {children}
