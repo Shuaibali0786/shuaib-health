@@ -64,3 +64,21 @@ Tool: `backend/app/auth/admin_access.py` (tests: `backend/tests/unit/test_admin_
    (see `two-factor.md`).
 
 The password must pass the normal policy (length, not common, does not contain the email name).
+
+## Lost authenticator: `reset-2fa`
+
+Use this when the password works but the authenticator code does not (phone lost, entry deleted).
+Do steps 1 to 3 above (a fresh PowerShell, hidden URLs, throwaway values; the throwaway
+`PRIVACY_HASH_KEY` is fine here), then:
+
+```
+uv run python -m app.auth.admin_access reset-2fa --email <admin email> --expect-host <prod host>
+```
+
+Type the database name when asked. It turns two-step sign-in off for **that one account**, clears its
+old secret and backup codes, ends its open sessions and writes a `staff.two_factor_reset` audit row.
+It never prints a secret, and the password is not changed. It says so if two-step sign-in was already off.
+
+Then close the PowerShell window, sign in with the **password only**, open **Account** and set up
+two-step sign-in again: scan the new QR code and save the new backup codes. Until you do, the
+account is protected by the password alone, so do it straight away.

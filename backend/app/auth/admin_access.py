@@ -9,7 +9,14 @@
     saved or logged) and sets it for that one account only. Two-step sign-in is left as it is. The
     account's open sessions end and its failed-sign-in counter is cleared.
 
-Both commands use the production guard (``app.ops.target_guard``): the masked host and the database
+``python -m app.auth.admin_access reset-2fa --email you@example.org --expect-host <host>``
+    For a lost authenticator (owner request 2026-11-20). Turns two-step sign-in off for that one
+    account and clears its TOTP secret and backup codes (the same ``two_factor.operator_reset`` the
+    create_admin tool uses). Its open sessions end and a ``staff.two_factor_reset`` audit row is
+    written. The password is not changed and nobody else is touched. The next sign-in needs the
+    password only; set up two-step sign-in again from the Account page to get a new QR code.
+
+All commands use the production guard (``app.ops.target_guard``): the masked host and the database
 name are printed and the database name must be typed. Nothing here ever prints a URL, a password, a
 hash or a key.
 """
@@ -32,6 +39,11 @@ from app.ops.target_guard import GuardRefusal, add_guard_arguments, confirm_targ
 from app.settings import get_settings
 
 SYSTEM_FINGERPRINT = "0" * 16
+TWO_FACTOR_DONE = (
+    "Two-step sign-in is now OFF for that account; its old secret and backup codes are cleared. "
+    "Sign in with the password, then set it up again (Account page) to get a new QR code."
+)
+TWO_FACTOR_ALREADY_OFF = "Two-step sign-in was already off for that account. Nothing changed."
 DONE = "Password updated for that account. Two-step sign-in was not changed."
 NO_SUCH_ACCOUNT = "No account with that email."
 
@@ -132,7 +144,7 @@ def main(
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.auth.admin_access")
-    parser.add_argument("command", choices=["status", "set-password"])
+    parser.add_argument("command", choices=["status", "set-password", "reset-2fa"])
     parser.add_argument("--email", required=True)
     add_guard_arguments(parser)
     args = parser.parse_args(argv)
@@ -144,6 +156,13 @@ def main(
             with factory() as db:
                 for line in status_lines(db, email=args.email, now=now()):
                     print(line)
+            return 0
+        if args.command == "reset-2fa":
+            with factory() as db:
+                if _account(db, args.email) is None:
+                    raise AdminAccessError(NO_SUCH_ACCOUNT)
+                changed = two_factor.operator_reset(db, args.email, now())
+            print(TWO_FACTOR_DONE if changed else TWO_FACTOR_ALREADY_OFF)
             return 0
         first = prompt("New password: ")
         if prompt("Repeat new password: ") != first:

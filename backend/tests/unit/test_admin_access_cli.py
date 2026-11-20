@@ -163,3 +163,53 @@ def test_refusals_change_nothing(db_session: Session, capsys: pytest.CaptureFixt
 def test_the_password_cannot_be_given_on_the_command_line(db_session: Session) -> None:
     with pytest.raises(SystemExit):
         run(db_session, "set-password", "--email", "owner@example.org", "--password", NEW)
+
+
+def _enrol(db: Session, staff: m.StaffAccount) -> None:
+    staff.totp_secret_encrypted = "x" * 40
+    staff.totp_enabled_at = NOW
+    staff.totp_last_step = 7
+    db.add(m.StaffBackupCode(staff_id=staff.id, code_hash="a" * 64))
+    db.flush()
+
+
+def _backup_codes(db: Session, staff_id: object) -> int:
+    return db.execute(
+        text("SELECT count(*) FROM staff_backup_code WHERE staff_id = :s"), {"s": staff_id}
+    ).scalar_one()
+
+
+def test_reset_2fa_turns_it_off_for_only_that_account_and_prints_no_secret(
+    db_session: Session,
+) -> None:
+    owner = make(db_session)
+    other = make(db_session, "other@example.org")
+    _enrol(db_session, owner)
+    _enrol(db_session, other)
+    password_hash = owner.password_hash
+    code, out = run(db_session, "reset-2fa", "--email", "Owner@Example.org")
+    assert code == 0 and out == cli.TWO_FACTOR_DONE + "\n"
+    db_session.refresh(owner)
+    db_session.refresh(other)
+    assert owner.totp_secret_encrypted is None and owner.totp_enabled_at is None
+    assert owner.totp_last_step is None
+    assert owner.password_hash == password_hash  # the password is not touched
+    assert other.totp_enabled_at is not None and other.totp_secret_encrypted == "x" * 40
+    assert _backup_codes(db_session, owner.id) == 0
+    assert _backup_codes(db_session, other.id) == 1
+    audit = db_session.execute(
+        text("SELECT count(*) FROM audit_log WHERE action = 'staff.two_factor_reset'")
+    ).scalar_one()
+    assert audit == 1
+
+
+def test_reset_2fa_refusals_change_nothing(
+    db_session: Session, capsys: pytest.CaptureFixture[str]
+) -> None:
+    owner = make(db_session)
+    code, out = run(db_session, "reset-2fa", "--email", "owner@example.org")
+    assert code == 0 and out == cli.TWO_FACTOR_ALREADY_OFF + "\n"
+    code, _ = run(db_session, "reset-2fa", "--email", "nobody@example.org")
+    assert code == 1 and cli.NO_SUCH_ACCOUNT in capsys.readouterr().err
+    db_session.refresh(owner)
+    assert owner.totp_enabled_at is None
