@@ -1,6 +1,7 @@
 """``python -m app.auth.admin_access``: read-only status and a hidden-prompt reset of ONE admin."""
 
 import io
+import uuid
 from collections.abc import Callable
 from contextlib import redirect_stdout
 from datetime import UTC, datetime, timedelta
@@ -169,14 +170,16 @@ def _enrol(db: Session, staff: m.StaffAccount) -> None:
     staff.totp_secret_encrypted = "x" * 40
     staff.totp_enabled_at = NOW
     staff.totp_last_step = 7
-    db.add(m.StaffBackupCode(staff_id=staff.id, code_hash="a" * 64))
+    db.add(m.StaffBackupCode(staff_id=uuid.UUID(str(staff.id)), code_hash="a" * 64))
     db.flush()
 
 
 def _backup_codes(db: Session, staff_id: object) -> int:
-    return db.execute(
-        text("SELECT count(*) FROM staff_backup_code WHERE staff_id = :s"), {"s": staff_id}
-    ).scalar_one()
+    return int(
+        db.execute(
+            text("SELECT count(*) FROM staff_backup_code WHERE staff_id = :s"), {"s": staff_id}
+        ).scalar_one()
+    )
 
 
 def test_reset_2fa_turns_it_off_for_only_that_account_and_prints_no_secret(
